@@ -1,0 +1,761 @@
+import React, { useState, useEffect } from 'react';
+import {
+  ClipboardCheck,
+  CheckCircle,
+  XCircle,
+  HelpCircle,
+  Plus,
+  Printer,
+  FileSpreadsheet,
+  AlertCircle,
+  BookmarkCheck,
+  ChevronDown,
+  ChevronUp,
+  Building,
+  Calendar,
+  UserCheck,
+  Lightbulb,
+  Sparkles,
+  CheckCircle2,
+  Wrench,
+  Info
+} from 'lucide-react';
+import { exportWorkingPaperToExcel } from '../utils/exportExcel';
+import AuditToolkits from './AuditToolkits';
+
+export default function ExecutionView({
+  workingPapers = [],
+  setWorkingPapers,
+  selectedWp,
+  setSelectedWp,
+  orgProfile,
+  selectedYear = '2569'
+}) {
+  const currentWp = workingPapers.find((w) => w.id === selectedWp) || workingPapers[0] || {
+    id: 'WP-EMPTY',
+    topic: 'ไม่มีกระดาษทำการ',
+    department: 'หน่วยรับตรวจ',
+    checklist: [],
+    samples: [],
+    finding: {}
+  };
+
+  // Sync selectedWp if not in workingPapers
+  useEffect(() => {
+    if (workingPapers.length > 0 && !workingPapers.some((w) => w.id === selectedWp)) {
+      setSelectedWp(workingPapers[0].id);
+    }
+  }, [workingPapers, selectedWp, setSelectedWp]);
+
+  const isSubsidyWp = currentWp.id?.startsWith('WP-SUBSIDY');
+  const docNoLabel = isSubsidyWp ? 'เลขที่โครงการ / บันทึกข้อตกลง' : 'เลขที่เอกสาร / ฎีกา';
+  const payeeLabel = isSubsidyWp ? 'หน่วยงาน / องค์กรที่ขอรับเงินอุดหนุน' : 'ผู้รับเงิน / คู่สัญญา';
+  const amountLabel = isSubsidyWp ? 'วงเงินอุดหนุน (บาท)' : 'จำนวนเงิน (บาท)';
+
+  const [showAddSample, setShowAddSample] = useState(false);
+  const [expandedGuidance, setExpandedGuidance] = useState({});
+  const [showToolkits, setShowToolkits] = useState(true);
+  const [autoFindingToast, setAutoFindingToast] = useState('');
+
+  const [newSample, setNewSample] = useState({
+    docNo: '',
+    date: '',
+    payee: '',
+    amount: '',
+    testResult: 'ปกติ',
+    note: ''
+  });
+
+  const toggleGuidance = (id) => {
+    setExpandedGuidance((prev) => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const toggleAllGuidance = () => {
+    const hasAnyOpen = Object.values(expandedGuidance).some(Boolean);
+    if (hasAnyOpen) {
+      setExpandedGuidance({});
+    } else {
+      const allOpen = {};
+      (currentWp.checklist || []).forEach((item) => {
+        if (item.guidance) allOpen[item.id] = true;
+      });
+      setExpandedGuidance(allOpen);
+    }
+  };
+
+  // Add sample pushed from toolkits
+  const handleAddSampleFromTool = (sampleData) => {
+    const updated = workingPapers.map((wp) => {
+      if (wp.id === currentWp.id) {
+        const samples = wp.samples || [];
+        return {
+          ...wp,
+          samples: [
+            ...samples,
+            {
+              ...sampleData,
+              id: `SMP-${Date.now().toString().slice(-4)}`
+            }
+          ]
+        };
+      }
+      return wp;
+    });
+    setWorkingPapers(updated);
+  };
+
+  // Toggle checklist item result
+  const handleToggleChecklist = (checkId) => {
+    const updated = workingPapers.map((wp) => {
+      if (wp.id === currentWp.id) {
+        const nextChecklist = (wp.checklist || []).map((item) => {
+          if (item.id === checkId) {
+            let nextResult = 'passed';
+            if (item.result === 'passed') nextResult = 'failed';
+            else if (item.result === 'failed') nextResult = 'na';
+            else nextResult = 'passed';
+            return { ...item, result: nextResult };
+          }
+          return item;
+        });
+        return { ...wp, checklist: nextChecklist };
+      }
+      return wp;
+    });
+    setWorkingPapers(updated);
+  };
+
+  // Add new sample row
+  const handleAddSample = (e) => {
+    e.preventDefault();
+    if (!newSample.docNo) return;
+    const updated = workingPapers.map((wp) => {
+      if (wp.id === currentWp.id) {
+        const samples = wp.samples || [];
+        return {
+          ...wp,
+          samples: [
+            ...samples,
+            {
+              ...newSample,
+              id: `SMP-${Date.now().toString().slice(-4)}`,
+              amount: Number(newSample.amount) || 0
+            }
+          ]
+        };
+      }
+      return wp;
+    });
+    setWorkingPapers(updated);
+    setShowAddSample(false);
+    setNewSample({
+      docNo: '',
+      date: '',
+      payee: '',
+      amount: '',
+      testResult: 'ปกติ',
+      note: ''
+    });
+  };
+
+  // Update findings
+  const handleUpdateFinding = (field, value) => {
+    const updated = workingPapers.map((wp) => {
+      if (wp.id === currentWp.id) {
+        return {
+          ...wp,
+          finding: {
+            ...wp.finding,
+            [field]: value
+          }
+        };
+      }
+      return wp;
+    });
+    setWorkingPapers(updated);
+  };
+
+  // Auto-generate 4-element audit findings from failed checklist and abnormal samples
+  const handleAutoGenerateFindings = () => {
+    const failedChecklist = (currentWp.checklist || []).filter((item) => item.result === 'failed');
+    const abnormalSamples = (currentWp.samples || []).filter((s) => s.testResult !== 'ปกติ');
+
+    if (failedChecklist.length === 0 && abnormalSamples.length === 0) {
+      const autoCondition = `จากการสุ่มตรวจสอบเอกสารและกระบวนการปฏิบัติงานเรื่อง "${currentWp.topic}" ของ ${currentWp.department} ประจำปีงบประมาณ พ.ศ. ${selectedYear} ตามตัวอย่างที่สุ่มตรวจ ไม่พบข้อบกพร่องที่มีนัยสำคัญ การดำเนินงานเป็นไปตามระเบียบและเกณฑ์มาตรฐานที่กำหนด`;
+      const autoCause = `หน่วยรับตรวจมีความเข้าใจในระเบียบกฎหมาย มีการสอบทานขั้นตอนการปฏิบัติงาน และมีการควบคุมภายในที่เหมาะสม`;
+      const autoEffect = `ทำให้การปฏิบัติงานและการใช้จ่ายงบประมาณเป็นไปด้วยความถูกต้อง โปร่งใส เกิดประโยชน์สูงสุดแก่ทางราชการ`;
+      const autoRec = `เห็นควรให้ ${currentWp.department} รักษามาตรฐานการปฏิบัติงาน และติดตามหนังสือสั่งการหรือระเบียบที่มีการปรับปรุงใหม่จากกระทรวงมหาดไทยและกรมบัญชีกลางอย่างต่อเนื่อง`;
+
+      const updated = workingPapers.map((wp) => {
+        if (wp.id === currentWp.id) {
+          return {
+            ...wp,
+            finding: {
+              condition: autoCondition,
+              cause: autoCause,
+              effect: autoEffect,
+              recommendation: autoRec
+            }
+          };
+        }
+        return wp;
+      });
+      setWorkingPapers(updated);
+      setAutoFindingToast('ร่างข้อตรวจพบ (กรณีผลตรวจปกติ/ผ่านเกณฑ์) เรียบร้อยแล้ว');
+      setTimeout(() => setAutoFindingToast(''), 3000);
+      return;
+    }
+
+    // Compose Condition
+    let conditionText = `จากการสุ่มตรวจสอบการปฏิบัติงานเรื่อง "${currentWp.topic}" ของ ${currentWp.department} ประจำปีงบประมาณ พ.ศ. ${selectedYear} พบข้อบกพร่องและข้อสังเกต ดังนี้:\n`;
+    failedChecklist.forEach((item, idx) => {
+      conditionText += `${idx + 1}. ไม่ผ่านเกณฑ์: ${item.question}${item.note ? ` (ข้อสังเกต: ${item.note})` : ''}\n`;
+    });
+
+    if (abnormalSamples.length > 0) {
+      conditionText += `\nจากการสุ่มตรวจเอกสาร/สัญญา/ฎีกาเบิกจ่าย พบรายการที่มีข้อสังเกตหรือไม่ถูกต้อง จำนวน ${abnormalSamples.length} รายการ ดังนี้:\n`;
+      abnormalSamples.forEach((s, idx) => {
+        conditionText += `- รายการที่ ${idx + 1}: ${s.docNo} (${s.payee}) จำนวนเงิน ${Number(s.amount || 0).toLocaleString()} บาท - ผลการตรวจ: "${s.testResult}" (${s.note || 'ไม่มีระบุหมายเหตุ'})\n`;
+      });
+    }
+
+    // Specific Causes, Effects, and Recommendations by WP ID or Topic
+    let causeText = '';
+    let effectText = '';
+    let recText = '';
+
+    if (currentWp.id === 'WP-PRICE-2570' || currentWp.topic?.includes('ราคากลาง')) {
+      causeText = `คณะกรรมการกำหนดราคากลางและเจ้าหน้าที่ผู้รับผิดชอบยังขาดความเข้าใจในหลักเกณฑ์และวิธีปฏิบัติการคำนวณราคากลางงานก่อสร้างของราชการตามประกาศคณะกรรมการราคากลางฯ และไม่ได้สอบทานตาราง Factor F รวมถึงขาดการตรวจสอบราคาวัสดุก่อสร้างจากสำนักงานพาณิชย์จังหวัดให้เป็นปัจจุบัน`;
+      effectText = `อาจทำให้ราคากลางที่ อปท. อนุมัติสูงหรือต่ำกว่าความเป็นจริง ส่งผลให้การจัดซื้อจัดจ้างด้วยเงินงบประมาณไม่ประหยัด คุ้มค่า และมีความเสี่ยงต่อการถูก สตง. หรือ ป.ป.ช. ตรวจสอบทักท้วงและเรียกเงินคืน`;
+      recText = `1. แจ้ง ${currentWp.department} สั่งการให้คณะกรรมการกำหนดราคากลางทบทวนการคำนวณราคากลางและแบบ ปร.4, ปร.5, ปร.6 ให้ถูกต้องตามหลักเกณฑ์ของกรมบัญชีกลาง\n2. กำชับให้ใช้ราคาพาณิชย์จังหวัดและอัตราค่าแรงขั้นต่ำที่เป็นปัจจุบัน รวมถึงเลือกตาราง Factor F ให้ตรงกับประเภทงานก่อสร้างและเงื่อนไขสัญญาอย่างเคร่งครัด\n3. รายงานผลการดำเนินการให้ผู้บริหารท้องถิ่นทราบภายใน 30 วัน`;
+    } else if (currentWp.id === 'WP-PROC-2570' || currentWp.topic?.includes('จัดซื้อจัดจ้าง')) {
+      causeText = `เจ้าหน้าที่พัสดุและคณะกรรมการตรวจรับพัสดุยังขาดความรัดกุมในการตรวจสอบเอกสารหลักประกันสัญญา และขาดระบบติดตามการนับระยะเวลาส่งมอบงานตามสัญญา รวมถึงมิได้คิดค่าปรับกรณีส่งมอบงานล่าช้าตามมาตรา 175 แห่ง พ.ร.บ. การจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ พ.ศ. 2560`;
+      effectText = `ทำให้ทางราชการเสียประโยชน์จากการไม่เรียกเก็บค่าปรับตามสัญญา และหลักประกันสัญญาอาจไม่ครอบคลุมความชำรุดบกพร่อง ก่อให้เกิดความเสี่ยงต่อความเสียหายของงบประมาณและวินัยการเงินการคลัง`;
+      recText = `1. สั่งการให้กองคลัง/งานพัสดุ ตรวจสอบระยะเวลาส่งมอบงานและเรียกเก็บค่าปรับจากคู่สัญญาให้ครบถ้วนถูกต้องตามระเบียบฯ\n2. จัดทำทะเบียนคุมสัญญาและหลักประกันสัญญาเพื่อแจ้งเตือนการหมดอายุและการส่งคืนหลักประกันอย่างเป็นระบบ\n3. ให้เจ้าหน้าที่ที่เกี่ยวข้องศึกษาทำความเข้าใจ พ.ร.บ. การจัดซื้อจัดจ้างฯ พ.ศ. 2560 และหนังสือสั่งการคณะกรรมการวินิจฉัยอย่างเคร่งครัด`;
+    } else if (currentWp.id === 'WP-CONST-2570' || currentWp.topic?.includes('ข้อบัญญัติ')) {
+      causeText = `ช่างผู้ควบคุมงานไม่ได้จัดทำสมุดบันทึกรายงานประจำวันตามระเบียบพัสดุฯ ข้อ 178 อย่างต่อเนื่อง และคณะกรรมการตรวจรับพัสดุมิได้รอผลทดสอบความแข็งแรงของคอนกรีต (Cylinder Test 28 วัน) ก่อนการตรวจรับงวดสุดท้าย รวมถึงการกันเงินเหลื่อมปียังไม่สอดคล้องกับระเบียบ มท. รับจ่ายเงิน 2566`;
+      effectText = `งานก่อสร้างอาจไม่ได้คุณภาพมาตรฐานตามแบบรูปรายการ ก่อให้เกิดความชำรุดเสียหายก่อนเวลาอันควร และการเบิกจ่ายงบประมาณอาจไม่ชอบด้วยระเบียบการเงินการคลังของ อปท.`;
+      recText = `1. กำชับให้ช่างผู้ควบคุมงานจดบันทึกสภาพการปฏิบัติงานประจำวันและรายงานประธานกรรมการตรวจรับพัสดุเป็นประจำทุกสัปดาห์\n2. การตรวจรับงานโครงสร้างคอนกรีตต้องมีผลทดสอบกำลังอัด (Cylinder Test) จากสถาบันที่เชื่อถือได้รับรองครบถ้วนก่อนการเบิกจ่ายเงินงวด\n3. ตรวจสอบการกันเงินเหลื่อมปีให้มีหนี้ผูกพันสัญญาภายใน 30 ก.ย. หากไม่ทันต้องเสนอขออนุมัติต่อสภาท้องถิ่นตามระเบียบ มท. รับจ่ายเงิน 2566 ข้อ 64-67`;
+    } else if (currentWp.id === 'WP-PERMIT-2570' || currentWp.topic?.includes('ขออนุญาต') || currentWp.topic?.includes('รื้อถอน')) {
+      causeText = `เจ้าหน้าที่ผู้รับผิดชอบขาดการตรวจสอบอัตราค่าธรรมเนียมใบอนุญาตและค่าตรวจแบบแปลนตามกฎกระทรวง ฉบับที่ 7 (พ.ศ. 2528) แห่ง พ.ร.บ. ควบคุมอาคาร พ.ศ. 2522 และขาดการควบคุมระยะเวลาการพิจารณาคำขอให้เป็นไปตามกรอบ 45 วันของ พ.ร.บ. การอำนวยความสะดวกฯ พ.ศ. 2558`;
+      effectText = `ทำให้ อปท. จัดเก็บรายได้ค่าธรรมเนียมตกหล่นไม่ครบถ้วน และประชาชนผู้ขออนุญาตอาจได้รับการบริการที่ล่าช้าเกินกรอบเวลาที่กฎหมายกำหนด รวมถึงอาจมีสิ่งปลูกสร้างที่ผิดแบบรูปความปลอดภัย`;
+      recText = `1. ให้กองช่างตรวจสอบและคำนวณค่าธรรมเนียมใบอนุญาตและค่าตรวจแบบแปลนให้ถูกต้องตามขนาดพื้นที่และประเภทอาคาร หากจัดเก็บขาดให้ติดตามเรียกเก็บเพิ่มเติม\n2. จัดทำสมุดคุมคำขออนุญาตก่อสร้าง (แบบ ข.1) และควบคุมกระบวนการพิจารณาให้แล้วเสร็จภายใน 45 วัน\n3. ตรวจสอบใบประกอบวิชาชีพของวิศวกรและสถาปนิกผู้รับผิดชอบงานให้ถูกต้องตามกฎหมายวิศวกรและสถาปัตยกรรม`;
+    } else {
+      causeText = `เจ้าหน้าที่ผู้ปฏิบัติงานยังขาดความเข้าใจในระเบียบกระทรวงมหาดไทยและหนังสือสั่งการที่เกี่ยวข้อง และขาดการสอบทานเอกสารหลักฐานในแต่ละขั้นตอนก่อนเสนอขออนุมัติเบิกจ่าย`;
+      effectText = `อาจทำให้การเบิกจ่ายงบประมาณและการปฏิบัติงานไม่ถูกต้องตามระเบียบราชการ เสี่ยงต่อความเสียหายของงบประมาณแผ่นดิน และอาจถูก สตง. ทักท้วงและเรียกเงินคืน`;
+      recText = `1. แจ้ง ${currentWp.department} ให้ทบทวนและแก้ไขข้อบกพร่องตามระเบียบราชการให้ถูกต้องครบถ้วน\n2. กำชับเจ้าหน้าที่ผู้รับผิดชอบให้ปฏิบัติตามระเบียบและหนังสือสั่งการที่เกี่ยวข้องอย่างเคร่งครัด\n3. รายงานผลการปรับปรุงแก้ไขให้ผู้บริหารท้องถิ่นและหน่วยตรวจสอบภายในทราบภายใน 30 วัน`;
+    }
+
+    const updated = workingPapers.map((wp) => {
+      if (wp.id === currentWp.id) {
+        return {
+          ...wp,
+          finding: {
+            condition: conditionText.trim(),
+            cause: causeText.trim(),
+            effect: effectText.trim(),
+            recommendation: recText.trim()
+          }
+        };
+      }
+      return wp;
+    });
+    setWorkingPapers(updated);
+    setAutoFindingToast('ดึงข้อตรวจพบจาก Checklist และการสุ่มตรวจมาร่างข้อตรวจพบ 4 องค์ประกอบเรียบร้อยแล้ว');
+    setTimeout(() => setAutoFindingToast(''), 4000);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Top Header & Topic Selector */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center space-x-2 text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">
+            <ClipboardCheck className="w-4 h-4" />
+            <span>กระดาษทำการตรวจสอบ (Working Paper)</span>
+          </div>
+          <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 leading-tight">
+            {currentWp.topic}
+          </h2>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-2">
+            <span className="flex items-center">
+              <Building className="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-slate-500" />
+              หน่วยรับตรวจ: <strong className="ml-1 text-slate-700 dark:text-slate-300">{currentWp.department}</strong>
+            </span>
+            <span>•</span>
+            <span className="flex items-center">
+              <Calendar className="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-slate-500" />
+              งวดตรวจสอบ: <strong className="ml-1 text-slate-700 dark:text-slate-300">{currentWp.auditPeriod || `ปีงบประมาณ พ.ศ. ${selectedYear}`}</strong>
+            </span>
+            <span>•</span>
+            <span className="flex items-center">
+              <UserCheck className="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-slate-500" />
+              ผู้ตรวจสอบ: <strong className="ml-1 text-slate-700 dark:text-slate-300">{orgProfile.auditorName || currentWp.auditor || 'ผู้ตรวจสอบภายใน'}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-3 shrink-0">
+          <div className="relative">
+            <select
+              value={currentWp.id}
+              onChange={(e) => setSelectedWp(e.target.value)}
+              className="appearance-none bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 text-slate-800 dark:text-slate-200 text-xs font-bold py-2.5 pl-3 pr-8 rounded-xl border border-slate-300 dark:border-slate-600 outline-none cursor-pointer"
+            >
+              {workingPapers.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.id}: {w.topic.slice(0, 30)}...
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 absolute right-2.5 top-3.5 pointer-events-none" />
+          </div>
+
+          <button
+            onClick={() => exportWorkingPaperToExcel(currentWp, orgProfile)}
+            className="no-print bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Export Excel</span>
+          </button>
+
+          <button
+            onClick={() => window.print()}
+            className="no-print bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            <span>พิมพ์กระดาษทำการ</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Criteria / Regulations Box */}
+      <div className="bg-amber-50/60 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-800/50 rounded-xl p-4 text-xs">
+        <div className="flex items-center space-x-2 font-bold text-amber-950 dark:text-amber-200 mb-1.5">
+          <BookmarkCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <span>เกณฑ์มาตรฐาน / ระเบียบกฎหมายที่ใช้ตรวจสอบ (Criteria)</span>
+        </div>
+        <ul className="list-disc list-inside space-y-1 text-amber-900/90 dark:text-amber-300 pl-1">
+          {currentWp.criteria?.map((c, i) => (
+            <li key={i}>{c}</li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Interactive Audit Toolkits for Technical Audits (Year 2570 & General) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div
+          onClick={() => setShowToolkits(!showToolkits)}
+          className="p-4 bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-slate-50 dark:from-slate-850 dark:to-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between cursor-pointer select-none"
+        >
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-700 text-white flex items-center justify-center shadow-xs">
+              <Wrench className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  เครื่องมือช่วยตรวจสอบเชิงเทคนิค (Audit Toolkits & Calculators)
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300">
+                  ปี 2570 & ทั่วไป
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                คำนวณราคากลาง Factor F, ตรวจสอบค่าปรับส่งมอบงานล่าช้า, ค่าธรรมเนียมใบอนุญาตก่อสร้าง, และสอบทานข้อบัญญัติ
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+          >
+            {showToolkits ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {showToolkits && (
+          <div className="p-4 bg-slate-50/40 dark:bg-slate-900/60">
+            <AuditToolkits
+              currentWpId={currentWp.id}
+              onAddSampleFromTool={handleAddSampleFromTool}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Section 1: Audit Program Checklist */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs overflow-hidden">
+        <div className="p-4 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              1. แนวทางการตรวจสอบและการควบคุมภายใน (Audit Program Checklist)
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              คลิกที่ปุ่มผลการตรวจเพื่อสลับสถานะ: ผ่าน / ไม่ผ่าน / ไม่เกี่ยวข้อง
+            </p>
+          </div>
+          <div className="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
+            {(currentWp.checklist || []).some((i) => i.guidance) && (
+              <button
+                type="button"
+                onClick={toggleAllGuidance}
+                className="text-xs font-semibold text-blue-700 dark:text-blue-400 hover:text-blue-900 hover:underline flex items-center space-x-1 cursor-pointer bg-blue-50 dark:bg-blue-950/50 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-900"
+              >
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                <span>
+                  {Object.values(expandedGuidance).some(Boolean)
+                    ? 'ยุบคำแนะนำ'
+                    : '💡 เปิดคำแนะนำทั้งหมด'}
+                </span>
+              </button>
+            )}
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+              {(currentWp.checklist || []).filter((c) => c.result === 'passed').length} / {(currentWp.checklist || []).length} ผ่านเกณฑ์
+            </span>
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {(currentWp.checklist || []).map((item, idx) => {
+            const isPassed = item.result === 'passed';
+            const isFailed = item.result === 'failed';
+            const hasGuidance = Boolean(item.guidance?.trim());
+            const isGuidanceOpen = expandedGuidance[item.id];
+
+            return (
+              <div
+                key={item.id}
+                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors"
+              >
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-start space-x-2">
+                    <span className="font-bold text-slate-400 dark:text-slate-500 text-xs shrink-0">{idx + 1}.</span>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+                      {item.question}
+                    </span>
+                  </div>
+
+                  {hasGuidance && (
+                    <div className="pl-4 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => toggleGuidance(item.id)}
+                        className="inline-flex items-center space-x-1 text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline cursor-pointer transition-colors"
+                      >
+                        <Lightbulb className="w-3 h-3 text-amber-500 shrink-0" />
+                        <span>{isGuidanceOpen ? 'ซ่อนคำแนะนำและข้อกฎหมาย' : '💡 ดูคำแนะนำและข้อกฎหมายสำหรับผู้ตรวจ'}</span>
+                      </button>
+
+                      {isGuidanceOpen && (
+                        <div className="mt-1.5 p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 text-[11px] text-blue-950 dark:text-blue-200 leading-relaxed animate-in fade-in">
+                          <div className="font-bold text-blue-900 dark:text-blue-300 flex items-center space-x-1 mb-1">
+                            <BookmarkCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span>เกณฑ์และสาระสำคัญที่ต้องสอบทาน:</span>
+                          </div>
+                          <p className="pl-4">{item.guidance}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {item.note && (
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 pl-4">
+                      <strong>หมายเหตุตรวจพบ:</strong> {item.note}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                  <button
+                    onClick={() => handleToggleChecklist(item.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                      isPassed
+                        ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200'
+                        : isFailed
+                        ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 hover:bg-rose-200'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                    }`}
+                  >
+                    {isPassed ? (
+                      <>
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>ปฏิบัติถูกต้อง</span>
+                      </>
+                    ) : isFailed ? (
+                      <>
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>มีข้อบกพร่อง</span>
+                      </>
+                    ) : (
+                      <>
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        <span>ไม่เกี่ยวข้อง</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Section 2: Sample Testing (สุ่มตรวจฎีกา / เอกสาร) */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs overflow-hidden">
+        <div className="p-4 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              2. ตารางบันทึกการสุ่มตรวจตัวอย่าง (Sample Testing Records)
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              รายการเอกสาร ฎีกาเบิกจ่าย หรือสัญญาที่ทำการสุ่มตรวจ
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAddSample(true)}
+            className="no-print bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs flex items-center space-x-1 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>เพิ่มตัวอย่าง</span>
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
+            <thead className="bg-slate-50/90 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700/80">
+              <tr>
+                <th className="px-4 py-2.5">ลำดับ</th>
+                <th className="px-4 py-2.5">{docNoLabel}</th>
+                <th className="px-4 py-2.5">วันที่</th>
+                <th className="px-4 py-2.5">{payeeLabel}</th>
+                <th className="px-4 py-2.5 text-right">{amountLabel}</th>
+                <th className="px-4 py-2.5 text-center">ผลการตรวจ</th>
+                <th className="px-4 py-2.5">ข้อสังเกต / เอกสารแนบ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {currentWp.samples?.map((s, idx) => (
+                <tr key={s.id} className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors">
+                  <td className="px-4 py-2.5 font-bold text-slate-400 dark:text-slate-500">{idx + 1}</td>
+                  <td className="px-4 py-2.5 font-mono font-bold text-slate-900 dark:text-slate-100">{s.docNo}</td>
+                  <td className="px-4 py-2.5">{s.date}</td>
+                  <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200">{s.payee}</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold">
+                    {s.amount?.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300">
+                      {s.testResult}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">{s.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Section 3: Audit Findings (ข้อตรวจพบ 4 องค์ประกอบ) */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-3">
+          <div className="flex items-center space-x-2 text-slate-900 dark:text-slate-100 font-bold text-sm">
+            <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span>3. สรุปข้อตรวจพบและข้อเสนอแนะ (Audit Findings - 4 Elements)</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAutoGenerateFindings}
+            className="no-print bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer self-start sm:self-auto transition-all"
+            title="ดึงผลการตรวจที่ไม่ผ่านและตัวอย่างที่มีข้อสังเกตมาร่างเป็นข้อตรวจพบ 4 องค์ประกอบอัตโนมัติ"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>⚡ ร่างข้อตรวจพบอัตโนมัติ (Auto-Generate Findings)</span>
+          </button>
+        </div>
+
+        {autoFindingToast && (
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center space-x-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{autoFindingToast}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          {/* Condition */}
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-800 dark:text-slate-200">
+              1. สภาพการณ์ที่ตรวจพบ (Condition)
+            </label>
+            <textarea
+              rows="3"
+              value={currentWp.finding?.condition || ''}
+              onChange={(e) => handleUpdateFinding('condition', e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 leading-relaxed"
+              placeholder="ระบุข้อเท็จจริงที่ตรวจพบ..."
+            ></textarea>
+          </div>
+
+          {/* Cause */}
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-800 dark:text-slate-200">
+              2. สาเหตุของข้อบกพร่อง (Cause)
+            </label>
+            <textarea
+              rows="3"
+              value={currentWp.finding?.cause || ''}
+              onChange={(e) => handleUpdateFinding('cause', e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 leading-relaxed"
+              placeholder="ระบุสาเหตุ เช่น ขาดความรู้ ขาดการควบคุม..."
+            ></textarea>
+          </div>
+
+          {/* Effect */}
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-800 dark:text-slate-200">
+              3. ผลกระทบ / ความเสียหาย (Effect)
+            </label>
+            <textarea
+              rows="3"
+              value={currentWp.finding?.effect || ''}
+              onChange={(e) => handleUpdateFinding('effect', e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 leading-relaxed"
+              placeholder="ระบุความเสี่ยงหรือความเสียหายที่เกิดขึ้น..."
+            ></textarea>
+          </div>
+
+          {/* Recommendation */}
+          <div className="space-y-1.5">
+            <label className="font-bold text-blue-900 dark:text-blue-200">
+              4. ข้อเสนอแนะของผู้ตรวจสอบภายใน (Recommendation)
+            </label>
+            <textarea
+              rows="3"
+              value={currentWp.finding?.recommendation || ''}
+              onChange={(e) => handleUpdateFinding('recommendation', e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-blue-300 dark:border-blue-700/60 bg-blue-50/40 dark:bg-blue-500/10 focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed text-blue-950 dark:text-blue-100 font-medium"
+              placeholder="ระบุแนวทางแก้ไขที่ชัดเจน สามารถปฏิบัติได้จริง..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <span className="text-[11px] text-slate-400 dark:text-slate-500">
+            * ข้อมูลข้อตรวจพบนี้จะถูกดึงไปจัดทำรายงานผลการตรวจสอบอัตโนมัติในโมดูลถัดไป
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setAutoFindingToast('✓ บันทึกข้อมูลกระดาษทำการเรียบร้อยแล้ว');
+              setTimeout(() => setAutoFindingToast(''), 3000);
+            }}
+            className="no-print bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer transition-colors shadow-xs"
+          >
+            บันทึกกระดาษทำการ
+          </button>
+        </div>
+      </div>
+
+      {/* Modal: Add Sample */}
+      {showAddSample && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">เพิ่มรายการสุ่มตรวจ</h3>
+            <form onSubmit={handleAddSample} className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">{docNoLabel}</label>
+                <input
+                  type="text"
+                  required
+                  placeholder={isSubsidyWp ? 'เช่น บันทึกข้อตกลง 12/68' : 'เช่น ฎีกา 214/68'}
+                  value={newSample.docNo}
+                  onChange={(e) => setNewSample({ ...newSample, docNo: e.target.value })}
+                  className="w-full mt-1 p-2 rounded-xl border border-slate-300 dark:border-slate-600 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">วันที่</label>
+                  <input
+                    type="text"
+                    placeholder="เช่น 15 ก.พ. 68"
+                    value={newSample.date}
+                    onChange={(e) => setNewSample({ ...newSample, date: e.target.value })}
+                    className="w-full mt-1 p-2 rounded-xl border border-slate-300 dark:border-slate-600 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">{amountLabel}</label>
+                  <input
+                    type="number"
+                    placeholder="เช่น 15000"
+                    value={newSample.amount}
+                    onChange={(e) => setNewSample({ ...newSample, amount: e.target.value })}
+                    className="w-full mt-1 p-2 rounded-xl border border-slate-300 dark:border-slate-600 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">{payeeLabel}</label>
+                <input
+                  type="text"
+                  placeholder={isSubsidyWp ? 'เช่น โรงเรียนบ้านฝางคำ' : 'เช่น หจก. สมบูรณ์ก่อสร้าง'}
+                  value={newSample.payee}
+                  onChange={(e) => setNewSample({ ...newSample, payee: e.target.value })}
+                  className="w-full mt-1 p-2 rounded-xl border border-slate-300 dark:border-slate-600 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">ผลการตรวจ</label>
+                <select
+                  value={newSample.testResult}
+                  onChange={(e) => setNewSample({ ...newSample, testResult: e.target.value })}
+                  className="w-full mt-1 p-2 rounded-xl border border-slate-300 dark:border-slate-600 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                >
+                  <option value="ปกติ">ปกติ (ถูกต้องตามระเบียบ)</option>
+                  <option value="มีข้อสังเกต">มีข้อสังเกต</option>
+                  <option value="ไม่ถูกต้อง">ไม่ถูกต้อง</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">ข้อสังเกต / หมายเหตุ</label>
+                <input
+                  type="text"
+                  placeholder="ระบุข้อสังเกต..."
+                  value={newSample.note}
+                  onChange={(e) => setNewSample({ ...newSample, note: e.target.value })}
+                  className="w-full mt-1 p-2 rounded-xl border border-slate-300 dark:border-slate-600 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddSample(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold cursor-pointer"
+                >
+                  บันทึกตัวอย่าง
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
