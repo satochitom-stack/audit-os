@@ -166,34 +166,34 @@ export default function EngagementPlanView({
   return (
     <div className="space-y-6">
       {/* 1. Header Banner */}
-      <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-white dark:from-slate-850 dark:to-slate-900 rounded-2xl p-6 text-slate-900 dark:text-slate-100 shadow-xs border border-blue-200/80 dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-6 print:hidden">
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 print:hidden">
         <div className="space-y-2">
-          <div className="inline-flex items-center space-x-2 bg-blue-100/80 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 px-3 py-1 rounded-full text-xs font-semibold text-blue-700 dark:text-blue-300">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>มาตรฐานหนังสือกรมบัญชีกลาง ว 614 & AI Co-Auditor</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             แผนปฏิบัติงานตรวจสอบ (Audit Engagement Plan)
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-sm max-w-2xl">
+          <p className="text-stone-300 text-sm max-w-2xl leading-relaxed">
             วางแผนและออกแบบแนวการตรวจสอบรายกิจกรรม (Audit Program) สเต็ปต่อสเต็ป พร้อมเชื่อมโยงเกณฑ์ระเบียบกฎหมาย
             และเปลี่ยนภาพลักษณ์ผู้ตรวจสอบจาก "คนจับผิด" สู่ "เพื่อนคู่คิด (Consulting Mindset)" ประจำปีงบประมาณ {selectedYear}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 shrink-0">
           <button
             onClick={() => setActiveTab('ai-copilot')}
-            className="flex items-center space-x-2 bg-amber-400 hover:bg-amber-300 text-slate-900 px-4 py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all cursor-pointer transform hover:-translate-y-0.5"
+            className="flex items-center space-x-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer transform hover:-translate-y-0.5"
           >
-            <Sparkles className="w-4 h-4 text-slate-900" />
+            <Sparkles className="w-4 h-4 text-amber-200" />
             <span>+ AI สร้างแผนตาม ว 614</span>
           </button>
           <button
             onClick={handlePrint}
-            className="flex items-center space-x-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xs transition-all cursor-pointer"
+            className="flex items-center space-x-2 bg-stone-800 hover:bg-stone-750 text-stone-200 border border-stone-700 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xs transition-all cursor-pointer"
           >
-            <Printer className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+            <Printer className="w-4 h-4 text-stone-300" />
             <span>พิมพ์แผน (A4)</span>
           </button>
         </div>
@@ -201,66 +201,66 @@ export default function EngagementPlanView({
 
       {/* 2. Top Summary Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 print:hidden">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-slate-500 font-medium">แผนปฏิบัติการทั้งหมด</div>
-            <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">
-              {filteredPlans.length} <span className="text-xs font-normal text-slate-400">เรื่อง</span>
+            <div className="text-xs text-stone-500 font-medium">แผนปฏิบัติการทั้งหมด</div>
+            <div className="text-2xl font-bold text-stone-800 dark:text-stone-100 mt-1">
+              {filteredPlans.length} <span className="text-xs font-normal text-stone-400">เรื่อง</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-700 dark:text-amber-400">
             <FileText className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-slate-500 font-medium">บริการให้ความเชื่อมั่น (Assurance)</div>
-            <div className="text-2xl font-bold text-indigo-600 mt-1">
+            <div className="text-xs text-stone-500 font-medium">บริการให้ความเชื่อมั่น (Assurance)</div>
+            <div className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1">
               {filteredPlans.filter((p) => p.serviceType === 'assurance').length}{' '}
-              <span className="text-xs font-normal text-slate-400">เรื่อง</span>
+              <span className="text-xs font-normal text-stone-400">เรื่อง</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
+          <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-700 dark:text-stone-300">
             <ShieldCheck className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-slate-500 font-medium">บริการให้คำปรึกษา (Consulting)</div>
-            <div className="text-2xl font-bold text-emerald-600 mt-1">
+            <div className="text-xs text-stone-500 font-medium">บริการให้คำปรึกษา (Consulting)</div>
+            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">
               {filteredPlans.filter((p) => p.serviceType === 'consulting').length}{' '}
-              <span className="text-xs font-normal text-slate-400">เรื่อง</span>
+              <span className="text-xs font-normal text-stone-400">เรื่อง</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
             <MessageSquareQuote className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
+        <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-slate-500 font-medium">หน่วยรับตรวจในแผน</div>
-            <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">
+            <div className="text-xs text-stone-500 font-medium">หน่วยรับตรวจในแผน</div>
+            <div className="text-2xl font-bold text-stone-800 dark:text-stone-100 mt-1">
               {[...new Set(filteredPlans.map((p) => p.department))].length}{' '}
-              <span className="text-xs font-normal text-slate-400">สำนัก/กอง</span>
+              <span className="text-xs font-normal text-stone-400">สำนัก/กอง</span>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/50 flex items-center justify-center text-purple-600">
+          <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-600 dark:text-stone-400">
             <Building className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* 3. Main Navigation Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-2 sm:space-x-4 print:hidden">
+      <div className="flex border-b border-stone-200 dark:border-stone-800 space-x-2 sm:space-x-4 print:hidden">
         <button
           onClick={() => setActiveTab('list')}
           className={`pb-3 px-3 sm:px-4 text-sm font-semibold flex items-center space-x-2 border-b-2 transition-all cursor-pointer ${
             activeTab === 'list'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+              ? 'border-amber-700 text-amber-800 dark:text-amber-300'
+              : 'border-transparent text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -271,8 +271,8 @@ export default function EngagementPlanView({
           onClick={() => setActiveTab('ai-copilot')}
           className={`pb-3 px-3 sm:px-4 text-sm font-semibold flex items-center space-x-2 border-b-2 transition-all cursor-pointer ${
             activeTab === 'ai-copilot'
-              ? 'border-amber-500 text-amber-600 dark:text-amber-400'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+              ? 'border-amber-600 text-amber-700 dark:text-amber-300'
+              : 'border-transparent text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
           }`}
         >
           <Sparkles className="w-4 h-4 text-amber-500" />
@@ -283,8 +283,8 @@ export default function EngagementPlanView({
           onClick={() => setActiveTab('detail')}
           className={`pb-3 px-3 sm:px-4 text-sm font-semibold flex items-center space-x-2 border-b-2 transition-all cursor-pointer ${
             activeTab === 'detail'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+              ? 'border-amber-700 text-amber-800 dark:text-amber-300'
+              : 'border-transparent text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
           }`}
         >
           <FileSpreadsheet className="w-4 h-4" />
@@ -295,8 +295,8 @@ export default function EngagementPlanView({
           onClick={() => setActiveTab('communication')}
           className={`pb-3 px-3 sm:px-4 text-sm font-semibold flex items-center space-x-2 border-b-2 transition-all cursor-pointer ${
             activeTab === 'communication'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+              ? 'border-amber-700 text-amber-800 dark:text-amber-300'
+              : 'border-transparent text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
           }`}
         >
           <MessageSquareQuote className="w-4 h-4" />
@@ -310,25 +310,25 @@ export default function EngagementPlanView({
       {activeTab === 'list' && (
         <div className="space-y-4 print:hidden">
           {/* Filter Bar */}
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 space-y-3 shadow-xs">
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
               <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="ค้นหากิจกรรม, กอง, หรือเรื่องที่ตรวจ..."
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-9 pr-3 py-2 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-sm text-stone-850 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
               <div className="flex items-center space-x-2 w-full sm:w-auto">
-                <span className="text-xs text-slate-500 font-medium shrink-0">บริการ:</span>
+                <span className="text-xs text-stone-500 font-medium shrink-0">บริการ:</span>
                 <select
                   value={serviceTypeFilter}
                   onChange={(e) => setServiceTypeFilter(e.target.value)}
-                  className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
                 >
                   <option value="all">ทุกประเภทบริการ</option>
                   <option value="assurance">งานบริการให้ความเชื่อมั่น (Assurance)</option>
@@ -339,7 +339,7 @@ export default function EngagementPlanView({
 
             {/* Dimension Filter Chips */}
             <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 pt-1 text-xs">
-              <span className="text-slate-400 font-medium shrink-0 mr-1 text-[11px]">มิติงานตรวจ:</span>
+              <span className="text-stone-400 font-medium shrink-0 mr-1 text-[11px]">มิติงานตรวจ:</span>
               {AUDIT_DIMENSIONS.map((dim) => {
                 const isActive = dimensionFilter === dim.id;
                 return (
@@ -349,8 +349,8 @@ export default function EngagementPlanView({
                     onClick={() => setDimensionFilter(dim.id)}
                     className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer flex items-center space-x-1 text-xs ${
                       isActive
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-750'
                     }`}
                   >
                     <span className="font-mono text-[10px] opacity-80">[{dim.badge}]</span>
@@ -362,9 +362,9 @@ export default function EngagementPlanView({
           </div>
 
           {/* Table of Engagement Plans */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-xs">
+          <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 overflow-hidden shadow-xs">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50/90 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700/80 text-xs">
+              <thead className="bg-stone-100/90 dark:bg-stone-800/80 text-stone-700 dark:text-stone-200 font-bold border-b border-stone-200 dark:border-stone-700/80 text-xs">
                 <tr>
                   <th className="py-3.5 px-4 w-32">รหัสแผน</th>
                   <th className="py-3.5 px-4">ชื่อเรื่อง / กิจกรรมตรวจสอบ</th>
@@ -375,10 +375,10 @@ export default function EngagementPlanView({
                   <th className="py-3.5 px-4 w-36 text-center">การจัดการ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                 {filteredPlans.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <td colSpan={7} className="py-8 text-center text-stone-400">
                       ไม่พบแผนปฏิบัติงานตรวจสอบที่ตรงกับเงื่อนไข
                     </td>
                   </tr>
@@ -386,31 +386,31 @@ export default function EngagementPlanView({
                   filteredPlans.map((plan) => (
                     <tr
                       key={plan.id}
-                      className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      className="hover:bg-amber-50/40 dark:hover:bg-stone-800/50 transition-colors cursor-pointer"
                       onClick={() => {
                         setSelectedPlanId(plan.id);
                         setActiveTab('detail');
                       }}
                     >
-                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
+                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-amber-800 dark:text-amber-400">
                         {plan.id}
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-semibold text-slate-800 dark:text-slate-200">{plan.title}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">กิจกรรม: {plan.activityName}</div>
+                        <div className="font-semibold text-stone-800 dark:text-stone-200">{plan.title}</div>
+                        <div className="text-xs text-stone-500 mt-0.5">กิจกรรม: {plan.activityName}</div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
                           {plan.department}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 space-y-1">
                         <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300">
                             {plan.dimension ? plan.dimension.toUpperCase() : 'AUDIT'}
                           </span>
                           {plan.serviceType === 'assurance' ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
                               ให้ความเชื่อมั่น
                             </span>
                           ) : (
@@ -419,13 +419,13 @@ export default function EngagementPlanView({
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-500 line-clamp-1">{plan.serviceSubtype}</div>
+                        <div className="text-[11px] text-stone-500 line-clamp-1">{plan.serviceSubtype}</div>
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-400">
+                      <td className="py-3.5 px-4 text-xs text-stone-600 dark:text-stone-400">
                         {plan.fieldworkPeriod || plan.period || '-'}
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <span className="inline-block bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                        <span className="inline-block bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs px-2.5 py-0.5 rounded-full font-semibold">
                           {plan.auditProgram?.length || 0} ขั้นตอน
                         </span>
                       </td>
@@ -501,14 +501,14 @@ export default function EngagementPlanView({
                       setAiActivity(act.name);
                       setAiDepartment(act.dept);
                     }}
-                    className={`text-left text-xs p-2 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
+                    className={`text-left text-xs p-2 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
                       aiActivity === act.name
-                        ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold'
-                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        ? 'border-amber-600 bg-amber-50/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 font-semibold'
+                        : 'border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
                     }`}
                   >
                     <span className="truncate">{act.name}</span>
-                    <span className="text-[10px] text-slate-400 shrink-0 ml-2">
+                    <span className="text-[10px] text-stone-400 shrink-0 ml-2">
                       {act.dept} • {act.score}
                     </span>
                   </button>
@@ -518,13 +518,13 @@ export default function EngagementPlanView({
 
             {/* Department */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
                 หน่วยรับตรวจ (สำนัก/กอง):
               </label>
               <select
                 value={aiDepartment}
                 onChange={(e) => setAiDepartment(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-800 dark:text-slate-200"
+                className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-2.5 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
                 {getDepartments().filter((d) => d !== 'หน่วยตรวจสอบภายใน').map((dept) => (
                   <option key={dept} value={dept}>{dept}</option>
@@ -534,7 +534,7 @@ export default function EngagementPlanView({
 
             {/* Activity Name */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
                 ชื่อกิจกรรม / เรื่องที่จะเข้าตรวจ:
               </label>
               <input
@@ -542,19 +542,19 @@ export default function EngagementPlanView({
                 value={aiActivity}
                 onChange={(e) => setAiActivity(e.target.value)}
                 placeholder="เช่น การจัดทำบัญชีและรายงานการเงิน..."
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-800 dark:text-slate-200"
+                className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-2.5 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
 
             {/* Audit Dimension */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
                 มิติงานตรวจสอบ (Audit Dimension):
               </label>
               <select
                 value={aiDimension}
                 onChange={(e) => setAiDimension(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-2.5 text-sm text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
                 <option value="financial">💰 การเงิน & บัญชี (Financial Audit: เงินสด, ฎีกา, KTB, e-LAAS)</option>
                 <option value="compliance">📜 การปฏิบัติตามกฎหมายและระเบียบ (Compliance Audit: พัสดุฯ, ก่อสร้าง, ว 184)</option>
@@ -568,7 +568,7 @@ export default function EngagementPlanView({
 
             {/* Service Type per W614 */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
                 ประเภทงานบริการตรวจสอบ:
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -577,15 +577,15 @@ export default function EngagementPlanView({
                   onClick={() => setAiServiceType('assurance')}
                   className={`p-2.5 rounded-xl border text-xs font-semibold text-left transition-all cursor-pointer ${
                     aiServiceType === 'assurance'
-                      ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600'
+                      ? 'border-stone-800 bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 ring-2 ring-stone-700/20'
+                      : 'border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-400'
                   }`}
                 >
                   <div className="font-bold flex items-center space-x-1.5">
-                    <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                    <ShieldCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                     <span>บริการให้ความเชื่อมั่น</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-1">Assurance Service (ตรวจการเงิน / กฎระเบียบ)</div>
+                  <div className="text-[10px] text-stone-500 mt-1">Assurance Service (ตรวจการเงิน / กฎระเบียบ)</div>
                 </button>
 
                 <button
@@ -594,21 +594,21 @@ export default function EngagementPlanView({
                   className={`p-2.5 rounded-xl border text-xs font-semibold text-left transition-all cursor-pointer ${
                     aiServiceType === 'consulting'
                       ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600'
+                      : 'border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-400'
                   }`}
                 >
                   <div className="font-bold flex items-center space-x-1.5">
                     <MessageSquareQuote className="w-4 h-4 text-emerald-600" />
                     <span>บริการให้คำปรึกษา</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-1">Consulting Service (เพื่อนคู่คิด / ให้คำแนะนำ)</div>
+                  <div className="text-[10px] text-stone-500 mt-1">Consulting Service (เพื่อนคู่คิด / ให้คำแนะนำ)</div>
                 </button>
               </div>
             </div>
 
             {/* Custom Notes */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
                 ประเด็นเน้นย้ำเพิ่มเติม (Optional):
               </label>
               <textarea
@@ -616,7 +616,7 @@ export default function EngagementPlanView({
                 onChange={(e) => setAiCustomNotes(e.target.value)}
                 rows={2}
                 placeholder="เช่น เน้นเรื่องการกระทบยอดเงินฝากธนาคาร หรือตรวจเช็คค้างจ่ายเกิน 3 เดือน..."
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-800 dark:text-slate-200"
+                className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-2.5 text-xs text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
 
@@ -624,7 +624,7 @@ export default function EngagementPlanView({
             <button
               onClick={handleGenerateAI}
               disabled={isGenerating || !aiActivity}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center space-x-2 transition-all cursor-pointer"
+              className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center space-x-2 transition-all cursor-pointer"
             >
               {isGenerating ? (
                 <>
@@ -776,20 +776,20 @@ export default function EngagementPlanView({
       {activeTab === 'detail' && selectedPlan && (
         <div className="space-y-6 print:hidden">
           {/* Plan Selector & Quick Info */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center space-x-2 text-xs">
-                <span className="font-mono font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
+                <span className="font-mono font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200/60 dark:border-amber-900/40">
                   {selectedPlan.id}
                 </span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-500 font-medium">หน่วยรับตรวจ: {selectedPlan.department}</span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-500 font-medium">
+                <span className="text-stone-300 dark:text-stone-700">•</span>
+                <span className="text-stone-500 font-medium">หน่วยรับตรวจ: {selectedPlan.department}</span>
+                <span className="text-stone-300 dark:text-stone-700">•</span>
+                <span className="text-stone-500 font-medium">
                   ผู้ตรวจ: {selectedPlan.auditorName || orgProfile?.auditorName}
                 </span>
               </div>
-              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mt-1">
+              <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100 mt-1">
                 {selectedPlan.title}
               </h2>
             </div>
@@ -798,7 +798,7 @@ export default function EngagementPlanView({
               <select
                 value={selectedPlan.id}
                 onChange={(e) => setSelectedPlanId(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg px-3 py-2 text-xs font-semibold"
+                className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 rounded-xl px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500 outline-none"
               >
                 {engagementPlans.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -808,7 +808,7 @@ export default function EngagementPlanView({
               </select>
               <button
                 onClick={() => setShowAddStepModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center space-x-1 cursor-pointer"
+                className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center space-x-1 cursor-pointer transition-colors shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>เพิ่มขั้นตอนตรวจ</span>

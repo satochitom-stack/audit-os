@@ -79,17 +79,17 @@ export default function StrategicPlanView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-blue-800 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden print:hidden">
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden print:hidden">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
               <Calendar className="w-3.5 h-3.5" />
               <span>ขั้นตอนที่ 2 ของกระบวนการตรวจสอบภายใน อปท.</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               แผนการตรวจสอบระยะยาว (3 ปี) & การคำนวณคน-วัน (Audit Capacity)
             </h1>
-            <p className="text-blue-100/80 text-xs sm:text-sm max-w-2xl">
+            <p className="text-stone-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
               คำนวณวันทำการตรวจสอบจริง (Audit Man-Days Capacity) และจัดสรรกิจกรรมเข้าแผนหมุนเวียนระยะยาว 3 ปี ตามระดับความเสี่ยง (สูง=ทุกปี, ปานกลาง=ปีเว้นปี) ตามมาตรฐานคู่มือ สถ.
             </p>
           </div>
@@ -97,9 +97,9 @@ export default function StrategicPlanView({
           <div className="flex items-center space-x-2 self-start sm:self-auto">
             <button
               onClick={() => window.print()}
-              className="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-white/20 shadow-sm"
+              className="bg-stone-800/80 hover:bg-stone-700/80 text-amber-200 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-700 shadow-sm"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-4 h-4 text-amber-300" />
               <span>พิมพ์แผน 3 ปี</span>
             </button>
           </div>
@@ -107,13 +107,13 @@ export default function StrategicPlanView({
       </div>
 
       {/* Navigation Subtabs */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-2 border border-slate-200 dark:border-slate-800 shadow-xs flex space-x-2 print:hidden">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-2 border border-stone-200/80 dark:border-stone-800 shadow-xs flex space-x-2 print:hidden">
         <button
           onClick={() => setActiveTab('manday')}
           className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
             activeTab === 'manday'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
           <Calculator className="w-4 h-4" />
@@ -124,8 +124,8 @@ export default function StrategicPlanView({
           onClick={() => setActiveTab('three_year')}
           className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
             activeTab === 'three_year'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -135,73 +135,73 @@ export default function StrategicPlanView({
 
       {/* VIEW: MAN-DAY CALCULATION */}
       {activeTab === 'manday' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-          <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-              <Calculator className="w-5 h-5 text-blue-600" />
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-6">
+          <div className="border-b border-stone-200/80 dark:border-stone-800 pb-4">
+            <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+              <Calculator className="w-5 h-5 text-amber-700 dark:text-amber-400" />
               <span>สูตรคำนวณวันทำการและความสามารถในการตรวจสอบ (Audit Capacity Formula)</span>
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
               อ้างอิงหลักเกณฑ์กระทรวงการคลัง และคู่มือการปฏิบัติงานของกองตรวจสอบระบบการเงินบัญชีท้องถิ่น (สถ.)
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Input Variables */}
-            <div className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            <div className="space-y-4 bg-stone-50 dark:bg-stone-850/60 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-700">
+              <h3 className="text-sm font-bold text-stone-900 dark:text-stone-200">
                 ตัวแปรการคำนวณประจำปีงบประมาณ พ.ศ. {selectedYear}
               </h3>
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block font-semibold mb-1">จำนวนผู้ตรวจสอบภายใน (คน)</label>
+                  <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">จำนวนผู้ตรวจสอบภายใน (คน)</label>
                   <input
                     type="number"
                     min="1"
                     value={auditorCount}
                     onChange={(e) => setAuditorCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold"
+                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold mb-1">วันทำงานรวมทั้งปี (วันทำการราชการ)</label>
+                  <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">วันทำงานรวมทั้งปี (วันทำการราชการ)</label>
                   <input
                     type="number"
                     value={grossWorkingDays}
                     onChange={(e) => setGrossWorkingDays(parseInt(e.target.value) || 220)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
                   />
-                  <span className="text-[10px] text-slate-400">มาตรฐาน 52 สัปดาห์ × 5 วัน หักวันหยุดราชการ = ประมาณ 220-230 วัน</span>
+                  <span className="text-[10px] text-stone-400 mt-1 block">มาตรฐาน 52 สัปดาห์ × 5 วัน หักวันหยุดราชการ = ประมาณ 220-230 วัน</span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="block font-semibold mb-1">หัก วันลา (วัน)</label>
+                    <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">หัก วันลา (วัน)</label>
                     <input
                       type="number"
                       value={leaveDays}
                       onChange={(e) => setLeaveDays(parseInt(e.target.value) || 0)}
-                      className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold mb-1">หัก ฝึกอบรม (วัน)</label>
+                    <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">หัก ฝึกอบรม (วัน)</label>
                     <input
                       type="number"
                       value={trainingDays}
                       onChange={(e) => setTrainingDays(parseInt(e.target.value) || 0)}
-                      className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold mb-1">หัก งานบริหาร (วัน)</label>
+                    <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">หัก งานบริหาร (วัน)</label>
                     <input
                       type="number"
                       value={adminDays}
                       onChange={(e) => setAdminDays(parseInt(e.target.value) || 0)}
-                      className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
                     />
                   </div>
                 </div>
@@ -209,34 +209,34 @@ export default function StrategicPlanView({
             </div>
 
             {/* Capacity Result Card */}
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-slate-800 dark:to-indigo-950/40 p-6 rounded-2xl border border-blue-200 dark:border-indigo-800 flex flex-col justify-between space-y-4">
+            <div className="bg-gradient-to-br from-amber-50/80 via-stone-50 to-stone-100/90 dark:from-stone-850 dark:via-stone-900 dark:to-amber-950/20 p-6 rounded-2xl border border-amber-200/80 dark:border-stone-700 flex flex-col justify-between space-y-4 shadow-2xs">
               <div className="space-y-2">
-                <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">
+                <span className="text-xs font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wider">
                   ผลการคำนวณกำลังคน-วัน (Audit Capacity)
                 </span>
-                <div className="text-4xl font-black text-blue-900 dark:text-blue-200">
-                  {totalNetAuditCapacity} <span className="text-base font-normal text-slate-600 dark:text-slate-400">คน-วัน (Man-Days)</span>
+                <div className="text-4xl font-black text-stone-900 dark:text-amber-200">
+                  {totalNetAuditCapacity} <span className="text-base font-normal text-stone-600 dark:text-stone-400">คน-วัน (Man-Days)</span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                   ผู้ตรวจสอบ {auditorCount} คน สามารถลงพื้นที่ตรวจสอบจริงได้คนละ <strong>{netFieldworkDaysPerAuditor} วัน/ปี</strong> รวมกำลังคนตรวจจริง <strong>{totalNetAuditCapacity} คน-วัน</strong>
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700 text-xs space-y-2">
+              <div className="p-4 rounded-xl bg-white/90 dark:bg-stone-800/90 border border-stone-200 dark:border-stone-700 text-xs space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-600">กำลังคน-วันที่ใช้ในแผนปี {year1}:</span>
-                  <span className="font-bold text-blue-800 dark:text-blue-300">{y1TotalDays} คน-วัน</span>
+                  <span className="text-stone-600 dark:text-stone-400">กำลังคน-วันที่ใช้ในแผนปี {year1}:</span>
+                  <span className="font-bold text-stone-900 dark:text-stone-100">{y1TotalDays} คน-วัน</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-600">กำลังคงเหลือสำหรับงานตรวจพิเศษ/คำสั่งผู้บริหาร:</span>
+                  <span className="text-stone-600 dark:text-stone-400">กำลังคงเหลือสำหรับงานตรวจพิเศษ/คำสั่งผู้บริหาร:</span>
                   <span className={`font-bold ${totalNetAuditCapacity >= y1TotalDays ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {totalNetAuditCapacity - y1TotalDays} คน-วัน
                   </span>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden mt-1">
+                <div className="w-full bg-stone-200 dark:bg-stone-700 rounded-full h-2 overflow-hidden mt-1">
                   <div
                     className={`h-2 rounded-full ${
-                      y1TotalDays <= totalNetAuditCapacity ? 'bg-blue-600' : 'bg-rose-500'
+                      y1TotalDays <= totalNetAuditCapacity ? 'bg-amber-600' : 'bg-rose-500'
                     }`}
                     style={{ width: `${Math.min(100, (y1TotalDays / (totalNetAuditCapacity || 1)) * 100)}%` }}
                   />
@@ -249,18 +249,18 @@ export default function StrategicPlanView({
 
       {/* VIEW: 3-YEAR STRATEGIC PLAN MATRIX */}
       {activeTab === 'three_year' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 print:border-none print:shadow-none print:p-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4 print:border-none print:shadow-none print:p-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-stone-100 dark:border-stone-800">
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
                 ผังแผนการตรวจสอบระยะยาว 3 ปี (พ.ศ. {year1} - {year3})
               </h2>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-stone-500">
                 หน่วยตรวจสอบภายใน {orgProfile?.name || 'อปท.'}
               </div>
             </div>
 
-            <div className="text-xs text-slate-500 flex items-center space-x-3">
+            <div className="text-xs text-stone-500 flex items-center space-x-3">
               <span className="flex items-center space-x-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
                 <span>เสี่ยงสูง (ตรวจทุกปี)</span>
@@ -273,8 +273,8 @@ export default function StrategicPlanView({
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
-              <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 font-bold border-b border-slate-200 dark:border-slate-700">
+            <table className="w-full text-left text-xs border border-stone-200 dark:border-stone-700 rounded-2xl overflow-hidden">
+              <thead className="bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold border-b border-stone-200 dark:border-stone-700">
                 <tr>
                   <th className="py-3 px-3 w-12 text-center">ลำดับ</th>
                   <th className="py-3 px-3">กิจกรรม / ภารกิจที่ตรวจสอบ</th>
@@ -286,12 +286,12 @@ export default function StrategicPlanView({
                   <th className="py-3 px-3 text-center w-24">ปี {year3}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                 {strategicActivities.map((act, idx) => (
-                  <tr key={act.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-3 text-center font-bold text-slate-400">{idx + 1}</td>
-                    <td className="py-3 px-3 font-semibold text-slate-900 dark:text-slate-100">{act.name}</td>
-                    <td className="py-3 px-3 text-slate-600 dark:text-slate-400">{act.department}</td>
+                  <tr key={act.id} className="hover:bg-amber-50/30 dark:hover:bg-stone-800/40 transition-colors">
+                    <td className="py-3 px-3 text-center font-bold text-stone-400">{idx + 1}</td>
+                    <td className="py-3 px-3 font-semibold text-stone-900 dark:text-stone-100">{act.name}</td>
+                    <td className="py-3 px-3 text-stone-600 dark:text-stone-400">{act.department}</td>
                     <td className="py-3 px-3 text-center">
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -305,7 +305,7 @@ export default function StrategicPlanView({
                         {act.riskLevel}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-blue-700 dark:text-blue-400">
+                    <td className="py-3 px-3 text-center font-bold text-amber-800 dark:text-amber-300 font-mono">
                       {act.manDays}
                     </td>
 
@@ -314,8 +314,8 @@ export default function StrategicPlanView({
                         onClick={() => toggleYear(act.id, 'y1')}
                         className={`w-6 h-6 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                           act.y1
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                            ? 'bg-amber-700 text-white shadow-xs'
+                            : 'bg-stone-100 dark:bg-stone-800 text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                         }`}
                       >
                         {act.y1 ? '✓' : '-'}
@@ -327,8 +327,8 @@ export default function StrategicPlanView({
                         onClick={() => toggleYear(act.id, 'y2')}
                         className={`w-6 h-6 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                           act.y2
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                            ? 'bg-amber-700 text-white shadow-xs'
+                            : 'bg-stone-100 dark:bg-stone-800 text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                         }`}
                       >
                         {act.y2 ? '✓' : '-'}
@@ -340,8 +340,8 @@ export default function StrategicPlanView({
                         onClick={() => toggleYear(act.id, 'y3')}
                         className={`w-6 h-6 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                           act.y3
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                            ? 'bg-amber-700 text-white shadow-xs'
+                            : 'bg-stone-100 dark:bg-stone-800 text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                         }`}
                       >
                         {act.y3 ? '✓' : '-'}

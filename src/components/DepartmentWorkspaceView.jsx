@@ -541,21 +541,21 @@ export default function DepartmentWorkspaceView({
       )}
 
       {/* Top Header & Department Switcher */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-2xl p-5 sm:p-6 border border-stone-800 shadow-sm text-stone-100 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
-              <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 Department Workspace (Sprint 3)
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-stone-300">
                 {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} • ปีงบประมาณ พ.ศ. {selectedYear}
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-stone-100 flex items-center space-x-2.5">
               <span>พื้นที่ทำงานเฉพาะส่วนราชการ: {activeDept}</span>
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
+            <p className="text-xs text-stone-300 max-w-2xl leading-relaxed">
               ศูนย์ปฏิบัติงานส่วนราชการที่เชื่อมโยงงานประจำ เครื่องมือเฉพาะทาง (พัสดุ, ราคากลาง, แผนงาน) พร้อมระบบการควบคุมภายในและการตอบข้อทักท้วงตามกฎหมาย
             </p>
           </div>
@@ -563,7 +563,7 @@ export default function DepartmentWorkspaceView({
           {/* Department Switcher Tabs & Excel Export Button */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             {isAdmin ? (
-              <div className="flex flex-wrap items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0 gap-1">
+              <div className="flex flex-wrap items-center bg-stone-800/80 p-1.5 rounded-2xl border border-stone-700/80 shrink-0 gap-1">
                 {[
                   { id: 'สำนักปลัด', label: 'สำนักปลัด', icon: Building2 },
                   { id: 'กองคลัง', label: 'กองคลัง', icon: BadgeDollarSign },
@@ -581,8 +581,8 @@ export default function DepartmentWorkspaceView({
                       onClick={() => setActiveDept(d.id)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
                         isSelected
-                          ? 'bg-blue-600 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                          ? 'bg-amber-700 text-white shadow-xs'
+                          : 'text-stone-300 hover:text-white'
                       }`}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -627,7 +627,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('overview')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'overview' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'overview' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -636,7 +636,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('vehicles')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'vehicles' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'vehicles' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Car className="w-3.5 h-3.5" />
@@ -645,7 +645,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('projects')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'projects' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'projects' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -654,7 +654,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('saraban')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'saraban' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'saraban' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -663,7 +663,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('complaints')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'complaints' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'complaints' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5" />
@@ -672,7 +672,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('health')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'health' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'health' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Activity className="w-3.5 h-3.5 text-teal-500" />
@@ -681,7 +681,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('capa')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'capa' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'capa' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5 text-amber-500" />
@@ -696,7 +696,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('overview')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'overview' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'overview' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -705,7 +705,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('contracts')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'contracts' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'contracts' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <FolderPlus className="w-3.5 h-3.5" />
@@ -714,7 +714,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('penalty')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'penalty' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'penalty' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Calculator className="w-3.5 h-3.5 text-amber-500" />
@@ -723,7 +723,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('inventory')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'inventory' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'inventory' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -732,7 +732,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('loans')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'loans' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'loans' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5 text-rose-500" />
@@ -741,7 +741,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('capa')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'capa' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'capa' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
@@ -756,7 +756,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('overview')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'overview' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'overview' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -765,7 +765,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('estimator')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'estimator' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'estimator' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Calculator className="w-3.5 h-3.5 text-blue-500" />
@@ -774,7 +774,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('projects')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'projects' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'projects' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <HardHat className="w-3.5 h-3.5" />
@@ -783,7 +783,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('permits')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'permits' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'permits' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5" />
@@ -792,7 +792,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('machinery')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'machinery' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'machinery' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Wrench className="w-3.5 h-3.5" />
@@ -801,7 +801,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('capa')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'capa' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'capa' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
@@ -816,7 +816,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('overview')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'overview' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'overview' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -825,7 +825,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('lunch')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'lunch' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'lunch' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Apple className="w-3.5 h-3.5 text-emerald-500" />
@@ -834,7 +834,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('materials')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'materials' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'materials' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-blue-500" />
@@ -843,7 +843,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('teachers')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'teachers' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'teachers' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Users className="w-3.5 h-3.5" />
@@ -852,7 +852,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('capa')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'capa' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'capa' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
@@ -867,7 +867,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('overview')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'overview' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'overview' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -876,7 +876,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('elderly')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'elderly' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'elderly' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <Heart className="w-3.5 h-3.5 text-rose-500" />
@@ -885,7 +885,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('disability')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'disability' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'disability' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <HeartHandshake className="w-3.5 h-3.5 text-indigo-500" />
@@ -894,7 +894,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('relief')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'relief' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'relief' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
@@ -903,7 +903,7 @@ export default function DepartmentWorkspaceView({
               <button
                 onClick={() => setSubTab('capa')}
                 className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center space-x-1.5 ${
-                  subTab === 'capa' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  subTab === 'capa' ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60' : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />

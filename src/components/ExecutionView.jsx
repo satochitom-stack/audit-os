@@ -271,29 +271,29 @@ export default function ExecutionView({
   return (
     <div className="space-y-6">
       {/* Top Header & Topic Selector */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">
-            <ClipboardCheck className="w-4 h-4" />
+          <div className="flex items-center space-x-2 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">
+            <ClipboardCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             <span>กระดาษทำการตรวจสอบ (Working Paper)</span>
           </div>
-          <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 leading-tight">
+          <h2 className="text-lg font-black text-stone-900 dark:text-stone-100 leading-tight">
             {currentWp.topic}
           </h2>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-2">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 dark:text-stone-400 mt-2">
             <span className="flex items-center">
-              <Building className="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-slate-500" />
-              หน่วยรับตรวจ: <strong className="ml-1 text-slate-700 dark:text-slate-300">{currentWp.department}</strong>
+              <Building className="w-3.5 h-3.5 mr-1 text-stone-400 dark:text-stone-500" />
+              หน่วยรับตรวจ: <strong className="ml-1 text-stone-700 dark:text-stone-300">{currentWp.department}</strong>
             </span>
             <span>•</span>
             <span className="flex items-center">
-              <Calendar className="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-slate-500" />
-              งวดตรวจสอบ: <strong className="ml-1 text-slate-700 dark:text-slate-300">{currentWp.auditPeriod || `ปีงบประมาณ พ.ศ. ${selectedYear}`}</strong>
+              <Calendar className="w-3.5 h-3.5 mr-1 text-stone-400 dark:text-stone-500" />
+              งวดตรวจสอบ: <strong className="ml-1 text-stone-700 dark:text-stone-300">{currentWp.auditPeriod || `ปีงบประมาณ พ.ศ. ${selectedYear}`}</strong>
             </span>
             <span>•</span>
             <span className="flex items-center">
-              <UserCheck className="w-3.5 h-3.5 mr-1 text-slate-400 dark:text-slate-500" />
-              ผู้ตรวจสอบ: <strong className="ml-1 text-slate-700 dark:text-slate-300">{orgProfile.auditorName || currentWp.auditor || 'ผู้ตรวจสอบภายใน'}</strong>
+              <UserCheck className="w-3.5 h-3.5 mr-1 text-stone-400 dark:text-stone-500" />
+              ผู้ตรวจสอบ: <strong className="ml-1 text-stone-700 dark:text-stone-300">{orgProfile.auditorName || currentWp.auditor || 'ผู้ตรวจสอบภายใน'}</strong>
             </span>
           </div>
         </div>
@@ -303,7 +303,7 @@ export default function ExecutionView({
             <select
               value={currentWp.id}
               onChange={(e) => setSelectedWp(e.target.value)}
-              className="appearance-none bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 text-slate-800 dark:text-slate-200 text-xs font-bold py-2.5 pl-3 pr-8 rounded-xl border border-slate-300 dark:border-slate-600 outline-none cursor-pointer"
+              className="appearance-none bg-stone-100 dark:bg-stone-800 hover:bg-stone-200/80 text-stone-800 dark:text-stone-200 text-xs font-bold py-2.5 pl-3 pr-8 rounded-xl border border-stone-300 dark:border-stone-600 outline-none cursor-pointer"
             >
               {workingPapers.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -311,12 +311,12 @@ export default function ExecutionView({
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 absolute right-2.5 top-3.5 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 absolute right-2.5 top-3.5 pointer-events-none" />
           </div>
 
           <button
             onClick={() => exportWorkingPaperToExcel(currentWp, orgProfile)}
-            className="no-print bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
+            className="no-print bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
           >
             <FileSpreadsheet className="w-4 h-4" />
             <span>Export Excel</span>
@@ -324,7 +324,7 @@ export default function ExecutionView({
 
           <button
             onClick={() => window.print()}
-            className="no-print bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
+            className="no-print bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
           >
             <Printer className="w-4 h-4" />
             <span>พิมพ์กระดาษทำการ</span>
@@ -346,32 +346,32 @@ export default function ExecutionView({
       </div>
 
       {/* Interactive Audit Toolkits for Technical Audits (Year 2570 & General) */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs overflow-hidden">
         <div
           onClick={() => setShowToolkits(!showToolkits)}
-          className="p-4 bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-slate-50 dark:from-slate-850 dark:to-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between cursor-pointer select-none"
+          className="p-4 bg-stone-50 dark:bg-stone-850/80 border-b border-stone-200/80 dark:border-stone-800 flex items-center justify-between cursor-pointer select-none"
         >
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-700 text-white flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-stone-800 text-amber-200 flex items-center justify-center shadow-xs">
               <Wrench className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
                   เครื่องมือช่วยตรวจสอบเชิงเทคนิค (Audit Toolkits & Calculators)
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/40">
                   ปี 2570 & ทั่วไป
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
                 คำนวณราคากลาง Factor F, ตรวจสอบค่าปรับส่งมอบงานล่าช้า, ค่าธรรมเนียมใบอนุญาตก่อสร้าง, และสอบทานข้อบัญญัติ
               </p>
             </div>
           </div>
           <button
             type="button"
-            className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+            className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700"
           >
             {showToolkits ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -403,7 +403,7 @@ export default function ExecutionView({
               <button
                 type="button"
                 onClick={toggleAllGuidance}
-                className="text-xs font-semibold text-blue-700 dark:text-blue-400 hover:text-blue-900 hover:underline flex items-center space-x-1 cursor-pointer bg-blue-50 dark:bg-blue-950/50 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-900"
+                className="text-xs font-semibold text-amber-800 dark:text-amber-300 hover:text-amber-950 hover:underline flex items-center space-x-1 cursor-pointer bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-200/80 dark:border-amber-900/40"
               >
                 <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
                 <span>
@@ -413,13 +413,13 @@ export default function ExecutionView({
                 </span>
               </button>
             )}
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+            <span className="text-xs font-bold text-stone-600 dark:text-stone-400 bg-white dark:bg-stone-900 px-2.5 py-1 rounded-lg border border-stone-200 dark:border-stone-700">
               {(currentWp.checklist || []).filter((c) => c.result === 'passed').length} / {(currentWp.checklist || []).length} ผ่านเกณฑ์
             </span>
           </div>
         </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="divide-y divide-stone-100 dark:divide-stone-800">
           {(currentWp.checklist || []).map((item, idx) => {
             const isPassed = item.result === 'passed';
             const isFailed = item.result === 'failed';
@@ -429,12 +429,12 @@ export default function ExecutionView({
             return (
               <div
                 key={item.id}
-                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors"
+                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-stone-50/60 dark:hover:bg-stone-850/40 transition-colors"
               >
                 <div className="space-y-1 flex-1">
                   <div className="flex items-start space-x-2">
-                    <span className="font-bold text-slate-400 dark:text-slate-500 text-xs shrink-0">{idx + 1}.</span>
-                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+                    <span className="font-bold text-stone-400 dark:text-stone-500 text-xs shrink-0">{idx + 1}.</span>
+                    <span className="text-xs font-semibold text-stone-800 dark:text-stone-200 leading-snug">
                       {item.question}
                     </span>
                   </div>
@@ -444,19 +444,19 @@ export default function ExecutionView({
                       <button
                         type="button"
                         onClick={() => toggleGuidance(item.id)}
-                        className="inline-flex items-center space-x-1 text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline cursor-pointer transition-colors"
+                        className="inline-flex items-center space-x-1 text-[11px] font-medium text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-200 hover:underline cursor-pointer transition-colors"
                       >
                         <Lightbulb className="w-3 h-3 text-amber-500 shrink-0" />
                         <span>{isGuidanceOpen ? 'ซ่อนคำแนะนำและข้อกฎหมาย' : '💡 ดูคำแนะนำและข้อกฎหมายสำหรับผู้ตรวจ'}</span>
                       </button>
 
                       {isGuidanceOpen && (
-                        <div className="mt-1.5 p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 text-[11px] text-blue-950 dark:text-blue-200 leading-relaxed animate-in fade-in">
-                          <div className="font-bold text-blue-900 dark:text-blue-300 flex items-center space-x-1 mb-1">
-                            <BookmarkCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <div className="mt-1.5 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 text-[11px] text-stone-850 dark:text-amber-100 leading-relaxed animate-in fade-in">
+                          <div className="font-bold text-amber-900 dark:text-amber-300 flex items-center space-x-1 mb-1">
+                            <BookmarkCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
                             <span>เกณฑ์และสาระสำคัญที่ต้องสอบทาน:</span>
                           </div>
-                          <p className="pl-4">{item.guidance}</p>
+                          <p className="pl-4 text-stone-700 dark:text-stone-300">{item.guidance}</p>
                         </div>
                       )}
                     </div>
@@ -517,7 +517,7 @@ export default function ExecutionView({
           </div>
           <button
             onClick={() => setShowAddSample(true)}
-            className="no-print bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs flex items-center space-x-1 cursor-pointer"
+            className="no-print bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex items-center space-x-1 cursor-pointer transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>เพิ่มตัวอย่าง</span>
@@ -525,8 +525,8 @@ export default function ExecutionView({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-            <thead className="bg-slate-50/90 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700/80">
+          <table className="w-full text-left text-xs text-stone-600 dark:text-stone-400">
+            <thead className="bg-stone-100/90 dark:bg-stone-800/80 text-stone-700 dark:text-stone-200 font-bold border-b border-stone-200 dark:border-stone-700/80">
               <tr>
                 <th className="px-4 py-2.5">ลำดับ</th>
                 <th className="px-4 py-2.5">{docNoLabel}</th>
@@ -537,13 +537,13 @@ export default function ExecutionView({
                 <th className="px-4 py-2.5">ข้อสังเกต / เอกสารแนบ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
               {currentWp.samples?.map((s, idx) => (
-                <tr key={s.id} className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="px-4 py-2.5 font-bold text-slate-400 dark:text-slate-500">{idx + 1}</td>
-                  <td className="px-4 py-2.5 font-mono font-bold text-slate-900 dark:text-slate-100">{s.docNo}</td>
+                <tr key={s.id} className="hover:bg-amber-50/40 dark:hover:bg-stone-800/50 transition-colors">
+                  <td className="px-4 py-2.5 font-bold text-stone-400 dark:text-stone-500">{idx + 1}</td>
+                  <td className="px-4 py-2.5 font-mono font-bold text-stone-900 dark:text-stone-100">{s.docNo}</td>
                   <td className="px-4 py-2.5">{s.date}</td>
-                  <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200">{s.payee}</td>
+                  <td className="px-4 py-2.5 font-medium text-stone-800 dark:text-stone-200">{s.payee}</td>
                   <td className="px-4 py-2.5 text-right font-mono font-semibold">
                     {s.amount?.toLocaleString()}
                   </td>
@@ -552,7 +552,7 @@ export default function ExecutionView({
                       {s.testResult}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">{s.note}</td>
+                  <td className="px-4 py-2.5 text-stone-500 dark:text-stone-400">{s.note}</td>
                 </tr>
               ))}
             </tbody>
@@ -561,20 +561,20 @@ export default function ExecutionView({
       </div>
 
       {/* Section 3: Audit Findings (ข้อตรวจพบ 4 องค์ประกอบ) */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-3">
-          <div className="flex items-center space-x-2 text-slate-900 dark:text-slate-100 font-bold text-sm">
-            <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+      <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200 dark:border-stone-800 pb-3">
+          <div className="flex items-center space-x-2 text-stone-900 dark:text-stone-100 font-bold text-sm">
+            <AlertCircle className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             <span>3. สรุปข้อตรวจพบและข้อเสนอแนะ (Audit Findings - 4 Elements)</span>
           </div>
 
           <button
             type="button"
             onClick={handleAutoGenerateFindings}
-            className="no-print bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer self-start sm:self-auto transition-all"
+            className="no-print bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer self-start sm:self-auto transition-all"
             title="ดึงผลการตรวจที่ไม่ผ่านและตัวอย่างที่มีข้อสังเกตมาร่างเป็นข้อตรวจพบ 4 องค์ประกอบอัตโนมัติ"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-200" />
             <span>⚡ ร่างข้อตรวจพบอัตโนมัติ (Auto-Generate Findings)</span>
           </button>
         </div>
@@ -589,56 +589,56 @@ export default function ExecutionView({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           {/* Condition */}
           <div className="space-y-1.5">
-            <label className="font-bold text-slate-800 dark:text-slate-200">
+            <label className="font-bold text-stone-800 dark:text-stone-200">
               1. สภาพการณ์ที่ตรวจพบ (Condition)
             </label>
             <textarea
               rows="3"
               value={currentWp.finding?.condition || ''}
               onChange={(e) => handleUpdateFinding('condition', e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 leading-relaxed"
+              className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-600 focus:ring-2 focus:ring-amber-500 outline-none bg-stone-50/60 dark:bg-stone-800 dark:text-stone-100 dark:placeholder-stone-500 leading-relaxed"
               placeholder="ระบุข้อเท็จจริงที่ตรวจพบ..."
             ></textarea>
           </div>
 
           {/* Cause */}
           <div className="space-y-1.5">
-            <label className="font-bold text-slate-800 dark:text-slate-200">
+            <label className="font-bold text-stone-800 dark:text-stone-200">
               2. สาเหตุของข้อบกพร่อง (Cause)
             </label>
             <textarea
               rows="3"
               value={currentWp.finding?.cause || ''}
               onChange={(e) => handleUpdateFinding('cause', e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 leading-relaxed"
+              className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-600 focus:ring-2 focus:ring-amber-500 outline-none bg-stone-50/60 dark:bg-stone-800 dark:text-stone-100 dark:placeholder-stone-500 leading-relaxed"
               placeholder="ระบุสาเหตุ เช่น ขาดความรู้ ขาดการควบคุม..."
             ></textarea>
           </div>
 
           {/* Effect */}
           <div className="space-y-1.5">
-            <label className="font-bold text-slate-800 dark:text-slate-200">
+            <label className="font-bold text-stone-800 dark:text-stone-200">
               3. ผลกระทบ / ความเสียหาย (Effect)
             </label>
             <textarea
               rows="3"
               value={currentWp.finding?.effect || ''}
               onChange={(e) => handleUpdateFinding('effect', e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 leading-relaxed"
+              className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-600 focus:ring-2 focus:ring-amber-500 outline-none bg-stone-50/60 dark:bg-stone-800 dark:text-stone-100 dark:placeholder-stone-500 leading-relaxed"
               placeholder="ระบุความเสี่ยงหรือความเสียหายที่เกิดขึ้น..."
             ></textarea>
           </div>
 
           {/* Recommendation */}
           <div className="space-y-1.5">
-            <label className="font-bold text-blue-900 dark:text-blue-200">
+            <label className="font-bold text-amber-900 dark:text-amber-300">
               4. ข้อเสนอแนะของผู้ตรวจสอบภายใน (Recommendation)
             </label>
             <textarea
               rows="3"
               value={currentWp.finding?.recommendation || ''}
               onChange={(e) => handleUpdateFinding('recommendation', e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-blue-300 dark:border-blue-700/60 bg-blue-50/40 dark:bg-blue-500/10 focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed text-blue-950 dark:text-blue-100 font-medium"
+              className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-950/20 focus:ring-2 focus:ring-amber-500 outline-none leading-relaxed text-stone-900 dark:text-amber-100 font-medium"
               placeholder="ระบุแนวทางแก้ไขที่ชัดเจน สามารถปฏิบัติได้จริง..."
             ></textarea>
           </div>

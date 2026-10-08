@@ -184,21 +184,21 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
   const permitFeeResult = calculatePermitFee();
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-blue-200/90 dark:border-blue-900/60 shadow-xs overflow-hidden">
+    <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs overflow-hidden">
       {/* Header bar */}
-      <div className="p-4 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-white dark:from-blue-950/40 dark:via-slate-900 dark:to-slate-900 border-b border-blue-200/80 dark:border-blue-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-4 bg-gradient-to-r from-stone-100/80 via-stone-50 to-white dark:from-stone-850 dark:via-stone-900 dark:to-stone-900 border-b border-stone-200/80 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-blue-700 text-white flex items-center justify-center shadow-xs">
+          <div className="w-8 h-8 rounded-xl bg-amber-700 text-white flex items-center justify-center shadow-xs">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+            <h3 className="text-sm font-black text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
               <span>ชุดเครื่องมือผู้ช่วยตรวจสอบภายในเฉพาะด้าน (Audit Toolkits 2570)</span>
-              <span className="text-[10px] bg-blue-700 text-white px-2 py-0.5 rounded-full font-bold">
+              <span className="text-[10px] bg-amber-700 text-white px-2 py-0.5 rounded-full font-bold">
                 ใหม่ ว 614 / กรมบัญชีกลาง
               </span>
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-stone-500 dark:text-stone-400">
               ช่วยคำนวณและตรวจสอบความถูกต้องตามกฎหมายและระเบียบ แม้ผู้ตรวจไม่มีพื้นฐานงานช่าง
             </p>
           </div>
@@ -207,7 +207,7 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
         <div className="flex items-center space-x-2 self-end sm:self-center">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-xs font-semibold text-blue-700 dark:text-blue-300 hover:text-blue-800 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center space-x-1 cursor-pointer"
+            className="text-xs font-semibold text-amber-800 dark:text-amber-300 hover:text-amber-900 bg-white dark:bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center space-x-1 cursor-pointer"
           >
             <span>{isExpanded ? 'ย่อเครื่องมือ' : 'เปิดใช้งานเครื่องมือ'}</span>
             {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -223,14 +223,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               onClick={() => setActiveTool('factor-f')}
               className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
                 activeTool === 'factor-f'
-                  ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                  ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 border-stone-700/60 shadow-xs'
+                  : 'bg-stone-50 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100'
               }`}
             >
-              <Calculator className="w-4 h-4 shrink-0" />
+              <Calculator className="w-4 h-4 shrink-0 text-amber-400" />
               <div className="truncate">
                 <div>ตรวจราคากลาง & Factor F</div>
-                <div className={`text-[10px] font-normal ${activeTool === 'factor-f' ? 'text-blue-100' : 'text-slate-400'}`}>แบบ ปร.4, 5, 6</div>
+                <div className={`text-[10px] font-normal ${activeTool === 'factor-f' ? 'text-amber-300' : 'text-stone-400'}`}>แบบ ปร.4, 5, 6</div>
               </div>
             </button>
 
@@ -238,14 +238,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               onClick={() => setActiveTool('penalty')}
               className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
                 activeTool === 'penalty'
-                  ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                  ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 border-stone-700/60 shadow-xs'
+                  : 'bg-stone-50 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100'
               }`}
             >
-              <Clock className="w-4 h-4 shrink-0" />
+              <Clock className="w-4 h-4 shrink-0 text-amber-400" />
               <div className="truncate">
                 <div>คำนวณค่าปรับส่งมอบล่าช้า</div>
-                <div className={`text-[10px] font-normal ${activeTool === 'penalty' ? 'text-blue-100' : 'text-slate-400'}`}>0.1% - 0.2% ต่อวัน</div>
+                <div className={`text-[10px] font-normal ${activeTool === 'penalty' ? 'text-amber-300' : 'text-stone-400'}`}>0.1% - 0.2% ต่อวัน</div>
               </div>
             </button>
 
@@ -253,14 +253,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               onClick={() => setActiveTool('permit')}
               className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
                 activeTool === 'permit'
-                  ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                  ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 border-stone-700/60 shadow-xs'
+                  : 'bg-stone-50 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100'
               }`}
             >
-              <Building2 className="w-4 h-4 shrink-0" />
+              <Building2 className="w-4 h-4 shrink-0 text-amber-400" />
               <div className="truncate">
                 <div>ตรวจค่าธรรมเนียมใบอนุญาต</div>
-                <div className={`text-[10px] font-normal ${activeTool === 'permit' ? 'text-blue-100' : 'text-slate-400'}`}>พ.ร.บ. ควบคุมอาคาร 2522</div>
+                <div className={`text-[10px] font-normal ${activeTool === 'permit' ? 'text-amber-300' : 'text-stone-400'}`}>พ.ร.บ. ควบคุมอาคาร 2522</div>
               </div>
             </button>
 
@@ -268,14 +268,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               onClick={() => setActiveTool('ordinance')}
               className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
                 activeTool === 'ordinance'
-                  ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                  ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 border-stone-700/60 shadow-xs'
+                  : 'bg-stone-50 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100'
               }`}
             >
-              <HardHat className="w-4 h-4 shrink-0" />
+              <HardHat className="w-4 h-4 shrink-0 text-amber-400" />
               <div className="truncate">
                 <div>ตรวจงานก่อสร้างข้อบัญญัติ</div>
-                <div className={`text-[10px] font-normal ${activeTool === 'ordinance' ? 'text-blue-100' : 'text-slate-400'}`}>กันเงินเหลื่อมปี / คุมงาน</div>
+                <div className={`text-[10px] font-normal ${activeTool === 'ordinance' ? 'text-amber-300' : 'text-stone-400'}`}>กันเงินเหลื่อมปี / คุมงาน</div>
               </div>
             </button>
           </div>
@@ -284,24 +284,24 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               TOOL 1: FACTOR F & REFERENCE PRICE CALCULATOR
           ========================================================================= */}
           {activeTool === 'factor-f' && (
-            <div className="bg-slate-50/70 dark:bg-slate-850/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center">
-                  <Calculator className="w-4 h-4 text-blue-700 dark:text-blue-400 mr-1.5" />
+            <div className="bg-stone-50/70 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-200/80 dark:border-stone-800 space-y-4 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200 dark:border-stone-800 pb-2">
+                <span className="font-bold text-stone-900 dark:text-stone-100 text-sm flex items-center">
+                  <Calculator className="w-4 h-4 text-amber-700 dark:text-amber-400 mr-1.5" />
                   เครื่องมือตรวจทานราคากลางและตาราง Factor F (แบบ ปร.5 / ปร.6)
                 </span>
-                <span className="text-slate-500 text-[11px]">
+                <span className="text-stone-500 text-[11px]">
                   อ้างอิง: หลักเกณฑ์การคำนวณราคากลางงานก่อสร้าง กรมบัญชีกลาง
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">ประเภทงานก่อสร้าง</label>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">ประเภทงานก่อสร้าง</label>
                   <select
                     value={workType}
                     onChange={(e) => setWorkType(e.target.value)}
-                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg outline-none font-medium"
+                    className="w-full p-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg outline-none font-medium"
                   >
                     <option value="road">งานทาง (ถนน คสล. / ลาดยาง / ลูกรัง)</option>
                     <option value="building">งานอาคาร (สำนักงาน / ศพด. / โรงจอดรถ)</option>
@@ -311,24 +311,24 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">ค่างานต้นทุน (Direct Cost ใน ปร.4)</label>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">ค่างานต้นทุน (Direct Cost ใน ปร.4)</label>
                   <div className="relative">
                     <input
                       type="number"
                       value={directCost}
                       onChange={(e) => setDirectCost(e.target.value)}
-                      className="w-full p-2 pr-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg outline-none font-mono font-bold text-slate-900 dark:text-slate-100"
+                      className="w-full p-2 pr-10 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg outline-none font-mono font-bold text-stone-900 dark:text-stone-100"
                     />
-                    <span className="absolute right-3 top-2 text-slate-400">บาท</span>
+                    <span className="absolute right-3 top-2 text-stone-400">บาท</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">เงื่อนไขเงินล่วงหน้าจ่าย</label>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">เงื่อนไขเงินล่วงหน้าจ่าย</label>
                   <select
                     value={advancePercent}
                     onChange={(e) => setAdvancePercent(e.target.value)}
-                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg outline-none"
+                    className="w-full p-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg outline-none"
                   >
                     <option value="0">0% (ตามปกติของ อปท.)</option>
                     <option value="5">5%</option>
@@ -338,11 +338,11 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">เงินประกันผลงานหัก</label>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">เงินประกันผลงานหัก</label>
                   <select
                     value={retentionPercent}
                     onChange={(e) => setRetentionPercent(e.target.value)}
-                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg outline-none"
+                    className="w-full p-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg outline-none"
                   >
                     <option value="0">0% (จ่ายเต็มตามงวด)</option>
                     <option value="5">5%</option>
@@ -353,24 +353,24 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
 
               {/* Comparison Row */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="text-[11px] text-slate-500">ค่า Factor F ตามเกณฑ์มาตรฐาน</div>
-                  <div className="text-xl font-mono font-black text-blue-700 dark:text-blue-400 mt-1">
+                <div className="bg-white dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+                  <div className="text-[11px] text-stone-500">ค่า Factor F ตามเกณฑ์มาตรฐาน</div>
+                  <div className="text-xl font-mono font-black text-amber-700 dark:text-amber-400 mt-1">
                     {factorFResult.factorF.toFixed(4)}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">รวม VAT 7% และดอกเบี้ยเงินกู้ {interestRate}%</div>
+                  <div className="text-[10px] text-stone-400 mt-0.5">รวม VAT 7% และดอกเบี้ยเงินกู้ {interestRate}%</div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="text-[11px] text-slate-500">ราคากลางที่ควรจะเป็น (ค่างาน x Factor F)</div>
-                  <div className="text-xl font-mono font-black text-slate-900 dark:text-slate-100 mt-1">
-                    {factorFResult.standardPrice.toLocaleString()} <span className="text-xs font-normal text-slate-400">บาท</span>
+                <div className="bg-white dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+                  <div className="text-[11px] text-stone-500">ราคากลางที่ควรจะเป็น (ค่างาน x Factor F)</div>
+                  <div className="text-xl font-mono font-black text-stone-900 dark:text-stone-100 mt-1">
+                    {factorFResult.standardPrice.toLocaleString()} <span className="text-xs font-normal text-stone-400">บาท</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">คำนวณตามสูตรของกรมบัญชีกลาง</div>
+                  <div className="text-[10px] text-stone-400 mt-0.5">คำนวณตามสูตรของกรมบัญชีกลาง</div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                <div className="bg-white dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+                  <label className="text-[11px] font-bold text-stone-700 dark:text-stone-300 block">
                     ราคากลางที่กองช่างคำนวณมา (ใน ปร.6)
                   </label>
                   <div className="flex items-center space-x-1.5 mt-1">
@@ -378,9 +378,9 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
                       type="number"
                       value={engineerPrice}
                       onChange={(e) => setEngineerPrice(e.target.value)}
-                      className="w-full p-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg outline-none font-mono font-bold text-sm text-slate-900 dark:text-slate-100"
+                      className="w-full p-1.5 bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-600 rounded-lg outline-none font-mono font-bold text-sm text-stone-900 dark:text-stone-100"
                     />
-                    <span className="text-slate-400 shrink-0 text-xs">บาท</span>
+                    <span className="text-stone-400 shrink-0 text-xs">บาท</span>
                   </div>
                 </div>
               </div>
@@ -445,14 +445,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               TOOL 2: PROCUREMENT DELAY & PENALTY CALCULATOR
           ========================================================================= */}
           {activeTool === 'penalty' && (
-            <div className="bg-slate-50/70 dark:bg-slate-850/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center">
-                  <Clock className="w-4 h-4 text-blue-700 dark:text-blue-400 mr-1.5" />
-                  เครื่องมือคำนวณค่าปรับส่งมอบงานล่าช้า & ตรวจสอบระยะเวลาสัญญา
+            <div className="bg-stone-50/70 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-200/80 dark:border-stone-800 space-y-4 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200 dark:border-stone-800 pb-2">
+                <span className="font-bold text-stone-900 dark:text-stone-100 text-sm flex items-center">
+                  <Clock className="w-4 h-4 text-amber-700 dark:text-amber-400 mr-1.5" />
+                  เครื่องมือคำนวณค่าปรับงานจ้างก่อสร้าง/จัดซื้อจัดจ้าง (กรณีส่งมอบล่าช้า)
                 </span>
-                <span className="text-slate-500 text-[11px]">
-                  อ้างอิง: ระเบียบกระทรวงการคลังว่าด้วยการจัดซื้อจัดจ้างฯ พ.ศ. 2560 ข้อ 162
+                <span className="text-stone-500 text-[11px]">
+                  อ้างอิง: พ.ร.บ. จัดซื้อจัดจ้างฯ 2560 ม. 175 และระเบียบฯ ข้อ 175-182
                 </span>
               </div>
 
@@ -584,34 +584,34 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               TOOL 3: BUILDING PERMIT FEE CALCULATOR
           ========================================================================= */}
           {activeTool === 'permit' && (
-            <div className="bg-slate-50/70 dark:bg-slate-850/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center">
-                  <Building2 className="w-4 h-4 text-blue-700 dark:text-blue-400 mr-1.5" />
+            <div className="bg-stone-50/70 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-200/80 dark:border-stone-800 space-y-4 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200 dark:border-stone-800 pb-2">
+                <span className="font-bold text-stone-900 dark:text-stone-100 text-sm flex items-center">
+                  <Building2 className="w-4 h-4 text-amber-700 dark:text-amber-400 mr-1.5" />
                   เครื่องมือคำนวณและตรวจสอบค่าธรรมเนียมใบอนุญาตก่อสร้างอาคาร (แบบ อ.1)
                 </span>
-                <span className="text-slate-500 text-[11px]">
+                <span className="text-stone-500 text-[11px]">
                   อ้างอิง: กฎกระทรวงกำหนดค่าธรรมเนียมตาม พ.ร.บ. ควบคุมอาคาร พ.ศ. 2522
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">พื้นที่อาคารรวม (ตารางเมตร)</label>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">พื้นที่อาคารรวม (ตารางเมตร)</label>
                   <input
                     type="number"
                     value={buildingArea}
                     onChange={(e) => setBuildingArea(e.target.value)}
-                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg outline-none font-mono font-bold"
+                    className="w-full p-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg outline-none font-mono font-bold"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">จำนวนชั้นของอาคาร</label>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">จำนวนชั้นของอาคาร</label>
                   <select
                     value={floorCount}
                     onChange={(e) => setFloorCount(e.target.value)}
-                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg outline-none"
+                    className="w-full p-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg outline-none"
                   >
                     <option value="1">1 ชั้น</option>
                     <option value="2">2 ชั้น</option>
@@ -621,25 +621,25 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">ค่าธรรมเนียมที่กองช่างเรียกเก็บจริง</label>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">ค่าธรรมเนียมที่กองช่างเรียกเก็บจริง</label>
                   <div className="relative">
                     <input
                       type="number"
                       value={collectedFee}
                       onChange={(e) => setCollectedFee(e.target.value)}
-                      className="w-full p-2 pr-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg outline-none font-mono font-bold"
+                      className="w-full p-2 pr-10 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg outline-none font-mono font-bold"
                     />
-                    <span className="absolute right-3 top-2 text-slate-400">บาท</span>
+                    <span className="absolute right-3 top-2 text-stone-400">บาท</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">เลขที่ใบเสร็จรับเงินที่ออก</label>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">เลขที่ใบเสร็จรับเงินที่ออก</label>
                   <input
                     type="text"
                     value={receiptNo}
                     onChange={(e) => setReceiptNo(e.target.value)}
-                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg outline-none font-mono text-[11px]"
+                    className="w-full p-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-lg outline-none font-mono text-[11px]"
                     placeholder="เช่น เล่มที่ 012 เลขที่ 45"
                   />
                 </div>
@@ -647,39 +647,39 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
 
               {/* Fee Results */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="text-[11px] text-slate-500">ค่าธรรมเนียมใบอนุญาตก่อสร้าง (แบบ อ.1)</div>
-                  <div className="text-xl font-mono font-black text-blue-700 dark:text-blue-400 mt-1">
-                    {permitFeeResult.permitFee} <span className="text-xs font-normal text-slate-400">บาท</span>
+                <div className="bg-white dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+                  <div className="text-[11px] text-stone-500">ค่าธรรมเนียมใบอนุญาตก่อสร้าง (แบบ อ.1)</div>
+                  <div className="text-xl font-mono font-black text-amber-700 dark:text-amber-400 mt-1">
+                    {permitFeeResult.permitFee} <span className="text-xs font-normal text-stone-400">บาท</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">ตามอัตรากฎกระทรวง ฉบับที่ 7</div>
+                  <div className="text-[10px] text-stone-400 mt-0.5">ตามอัตรากฎกระทรวง ฉบับที่ 7</div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="text-[11px] text-slate-500">ค่าธรรมเนียมตรวจแบบแปลนก่อสร้าง</div>
-                  <div className="text-xl font-mono font-black text-blue-700 dark:text-blue-400 mt-1">
-                    {permitFeeResult.blueprintFee.toLocaleString()} <span className="text-xs font-normal text-slate-400">บาท</span>
+                <div className="bg-white dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+                  <div className="text-[11px] text-stone-500">ค่าธรรมเนียมตรวจแบบแปลนก่อสร้าง</div>
+                  <div className="text-xl font-mono font-black text-amber-700 dark:text-amber-400 mt-1">
+                    {permitFeeResult.blueprintFee.toLocaleString()} <span className="text-xs font-normal text-stone-400">บาท</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">คิดตามพื้นที่ {buildingArea} ตร.ม.</div>
+                  <div className="text-[10px] text-stone-400 mt-0.5">คิดตามพื้นที่ {buildingArea} ตร.ม.</div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="text-[11px] text-slate-500">รวมค่าธรรมเนียมที่ต้องนำส่งคลัง</div>
-                  <div className="text-xl font-mono font-black text-slate-900 dark:text-slate-100 mt-1">
-                    {permitFeeResult.totalDue.toLocaleString()} <span className="text-xs font-normal text-slate-400">บาท</span>
+                <div className="bg-white dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+                  <div className="text-[11px] text-stone-500">รวมค่าธรรมเนียมที่ต้องนำส่งคลัง</div>
+                  <div className="text-xl font-mono font-black text-stone-900 dark:text-stone-100 mt-1">
+                    {permitFeeResult.totalDue.toLocaleString()} <span className="text-xs font-normal text-stone-400">บาท</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-stone-400 mt-0.5">
                     {permitFeeResult.isFeeAccurate ? '✅ เรียกเก็บถูกต้องตรงตามเกณฑ์' : `⚠️ เรียกเก็บคลาดเคลื่อน ${Math.abs(permitFeeResult.feeDiff)} บาท`}
                   </div>
                 </div>
               </div>
 
               {/* Permit Checklist Box */}
-              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 rounded-xl border border-blue-200/80 dark:border-blue-900/40 text-[11px] space-y-1">
-                <span className="font-bold text-blue-900 dark:text-blue-200 block">
+              <div className="p-3 bg-amber-50/50 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-900/40 text-[11px] space-y-1">
+                <span className="font-bold text-amber-900 dark:text-amber-200 block">
                   📌 สิ่งที่ผู้ตรวจสอบต้องขอตรวจจากกองช่าง:
                 </span>
-                <ul className="list-disc list-inside space-y-0.5 text-blue-800/90 dark:text-blue-300">
+                <ul className="list-disc list-inside space-y-0.5 text-stone-700 dark:text-stone-300">
                   <li>คำขออนุญาตก่อสร้าง (แบบ ข.1) และเอกสารสิทธิ์ที่ดิน (โฉนด/น.ส.3)</li>
                   <li>สำเนาใบเสร็จรับเงินที่กองช่างออกให้ผู้ยื่นคำขอ และใบนำส่งเงินให้กองคลัง</li>
                   <li>แบบแปลนที่มีสถาปนิกและวิศวกรผู้ควบคุมงานลงนามรับรอง (กรณีพื้นที่เกิน 150 ตร.ม. หรือความสูงตามเกณฑ์)</li>
@@ -701,9 +701,9 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
                       });
                       showToast();
                     }}
-                    className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 cursor-pointer flex items-center space-x-1.5 shadow-2xs"
+                    className="bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-600 px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-stone-50 cursor-pointer flex items-center space-x-1.5 shadow-2xs"
                   >
-                    <Plus className="w-3.5 h-3.5 text-blue-600" />
+                    <Plus className="w-3.5 h-3.5 text-amber-600" />
                     <span>+ บันทึกลงกระดาษทำการ</span>
                   </button>
                 </div>
@@ -715,13 +715,13 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               TOOL 4: CAPITAL PROJECT & ORDINANCE ALIGNMENT HELPER
           ========================================================================= */}
           {activeTool === 'ordinance' && (
-            <div className="bg-slate-50/70 dark:bg-slate-850/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center">
-                  <HardHat className="w-4 h-4 text-blue-700 dark:text-blue-400 mr-1.5" />
+            <div className="bg-stone-50/70 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-200/80 dark:border-stone-800 space-y-4 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200 dark:border-stone-800 pb-2">
+                <span className="font-bold text-stone-900 dark:text-stone-100 text-sm flex items-center">
+                  <HardHat className="w-4 h-4 text-amber-700 dark:text-amber-400 mr-1.5" />
                   เครื่องมือสอบทานโครงการก่อสร้างตามข้อบัญญัติงบประมาณ & การคุมงานหน้างาน
                 </span>
-                <span className="text-slate-500 text-[11px]">
+                <span className="text-stone-500 text-[11px]">
                   อ้างอิง: ระเบียบ มท. รับจ่ายเงิน 2566 & ระเบียบพัสดุ 2560 ข้อ 178
                 </span>
               </div>
@@ -850,7 +850,7 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
                     }}
                     className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 cursor-pointer flex items-center space-x-1.5 shadow-2xs"
                   >
-                    <Plus className="w-3.5 h-3.5 text-blue-600" />
+                    <Plus className="w-3.5 h-3.5 text-amber-600" />
                     <span>+ บันทึกลงกระดาษทำการ</span>
                   </button>
                 </div>

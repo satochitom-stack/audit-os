@@ -1898,13 +1898,13 @@ export default function RiskManagementView({
   return (
     <div className="space-y-6">
       {/* 1. Clean & Streamlined Header Card */}
-      <div className="bg-white dark:bg-slate-900 px-5 py-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
+      <div className="bg-white dark:bg-stone-900 px-5 py-4 rounded-xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 tracking-tight">
               การบริหารจัดการความเสี่ยงองค์กร (บส.1 - บส.5)
             </h2>
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60">
               ปีงบฯ {selectedYear}
             </span>
             {/* Compliance pill button */}
@@ -1914,7 +1914,7 @@ export default function RiskManagementView({
               className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border flex items-center space-x-1 cursor-pointer transition-colors ${
                 complianceAudit.isCompliant
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-                  : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                  : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
               }`}
               title="คลิกเพื่อดูผลตรวจความสอดคล้องตาม ว 3482 และเกณฑ์กระทรวงการคลัง"
             >
@@ -1922,7 +1922,7 @@ export default function RiskManagementView({
               <span>ความสอดคล้อง ว 3482 ({complianceAudit.score}%)</span>
             </button>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-stone-500 dark:text-stone-400">
             มาตรฐาน มท 0805.2/ว 3482 และกระทรวงการคลัง พ.ศ. 2562 • {isAdmin ? 'มุมมองหน่วยตรวจสอบภายใน' : `ส่วนราชการ: ${userDept}`}
           </p>
         </div>
@@ -1935,12 +1935,12 @@ export default function RiskManagementView({
             onClick={() => setShowGeminiModal(true)}
             className={`border text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs ${
               geminiReady
-                ? 'bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 text-purple-700 dark:from-purple-950/40 dark:to-indigo-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-800'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+                ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                : 'text-stone-600 hover:text-stone-900 dark:text-stone-300 bg-stone-50 hover:bg-stone-100 dark:bg-stone-800 border-stone-200 dark:border-stone-700'
             }`}
             title="ตั้งค่าเชื่อมต่อ Google Gemini Generative AI สำหรับงานวิเคราะห์ความเสี่ยง"
           >
-            <Sparkles className={`w-3.5 h-3.5 ${geminiReady ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400'}`} />
+            <Sparkles className={`w-3.5 h-3.5 ${geminiReady ? 'text-amber-600 dark:text-amber-400' : 'text-stone-400'}`} />
             <span>{geminiReady ? 'Gemini AI (ออนไลน์)' : 'ตั้งค่า Gemini AI'}</span>
           </button>
 
@@ -1952,27 +1952,27 @@ export default function RiskManagementView({
                 setShowGuideMenu(!showGuideMenu);
                 setShowExportMenu(false);
               }}
-              className="text-slate-700 dark:text-slate-200 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 cursor-pointer shadow-xs"
+              className="text-stone-700 dark:text-stone-200 bg-stone-50 hover:bg-stone-100 dark:bg-stone-800 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 cursor-pointer shadow-xs"
               title="คู่มือ ระเบียบ และคำอธิบายการจัดทำแบบรายงาน"
             >
-              <BookOpen className="w-3.5 h-3.5 text-slate-500" />
+              <BookOpen className="w-3.5 h-3.5 text-stone-500" />
               <span>คู่มือ & ระเบียบ</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
             </button>
 
             {showGuideMenu && (
-              <div className="absolute right-0 mt-1.5 w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 mt-1.5 w-60 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100">
                 <a
                   href="/docs/w3482-risk-forms.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setShowGuideMenu(false)}
-                  className="flex items-center px-3.5 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="flex items-center px-3.5 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                 >
                   <FileText className="w-4 h-4 text-rose-500 mr-2.5 shrink-0" />
                   <div>
                     <div className="font-bold">หนังสือสั่งการ มท ว 3482</div>
-                    <div className="text-[10px] text-slate-400">เปิดเอกสารทางการฉบับจริง (PDF)</div>
+                    <div className="text-[10px] text-stone-400">เปิดเอกสารทางการฉบับจริง (PDF)</div>
                   </div>
                 </a>
 
@@ -1980,12 +1980,12 @@ export default function RiskManagementView({
                   href="/docs/meeting_minutes_risk_2569.docx"
                   download="รายงานการประชุมคณะกรรมการบริหารจัดการความเสี่ยง_ปี2569.docx"
                   onClick={() => setShowGuideMenu(false)}
-                  className="flex items-center px-3.5 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-t border-slate-100 dark:border-slate-800/60"
+                  className="flex items-center px-3.5 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors border-t border-stone-100 dark:border-stone-800/60"
                 >
-                  <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2.5 shrink-0" />
+                  <FileText className="w-4 h-4 text-amber-700 dark:text-amber-400 mr-2.5 shrink-0" />
                   <div>
                     <div className="font-bold">รายงานการประชุมปี 2569</div>
-                    <div className="text-[10px] text-slate-400">ดาวน์โหลดเอกสาร Word (.docx)</div>
+                    <div className="text-[10px] text-stone-400">ดาวน์โหลดเอกสาร Word (.docx)</div>
                   </div>
                 </a>
 
@@ -1995,12 +1995,12 @@ export default function RiskManagementView({
                     setShowGuide(!showGuide);
                     setShowGuideMenu(false);
                   }}
-                  className="w-full text-left flex items-center px-3.5 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="w-full text-left flex items-center px-3.5 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
                 >
-                  <Info className="w-4 h-4 text-blue-500 mr-2.5 shrink-0" />
+                  <Info className="w-4 h-4 text-amber-600 mr-2.5 shrink-0" />
                   <div>
                     <div className="font-bold">{showGuide ? 'ซ่อนคำอธิบายแบบ' : 'แสดงคำอธิบายแบบ'}</div>
-                    <div className="text-[10px] text-slate-400">คำอธิบายจัดทำแบบ บส.1 - บส.5</div>
+                    <div className="text-[10px] text-stone-400">คำอธิบายจัดทำแบบ บส.1 - บส.5</div>
                   </div>
                 </button>
 
@@ -2010,12 +2010,12 @@ export default function RiskManagementView({
                     setShowCrossMachineInfo(true);
                     setShowGuideMenu(false);
                   }}
-                  className="w-full text-left flex items-center px-3.5 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="w-full text-left flex items-center px-3.5 py-2 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
                 >
-                  <HelpCircle className="w-4 h-4 text-amber-500 mr-2.5 shrink-0" />
+                  <HelpCircle className="w-4 h-4 text-amber-600 mr-2.5 shrink-0" />
                   <div>
                     <div className="font-bold">การเชื่อมข้อมูลข้ามเครื่อง</div>
-                    <div className="text-[10px] text-slate-400">วิธีส่งออก/นำเข้าไฟล์และ Cloud</div>
+                    <div className="text-[10px] text-stone-400">วิธีส่งออก/นำเข้าไฟล์และ Cloud</div>
                   </div>
                 </button>
               </div>
@@ -2030,7 +2030,7 @@ export default function RiskManagementView({
                 setShowExportMenu(!showExportMenu);
                 setShowGuideMenu(false);
               }}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs hover:shadow"
+              className="bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs hover:shadow"
               title="ส่งออกรายงานในรูปแบบ PDF, Word, Excel หรือสั่งพิมพ์"
             >
               <Download className="w-3.5 h-3.5" />
@@ -2039,12 +2039,12 @@ export default function RiskManagementView({
             </button>
 
             {showExportMenu && (
-              <div className="absolute right-0 mt-1.5 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="absolute right-0 mt-1.5 w-64 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100 divide-y divide-stone-100 dark:divide-stone-800">
                 <div className="py-1">
                   <button
                     type="button"
                     onClick={handleDownloadPdf}
-                    className="w-full text-left flex items-center px-3.5 py-2 text-slate-800 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer group"
+                    className="w-full text-left flex items-center px-3.5 py-2 text-stone-800 dark:text-stone-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer group"
                   >
                     <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 flex items-center justify-center mr-2.5 shrink-0 group-hover:scale-105 transition-transform">
                       <FileText className="w-4 h-4" />
@@ -2659,7 +2659,7 @@ export default function RiskManagementView({
       )}
 
       {/* 2. Executive Form Command Hub (บส. 1 - 5 Navigation & Working Tools) */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/90 dark:border-slate-800 p-3 no-print">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-xs border border-stone-200/80 dark:border-stone-800 p-3 no-print">
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
           {/* Left: Hero Form Dropdown + Quick Stepper */}
           <div className="flex flex-wrap items-center gap-2.5">
@@ -2668,33 +2668,33 @@ export default function RiskManagementView({
               <button
                 type="button"
                 onClick={() => setShowFormSelectorMenu(!showFormSelectorMenu)}
-                className="flex items-center space-x-3 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-800 text-white px-3.5 py-2 rounded-xl shadow-md shadow-blue-900/20 hover:shadow-lg transition-all font-bold cursor-pointer border border-blue-400/30 group"
+                className="flex items-center space-x-3 bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 hover:from-stone-850 hover:to-stone-800 text-stone-100 px-3.5 py-2 rounded-xl shadow-xs hover:shadow-md transition-all font-bold cursor-pointer border border-stone-700/60 group"
                 title="คลิกเพื่อเลือกแบบรายงาน บส. 1 - บส. 5"
               >
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/20 text-white font-black text-sm shadow-inner group-hover:scale-105 transition-transform">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400/30 font-black text-sm shadow-inner group-hover:scale-105 transition-transform">
                   {currentFormMeta.num}
                 </div>
                 <div className="text-left">
-                  <div className="text-[10px] font-semibold text-blue-200 tracking-wide flex items-center space-x-1.5">
+                  <div className="text-[10px] font-semibold text-amber-300 tracking-wide flex items-center space-x-1.5">
                     <span>แบบรายงานหลัก</span>
-                    <span className="w-1 h-1 rounded-full bg-blue-300"></span>
+                    <span className="w-1 h-1 rounded-full bg-amber-400"></span>
                     <span>ขั้นตอนที่ {currentFormMeta.step}/5</span>
                   </div>
                   <div className="text-xs sm:text-sm font-black flex items-center space-x-2 text-white">
                     <span>{currentFormMeta.code} {currentFormMeta.title}</span>
-                    <span className="bg-white/20 text-blue-50 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                    <span className="bg-amber-500/20 text-amber-200 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
                       {currentFormMeta.count}
                     </span>
                   </div>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-blue-200 transition-transform ml-1 group-hover:text-white ${showFormSelectorMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ml-1 group-hover:text-amber-300 ${showFormSelectorMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showFormSelectorMenu && (
-                <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-stone-900 rounded-2xl shadow-2xl border border-stone-200 dark:border-stone-800 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-2 border-b border-stone-100 dark:border-stone-800 flex items-center justify-between text-xs font-bold text-stone-500 dark:text-stone-400">
                     <span>เลือกแบบรายงานหลัก (บส. 1 - บส. 5)</span>
-                    <span className="text-[10px] bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md font-semibold">ตามเกณฑ์ ว 3482</span>
+                    <span className="text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60 px-2 py-0.5 rounded-md font-semibold">ตามเกณฑ์ ว 3482</span>
                   </div>
                   <div className="space-y-1 mt-1.5">
                     {FORMS_METADATA.map((f) => {
@@ -2709,30 +2709,30 @@ export default function RiskManagementView({
                           }}
                           className={`w-full text-left p-2.5 rounded-xl transition-all flex items-start space-x-3 cursor-pointer ${
                             isSelected
-                              ? 'bg-blue-50/90 dark:bg-blue-950/60 text-blue-900 dark:text-blue-100 border border-blue-200 dark:border-blue-800 shadow-xs'
-                              : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 border border-transparent'
+                              ? 'bg-amber-50/90 dark:bg-amber-950/40 text-stone-900 dark:text-stone-100 border border-amber-200/80 dark:border-amber-900/60 shadow-xs'
+                              : 'hover:bg-stone-50 dark:hover:bg-stone-850/60 text-stone-700 dark:text-stone-300 border border-transparent'
                           }`}
                         >
                           <div className={`flex items-center justify-center w-8 h-8 rounded-lg font-black text-sm shrink-0 shadow-xs ${
-                            isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                            isSelected ? 'bg-amber-700 text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
                           }`}>
                             {f.num}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <span className={`text-xs font-black ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200'}`}>
+                              <span className={`text-xs font-black ${isSelected ? 'text-amber-800 dark:text-amber-300' : 'text-stone-800 dark:text-stone-200'}`}>
                                 {f.code} {f.title}
                               </span>
                               <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
-                                isSelected ? 'bg-blue-200/90 dark:bg-blue-900 text-blue-900 dark:text-blue-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                isSelected ? 'bg-amber-200/90 dark:bg-amber-900 text-amber-900 dark:text-amber-200' : 'bg-stone-100 dark:bg-stone-800 text-stone-500'
                               }`}>
                                 {f.count} รายการ
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{f.desc}</p>
+                            <p className="text-[11px] text-stone-500 dark:text-stone-400 line-clamp-1 mt-0.5">{f.desc}</p>
                           </div>
                           {isSelected && (
-                            <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-1" />
+                            <Check className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-1" />
                           )}
                         </button>
                       );
@@ -2743,7 +2743,7 @@ export default function RiskManagementView({
             </div>
 
             {/* 2. Quick Stepper Pills (Desktop & Tablet) */}
-            <div className="hidden sm:flex items-center bg-slate-100/90 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+            <div className="hidden sm:flex items-center bg-stone-100/90 dark:bg-stone-800/80 p-1 rounded-xl border border-stone-200/80 dark:border-stone-700/60">
               <button
                 type="button"
                 onClick={() => {
@@ -2751,7 +2751,7 @@ export default function RiskManagementView({
                   setActiveTab(FORMS_METADATA[prevIdx].id);
                 }}
                 disabled={currentFormIndex === 0}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="p-1.5 rounded-lg text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 title="ขั้นตอนก่อนหน้า"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -2765,17 +2765,17 @@ export default function RiskManagementView({
                     onClick={() => setActiveTab(f.id)}
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
                       isCurrent
-                        ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-xs border border-blue-200/60 dark:border-blue-700'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        ? 'bg-white dark:bg-stone-750 text-amber-800 dark:text-amber-300 shadow-xs border border-amber-300/60 dark:border-amber-700'
+                        : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
                     }`}
                     title={`${f.code} ${f.title} (${f.count} รายการ)`}
                   >
                     <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black ${
-                      isCurrent ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      isCurrent ? 'bg-amber-700 text-white' : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300'
                     }`}>{f.num}</span>
                     <span>{f.shortLabel}</span>
                     <span className={`text-[10px] px-1 py-0.2 rounded-full font-mono ${
-                      isCurrent ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-slate-200/80 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                      isCurrent ? 'bg-amber-100 text-amber-850 dark:bg-amber-950 dark:text-amber-200' : 'bg-stone-200/80 dark:bg-stone-700 text-stone-500 dark:text-stone-400'
                     }`}>{f.count}</span>
                   </button>
                 );
@@ -2787,7 +2787,7 @@ export default function RiskManagementView({
                   setActiveTab(FORMS_METADATA[nextIdx].id);
                 }}
                 disabled={currentFormIndex === FORMS_METADATA.length - 1}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="p-1.5 rounded-lg text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 title="ขั้นตอนถัดไป"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -2799,12 +2799,12 @@ export default function RiskManagementView({
           <div className="flex flex-wrap items-center gap-2">
             {/* Admin Dept Selector (if admin) */}
             {isAdmin && (
-              <div className="flex items-center space-x-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5">
-                <Filter className="w-3.5 h-3.5 text-slate-400" />
+              <div className="flex items-center space-x-1.5 bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 rounded-lg px-2.5 py-1.5">
+                <Filter className="w-3.5 h-3.5 text-stone-400" />
                 <select
                   value={filterDept}
                   onChange={(e) => setFilterDept(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+                  className="bg-transparent text-xs font-bold text-stone-700 dark:text-stone-200 focus:outline-none cursor-pointer"
                 >
                   <option value="all">🏢 ทุกส่วนราชการ ({departmentsList.length})</option>
                   {departmentsList.map((dept) => (
@@ -2822,17 +2822,17 @@ export default function RiskManagementView({
                     setSmartDept(isAdmin ? (filterDept !== 'all' ? filterDept : 'กองคลัง') : userDept);
                     setShowSmartAssistant(true);
                   }}
-                  className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 cursor-pointer"
+                  className="bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 cursor-pointer"
                   title="ผู้ช่วยวิเคราะห์และจับคู่ความเสี่ยงมาตรฐานตาม ว 3482"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                   <span>ผู้ช่วยวิเคราะห์ (ว 3482)</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setShowCascadeConfirm(true)}
-                  className="bg-slate-50 hover:bg-slate-100 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 cursor-pointer"
+                  className="bg-stone-50 hover:bg-stone-100 text-stone-700 dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-700 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 cursor-pointer"
                   title="ซิงค์เชื่อมโยงข้อมูลจาก บส.1 ไปยัง บส.2, บส.3, บส.4, บส.5 อัตโนมัติ"
                 >
                   <Zap className="w-3.5 h-3.5 text-amber-500" />

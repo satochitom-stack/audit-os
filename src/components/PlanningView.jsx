@@ -385,14 +385,14 @@ export default function PlanningView({
       )}
 
       {/* Main Sub-navigation Tabs: 4 Tiers */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-3">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab('annual')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'annual'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -403,8 +403,8 @@ export default function PlanningView({
             onClick={() => setActiveTab('strategic')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'strategic'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -415,8 +415,8 @@ export default function PlanningView({
             onClick={() => setActiveTab('risk')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'risk'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -427,8 +427,8 @@ export default function PlanningView({
             onClick={() => setActiveTab('charter')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'charter'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
@@ -455,15 +455,15 @@ export default function PlanningView({
 
               <button
                 onClick={() => setShowApprovalMemoModal(true)}
-                className="bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+                className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
               >
-                <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <BookOpen className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                 <span>บันทึกขออนุมัติแผน</span>
               </button>
 
               <button
                 onClick={() => setShowAddPlan(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+                className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>เพิ่มโครงการตรวจสอบ</span>
@@ -474,7 +474,7 @@ export default function PlanningView({
           {activeTab === 'strategic' && (
             <button
               onClick={() => setShowAddStrategicModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+              className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>เพิ่มกิจกรรมในแผนระยะยาว</span>
@@ -484,7 +484,7 @@ export default function PlanningView({
           {activeTab === 'risk' && (
             <button
               onClick={() => setShowAddRisk(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+              className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>ประเมินกิจกรรมใหม่</span>
@@ -493,9 +493,9 @@ export default function PlanningView({
 
           <button
             onClick={() => window.print()}
-            className="no-print bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs flex items-center space-x-1.5 cursor-pointer"
+            className="no-print bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-bold px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 shadow-xs flex items-center space-x-1.5 cursor-pointer"
           >
-            <Printer className="w-3.5 h-3.5" />
+            <Printer className="w-3.5 h-3.5 text-stone-500" />
             <span>พิมพ์</span>
           </button>
         </div>
@@ -507,48 +507,48 @@ export default function PlanningView({
       {activeTab === 'annual' && (
         <div className="space-y-5">
           {/* Header Info Banner */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden">
+          <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-stone-100 rounded-2xl p-5 sm:p-6 shadow-md border border-stone-800 relative overflow-hidden">
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <span className="bg-white/20 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide">
+                  <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide">
                     ปีงบประมาณ พ.ศ. {selectedYear}
                   </span>
-                  <span className="text-blue-100 text-xs">
+                  <span className="text-stone-300 text-xs">
                     {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} {orgProfile?.district || ''} {orgProfile?.province || ''}
                   </span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
                   แผนการปฏิบัติงานตรวจสอบภายในประจำปี (Annual Audit Plan)
                 </h2>
-                <p className="text-blue-100 text-xs max-w-2xl leading-relaxed">
+                <p className="text-stone-300 text-xs max-w-2xl leading-relaxed">
                   จัดทำขึ้นจากการประเมินความเสี่ยงครอบคลุมทุกมิติงานตรวจ (การเงิน กฎระเบียบ ประสิทธิภาพ ไอที และงานสืบสวน) ได้รับความเห็นชอบจากปลัด อปท. และอนุมัติโดยนายก อปท. ตามระเบียบ มท. ตรวจสอบภายใน อปท. 2545
                 </p>
               </div>
 
               {/* Quick Summary Badges */}
-              <div className="grid grid-cols-3 gap-2 text-center shrink-0 bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20">
+              <div className="grid grid-cols-3 gap-2 text-center shrink-0 bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10">
                 <div className="px-2">
-                  <div className="text-xl font-black">{annualPlans.length}</div>
-                  <div className="text-[10px] text-blue-200">โครงการทั้งหมด</div>
+                  <div className="text-xl font-black text-white">{annualPlans.length}</div>
+                  <div className="text-[10px] text-stone-400">โครงการทั้งหมด</div>
                 </div>
                 <div className="px-2 border-x border-white/20">
                   <div className="text-xl font-black text-amber-300">{highRiskCount}</div>
-                  <div className="text-[10px] text-blue-200">ความเสี่ยงสูง</div>
+                  <div className="text-[10px] text-stone-400">ความเสี่ยงสูง</div>
                 </div>
                 <div className="px-2">
                   <div className="text-xl font-black text-emerald-300">{avgProgress}%</div>
-                  <div className="text-[10px] text-blue-200">ความก้าวหน้าเฉลี่ย</div>
+                  <div className="text-[10px] text-stone-400">ความก้าวหน้าเฉลี่ย</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Dimension Filter Chips Bar */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+          <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
-                <Filter className="w-3.5 h-3.5 text-blue-600" />
+              <div className="font-bold text-stone-700 dark:text-stone-300 flex items-center space-x-1.5">
+                <Filter className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                 <span>จำแนกตามมิติการตรวจสอบ ({AUDIT_DIMENSIONS.length - 1} มิติ):</span>
               </div>
 
@@ -557,7 +557,7 @@ export default function PlanningView({
                 <select
                   value={selectedDeptFilter}
                   onChange={(e) => setSelectedDeptFilter(e.target.value)}
-                  className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-xl px-2.5 py-1.5 outline-none font-bold cursor-pointer"
+                  className="bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 text-xs rounded-xl px-2.5 py-1.5 outline-none font-bold cursor-pointer"
                 >
                   <option value="all">ทุกหน่วยรับตรวจ</option>
                   <option value="สำนักปลัด">สำนักปลัด</option>
@@ -568,20 +568,20 @@ export default function PlanningView({
                 </select>
 
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                  <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5" />
                   <input
                     type="text"
                     placeholder="ค้นหาโครงการ..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs outline-none w-40 sm:w-48"
+                    className="pl-8 pr-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs outline-none w-40 sm:w-48 focus:border-amber-500"
                   />
                 </div>
               </div>
             </div>
 
             {/* Chips */}
-            <div className="flex flex-wrap gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex flex-wrap gap-1.5 pt-1 border-t border-stone-100 dark:border-stone-800">
               {AUDIT_DIMENSIONS.map((dim) => {
                 const isActive = selectedDimension === dim.id;
                 const count = dim.id === 'all'
@@ -593,8 +593,8 @@ export default function PlanningView({
                     onClick={() => setSelectedDimension(dim.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
                       isActive
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                        : 'bg-stone-100 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                     }`}
                   >
                     <span>{dim.badge}</span>
@@ -609,10 +609,10 @@ export default function PlanningView({
           </div>
 
           {/* Annual Plans Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+          <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                <thead className="bg-slate-50/90 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700/80">
+              <table className="w-full text-left text-xs text-stone-600 dark:text-stone-400">
+                <thead className="bg-stone-50/90 dark:bg-stone-800/80 text-stone-700 dark:text-stone-200 font-bold border-b border-stone-200 dark:border-stone-750">
                   <tr>
                     <th className="px-4 py-3.5">รหัส</th>
                     <th className="px-3 py-3.5 text-center">มิติการตรวจ</th>

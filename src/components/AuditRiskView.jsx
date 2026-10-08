@@ -1180,23 +1180,23 @@ export default function AuditRiskView({
       )}
 
       {/* Top Banner with Official Reference to Fang Kham SAO */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs relative overflow-hidden">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 sm:p-6 border border-stone-200/80 dark:border-stone-800 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 rounded-full px-3 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
-                <Building className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-0.5 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                 <span>การประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
               </span>
-              <span className="inline-flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300">
-                <Award className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-2.5 py-0.5 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3 h-3 text-amber-700 dark:text-amber-400" />
                 <span>ผู้ประเมิน: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
               ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง ประจำปีงบประมาณ พ.ศ. {selectedYear}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-3xl leading-relaxed">
               วิเคราะห์กิจกรรมในจักรวาลการตรวจสอบ (Audit Universe) ของ {orgProfile?.name || 'อปท.'} ตามกรอบปัจจัยเสี่ยง 5 มิติ (SOFCK)
               เพื่อจัดลำดับความเสี่ยงและคัดเลือกกิจกรรมความเสี่ยงสูงบรรจุเข้าสู่แผนการตรวจสอบประจำปี
             </p>
@@ -1205,20 +1205,20 @@ export default function AuditRiskView({
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               onClick={handleLoadFangkhamDefaults}
-              className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+              className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
               title="โหลดชุดข้อมูล 21 กิจกรรมมาตรฐานตามเกณฑ์การตรวจสอบ อปท."
             >
-              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               <span>โหลดข้อมูลตัวอย่าง (21 กิจกรรมมาตรฐาน)</span>
             </button>
 
             {setCurrentTab && (
               <button
                 onClick={() => setCurrentTab('engagement-plan')}
-                className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+                className="bg-amber-50/80 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/60 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
                 title="เปิดเมนูแผนปฏิบัติงานตรวจสอบตาม ว 614 พร้อม AI ผู้ช่วย"
               >
-                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                 <span>แผนปฏิบัติงานตรวจ ว 614</span>
               </button>
             )}
@@ -1243,7 +1243,7 @@ export default function AuditRiskView({
                 });
                 setShowAddModal(true);
               }}
-              className="bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+              className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>+ เพิ่มกิจกรรม</span>
@@ -1254,9 +1254,9 @@ export default function AuditRiskView({
                 setActiveSubTab('report');
                 setTimeout(() => window.print(), 200);
               }}
-              className="no-print bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+              className="no-print bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
             >
-              <Printer className="w-4 h-4 text-slate-500" />
+              <Printer className="w-4 h-4 text-stone-500" />
               <span>พิมพ์แบบประเมินความเสี่ยง</span>
             </button>
           </div>
@@ -1265,13 +1265,13 @@ export default function AuditRiskView({
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 no-print print:hidden">
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs">
-          <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">กิจกรรมที่ประเมินทั้งหมด</div>
-          <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">{totalActivities}</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">ในจักรวาลการตรวจสอบ (Audit Universe)</div>
+        <div className="bg-white dark:bg-stone-900 rounded-xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs">
+          <div className="text-[11px] font-bold text-stone-500 dark:text-stone-400">กิจกรรมที่ประเมินทั้งหมด</div>
+          <div className="text-2xl font-black text-stone-900 dark:text-stone-100 mt-1">{totalActivities}</div>
+          <div className="text-[10px] text-stone-400 mt-0.5">ในจักรวาลการตรวจสอบ (Audit Universe)</div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-rose-200/70 dark:border-rose-900/40 shadow-xs">
+        <div className="bg-white dark:bg-stone-900 rounded-xl p-4 border border-rose-200/70 dark:border-rose-900/40 shadow-xs">
           <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400 flex items-center">
             <span className="w-2 h-2 rounded-full bg-rose-500 mr-1.5"></span>
             ความเสี่ยงสูง (2.4 - 3.0)
@@ -1280,7 +1280,7 @@ export default function AuditRiskView({
           <div className="text-[10px] text-rose-500/80 mt-0.5">ต้องบรรจุในแผนประจำปี (เช่น งานบัญชี e-LAAS)</div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-amber-200/70 dark:border-amber-900/40 shadow-xs">
+        <div className="bg-white dark:bg-stone-900 rounded-xl p-4 border border-amber-200/70 dark:border-amber-900/40 shadow-xs">
           <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center">
             <span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>
             ความเสี่ยงปานกลาง (1.6 - 2.2)
@@ -1289,7 +1289,7 @@ export default function AuditRiskView({
           <div className="text-[10px] text-amber-600/80 mt-0.5">แผนระยะยาว / รอบหมุนเวียน 2-3 ปี</div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-emerald-200/70 dark:border-emerald-900/40 shadow-xs">
+        <div className="bg-white dark:bg-stone-900 rounded-xl p-4 border border-emerald-200/70 dark:border-emerald-900/40 shadow-xs">
           <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
             <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>
             ความเสี่ยงต่ำ (1.0 - 1.4)
@@ -1348,7 +1348,7 @@ export default function AuditRiskView({
       {activeSubTab === 'fangkham-matrix' && (
         <div className="space-y-4">
           {/* Filter Bar */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-stone-800 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="bg-white dark:bg-stone-900 rounded-xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" />
@@ -1357,14 +1357,14 @@ export default function AuditRiskView({
                   placeholder="ค้นหากิจกรรมที่ประเมิน..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-[#faf8f4] dark:bg-[#2b3545] outline-none text-xs w-48 sm:w-64 text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                  className="pl-8 pr-3 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs w-48 sm:w-64 text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
                 />
               </div>
 
               <select
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-[#faf8f4] dark:bg-[#2b3545] outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
               >
                 <option value="all">ทุกสำนัก/กอง</option>
                 {getDepartments().filter((d) => d !== 'หน่วยตรวจสอบภายใน').map((dept) => (
@@ -1375,7 +1375,7 @@ export default function AuditRiskView({
               <select
                 value={riskLevelFilter}
                 onChange={(e) => setRiskLevelFilter(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-[#faf8f4] dark:bg-[#2b3545] outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
               >
                 <option value="all">ทุกระดับความเสี่ยง</option>
                 <option value="สูง">สูง (2.4 - 3.0)</option>
@@ -1384,28 +1384,28 @@ export default function AuditRiskView({
               </select>
             </div>
 
-            <div className="text-slate-500 text-[11px] flex items-center space-x-2">
+            <div className="text-stone-500 text-[11px] flex items-center space-x-2">
               <span>แสดง {filteredActivities.length} จาก {totalActivities} รายการ</span>
             </div>
           </div>
 
           {/* Real Table matching PDF 3 */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200/80 dark:border-stone-800 shadow-xs overflow-hidden">
+            <div className="p-3.5 bg-stone-50/80 dark:bg-stone-850 border-b border-stone-200/80 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <div>
-                <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                <span className="font-bold text-stone-800 dark:text-stone-200 text-sm">
                   การประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
                 </span>
-                <span className="text-slate-500 ml-2">ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง</span>
+                <span className="text-stone-500 ml-2">ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง</span>
               </div>
-              <div className="text-slate-500 text-[11px]">
+              <div className="text-stone-500 text-[11px]">
                 เกณฑ์: ด้านกลยุทธ์ (S), ปฏิบัติงาน (O), การเงิน (F), กฎระเบียบ (C), บริหารความรู้ (K)
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                <thead className="bg-slate-50/90 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700/80">
+              <table className="w-full text-left text-xs text-stone-600 dark:text-stone-400">
+                <thead className="bg-stone-50/90 dark:bg-stone-800/80 text-stone-700 dark:text-stone-200 font-bold border-b border-stone-200 dark:border-stone-750">
                   <tr>
                     <th className="px-3 py-3 w-12 text-center">ที่</th>
                     <th className="px-4 py-3 min-w-[240px]">กิจกรรม</th>

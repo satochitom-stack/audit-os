@@ -180,17 +180,17 @@ export default function FormsView({
       )}
 
       {/* Header & Search Bar */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-stone-100 rounded-3xl p-6 sm:p-7 border border-stone-800 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-xs font-bold text-blue-600 dark:text-cyan-400 mb-1">
-              <FileSpreadsheet className="w-4 h-4" />
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-semibold mb-2">
+              <FileSpreadsheet className="w-4 h-4 text-amber-400" />
               <span>คลังแบบฟอร์มมาตรฐาน (Forms Library)</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
               คลังเอกสารและแบบฟอร์มมาตรฐาน อปท.
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-2xl">
               รวบรวมแบบฟอร์มทางการ แบบรายงาน และเอกสารแม่แบบสำหรับองค์กรปกครองส่วนท้องถิ่น สามารถเปิดอ่านเอกสารตัวจริงได้ทันทีในระบบโดยไม่ต้องดาวน์โหลด
             </p>
           </div>
@@ -201,7 +201,7 @@ export default function FormsView({
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>เพิ่มแบบฟอร์ม / อัปโหลดไฟล์</span>
@@ -211,18 +211,18 @@ export default function FormsView({
         </div>
 
         {/* Stats Badges */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/40 text-xs font-semibold">
-            <Layers className="w-3.5 h-3.5 text-blue-600" />
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-stone-800">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-800 text-amber-300 border border-stone-700 text-xs font-semibold">
+            <Layers className="w-3.5 h-3.5 text-amber-400" />
             <span>ทั้งหมด {formsBase.length} ฉบับ</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-900/40 text-xs font-semibold">
-            <Eye className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 text-xs font-semibold">
+            <Eye className="w-3.5 h-3.5 text-emerald-400" />
             <span>พร้อมเปิดอ่านและดาวน์โหลดทุกรายการ</span>
           </span>
           {searchTerm && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 text-xs font-semibold">
-              <Filter className="w-3.5 h-3.5 text-amber-600" />
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/60 text-amber-300 border border-amber-800 text-xs font-semibold">
+              <Filter className="w-3.5 h-3.5 text-amber-400" />
               <span>พบ {filteredItems.length} รายการจากการค้นหา</span>
             </span>
           )}
@@ -231,13 +231,13 @@ export default function FormsView({
         {/* Search & Categories Filter */}
         <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
           <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3.5" />
+            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
             <input
               type="text"
               placeholder="พิมพ์คำค้นหา เช่น ว 3482, บส. 1, การบริหารความเสี่ยง, ปค. 4, จัดซื้อจัดจ้าง..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none text-xs bg-slate-50/50 dark:bg-slate-950 dark:text-slate-100 dark:placeholder-slate-500"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-700 focus:ring-2 focus:ring-amber-500 outline-none text-xs bg-stone-900/90 text-stone-100 placeholder-stone-400"
             />
           </div>
 
@@ -248,8 +248,8 @@ export default function FormsView({
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
                   selectedCategory === cat.id
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    ? 'bg-amber-700 text-white shadow-xs'
+                    : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
                 }`}
               >
                 {cat.label}
@@ -269,17 +269,17 @@ export default function FormsView({
           return (
             <div
               key={item.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all space-y-3.5 flex flex-col justify-between group"
+              className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all space-y-3.5 flex flex-col justify-between group"
             >
               <div className="space-y-2.5">
                 {/* Category & Format Badges */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
+                    <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
                       {item.category}
                     </span>
                     {item.code && (
-                      <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] px-2 py-0.5 rounded-md font-bold">
+                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 text-[10px] px-2 py-0.5 rounded-md font-bold">
                         {item.code}
                       </span>
                     )}
@@ -287,7 +287,7 @@ export default function FormsView({
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${
                           item.fileType.includes('WORD')
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200'
+                            ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200'
                             : item.fileType.includes('EXCEL')
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
                             : 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200'
@@ -297,7 +297,7 @@ export default function FormsView({
                       </span>
                     )}
                     {item.pageCount && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-500 font-semibold">
                         {item.pageCount}
                       </span>
                     )}
@@ -306,7 +306,7 @@ export default function FormsView({
                   <div className="flex items-center space-x-1 shrink-0">
                     <button
                       onClick={() => handleCopy(item.id, `${item.title} - ${item.topic}`)}
-                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
                       title="คัดลอกชื่อแบบฟอร์ม"
                     >
                       {isCopied ? (
@@ -330,11 +330,11 @@ export default function FormsView({
 
                 {/* Title & Topic */}
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug group-hover:text-blue-600 dark:group-hover:text-cyan-400 transition-colors">
+                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug group-hover:text-amber-800 dark:group-hover:text-amber-400 transition-colors">
                     {item.title}
                   </h3>
                   {item.topic && (
-                    <div className="text-xs font-semibold text-blue-700 dark:text-cyan-300 mt-1">
+                    <div className="text-xs font-semibold text-amber-800 dark:text-amber-400 mt-1">
                       เรื่อง: {item.topic}
                     </div>
                   )}
@@ -342,19 +342,19 @@ export default function FormsView({
 
                 {/* Summary Box */}
                 {item.summary && (
-                  <p className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80 leading-relaxed">
+                  <p className="text-xs text-stone-600 dark:text-stone-300 bg-stone-50 dark:bg-stone-950/60 p-3 rounded-xl border border-stone-100 dark:border-stone-800/80 leading-relaxed">
                     {item.summary}
                   </p>
                 )}
               </div>
 
               {/* Footer File Reference & Actions */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-2.5">
+              <div className="pt-3 border-t border-stone-100 dark:border-stone-800/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-stone-400 gap-2.5">
                 <div
-                  className="flex items-center text-slate-500 dark:text-slate-400 font-mono text-[11px] truncate max-w-full sm:max-w-[210px]"
+                  className="flex items-center text-stone-500 dark:text-stone-400 font-mono text-[11px] truncate max-w-full sm:max-w-[210px]"
                   title={item.fileRef}
                 >
-                  <FolderOpen className="w-3.5 h-3.5 mr-1.5 text-blue-500 shrink-0" />
+                  <FolderOpen className="w-3.5 h-3.5 mr-1.5 text-amber-600 shrink-0" />
                   <span className="truncate">{item.fileRef || 'ไฟล์แนบ'}</span>
                 </div>
 
@@ -364,10 +364,10 @@ export default function FormsView({
                     <button
                       type="button"
                       onClick={() => setPreviewDoc(item)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
                       title="เปิดดูเอกสารตัวเต็มในระบบโดยไม่ต้องดาวน์โหลด"
                     >
-                      <Eye className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      <Eye className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                       <span>เปิดอ่าน</span>
                     </button>
                   )}
@@ -392,7 +392,7 @@ export default function FormsView({
                       </span>
                     </a>
                   ) : (
-                    <span className="text-slate-400 dark:text-slate-500 text-[11px]">
+                    <span className="text-stone-400 dark:text-stone-500 text-[11px]">
                       ไม่มีไฟล์แนบ
                     </span>
                   )}
@@ -404,9 +404,9 @@ export default function FormsView({
       </div>
 
       {filteredItems.length === 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 space-y-3">
-          <FileSpreadsheet className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
-          <div className="text-base font-bold text-slate-700 dark:text-slate-200">ไม่พบแบบฟอร์มที่ค้นหา</div>
+        <div className="bg-white dark:bg-stone-900 rounded-2xl p-12 text-center border border-stone-200/80 dark:border-stone-800 text-stone-500 dark:text-stone-400 space-y-3">
+          <FileSpreadsheet className="w-10 h-10 text-stone-300 dark:text-stone-700 mx-auto" />
+          <div className="text-base font-bold text-stone-700 dark:text-stone-200">ไม่พบแบบฟอร์มที่ค้นหา</div>
           <div className="text-xs max-w-sm mx-auto">
             ลองค้นหาด้วยคำสำคัญอื่น เช่น <strong>ว 3482</strong>, <strong>การบริหารความเสี่ยง</strong> หรือกดเลือกหมวดหมู่ <strong>"ทั้งหมด"</strong>
           </div>
@@ -416,7 +416,7 @@ export default function FormsView({
               setSearchTerm('');
               setSelectedCategory('all');
             }}
-            className="px-4 py-2 bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-cyan-400 text-xs font-bold rounded-xl cursor-pointer hover:bg-blue-100"
+            className="px-4 py-2 bg-amber-50 dark:bg-stone-800 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-xl cursor-pointer hover:bg-amber-100"
           >
             ล้างคำค้นหาทั้งหมด
           </button>
@@ -427,18 +427,18 @@ export default function FormsView({
           PDF PREVIEW MODAL (เปิดดูเอกสารได้โดยตรงโดยไม่ต้องดาวน์โหลด)
       ========================================================================= */}
       {previewDoc && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-5xl h-[92vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-stone-900 w-full max-w-5xl h-[92vh] rounded-2xl shadow-2xl border border-stone-200/80 dark:border-stone-800 flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-850">
+            <div className="p-4 border-b border-stone-200/80 dark:border-stone-800 flex items-center justify-between gap-3 bg-stone-50 dark:bg-stone-850">
               <div className="flex items-center gap-2.5 min-w-0">
-                <FileCheck2 className="w-4 h-4 text-blue-600 dark:text-cyan-400 shrink-0" />
+                <FileCheck2 className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 truncate">
                     {previewDoc.title}
                   </h3>
                   {previewDoc.topic && (
-                    <p className="text-[11px] text-blue-600 dark:text-cyan-400 truncate">
+                    <p className="text-[11px] text-amber-800 dark:text-amber-400 truncate">
                       {previewDoc.topic}
                     </p>
                   )}
@@ -450,7 +450,7 @@ export default function FormsView({
                   href={previewDoc.fileUrl || previewDoc.downloadUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
                   title="เปิดในแท็บใหม่"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -471,7 +471,7 @@ export default function FormsView({
                 <button
                   type="button"
                   onClick={() => setPreviewDoc(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                  className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-200/60 dark:hover:bg-stone-800 cursor-pointer transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -479,10 +479,10 @@ export default function FormsView({
             </div>
 
             {/* Modal Iframe */}
-            <div className="flex-1 bg-slate-100 dark:bg-slate-950 p-2 overflow-hidden flex flex-col">
+            <div className="flex-1 bg-stone-100 dark:bg-stone-950 p-2 overflow-hidden flex flex-col">
               <iframe
                 src={`${previewDoc.fileUrl || previewDoc.downloadUrl}#toolbar=1&navpanes=1`}
-                className="w-full h-full rounded-lg border border-slate-300 dark:border-slate-800 bg-white"
+                className="w-full h-full rounded-lg border border-stone-300 dark:border-stone-800 bg-white"
                 title={previewDoc.title}
               />
             </div>
@@ -494,17 +494,17 @@ export default function FormsView({
           ADMIN ADD / UPLOAD FORM MODAL (เฉพาะ ADMIN เท่านั้น)
       ========================================================================= */}
       {isAdmin && isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-850">
-              <div className="flex items-center space-x-2 text-slate-900 dark:text-slate-100 font-bold">
-                <Plus className="w-5 h-5 text-blue-600" />
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-stone-900 w-full max-w-lg rounded-2xl shadow-2xl border border-stone-200/80 dark:border-stone-800 overflow-hidden my-8">
+            <div className="p-4 border-b border-stone-100 dark:border-stone-800 flex items-center justify-between bg-stone-50 dark:bg-stone-850">
+              <div className="flex items-center space-x-2 text-stone-900 dark:text-stone-100 font-bold">
+                <Plus className="w-5 h-5 text-amber-700 dark:text-amber-400" />
                 <span>เพิ่มแบบฟอร์มมาตรฐานใหม่ (สำหรับ ADMIN)</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-stone-400 hover:text-stone-600 p-1 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -513,13 +513,13 @@ export default function FormsView({
             <form onSubmit={handleAddDocument} className="p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                     หมวดหมู่แบบฟอร์ม <span className="text-rose-500">*</span>:
                   </label>
                   <select
                     value={newDoc.category}
                     onChange={(e) => setNewDoc({ ...newDoc, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-bold"
                   >
                     {categories
                       .filter((c) => c.id !== 'all')
@@ -532,7 +532,7 @@ export default function FormsView({
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                     รหัส / เลขที่แบบฟอร์ม:
                   </label>
                   <input
@@ -540,13 +540,13 @@ export default function FormsView({
                     placeholder="เช่น ว 3482 หรือ บส. 1"
                     value={newDoc.code}
                     onChange={(e) => setNewDoc({ ...newDoc, code: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                   ชื่อแบบฟอร์ม <span className="text-rose-500">*</span>:
                 </label>
                 <input
@@ -555,12 +555,12 @@ export default function FormsView({
                   placeholder="เช่น แบบรายงานการบริหารจัดการความเสี่ยง..."
                   value={newDoc.title}
                   onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-bold"
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-bold"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                   ชื่อเรื่อง / อ้างอิงหนังสือสั่งการ:
                 </label>
                 <input
@@ -568,12 +568,12 @@ export default function FormsView({
                   placeholder="เช่น หนังสือกระทรวงมหาดไทย ด่วนที่สุด ที่ มท..."
                   value={newDoc.topic}
                   onChange={(e) => setNewDoc({ ...newDoc, topic: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                   คำอธิบายสรุปสาระสำคัญ:
                 </label>
                 <textarea
@@ -581,20 +581,20 @@ export default function FormsView({
                   placeholder="สรุปวัตถุประสงค์และการนำแบบฟอร์มนี้ไปใช้งาน..."
                   value={newDoc.summary}
                   onChange={(e) => setNewDoc({ ...newDoc, summary: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100"
                 />
               </div>
 
               {/* File Upload Box */}
-              <div className="p-3.5 rounded-xl border border-dashed border-blue-300 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 space-y-2">
-                <label className="block text-blue-900 dark:text-blue-200 font-bold">
+              <div className="p-3.5 rounded-xl border border-dashed border-amber-300 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 space-y-2">
+                <label className="block text-stone-800 dark:text-stone-200 font-bold">
                   อัปโหลดไฟล์เอกสารจากเครื่อง (PDF, Word, Excel):
                 </label>
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx,.xls,.xlsx"
                   onChange={handleFileUpload}
-                  className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+                  className="w-full text-xs text-stone-600 dark:text-stone-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-700 file:text-white hover:file:bg-amber-600 cursor-pointer"
                 />
                 {newDoc.fileRef && (
                   <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
@@ -606,17 +606,17 @@ export default function FormsView({
                 )}
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-200/80 dark:border-stone-800">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold shadow-xs cursor-pointer"
                 >
                   บันทึกแบบฟอร์ม
                 </button>

@@ -511,13 +511,13 @@ export default function PublicOverviewView({
       )}
 
       {/* 1. กรอบหน่วยงานด้านบน: ข้อมูลองค์กรปกครองส่วนท้องถิ่น */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 rounded-2xl px-4 sm:px-5 py-2.5 sm:py-3 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-stone-900 rounded-2xl px-4 sm:px-5 py-2.5 sm:py-3 border border-stone-200/80 dark:border-stone-800 shadow-2xs">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-cyan-300 border border-blue-200/80 dark:border-blue-800 text-xs sm:text-sm font-bold tracking-wide">
-            <Landmark className="w-4 h-4 text-blue-600 dark:text-cyan-400" />
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-850 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 text-xs sm:text-sm font-bold tracking-wide">
+            <Landmark className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             <span>{locationDisplay}</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 text-xs font-bold">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700 text-xs font-bold">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>ITA ธรรมาภิบาลระดับ AA</span>
           </span>
@@ -528,9 +528,9 @@ export default function PublicOverviewView({
           <button
             type="button"
             onClick={handleOpenAdminModal}
-            className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs font-black px-3.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center space-x-1.5 shrink-0 border border-amber-300 active:scale-95"
+            className="bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center space-x-1.5 shrink-0 border border-amber-600/30 active:scale-95"
           >
-            <Settings className="w-3.5 h-3.5 text-slate-950" />
+            <Settings className="w-3.5 h-3.5" />
             <span>⚙️ จัดการ/แก้ไขข้อมูล (Admin)</span>
           </button>
         )}
@@ -547,10 +547,10 @@ export default function PublicOverviewView({
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center space-x-2">
-                <span className="p-1 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-cyan-300">
+                <span className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60">
                   <Orbit className="w-4 h-4" />
                 </span>
-                <h2 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 font-['Prompt',sans-serif]">
+                <h2 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100 font-['Prompt',sans-serif]">
                   โครงสร้าง 5 ส่วนราชการหลัก & ภารกิจ {orgName}
                 </h2>
               </div>
@@ -558,7 +558,7 @@ export default function PublicOverviewView({
                 <button
                   type="button"
                   onClick={() => handleOpenAdminModal('orbital')}
-                  className="text-xs text-blue-600 dark:text-cyan-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
+                  className="text-xs text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 font-semibold cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>แก้ไขคำขวัญ/ข้อมูลวงโคจร</span>
@@ -572,23 +572,23 @@ export default function PublicOverviewView({
               centerTitle={orgName}
               centerSubtitle="ศูนย์ปฏิบัติการ 5 ส่วนราชการ"
               badgeLabel="IA-OS DIGITAL GOVERNANCE"
-              className="w-full min-h-[580px] h-[640px] flex flex-col items-center justify-center bg-gradient-to-b from-[#f3f8fe] via-[#ebf3fc] to-[#f5f9ff] dark:from-[#071126] dark:via-[#0b1a3a] dark:to-[#071126] relative overflow-hidden rounded-3xl border border-blue-200/80 dark:border-blue-900/60 shadow-[0_15px_45px_-12px_rgba(37,99,235,0.12)]"
+              className="w-full min-h-[580px] h-[640px] flex flex-col items-center justify-center bg-gradient-to-b from-[#f3f8fe] via-[#ebf3fc] to-[#f5f9ff] dark:from-[#071126] dark:via-[#0b1a3a] dark:to-[#071126] relative overflow-hidden rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-sm"
             />
           </div>
         );
       })()}
 
       {/* Navigation Sub-Tabs in Modern Pill Container */}
-      <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-wrap items-center gap-2">
+      <div className="bg-white dark:bg-stone-900 p-2 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap items-center gap-2">
         <button
           onClick={() => setActiveTab('divisions')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === 'divisions'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm font-black'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60 font-black'
+              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent'
           }`}
         >
-          <Building2 className={`w-4 h-4 ${activeTab === 'divisions' ? 'text-white' : 'text-blue-600'}`} />
+          <Building2 className={`w-4 h-4 ${activeTab === 'divisions' ? 'text-amber-400' : 'text-stone-500'}`} />
           <span>โครงสร้าง 5 ส่วนราชการ (รายละเอียด)</span>
         </button>
 
@@ -596,11 +596,11 @@ export default function PublicOverviewView({
           onClick={() => setActiveTab('timelines')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === 'timelines'
-              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm font-black'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60 font-black'
+              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent'
           }`}
         >
-          <Calendar className={`w-4 h-4 ${activeTab === 'timelines' ? 'text-white' : 'text-emerald-600'}`} />
+          <Calendar className={`w-4 h-4 ${activeTab === 'timelines' ? 'text-amber-400' : 'text-stone-500'}`} />
           <span>ปฏิทินรอบเวลาให้บริการประชาชน</span>
         </button>
 
@@ -608,11 +608,11 @@ export default function PublicOverviewView({
           onClick={() => setActiveTab('forms')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === 'forms'
-              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm font-black'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60 font-black'
+              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent'
           }`}
         >
-          <Download className={`w-4 h-4 ${activeTab === 'forms' ? 'text-white' : 'text-purple-600'}`} />
+          <Download className={`w-4 h-4 ${activeTab === 'forms' ? 'text-amber-400' : 'text-stone-500'}`} />
           <span>แบบฟอร์มคำขอสำหรับประชาชน</span>
         </button>
 
@@ -620,11 +620,11 @@ export default function PublicOverviewView({
           onClick={() => setActiveTab('ita')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === 'ita'
-              ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-sm font-black'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60 font-black'
+              : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent'
           }`}
         >
-          <ShieldCheck className={`w-4 h-4 ${activeTab === 'ita' ? 'text-white' : 'text-teal-600'}`} />
+          <ShieldCheck className={`w-4 h-4 ${activeTab === 'ita' ? 'text-amber-400' : 'text-stone-500'}`} />
           <span>ความโปร่งใส & ศูนย์ข้อมูลข่าวสาร</span>
         </button>
       </div>

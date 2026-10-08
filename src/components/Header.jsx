@@ -318,7 +318,7 @@ export default function Header({
                       setMenuOpen(false);
                       if (setCurrentTab) setCurrentTab('central-hub');
                     }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer font-medium border-b border-slate-100 dark:border-slate-800"
+                    className="w-full flex items-center space-x-2 px-3.5 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium border-b border-stone-100 dark:border-stone-800"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                     <span>📚 คลังเอกสารกลาง & ระเบียบปฏิบัติ</span>
@@ -330,7 +330,7 @@ export default function Header({
                         setMenuOpen(false);
                         onOpenSettings();
                       }}
-                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer font-medium"
+                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium"
                     >
                       <Settings className="w-3.5 h-3.5" />
                       <span>ตั้งค่าข้อมูล อปท. และผู้ตรวจ</span>
@@ -342,7 +342,7 @@ export default function Header({
                       setMenuOpen(false);
                       onChangePassword();
                     }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer font-medium"
+                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium"
                   >
                     <KeyRound className="w-3.5 h-3.5" />
                     <span>เปลี่ยนรหัสผ่านเข้าสู่ระบบ</span>
@@ -353,7 +353,7 @@ export default function Header({
                       setMenuOpen(false);
                       onLogout();
                     }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer font-semibold border-t border-slate-100 dark:border-slate-800"
+                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer font-semibold border-t border-stone-100 dark:border-stone-800"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>ออกจากระบบ / สลับบัญชี</span>

@@ -246,19 +246,19 @@ export default function ExecutiveDashboardView({
   return (
     <div className="space-y-6">
       {/* Executive Header Banner */}
-      <div className="bg-gradient-to-br from-blue-50/90 via-indigo-50/60 to-white dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden border border-blue-200/80 dark:border-blue-900/50">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-stone-100 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden border border-stone-800">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/80 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-400/30 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>แดชบอร์ดและรายงานภาพรวมสำหรับผู้บริหาร (Executive Governance Cockpit)</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
               แดชบอร์ดผู้บริหาร {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
               ติดตามสถานะความเสี่ยงองค์กร 5 สำนัก/กอง, วินัยการเงินการคลัง, กรอบเวลากฎหมายสำคัญ 
               และระบบสั่งการมอบหมายงานผู้บริหาร (Executive Directives)
             </p>
@@ -268,7 +268,7 @@ export default function ExecutiveDashboardView({
             <button
               type="button"
               onClick={() => setShowCreateDirectiveModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-sm shadow-blue-600/30 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>บันทึกข้อสั่งการผู้บริหาร</span>
@@ -276,72 +276,72 @@ export default function ExecutiveDashboardView({
             <button
               type="button"
               onClick={() => setCurrentTab && setCurrentTab('reporting')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-white/15 transition-all cursor-pointer shadow-xs"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold border border-stone-700 transition-all cursor-pointer shadow-xs"
             >
-              <FileText className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+              <FileText className="w-4 h-4 text-amber-400" />
               <span>รายงานสรุปประจำปี</span>
             </button>
           </div>
         </div>
 
         {/* 4 Financial & Governance KPI Highlights (ตารางสรุป 4 มิติสำคัญ) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-blue-200/60 dark:border-white/10">
-          <div className="bg-white/95 dark:bg-white/5 rounded-2xl p-4 border border-blue-200/80 dark:border-white/10 shadow-xs">
-            <div className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5 mb-1">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-stone-800">
+          <div className="bg-stone-850/80 rounded-2xl p-4 border border-stone-700/60 shadow-xs">
+            <div className="text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
+              <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
               <span>งบประมาณรวมทั้งสิ้น</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="text-xl sm:text-2xl font-bold text-white">
               {totalBudget > 0 ? (
                 <>
-                  {(totalBudget / 1000000).toFixed(2)} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">ลบ.</span>
+                  {(totalBudget / 1000000).toFixed(2)} <span className="text-xs font-normal text-stone-400">ลบ.</span>
                 </>
               ) : (
                 <>
-                  0.00 <span className="text-xs font-normal text-slate-500 dark:text-slate-400">บาท</span>
+                  0.00 <span className="text-xs font-normal text-stone-400">บาท</span>
                 </>
               )}
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <div className="text-[11px] text-stone-400 mt-1">
               {totalBudget > 0 ? 'ปีงบประมาณ พ.ศ. 2569' : 'รอการบันทึกงบประมาณ'}
             </div>
           </div>
 
-          <div className="bg-white/95 dark:bg-white/5 rounded-2xl p-4 border border-blue-200/80 dark:border-white/10 shadow-xs">
-            <div className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5 mb-1">
-              <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          <div className="bg-stone-850/80 rounded-2xl p-4 border border-stone-700/60 shadow-xs">
+            <div className="text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
               <span>การเบิกจ่ายงบประมาณ</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-300">
+            <div className="text-xl sm:text-2xl font-bold text-amber-400">
               {spentPercent}%
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <div className="text-[11px] text-stone-400 mt-1">
               {totalSpent > 0 ? `เบิกจ่าย ${(totalSpent / 1000000).toFixed(2)} ลบ.` : 'เบิกจ่าย 0.00 บาท'}
             </div>
           </div>
 
-          <div className="bg-white/95 dark:bg-white/5 rounded-2xl p-4 border border-blue-200/80 dark:border-white/10 shadow-xs">
-            <div className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5 mb-1">
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          <div className="bg-stone-850/80 rounded-2xl p-4 border border-stone-700/60 shadow-xs">
+            <div className="text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
               <span>ข้อทักท้วงคงค้าง (CAPA)</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-300">
-              {capaFindings.filter((c) => c.status !== 'verified_closed').length} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">ข้อ</span>
+            <div className="text-xl sm:text-2xl font-bold text-amber-400">
+              {capaFindings.filter((c) => c.status !== 'verified_closed').length} <span className="text-xs font-normal text-stone-400">ข้อ</span>
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <div className="text-[11px] text-stone-400 mt-1">
               {capaFindings.filter((c) => c.status !== 'verified_closed').length > 0 ? 'อยู่ในกรอบ 60 วัน' : 'ไม่มีข้อทักท้วงคงค้าง'}
             </div>
           </div>
 
-          <div className="bg-white/95 dark:bg-white/5 rounded-2xl p-4 border border-blue-200/80 dark:border-white/10 shadow-xs">
-            <div className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5 mb-1">
-              <Send className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+          <div className="bg-stone-850/80 rounded-2xl p-4 border border-stone-700/60 shadow-xs">
+            <div className="text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
+              <Send className="w-3.5 h-3.5 text-amber-400" />
               <span>ข้อสั่งการผู้บริหาร</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              {directives.filter((d) => d.status === 'in_progress').length} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">เรื่องรอดำเนินการ</span>
+            <div className="text-xl sm:text-2xl font-bold text-white">
+              {directives.filter((d) => d.status === 'in_progress').length} <span className="text-xs font-normal text-stone-400">เรื่องรอดำเนินการ</span>
             </div>
-            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
+            <div className="text-[11px] text-emerald-400 mt-1 font-medium">
               {directives.length > 0 ? `เสร็จสิ้น ${directives.filter((d) => d.status === 'completed').length} เรื่อง` : 'ไม่มีข้อสั่งการคงค้าง'}
             </div>
           </div>
@@ -456,14 +456,14 @@ export default function ExecutiveDashboardView({
       </div>
 
       {/* Tabs Switcher: Overview Scorecards vs. Executive Directives */}
-      <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+      <div className="flex items-center space-x-2 border-b border-stone-200 dark:border-stone-800 pb-2">
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
           className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
             activeTab === 'overview'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+              : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -475,8 +475,8 @@ export default function ExecutiveDashboardView({
           onClick={() => setActiveTab('directives')}
           className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
             activeTab === 'directives'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+              : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
           }`}
         >
           <Send className="w-4 h-4" />
@@ -489,21 +489,21 @@ export default function ExecutiveDashboardView({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+              <h3 className="text-sm font-bold text-stone-800 dark:text-stone-200">
                 ดัชนีชี้วัดการปฏิบัติตามระเบียบและระดับความเสี่ยง 5 ส่วนราชการ (Department Governance Scorecard)
               </h3>
-              <span className="text-xs text-slate-500">คลิกที่ส่วนราชการเพื่อเปิด Workspace เฉพาะทาง</span>
+              <span className="text-xs text-stone-500">คลิกที่ส่วนราชการเพื่อเปิด Workspace เฉพาะทาง</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
+              <div className="inline-flex rounded-xl bg-stone-100 dark:bg-stone-800 p-1 border border-stone-200 dark:border-stone-700">
                 <button
                   type="button"
                   onClick={() => setScorecardViewMode('table')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     scorecardViewMode === 'table'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-stone-850 text-amber-200 dark:bg-stone-700 dark:text-amber-300 shadow-2xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
                   }`}
                 >
                   <Table className="w-3.5 h-3.5" />
@@ -514,8 +514,8 @@ export default function ExecutiveDashboardView({
                   onClick={() => setScorecardViewMode('cards')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     scorecardViewMode === 'cards'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-stone-850 text-amber-200 dark:bg-stone-700 dark:text-amber-300 shadow-2xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
                   }`}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
@@ -526,10 +526,10 @@ export default function ExecutiveDashboardView({
           </div>
 
           {scorecardViewMode === 'table' ? (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                  <thead className="bg-slate-100/90 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700">
+                <table className="w-full text-left text-xs text-stone-600 dark:text-stone-400">
+                  <thead className="bg-stone-100/90 dark:bg-stone-800 text-stone-700 dark:text-stone-200 font-bold border-b border-stone-200 dark:border-stone-700">
                     <tr>
                       <th className="px-4 py-3.5">ส่วนราชการ (สำนัก/กอง)</th>
                       <th className="px-4 py-3.5">ผู้บังคับบัญชา / หัวหน้าส่วน</th>
@@ -541,7 +541,7 @@ export default function ExecutiveDashboardView({
                       <th className="px-4 py-3.5 text-center">พื้นที่ปฏิบัติงาน</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                     {departmentsData.map((dept) => {
                       const riskColor =
                         dept.riskTier === 'สูง'
@@ -550,23 +550,23 @@ export default function ExecutiveDashboardView({
                           ? 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50'
                           : dept.riskTier === 'ต่ำ'
                           ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900/50'
-                          : 'text-slate-600 bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700';
+                          : 'text-stone-600 bg-stone-50 border-stone-200 dark:bg-stone-800 dark:border-stone-700';
 
                       const riskLabel = dept.riskTier === 'รอการประเมิน' ? 'รอการประเมิน' : `เสี่ยง${dept.riskTier}`;
 
                       return (
                         <tr
                           key={dept.id}
-                          className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                          className="hover:bg-amber-50/40 dark:hover:bg-stone-800/50 transition-colors cursor-pointer group"
                           onClick={() => setCurrentTab && setCurrentTab(dept.tabKey)}
                         >
-                          <td className="px-4 py-3.5 font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors whitespace-nowrap">
+                          <td className="px-4 py-3.5 font-bold text-stone-900 dark:text-stone-100 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors whitespace-nowrap">
                             {dept.name}
                           </td>
-                          <td className="px-4 py-3.5 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                          <td className="px-4 py-3.5 text-stone-700 dark:text-stone-300 whitespace-nowrap">
                             <span className="font-semibold">{dept.head}</span>
                           </td>
-                          <td className="px-4 py-3.5 text-slate-600 dark:text-slate-400 max-w-xs">
+                          <td className="px-4 py-3.5 text-stone-600 dark:text-stone-400 max-w-xs">
                             {dept.keyArea}
                           </td>
                           <td className="px-3 py-3.5 text-center whitespace-nowrap">
@@ -576,13 +576,13 @@ export default function ExecutiveDashboardView({
                           </td>
                           <td className="px-4 py-3.5 text-center">
                             <div className="flex items-center gap-2 justify-center">
-                              <div className="w-20 bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                              <div className="w-20 bg-stone-100 dark:bg-stone-800 h-2 rounded-full overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${
                                     dept.complianceScore >= 90
                                       ? 'bg-emerald-500'
                                       : dept.complianceScore >= 80
-                                      ? 'bg-blue-500'
+                                      ? 'bg-amber-600'
                                       : dept.complianceScore > 0
                                       ? 'bg-amber-500'
                                       : 'bg-transparent'
@@ -590,12 +590,12 @@ export default function ExecutiveDashboardView({
                                   style={{ width: `${dept.complianceScore || 0}%` }}
                                 />
                               </div>
-                              <span className="font-bold text-xs text-slate-800 dark:text-slate-200 min-w-12 text-left">
+                              <span className="font-bold text-xs text-stone-800 dark:text-stone-200 min-w-12 text-left">
                                 {dept.complianceScore !== null && dept.complianceScore !== undefined ? `${dept.complianceScore}%` : 'รอประเมิน'}
                               </span>
                             </div>
                           </td>
-                          <td className="px-4 py-3.5 text-right font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                          <td className="px-4 py-3.5 text-right font-semibold text-stone-800 dark:text-stone-200 whitespace-nowrap">
                             {dept.budgetAllocated > 0 ? `${(dept.budgetAllocated / 1000000).toFixed(2)} ลบ.` : 'รอการบันทึก'}
                           </td>
                           <td className="px-3 py-3.5 text-center whitespace-nowrap">
@@ -604,7 +604,7 @@ export default function ExecutiveDashboardView({
                             </span>
                           </td>
                           <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
                               <span>เข้าหน้างาน</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </span>
@@ -626,7 +626,7 @@ export default function ExecutiveDashboardView({
                     ? 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50'
                     : dept.riskTier === 'ต่ำ'
                     ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900/50'
-                    : 'text-slate-600 bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700';
+                    : 'text-stone-600 bg-stone-50 border-stone-200 dark:bg-stone-800 dark:border-stone-700';
 
                 const riskLabel = dept.riskTier === 'รอการประเมิน' ? 'รอการประเมิน' : `เสี่ยง${dept.riskTier}`;
 
@@ -634,15 +634,15 @@ export default function ExecutiveDashboardView({
                   <div
                     key={dept.id}
                     onClick={() => setCurrentTab && setCurrentTab(dept.tabKey)}
-                    className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer flex flex-col justify-between group"
+                    className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all cursor-pointer flex flex-col justify-between group"
                   >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <div className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                          <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
                             {dept.head}
                           </div>
-                          <h4 className="font-bold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors">
+                          <h4 className="font-bold text-base text-stone-900 dark:text-stone-100 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
                             {dept.name}
                           </h4>
                         </div>
@@ -651,25 +651,25 @@ export default function ExecutiveDashboardView({
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-stone-500 dark:text-stone-400">
                         <strong>จุดเน้นตรวจ:</strong> {dept.keyArea}
                       </p>
 
                       {/* Progress Bar Score */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500">คะแนนความโปร่งใส/ระเบียบ:</span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200">
+                          <span className="text-stone-500">คะแนนความโปร่งใส/ระเบียบ:</span>
+                          <span className="font-bold text-stone-800 dark:text-stone-200">
                             {dept.complianceScore !== null && dept.complianceScore !== undefined ? `${dept.complianceScore}%` : 'รอการประเมิน'}
                           </span>
                         </div>
-                        <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-stone-100 dark:bg-stone-800 h-2 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
                               dept.complianceScore >= 90
                                 ? 'bg-emerald-500'
                                 : dept.complianceScore >= 80
-                                ? 'bg-blue-500'
+                                ? 'bg-amber-600'
                                 : dept.complianceScore > 0
                                 ? 'bg-amber-500'
                                 : 'bg-transparent'
@@ -680,15 +680,15 @@ export default function ExecutiveDashboardView({
                       </div>
 
                       {/* Budget & Issues Stats */}
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100 dark:border-stone-800 text-xs">
                         <div>
-                          <div className="text-slate-400 text-[11px]">งบประมาณจัดสรร</div>
-                          <div className="font-semibold text-slate-800 dark:text-slate-200">
+                          <div className="text-stone-400 text-[11px]">งบประมาณจัดสรร</div>
+                          <div className="font-semibold text-stone-800 dark:text-stone-200">
                             {dept.budgetAllocated > 0 ? `${(dept.budgetAllocated / 1000000).toFixed(2)} ลบ.` : 'รอการบันทึก'}
                           </div>
                         </div>
                         <div>
-                          <div className="text-slate-400 text-[11px]">ข้อทักท้วงคงค้าง</div>
+                          <div className="text-stone-400 text-[11px]">ข้อทักท้วงคงค้าง</div>
                           <div className={`font-semibold ${dept.openIssues > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                             {dept.openIssues > 0 ? `${dept.openIssues} ข้อ` : 'ไม่มีข้อตรวจพบ'}
                           </div>
@@ -696,7 +696,7 @@ export default function ExecutiveDashboardView({
                       </div>
                     </div>
 
-                    <div className="pt-4 flex items-center justify-between text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform">
+                    <div className="pt-4 flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:translate-x-1 transition-transform">
                       <span>เข้าสู่หน้างาน {dept.name}</span>
                       <ArrowRight className="w-4 h-4" />
                     </div>
@@ -712,14 +712,14 @@ export default function ExecutiveDashboardView({
       {activeTab === 'directives' && (
         <div className="space-y-4">
           {/* Directives Filter & Actions */}
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center space-x-2 w-full sm:w-auto">
-              <Filter className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">กรองตามส่วนราชการ:</span>
+              <Filter className="w-4 h-4 text-stone-400" />
+              <span className="text-xs font-semibold text-stone-600 dark:text-stone-400">กรองตามส่วนราชการ:</span>
               <select
                 value={selectedDeptFilter}
                 onChange={(e) => setSelectedDeptFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 font-bold"
+                className="px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-xs text-stone-900 dark:text-stone-100 font-bold"
               >
                 <option value="all">ทุกสำนัก/กอง ({directives.length})</option>
                 <option value="สำนักปลัด">สำนักปลัด (รวมงานสาธารณสุขฯ)</option>
@@ -733,7 +733,7 @@ export default function ExecutiveDashboardView({
             <button
               type="button"
               onClick={() => setShowCreateDirectiveModal(true)}
-              className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center space-x-1.5 px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>ออกข้อสั่งการใหม่</span>
@@ -748,8 +748,8 @@ export default function ExecutiveDashboardView({
                 d.status === 'completed'
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800'
                   : d.status === 'reported'
-                  ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:border-blue-800'
-                  : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800';
+                  ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800'
+                  : 'bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-800 dark:border-stone-700';
 
               const statusText =
                 d.status === 'completed'
@@ -761,15 +761,15 @@ export default function ExecutiveDashboardView({
               return (
                 <div
                   key={d.id}
-                  className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-slate-300 transition-all space-y-3"
+                  className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs hover:border-stone-300 dark:hover:border-stone-700 transition-all space-y-3"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded">
+                        <span className="font-mono text-xs font-bold text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200/60 dark:border-amber-900/40">
                           {d.code}
                         </span>
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
+                        <span className="text-xs font-bold text-stone-800 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 rounded-full">
                           มอบหมาย: {d.department}
                         </span>
                         <span
@@ -785,21 +785,21 @@ export default function ExecutiveDashboardView({
                           {statusText}
                         </span>
                       </div>
-                      <h4 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                      <h4 className="font-bold text-base text-stone-900 dark:text-stone-100">
                         {d.title}
                       </h4>
                     </div>
 
-                    <div className="text-xs text-slate-500 dark:text-slate-400 shrink-0 text-left sm:text-right">
-                      <div>ผู้สั่งการ: <strong className="text-slate-700 dark:text-slate-200">{d.issuer}</strong></div>
+                    <div className="text-xs text-stone-500 dark:text-stone-400 shrink-0 text-left sm:text-right">
+                      <div>ผู้สั่งการ: <strong className="text-stone-700 dark:text-stone-200">{d.issuer}</strong></div>
                       <div>กำหนดรายงาน: <strong className="text-rose-600 dark:text-rose-400">{d.dueDate}</strong></div>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60 leading-relaxed">
+                  <p className="text-xs text-stone-600 dark:text-stone-400 bg-stone-50 dark:bg-stone-950/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800/60 leading-relaxed">
                     <strong>สาระสำคัญ:</strong> {d.detail}
                     {d.legalRef && (
-                      <span className="block mt-1 text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
+                      <span className="block mt-1 text-[11px] text-amber-700 dark:text-amber-400 font-semibold">
                         อ้างอิง: {d.legalRef}
                       </span>
                     )}
@@ -817,8 +817,8 @@ export default function ExecutiveDashboardView({
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-                    <span className="text-slate-400">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 dark:border-stone-800 text-xs">
+                    <span className="text-stone-400">
                       สั่งการเมื่อ: {d.assignedDate}
                     </span>
 
@@ -827,7 +827,7 @@ export default function ExecutiveDashboardView({
                         <button
                           type="button"
                           onClick={() => handleUpdateStatus(d.id, 'reported')}
-                          className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold transition-colors cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 font-bold transition-colors cursor-pointer border border-amber-200/80 dark:border-amber-800/60"
                         >
                           บันทึกการรายงานผล
                         </button>
@@ -846,7 +846,7 @@ export default function ExecutiveDashboardView({
                       <button
                         type="button"
                         onClick={() => setSelectedDirectiveForView(d)}
-                        className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold transition-colors cursor-pointer flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold transition-colors cursor-pointer flex items-center gap-1 border border-stone-200/80 dark:border-stone-700"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>ดูรายละเอียด</span>
@@ -858,10 +858,10 @@ export default function ExecutiveDashboardView({
             })}
 
             {filteredDirectives.length === 0 && (
-              <div className="p-12 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-                <Send className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                <div className="font-bold text-sm text-slate-700 dark:text-slate-300">ไม่มีข้อสั่งการในส่วนราชการนี้</div>
-                <div className="text-xs text-slate-500">สามารถกดปุ่ม "ออกข้อสั่งการใหม่" เพื่อมอบหมายงานได้ทันที</div>
+              <div className="p-12 text-center text-stone-400 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800">
+                <Send className="w-8 h-8 mx-auto text-stone-300 dark:text-stone-600 mb-2" />
+                <div className="font-bold text-sm text-stone-700 dark:text-stone-300">ไม่มีข้อสั่งการในส่วนราชการนี้</div>
+                <div className="text-xs text-stone-500">สามารถกดปุ่ม "ออกข้อสั่งการใหม่" เพื่อมอบหมายงานได้ทันที</div>
               </div>
             )}
           </div>
@@ -870,17 +870,17 @@ export default function ExecutiveDashboardView({
 
       {/* Modal: ออกข้อสั่งการผู้บริหารใหม่ */}
       {showCreateDirectiveModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center space-x-2 text-slate-900 dark:text-slate-100 font-bold">
-                <Send className="w-5 h-5 text-blue-600" />
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-stone-900 w-full max-w-lg rounded-2xl shadow-2xl border border-stone-200/80 dark:border-stone-800 p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-200/80 dark:border-stone-800 pb-3">
+              <div className="flex items-center space-x-2 text-stone-900 dark:text-stone-100 font-bold">
+                <Send className="w-5 h-5 text-amber-700 dark:text-amber-400" />
                 <span>บันทึกข้อสั่งการและมอบหมายงานผู้บริหาร</span>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCreateDirectiveModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -888,7 +888,7 @@ export default function ExecutiveDashboardView({
 
             <form onSubmit={handleCreateDirective} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                   หัวข้อข้อสั่งการ / ภารกิจที่มอบหมาย <span className="text-rose-500">*</span>:
                 </label>
                 <input
@@ -897,19 +897,19 @@ export default function ExecutiveDashboardView({
                   placeholder="เช่น เร่งรัดติดตามการคืนเงินยืม หรือ สรุปรายงานพัสดุประจำปี ว 184"
                   value={newDirective.title}
                   onChange={(e) => setNewDirective({ ...newDirective, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-medium"
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-medium focus:ring-1 focus:ring-amber-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                     สำนัก/กอง ที่รับมอบหมาย:
                   </label>
                   <select
                     value={newDirective.department}
                     onChange={(e) => setNewDirective({ ...newDirective, department: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-bold"
                   >
                     <option value="สำนักปลัด">สำนักปลัด (รวมงานสาธารณสุขและสิ่งแวดล้อม)</option>
                     <option value="กองคลัง">กองคลัง</option>
@@ -920,13 +920,13 @@ export default function ExecutiveDashboardView({
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                     ระดับความเร่งด่วน:
                   </label>
                   <select
                     value={newDirective.urgency}
                     onChange={(e) => setNewDirective({ ...newDirective, urgency: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-bold"
                   >
                     <option value="urgent_high">⚡ ด่วนที่สุด</option>
                     <option value="urgent">ด่วนมาก</option>
@@ -937,7 +937,7 @@ export default function ExecutiveDashboardView({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                     กำหนดวันที่ต้องรายงานผล <span className="text-rose-500">*</span>:
                   </label>
                   <input
@@ -945,12 +945,12 @@ export default function ExecutiveDashboardView({
                     required
                     value={newDirective.dueDate}
                     onChange={(e) => setNewDirective({ ...newDirective, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-bold"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                     ระเบียบ/กฎหมายที่อ้างอิง:
                   </label>
                   <input
@@ -958,13 +958,13 @@ export default function ExecutiveDashboardView({
                     placeholder="เช่น ระเบียบ มท. รับจ่ายเงิน 2566"
                     value={newDirective.legalRef}
                     onChange={(e) => setNewDirective({ ...newDirective, legalRef: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
                   รายละเอียดและแนวทางสั่งการ:
                 </label>
                 <textarea
@@ -972,21 +972,21 @@ export default function ExecutiveDashboardView({
                   placeholder="ระบุข้อกำหนด ผลผลิตที่ต้องการ และแนวทางที่ให้ส่วนราชการดำเนินการ..."
                   value={newDirective.detail}
                   onChange={(e) => setNewDirective({ ...newDirective, detail: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-200/80 dark:border-stone-800">
                 <button
                   type="button"
                   onClick={() => setShowCreateDirectiveModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold"
+                  className="px-4 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold shadow-xs cursor-pointer"
                 >
                   บันทึกข้อสั่งการ
                 </button>
@@ -998,44 +998,44 @@ export default function ExecutiveDashboardView({
 
       {/* Modal: ดูรายละเอียดข้อสั่งการ */}
       {selectedDirectiveForView && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center space-x-2 text-slate-900 dark:text-slate-100 font-bold">
-                <Eye className="w-5 h-5 text-blue-600" />
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-stone-900 w-full max-w-lg rounded-2xl shadow-2xl border border-stone-200/80 dark:border-stone-800 p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-200/80 dark:border-stone-800 pb-3">
+              <div className="flex items-center space-x-2 text-stone-900 dark:text-stone-100 font-bold">
+                <Eye className="w-5 h-5 text-amber-700 dark:text-amber-400" />
                 <span>รายละเอียดข้อสั่งการ ({selectedDirectiveForView.code})</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedDirectiveForView(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl space-y-1">
-                <div className="text-slate-400 text-[11px]">หัวข้อข้อสั่งการ:</div>
-                <div className="font-bold text-sm text-slate-900 dark:text-slate-100">
+              <div className="p-3 bg-stone-50 dark:bg-stone-950 rounded-xl space-y-1">
+                <div className="text-stone-400 text-[11px]">หัวข้อข้อสั่งการ:</div>
+                <div className="font-bold text-sm text-stone-900 dark:text-stone-100">
                   {selectedDirectiveForView.title}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl">
-                  <span className="text-slate-400 block text-[11px]">ผู้รับมอบหมาย:</span>
-                  <strong className="text-blue-700 dark:text-blue-400">{selectedDirectiveForView.department}</strong>
+                <div className="p-2.5 bg-stone-50 dark:bg-stone-950 rounded-xl">
+                  <span className="text-stone-400 block text-[11px]">ผู้รับมอบหมาย:</span>
+                  <strong className="text-amber-800 dark:text-amber-400">{selectedDirectiveForView.department}</strong>
                 </div>
-                <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl">
-                  <span className="text-slate-400 block text-[11px]">กำหนดรายงาน:</span>
+                <div className="p-2.5 bg-stone-50 dark:bg-stone-950 rounded-xl">
+                  <span className="text-stone-400 block text-[11px]">กำหนดรายงาน:</span>
                   <strong className="text-rose-600 dark:text-rose-400">{selectedDirectiveForView.dueDate}</strong>
                 </div>
               </div>
 
               <div className="space-y-1">
-                <div className="text-slate-500 font-bold">รายละเอียดข้อสั่งการ:</div>
-                <p className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl text-slate-700 dark:text-slate-300 leading-relaxed">
+                <div className="text-stone-500 font-bold">รายละเอียดข้อสั่งการ:</div>
+                <p className="p-3 bg-stone-50 dark:bg-stone-950 rounded-xl text-stone-700 dark:text-stone-300 leading-relaxed">
                   {selectedDirectiveForView.detail}
                 </p>
               </div>
@@ -1054,11 +1054,11 @@ export default function ExecutiveDashboardView({
               )}
             </div>
 
-            <div className="flex items-center justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-end pt-3 border-t border-stone-200/80 dark:border-stone-800">
               <button
                 type="button"
                 onClick={() => setSelectedDirectiveForView(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs cursor-pointer"
               >
                 ปิดหน้าต่าง
               </button>

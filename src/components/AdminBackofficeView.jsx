@@ -262,20 +262,20 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
       )}
 
       {/* Top Header & Role Indicator */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-indigo-800/40 relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 px-3 py-1 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
               <ShieldAlert className="w-3.5 h-3.5" />
               <span>SUPER ADMIN CONSOLE</span>
-              <span className="text-white">●</span>
+              <span className="text-amber-400">●</span>
               <span>ระบบหลังบ้านควบคุมส่วนกลาง</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               ระบบหลังบ้านจัดการสมาชิก & ค่าบริการ (Audit-OS)
             </h1>
-            <p className="text-indigo-200/80 text-sm max-w-2xl">
+            <p className="text-stone-300 text-sm max-w-2xl">
               ควบคุมดูแลสมาชิกผู้ตรวจสอบภายใน อปท. ทั่วประเทศ อนุมัติการเข้าใช้งาน ตรวจสอบการชำระค่าสมาชิกรายเดือน/รายปี และกำหนดทิศทางระบบกลาง
             </p>
           </div>
@@ -284,18 +284,18 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
             {onSwitchToWorkbench && (
               <button
                 onClick={onSwitchToWorkbench}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center space-x-2 cursor-pointer"
+                className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center space-x-2 cursor-pointer border border-amber-600/30"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>เข้าสู่พื้นที่ทำงานตรวจสอบ (Workbench)</span>
               </button>
             )}
             <button
               onClick={reloadData}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center space-x-1.5 cursor-pointer border border-slate-700"
+              className="bg-stone-800 hover:bg-stone-700 text-stone-200 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-700"
               title="รีเฟรชข้อมูล"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4 text-amber-400" />
               <span>รีเฟรช</span>
             </button>
           </div>
@@ -304,19 +304,19 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
 
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center shrink-0">
+        <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-center shrink-0">
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">สมาชิกตรวจสอบภายในทั้งหมด</div>
-            <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{metrics.totalAuditors} <span className="text-xs font-normal text-slate-500">ท่าน</span></div>
+            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">สมาชิกตรวจสอบภายในทั้งหมด</div>
+            <div className="text-2xl font-black text-stone-800 dark:text-stone-100">{metrics.totalAuditors} <span className="text-xs font-normal text-stone-500">ท่าน</span></div>
             <div className="text-[11px] text-emerald-600 font-medium">ใช้งานอยู่ {metrics.activeAuditors} ท่าน</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 flex items-center justify-center shrink-0 relative">
+        <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-center shrink-0 relative">
             <Clock className="w-6 h-6" />
             {metrics.pendingCount > 0 && (
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
@@ -325,45 +325,45 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
             )}
           </div>
           <div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">คำขอสมัครสมาชิกรออนุมัติ</div>
-            <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{metrics.pendingCount} <span className="text-xs font-normal text-slate-500">รายการ</span></div>
-            <div className="text-[11px] text-slate-500">รอเปิดสิทธิ์การใช้งาน</div>
+            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">คำขอสมัครสมาชิกรออนุมัติ</div>
+            <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{metrics.pendingCount} <span className="text-xs font-normal text-stone-500">รายการ</span></div>
+            <div className="text-[11px] text-stone-500">รอเปิดสิทธิ์การใช้งาน</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center space-x-4">
+        <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center space-x-4">
           <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 flex items-center justify-center shrink-0">
             <BadgeAlert className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">สมาชิกใกล้หมดอายุ (&lt; 7 วัน)</div>
-            <div className="text-2xl font-black text-rose-600 dark:text-rose-400">{metrics.expiringSoonCount} <span className="text-xs font-normal text-slate-500">ท่าน</span></div>
-            <div className="text-[11px] text-slate-500">ต้องแจ้งเตือนต่ออายุ</div>
+            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">สมาชิกใกล้หมดอายุ (&lt; 7 วัน)</div>
+            <div className="text-2xl font-black text-rose-600 dark:text-rose-400">{metrics.expiringSoonCount} <span className="text-xs font-normal text-stone-500">ท่าน</span></div>
+            <div className="text-[11px] text-stone-500">ต้องแจ้งเตือนต่ออายุ</div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center space-x-4">
+        <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center space-x-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center shrink-0">
             <DollarSign className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">รายได้สะสมค่าบริการ</div>
+            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">รายได้สะสมค่าบริการ</div>
             <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
               ฿{metrics.totalRevenue.toLocaleString()}
             </div>
-            <div className="text-[11px] text-slate-500">จาก {payments.length} รายการรับชำระ</div>
+            <div className="text-[11px] text-stone-500">จาก {payments.length} รายการรับชำระ</div>
           </div>
         </div>
       </div>
 
       {/* Main Tab Navigation */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-1.5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap gap-1">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-1.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap gap-1">
         <button
           onClick={() => setActiveTab('pending')}
           className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'pending'
-              ? 'bg-amber-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
           <Clock className="w-4 h-4" />
@@ -377,8 +377,8 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
           onClick={() => setActiveTab('members')}
           className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'members'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -389,8 +389,8 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
           onClick={() => setActiveTab('billing')}
           className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'billing'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
           <CreditCard className="w-4 h-4" />
@@ -401,8 +401,8 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
           onClick={() => setActiveTab('settings')}
           className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'settings'
-              ? 'bg-slate-800 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
           <Settings className="w-4 h-4" />

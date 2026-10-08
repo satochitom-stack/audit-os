@@ -174,20 +174,20 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
       )}
 
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-blue-700/40 relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 bg-blue-500/20 text-blue-200 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
               <BookOpen className="w-3.5 h-3.5" />
               <span>CENTRAL KNOWLEDGE & DOCUMENT REPOSITORY</span>
-              <span className="text-white">●</span>
+              <span className="text-amber-400">●</span>
               <span>แชร์ใช้งานร่วมกันทุก อปท.</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               คลังเอกสารกลาง & ฐานความรู้ผู้ตรวจสอบภายใน อปท.
             </h1>
-            <p className="text-blue-100/80 text-sm max-w-3xl">
+            <p className="text-stone-300 text-sm max-w-3xl">
               รวบรวมระเบียบ กฎหมาย หนังสือสั่งการ ว. กรมบัญชีกลาง/มท., สไลด์หลักสูตรทอง 2569, รวม 30 ข้อทักท้วง สตง., และต้นแบบกระดาษทำการ 6 ภารกิจหลัก พร้อมคัดลอกลงในพื้นที่ทำงานของท่านได้ในคลิกเดียว
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
           {isAdmin && (
             <button
               onClick={() => setShowAddDocModal(true)}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md flex items-center space-x-2 cursor-pointer self-start md:self-auto shrink-0"
+              className="bg-amber-700 hover:bg-amber-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md flex items-center space-x-2 cursor-pointer self-start md:self-auto shrink-0 border border-amber-600/30"
             >
               <Plus className="w-4 h-4" />
               <span>+ เพิ่มเอกสารในคลังกลาง (ADMIN)</span>
@@ -205,7 +205,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
       </div>
 
       {/* Category Pills & Search Bar */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-1.5">
@@ -225,16 +225,16 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   }}
                   className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                     isSelected
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
                   }`}
                 >
                   <span>{cat.label}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                       isSelected
-                        ? 'bg-blue-800 text-white'
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        ? 'bg-stone-700 text-amber-300'
+                        : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300'
                     }`}
                   >
                     {count}
@@ -246,18 +246,18 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
           {/* Search Box */}
           <div className="relative min-w-[260px]">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
             <input
               type="text"
               placeholder="ค้นหาชื่อเรื่อง, ระเบียบ, รหัส..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-8 py-2 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-800 dark:text-stone-100"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+                className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-600"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -266,9 +266,9 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         </div>
 
         {/* Quick Tags */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-          <span className="text-slate-400 font-semibold flex items-center space-x-1 mr-1">
-            <Tag className="w-3 h-3" />
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-stone-100 dark:border-stone-800 text-[11px]">
+          <span className="text-stone-400 font-semibold flex items-center space-x-1 mr-1">
+            <Tag className="w-3 h-3 text-amber-700 dark:text-amber-400" />
             <span>แท็กยอดนิยม:</span>
           </span>
           {allTags.map((tag) => (
@@ -277,8 +277,8 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)}
               className={`px-2.5 py-0.5 rounded-lg border transition-all cursor-pointer ${
                 selectedTag === tag
-                  ? 'bg-blue-500 text-white border-blue-600 font-bold'
-                  : 'bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-400'
+                  ? 'bg-amber-700 text-white border-amber-800 font-bold'
+                  : 'bg-stone-50 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 border-stone-200/80 dark:border-stone-700 hover:border-amber-400'
               }`}
             >
               #{tag}
@@ -302,30 +302,30 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
           const isCurriculum = doc.category === 'curriculum-2569';
           const isQA = doc.category === 'qa-findings';
 
-          let cardAccent = 'border-slate-200 dark:border-slate-800 hover:border-blue-500';
-          if (isWorkingPaper) cardAccent = 'border-amber-200 dark:border-amber-900/60 hover:border-amber-500';
-          if (isCurriculum) cardAccent = 'border-indigo-200 dark:border-indigo-900/60 hover:border-indigo-500';
-          if (isQA) cardAccent = 'border-rose-200 dark:border-rose-900/60 hover:border-rose-500';
+          let cardAccent = 'border-stone-200/80 dark:border-stone-800 hover:border-amber-500';
+          if (isWorkingPaper) cardAccent = 'border-amber-200/80 dark:border-amber-900/60 hover:border-amber-500';
+          if (isCurriculum) cardAccent = 'border-stone-300 dark:border-stone-700 hover:border-amber-500';
+          if (isQA) cardAccent = 'border-amber-300/80 dark:border-amber-800/60 hover:border-amber-500';
 
           return (
             <div
               key={doc.id}
-              className={`bg-white dark:bg-slate-900 rounded-3xl p-5 border ${cardAccent} shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4`}
+              className={`bg-white dark:bg-stone-900 rounded-3xl p-5 border ${cardAccent} shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4`}
             >
               <div className="space-y-3">
                 {/* Card Top: Code & FileType */}
                 <div className="flex items-start justify-between gap-2">
-                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
                     {doc.code}
                   </span>
                   <div className="flex items-center space-x-1.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/40">
                       {doc.fileType} {doc.fileSize ? `(${doc.fileSize})` : ''}
                     </span>
                     {isAdmin && (
                       <button
                         onClick={() => handleDeleteDoc(doc.id, doc.title)}
-                        className="text-slate-400 hover:text-rose-500 p-1 rounded-md transition-colors"
+                        className="text-stone-400 hover:text-rose-500 p-1 rounded-md transition-colors"
                         title="ลบเอกสาร"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -336,13 +336,13 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
                 {/* Title & Topic */}
                 <div className="space-y-1">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug">
+                  <h3 className="font-bold text-sm text-stone-900 dark:text-stone-100 line-clamp-2 leading-snug">
                     {doc.title}
                   </h3>
-                  <div className="text-xs text-blue-700 dark:text-blue-400 font-medium line-clamp-1">
+                  <div className="text-xs text-amber-800 dark:text-amber-400 font-medium line-clamp-1">
                     {doc.topic}
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center space-x-1">
+                  <div className="text-[11px] text-stone-400 flex items-center space-x-1">
                     <Building className="w-3 h-3" />
                     <span>{doc.organization}</span>
                     {doc.year && <span>({doc.year})</span>}
@@ -350,7 +350,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                 </div>
 
                 {/* Summary */}
-                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                <p className="text-xs text-stone-600 dark:text-stone-300 line-clamp-3 leading-relaxed">
                   {doc.summary}
                 </p>
 
@@ -360,7 +360,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                     {doc.tags.slice(0, 3).map((t) => (
                       <span
                         key={t}
-                        className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-md"
+                        className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-500 px-2 py-0.5 rounded-md"
                       >
                         #{t}
                       </span>
@@ -370,19 +370,19 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               </div>
 
               {/* Card Footer Actions */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center space-x-2">
+              <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center space-x-2">
                 <button
                   onClick={() => setPreviewDoc(doc)}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1 cursor-pointer"
+                  className="flex-1 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1 cursor-pointer"
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  <Eye className="w-3.5 h-3.5 text-stone-500" />
                   <span>ดูเนื้อหา</span>
                 </button>
 
                 {isWorkingPaper && (
                   <button
                     onClick={() => handleCloneWorkingPaper(doc)}
-                    className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
+                    className="bg-amber-700 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
                     title="คัดลอกลงในกระดาษทำการของฉัน"
                   >
                     <ClipboardCheck className="w-3.5 h-3.5" />
@@ -392,7 +392,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
                 <button
                   onClick={() => handleCopyText(doc.id, doc.fullContent || doc.summary)}
-                  className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all cursor-pointer"
+                  className="p-2 rounded-xl border border-stone-200/80 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-all cursor-pointer"
                   title="คัดลอกเนื้อหา"
                 >
                   {copiedId === doc.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -413,46 +413,46 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
       {/* FULL PREVIEW MODAL */}
       {previewDoc && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-stone-200/80 dark:border-stone-800 shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4 bg-slate-50/50 dark:bg-slate-800/50">
+            <div className="p-6 border-b border-stone-100 dark:border-stone-800 flex items-start justify-between gap-4 bg-stone-50/50 dark:bg-stone-850/50">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                  <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300">
                     {previewDoc.code}
                   </span>
-                  <span className="text-xs text-slate-400">{previewDoc.organization} ({previewDoc.year})</span>
+                  <span className="text-xs text-stone-400">{previewDoc.organization} ({previewDoc.year})</span>
                 </div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 leading-snug">
                   {previewDoc.title}
                 </h2>
-                <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                <div className="text-xs text-amber-800 dark:text-amber-400 font-medium">
                   {previewDoc.topic}
                 </div>
               </div>
 
               <button
                 onClick={() => setPreviewDoc(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="text-stone-400 hover:text-stone-600 p-1.5 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 dark:text-slate-300 custom-scrollbar leading-relaxed">
+            <div className="p-6 overflow-y-auto space-y-5 text-xs text-stone-700 dark:text-stone-300 custom-scrollbar leading-relaxed">
               <div className="space-y-2">
-                <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">สาระสำคัญโดยสรุป</h4>
-                <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 text-slate-800 dark:text-slate-200">
+                <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">สาระสำคัญโดยสรุป</h4>
+                <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-stone-800 dark:text-stone-200">
                   {previewDoc.summary}
                 </div>
               </div>
 
               {previewDoc.keyPoints && previewDoc.keyPoints.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">ประเด็นสำคัญที่ต้องตรวจสอบ (Key Checkpoints)</h4>
-                  <ul className="space-y-1.5 list-disc list-inside bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                  <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">ประเด็นสำคัญที่ต้องตรวจสอบ (Key Checkpoints)</h4>
+                  <ul className="space-y-1.5 list-disc list-inside bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700">
                     {previewDoc.keyPoints.map((point, idx) => (
                       <li key={idx} className="leading-relaxed">{point}</li>
                     ))}
@@ -461,19 +461,19 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               )}
 
               <div className="space-y-2">
-                <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">เนื้อหา / แนวทางปฏิบัติงานฉบับเต็ม</h4>
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-sans whitespace-pre-line leading-relaxed text-slate-700 dark:text-slate-300">
+                <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">เนื้อหา / แนวทางปฏิบัติงานฉบับเต็ม</h4>
+                <div className="p-4 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 font-sans whitespace-pre-line leading-relaxed text-stone-700 dark:text-stone-300">
                   {previewDoc.fullContent || previewDoc.summary}
                 </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-wrap items-center justify-between gap-3">
+            <div className="p-4 border-t border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-850/50 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => handleCopyText(previewDoc.id, previewDoc.fullContent || previewDoc.summary)}
-                  className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                  className="bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 text-stone-800 dark:text-stone-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
                 >
                   <Copy className="w-3.5 h-3.5" />
                   <span>คัดลอกข้อความ</span>
@@ -487,7 +487,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                       handleCloneWorkingPaper(previewDoc);
                       setPreviewDoc(null);
                     }}
-                    className="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md flex items-center space-x-1.5 cursor-pointer"
+                    className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md flex items-center space-x-1.5 cursor-pointer"
                   >
                     <ClipboardCheck className="w-4 h-4" />
                     <span>นำเข้ากระดาษทำการของฉันทันที</span>
@@ -495,7 +495,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                 )}
                 <button
                   onClick={() => setPreviewDoc(null)}
-                  className="bg-slate-800 text-white hover:bg-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer"
+                  className="bg-stone-800 text-white hover:bg-stone-700 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer"
                 >
                   ปิดหน้าต่าง
                 </button>

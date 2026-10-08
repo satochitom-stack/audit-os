@@ -79,19 +79,19 @@ export default function AnnualAuditReportView({
       )}
 
       {/* Action Bar (no-print) */}
-      <div className="no-print bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="no-print bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 rounded-md">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-2 py-0.5 rounded-md">
               Sprint 4: Enterprise Report Engine
             </span>
-            <span className="text-xs text-slate-400">• ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            <span className="text-xs text-stone-500 dark:text-stone-400">• ปีงบประมาณ พ.ศ. {selectedYear}</span>
           </div>
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mt-1 flex items-center space-x-2">
-            <FileText className="w-4 h-4 text-blue-600" />
+          <h2 className="text-base font-bold text-stone-800 dark:text-stone-100 mt-1 flex items-center space-x-2">
+            <FileText className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             <span>รายงานผลการตรวจสอบภายในประจำปีงบประมาณ (Annual Audit Report)</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
             เอกสารสรุปผลการตรวจสอบครบวงจรตามแบบฟอร์มมาตรฐานราชการ พร้อมพิมพ์หนังสือนำส่งและส่งออก Excel
           </p>
         </div>
@@ -109,7 +109,7 @@ export default function AnnualAuditReportView({
           <button
             type="button"
             onClick={() => window.print()}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-stone-900 hover:bg-stone-800 dark:bg-amber-700 dark:hover:bg-amber-600 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>พิมพ์รายงาน / บันทึกเป็น PDF</span>
@@ -118,14 +118,14 @@ export default function AnnualAuditReportView({
       </div>
 
       {/* Toggles for display (no-print) */}
-      <div className="no-print bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-300">
-        <span className="font-bold text-slate-700 dark:text-slate-200">ตัวเลือกการแสดงผลส่วนรายงาน:</span>
+      <div className="no-print bg-stone-50/80 dark:bg-stone-900/60 p-3.5 rounded-xl border border-stone-200/80 dark:border-stone-800 flex flex-wrap items-center gap-4 text-xs font-medium text-stone-600 dark:text-stone-300">
+        <span className="font-bold text-stone-800 dark:text-stone-200">ตัวเลือกการแสดงผลส่วนรายงาน:</span>
         <label className="flex items-center space-x-1.5 cursor-pointer">
           <input
             type="checkbox"
             checked={showCoverMemo}
             onChange={(e) => setShowCoverMemo(e.target.checked)}
-            className="rounded text-blue-600"
+            className="rounded accent-amber-700"
           />
           <span>หนังสือนำส่ง / บันทึกข้อความ</span>
         </label>
@@ -134,7 +134,7 @@ export default function AnnualAuditReportView({
             type="checkbox"
             checked={showExecSummary}
             onChange={(e) => setShowExecSummary(e.target.checked)}
-            className="rounded text-blue-600"
+            className="rounded accent-amber-700"
           />
           <span>บทสรุปสำหรับผู้บริหาร</span>
         </label>
@@ -143,7 +143,7 @@ export default function AnnualAuditReportView({
             type="checkbox"
             checked={showDeptDetails}
             onChange={(e) => setShowDeptDetails(e.target.checked)}
-            className="rounded text-blue-600"
+            className="rounded accent-amber-700"
           />
           <span>ผลการตรวจรายกอง</span>
         </label>
@@ -152,7 +152,7 @@ export default function AnnualAuditReportView({
             type="checkbox"
             checked={showCapaTable}
             onChange={(e) => setShowCapaTable(e.target.checked)}
-            className="rounded text-blue-600"
+            className="rounded accent-amber-700"
           />
           <span>ตารางติดตามข้อทักท้วง (CAPA)</span>
         </label>
@@ -161,7 +161,7 @@ export default function AnnualAuditReportView({
             type="checkbox"
             checked={showControlEvaluation}
             onChange={(e) => setShowControlEvaluation(e.target.checked)}
-            className="rounded text-blue-600"
+            className="rounded accent-amber-700"
           />
           <span>การควบคุมภายในภาพรวม</span>
         </label>
@@ -243,45 +243,45 @@ export default function AnnualAuditReportView({
         ======================================================================= */}
         {showExecSummary && (
           <section className="space-y-4">
-            <div className="flex items-center space-x-2 border-b border-blue-500/40 pb-2">
-              <span className="text-base font-black text-slate-900 dark:text-slate-100">
+            <div className="flex items-center space-x-2 border-b border-amber-600/30 pb-2">
+              <span className="text-base font-black text-stone-900 dark:text-stone-100">
                 ส่วนที่ 1: บทสรุปสำหรับผู้บริหาร (Executive Summary)
               </span>
             </div>
 
             {/* Metric Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-0.5">
-                <div className="text-[11px] text-slate-500 font-medium">แผนการตรวจสอบ</div>
-                <div className="text-xl font-black text-blue-600 dark:text-blue-400">{totalPlans} กิจกรรม</div>
+              <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-700 text-center space-y-0.5">
+                <div className="text-[11px] text-stone-500 font-medium">แผนการตรวจสอบ</div>
+                <div className="text-xl font-black text-amber-700 dark:text-amber-400">{totalPlans} กิจกรรม</div>
                 <div className="text-[10px] text-emerald-600 font-bold">ดำเนินการตรวจ 100%</div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-0.5">
-                <div className="text-[11px] text-slate-500 font-medium">กระดาษทำการที่จัดทำ</div>
-                <div className="text-xl font-black text-slate-900 dark:text-slate-100">{totalWp} เรื่อง</div>
+              <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-700 text-center space-y-0.5">
+                <div className="text-[11px] text-stone-500 font-medium">กระดาษทำการที่จัดทำ</div>
+                <div className="text-xl font-black text-stone-900 dark:text-stone-100">{totalWp} เรื่อง</div>
                 <div className="text-[10px] text-purple-600 font-bold">สุ่มตรวจหลักฐานครบถ้วน</div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-0.5">
-                <div className="text-[11px] text-slate-500 font-medium">ข้อตรวจพบ/ทักท้วง (CAPA)</div>
+              <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-700 text-center space-y-0.5">
+                <div className="text-[11px] text-stone-500 font-medium">ข้อตรวจพบ/ทักท้วง (CAPA)</div>
                 <div className="text-xl font-black text-amber-600 dark:text-amber-400">{totalCapa} ประเด็น</div>
-                <div className="text-[10px] text-slate-500">รวม สตง. & ตรวจสอบภายใน</div>
+                <div className="text-[10px] text-stone-500">รวม สตง. & ตรวจสอบภายใน</div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-0.5">
-                <div className="text-[11px] text-slate-500 font-medium">ความสำเร็จการแก้ไข (CAPA)</div>
+              <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-700 text-center space-y-0.5">
+                <div className="text-[11px] text-stone-500 font-medium">ความสำเร็จการแก้ไข (CAPA)</div>
                 <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{complianceRate}%</div>
                 <div className="text-[10px] text-emerald-600 font-bold">ยุติแล้ว {closedCapa} จาก {totalCapa} เรื่อง</div>
               </div>
             </div>
 
-            <div className="bg-blue-50/60 dark:bg-blue-950/30 p-4 rounded-2xl border border-blue-200 dark:border-blue-900 space-y-2 text-xs">
-              <div className="font-bold text-blue-900 dark:text-blue-200 flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+            <div className="bg-amber-50/60 dark:bg-amber-950/30 p-4 rounded-2xl border border-amber-200/80 dark:border-amber-900/40 space-y-2 text-xs">
+              <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                 <span>ผลการประเมินภาพรวมของผู้ตรวจสอบภายใน:</span>
               </div>
-              <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
+              <p className="text-stone-700 dark:text-stone-300 leading-relaxed text-justify">
                 ในภาพรวมปีงบประมาณ พ.ศ. {selectedYear} การบริหารจัดการและการปฏิบัติงานของ {orgName} มีระบบการควบคุมภายในที่เพียงพอและเป็นที่น่าพอใจในระดับหนึ่ง โดยหน่วยรับตรวจส่วนใหญ่ได้ให้ความร่วมมือและปฏิบัติตามกฎหมาย ระเบียบ ข้อบังคับของทางราชการ อย่างไรก็ดี ยังพบข้อบกพร่องที่ต้องได้รับการกวดขันและปรับปรุงอย่างต่อเนื่อง ได้แก่ การกำกับควบคุมการใช้รถยนต์ส่วนกลางและใบสั่งจ่ายน้ำมันของสำนักปลัด, การเร่งรัดติดตามลูกหนี้เงินยืมทดรองราชการและการคิดค่าปรับสัญญาพัสดุของกองคลัง, และการรอผลทดสอบความแข็งแรงของคอนกรีต 28 วันก่อนตรวจรับงานของกองช่าง
               </p>
             </div>
@@ -323,13 +323,13 @@ export default function AnnualAuditReportView({
             </div>
 
             {/* 3.1 สำนักปลัด */}
-            <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-4 sm:p-5 space-y-3 bg-slate-50/50 dark:bg-slate-950/40">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-                <span className="font-bold text-sm text-blue-900 dark:text-blue-300 flex items-center space-x-2">
-                  <Building className="w-4 h-4 text-blue-600" />
+            <div className="border border-stone-200/80 dark:border-stone-700 rounded-2xl p-4 sm:p-5 space-y-3 bg-stone-50/50 dark:bg-stone-900/40">
+              <div className="flex items-center justify-between border-b border-stone-200/80 dark:border-stone-800 pb-2">
+                <span className="font-bold text-sm text-stone-800 dark:text-stone-200 flex items-center space-x-2">
+                  <Building className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                   <span>3.1 สำนักปลัด (Office of the Municipal Clerk)</span>
                 </span>
-                <span className="text-[11px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded font-bold">
+                <span className="text-[11px] bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-2 py-0.5 rounded font-bold">
                   ระดับความเสี่ยง: ปานกลาง
                 </span>
               </div>
@@ -429,7 +429,7 @@ export default function AnnualAuditReportView({
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {capaFindings.map((c) => (
                     <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                      <td className="p-2 font-mono font-bold text-blue-600 dark:text-blue-400">{c.id}</td>
+                      <td className="p-2 font-mono font-bold text-amber-800 dark:text-amber-300">{c.id}</td>
                       <td className="p-2">{c.sourceName || (c.source === 'oag' ? 'สตง.' : 'หน่วยตรวจสอบ')}</td>
                       <td className="p-2">{c.department}</td>
                       <td className="p-2 font-medium">{c.title}</td>

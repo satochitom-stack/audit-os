@@ -93,27 +93,27 @@ export default function ClosingMeetingView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-teal-700 via-emerald-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden print:hidden">
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden print:hidden">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
               <Calendar className="w-3.5 h-3.5" />
               <span>ขั้นตอนที่ 7 ของกระบวนการตรวจสอบภายใน อปท.</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               การประชุมปิดการตรวจสอบ (Closing Meeting)
             </h1>
-            <p className="text-emerald-100/80 text-xs sm:text-sm max-w-2xl">
+            <p className="text-stone-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
               การสรุปข้อตรวจพบเบื้องต้น รับฟังข้อเท็จจริงและคำชี้แจงจากหน่วยรับตรวจ และตกลงแนวทางแก้ไขร่วมกันก่อนจัดทำรายงานผลการตรวจสอบฉบับสมบูรณ์เสนอผู้บริหาร
             </p>
           </div>
 
-          <div className="flex items-center space-x-2 self-start sm:self-auto">
+          <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
             <button
               onClick={handlePrint}
-              className="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-white/20 shadow-sm"
+              className="bg-stone-800 hover:bg-stone-750 text-stone-200 border border-stone-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-4 h-4 text-stone-300" />
               <span>พิมพ์รายงานการประชุมปิด</span>
             </button>
           </div>
@@ -121,15 +121,15 @@ export default function ClosingMeetingView({
       </div>
 
       {/* Select Project Bar */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between gap-4 print:hidden">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between gap-4 print:hidden">
         <div className="flex items-center space-x-3">
-          <label className="text-xs font-bold text-slate-600 dark:text-slate-300 shrink-0">
+          <label className="text-xs font-bold text-stone-600 dark:text-stone-300 shrink-0">
             เลือกโครงการตรวจสอบ:
           </label>
           <select
             value={selectedPlanId}
             onChange={(e) => setSelectedPlanId(e.target.value)}
-            className="text-xs p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold max-w-md"
+            className="text-xs p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold max-w-md text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
           >
             {annualPlans.map((p) => (
               <option key={p.id} value={p.id}>

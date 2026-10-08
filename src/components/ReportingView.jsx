@@ -279,14 +279,14 @@ export default function ReportingView({
       )}
 
       {/* Sub-navigation tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-3">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab('annual-report')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'annual-report'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -297,8 +297,8 @@ export default function ReportingView({
             onClick={() => setActiveTab('report')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'report'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -309,8 +309,8 @@ export default function ReportingView({
             onClick={() => setActiveTab('exit')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'exit'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
@@ -321,8 +321,8 @@ export default function ReportingView({
             onClick={() => setActiveTab('capa')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'capa'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
@@ -336,7 +336,7 @@ export default function ReportingView({
             <select
               value={selectedWpId}
               onChange={(e) => setSelectedWpId(e.target.value)}
-              className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer max-w-[260px] truncate"
+              className="bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs font-bold rounded-xl px-3 py-2 outline-none cursor-pointer max-w-[260px] truncate focus:ring-2 focus:ring-amber-500"
             >
               {workingPapers.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -350,9 +350,9 @@ export default function ReportingView({
             <>
               <button
                 onClick={() => setShowCapaMemoModal(true)}
-                className="bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+                className="bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
               >
-                <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <BookOpen className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                 <span>บันทึกสรุปเสนอผู้บริหาร</span>
               </button>
 
@@ -381,7 +381,7 @@ export default function ReportingView({
                   });
                   setShowAddCapaModal(true);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+                className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>เพิ่มข้อทักท้วง / ข้อสังเกต</span>
@@ -400,7 +400,7 @@ export default function ReportingView({
 
           <button
             onClick={() => window.print()}
-            className="no-print bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
+            className="no-print bg-stone-850 hover:bg-stone-800 text-stone-100 text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer border border-stone-700/60"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>พิมพ์</span>
