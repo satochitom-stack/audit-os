@@ -64,7 +64,7 @@ export default function DashboardView({
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                คุณกำลังรับชมภาพรวมผลการดำเนินงานและสถิติงานตรวจสอบภายใน อบต.ฝางคำ
+                คุณกำลังรับชมภาพรวมผลการดำเนินงานและสถิติงานตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
               </p>
             </div>
           </div>

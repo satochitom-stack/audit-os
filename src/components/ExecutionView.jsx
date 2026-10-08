@@ -706,7 +706,7 @@ export default function ExecutionView({
                 <label className="font-bold text-slate-700 dark:text-slate-300">{payeeLabel}</label>
                 <input
                   type="text"
-                  placeholder={isSubsidyWp ? 'เช่น โรงเรียนบ้านฝางคำ' : 'เช่น หจก. สมบูรณ์ก่อสร้าง'}
+                  placeholder={isSubsidyWp ? 'เช่น โรงเรียนในเขตพื้นที่' : 'เช่น หจก. สมบูรณ์ก่อสร้าง'}
                   value={newSample.payee}
                   onChange={(e) => setNewSample({ ...newSample, payee: e.target.value })}
                   className="w-full mt-1 p-2 rounded-xl border border-slate-300 dark:border-slate-600 outline-none bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"

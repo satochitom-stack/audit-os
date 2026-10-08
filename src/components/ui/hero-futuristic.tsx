@@ -443,9 +443,9 @@ export interface HeroFuturisticProps {
 }
 
 export const Html = ({
-  badge = "INTERNAL AUDIT OPERATING SYSTEM • อบต.ฝางคำ",
-  title = "IA-OS FANG KHAM",
-  subtitle = "ระบบปฏิบัติการตรวจสอบภายในยุคดิจิทัล องค์การบริหารส่วนตำบลฝางคำ",
+  badge = "AUDIT-OS • LOCAL GOVERNMENT INTERNAL AUDIT NETWORK",
+  title = "AUDIT-OS NETWORK",
+  subtitle = "ระบบปฏิบัติการตรวจสอบภายในยุคดิจิทัล สำหรับองค์กรปกครองส่วนท้องถิ่น",
   subtext = "วิเคราะห์ความเสี่ยง SOFCK • แผนตรวจสอบ ว 614 • การควบคุมภายใน ปอ.1-ปค.5",
   buttonText = "สำรวจระบบงาน",
   buttonSubtext = "SCROLL TO EXPLORE",

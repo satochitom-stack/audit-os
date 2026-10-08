@@ -120,7 +120,7 @@ export default function GeminiConfigModal({ isOpen, onClose }) {
                 )}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                ระบบปัญญาประดิษฐ์วิเคราะห์ความเสี่ยงและมาตรการแก้ไขสำหรับ อบต.ฝางคำ
+                ระบบปัญญาประดิษฐ์วิเคราะห์ความเสี่ยงและมาตรการแก้ไขสำหรับองค์กรปกครองส่วนท้องถิ่น
               </p>
             </div>
           </div>
@@ -267,11 +267,11 @@ export default function GeminiConfigModal({ isOpen, onClose }) {
           <div className="p-3.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200/70 dark:border-purple-900/40 space-y-2 text-[11px] text-slate-600 dark:text-slate-400">
             <div className="font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-purple-600" />
-              จุดเด่นของการเชื่อมต่อ AI สำหรับ อบต.ฝางคำ
+              จุดเด่นของการเชื่อมต่อ AI สำหรับงานตรวจสอบภายใน อปท.
             </div>
             <ul className="space-y-1.5 list-disc list-inside leading-relaxed text-slate-700 dark:text-slate-300">
               <li>
-                <strong className="text-purple-700 dark:text-purple-300">ปรับแต่งเฉพาะทาง (System Prompt):</strong> วางกรอบระเบียบการเงินการคลัง, ว 614, ว 3482, PDPA, ITA และบริบทพื้นที่สิรินธร/ลำโดมน้อย
+                <strong className="text-purple-700 dark:text-purple-300">ปรับแต่งเฉพาะทาง (System Prompt):</strong> วางกรอบระเบียบการเงินการคลัง, ว 614, ว 3482, PDPA, ITA และบริบท อปท.
               </li>
               <li>
                 <strong className="text-purple-700 dark:text-purple-300">ระบบทำงานออฟไลน์ (Offline Fallback):</strong> หากไม่มี API Key หรือเน็ตไม่เสถียร ระบบจะใช้คลังคำตอบมาตรฐานอัตโนมัติ ใช้งานได้ต่อเนื่อง 100%

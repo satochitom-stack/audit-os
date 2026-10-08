@@ -549,7 +549,7 @@ export default function DepartmentWorkspaceView({
                 Department Workspace (Sprint 3)
               </span>
               <span className="text-xs text-slate-500">
-                {orgProfile.name || 'อบต.ฝางคำ'} • ปีงบประมาณ พ.ศ. {selectedYear}
+                {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} • ปีงบประมาณ พ.ศ. {selectedYear}
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2.5">
@@ -1430,7 +1430,7 @@ export default function DepartmentWorkspaceView({
                       ส่วนหนึ่งของงานสาธารณสุขและสิ่งแวดล้อม ภายใต้การกำกับดูแลของสำนักปลัด
                     </p>
                   </div>
-                  <span className="text-xs text-slate-500">ตำบลฝางคำ 6 หมู่บ้าน</span>
+                  <span className="text-xs text-slate-500">ในเขตพื้นที่รับผิดชอบ</span>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -2733,11 +2733,11 @@ export default function DepartmentWorkspaceView({
                 <div className="space-y-1.5">
                   <div className="inline-flex items-center gap-1.5 bg-white/15 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-xs">
                     <Baby className="w-3.5 h-3.5 text-pink-300" />
-                    <span>สังกัดกองการศึกษา ศาสนาและวัฒนธรรม อบต.ฝางคำ</span>
+                    <span>สังกัดกองการศึกษา ศาสนาและวัฒนธรรม {orgProfile?.name || 'อปท.'}</span>
                   </div>
                   <h2 className="text-2xl font-black">{currentCdcData.centerName}</h2>
                   <p className="text-xs text-purple-100 flex items-center gap-2">
-                    <span>📍 ที่ตั้ง: {currentCdcData.village || 'ตำบลฝางคำ อำเภอสิรินธร'}</span>
+                    <span>📍 ที่ตั้ง: {currentCdcData.village || orgProfile?.district || 'ในเขตพื้นที่รับผิดชอบ'}</span>
                     <span>•</span>
                     <span>มาตรฐานปฐมวัยแห่งชาติ: ได้คะแนน <strong>{currentCdcData.summary.nationalStandardScore || 90}</strong> / 100</span>
                   </p>
@@ -2860,7 +2860,7 @@ export default function DepartmentWorkspaceView({
                       </span>
                     </div>
                     <p className="text-slate-600 dark:text-slate-400 text-[11px]">
-                      บันทึกตรวจสุขภาพและประเมินพัฒนาการแล้ว <strong>{currentCdcData.healthGrowthChecks.length}</strong> รายการ โดย รพ.สต.ฝางคำ ร่วมกับครูผู้ดูแลเด็ก
+                      บันทึกตรวจสุขภาพและประเมินพัฒนาการแล้ว <strong>{currentCdcData.healthGrowthChecks.length}</strong> รายการ โดย รพ.สต. ในพื้นที่ ร่วมกับครูผู้ดูแลเด็ก
                     </p>
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-teal-200/60 text-[11px]">
                       <div>✅ ภาวะโภชนาการ: <strong>สมส่วน 100%</strong></div>
@@ -3084,7 +3084,7 @@ export default function DepartmentWorkspaceView({
                     <span>ทะเบียนเฝ้าระวังสุขภาพ & ประเมินพัฒนาการเด็กปฐมวัย (DSPM 4 ด้าน)</span>
                   </h3>
                   <p className="text-xs text-slate-500">
-                    ตรวจร่างกาย ชั่งน้ำหนัก วัดส่วนสูง ตรวจสุขภาพฟัน และประเมินพัฒนาการร่วมกับ รพ.สต.ฝางคำ
+                    ตรวจร่างกาย ชั่งน้ำหนัก วัดส่วนสูง ตรวจสุขภาพฟัน และประเมินพัฒนาการร่วมกับ รพ.สต. ในพื้นที่
                   </p>
                 </div>
                 <button
@@ -3548,7 +3548,7 @@ export default function DepartmentWorkspaceView({
                 <input
                   type="text"
                   required
-                  placeholder="เช่น หมู่ที่ 3 ตำบลฝางคำ"
+                  placeholder="เช่น หมู่ที่ 3 หรือชื่อสายทาง/สถานที่"
                   value={newConstProject.location}
                   onChange={(e) => setNewConstProject({ ...newConstProject, location: e.target.value })}
                   className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
@@ -4163,7 +4163,7 @@ export default function DepartmentWorkspaceView({
                 <input
                   type="text"
                   required
-                  placeholder="เช่น รพ.สต.ฝางคำ ร่วมกับครู ศพด."
+                  placeholder="เช่น รพ.สต. ในพื้นที่ ร่วมกับครู ศพด."
                   value={newHealthCheck.examiner}
                   onChange={(e) => setNewHealthCheck({ ...newHealthCheck, examiner: e.target.value })}
                   className="w-full mt-1 p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"

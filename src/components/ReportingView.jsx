@@ -1179,7 +1179,7 @@ export default function ReportingView({
                 <div className="flex justify-between items-baseline text-xs font-bold text-slate-700 dark:text-slate-300 pt-2">
                   <div className="text-left">
                     <span>ส่วนราชการ: </span>
-                    <span className="font-normal">{orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} {orgProfile?.name || 'อบต.ฝางคำ'}</span>
+                    <span className="font-normal">{orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
                   </div>
                   <div className="text-right">
                     <span>ที่: </span>
@@ -1200,12 +1200,12 @@ export default function ReportingView({
 
               <div className="space-y-4">
                 <div>
-                  <strong>เรียน:</strong> นายก{orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'} (ผ่าน ปลัด{orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'})
+                  <strong>เรียน:</strong> นายก{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})
                 </div>
 
                 <div className="space-y-3 text-justify indent-8">
                   <p>
-                    ตามที่ สำนักงานการตรวจเงินแผ่นดิน (สตง.) ผู้ตรวจราชการกรมส่งเสริมการปกครองท้องถิ่น และหน่วยตรวจสอบภายใน ได้มีข้อทักท้วงและข้อสังเกตเกี่ยวกับการปฏิบัติงานทางการเงิน การพัสดุ และการบริหารงานของส่วนราชการในสังกัด {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'} นั้น
+                    ตามที่ สำนักงานการตรวจเงินแผ่นดิน (สตง.) ผู้ตรวจราชการกรมส่งเสริมการปกครองท้องถิ่น และหน่วยตรวจสอบภายใน ได้มีข้อทักท้วงและข้อสังเกตเกี่ยวกับการปฏิบัติงานทางการเงิน การพัสดุ และการบริหารงานของส่วนราชการในสังกัด {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} นั้น
                   </p>
                   <p>
                     หน่วยตรวจสอบภายใน ได้ดำเนินการติดตามผลการปรับปรุงแก้ไขข้อบกพร่องตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. 2545 ข้อ 25 และข้อ 26 ครบถ้วนตามกรอบระยะเวลา 60 วันแล้ว จึงขอสรุปผลการติดตามการปฏิบัติตามข้อทักท้วงและข้อสังเกต รวมทั้งสิ้น <strong>{findingsList.length} เรื่อง</strong> โดยดำเนินการแล้วเสร็จและยุติข้อสังเกตได้ <strong>{closedCount} เรื่อง</strong> อยู่ระหว่างดำเนินการ <strong>{findingsList.length - closedCount} เรื่อง</strong> ดังมีรายละเอียดต่อไปนี้:
@@ -1275,7 +1275,7 @@ export default function ReportingView({
                     <div>(ลงชื่อ)........................................................</div>
                     <div>
                       <div className="font-bold">({orgProfile?.palatName || 'ปลัด อปท.'})</div>
-                      <div className="text-slate-500">{orgProfile?.palatPosition || 'ปลัดองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                      <div className="text-slate-500">{orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
                       <div className="text-[11px] text-slate-400">ผู้ตรวจสอบและเสนอความเห็น</div>
                     </div>
                   </div>
@@ -1288,8 +1288,8 @@ export default function ReportingView({
                   </div>
                   <div>
                     <div className="font-bold">({orgProfile?.approverName || 'นายก อปท.'})</div>
-                    <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
-                    <div className="text-[11px] text-slate-400">นายกองค์การบริหารส่วนตำบลฝางคำ</div>
+                    <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
+                    <div className="text-[11px] text-slate-400">นายก{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</div>
                   </div>
                 </div>
               </div>

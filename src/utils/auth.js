@@ -765,7 +765,7 @@ export function deleteDepartment(name) {
 const DEFAULT_SESSION_MS = 24 * 60 * 60 * 1000; // 24 ชั่วโมง
 
 export const ALL_MENU_IDS = [
-  { id: 'public-overview', label: 'ภาพรวม', icon: 'Globe', desc: 'ภาพรวมองค์กร อบต.ฝางคำ การให้บริการประชาชน ข้อมูลสาธารณะ และช่องทางติดต่อ' },
+  { id: 'public-overview', label: 'ภาพรวม', icon: 'Globe', desc: 'ภาพรวมองค์กร อปท. การให้บริการประชาชน ข้อมูลสาธารณะ และช่องทางติดต่อ' },
   { id: 'executive-dashboard', label: 'แดชบอร์ดผู้บริหาร', icon: 'LayoutDashboard', desc: 'แดชบอร์ดภาพรวมการเงิน ผลการตรวจ การสั่งการ และนาฬิกานับถอยหลังกฎหมาย' },
   { id: 'dashboard', label: 'แดชบอร์ดตรวจสอบภายใน', icon: 'ShieldAlert', desc: 'แดชบอร์ดสรุปและปฏิทินงานตรวจสอบ' },
   { id: 'central-calendar', label: 'ปฏิทินปฏิบัติงานส่วนกลาง', icon: 'CalendarDays', desc: 'ปฏิทินบูรณาการร่วมทุกสำนัก/กอง และกำหนดการตรวจ' },
@@ -1161,14 +1161,16 @@ export async function pullPendingUsersFromCloud() {
   return getPendingUsers();
 }
 
-export async function registerUser({ username, displayName, department, position, role = 'staff', password, email }) {
+export async function registerUser({ username, displayName, organization, department, position, role = 'staff', password, email }) {
   const cleanUsername = username.trim().toLowerCase();
-  const cleanDept = department ? department.trim() : 'สำนักปลัด';
+  const cleanOrg = organization ? organization.trim() : '';
+  const cleanDept = department ? department.trim() : 'หน่วยตรวจสอบภายใน';
   const cleanDisplayName = displayName.trim();
-  const cleanPosition = position ? position.trim() : '';
+  const cleanPosition = position ? position.trim() : 'ผู้ตรวจสอบภายใน';
 
   if (!cleanUsername) throw new Error('กรุณาระบุชื่อผู้ใช้งาน');
   if (!cleanDisplayName) throw new Error('กรุณาระบุชื่อ-นามสกุล');
+  if (!cleanOrg) throw new Error('กรุณาระบุองค์กรปกครองส่วนท้องถิ่น (อปท.) / หน่วยงานที่สังกัด');
   if (!password || password.length < 4) throw new Error('รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
 
   const existingUsers = getUsers();
@@ -1239,6 +1241,7 @@ export async function registerUser({ username, displayName, department, position
     id: supabaseId || 'pend_' + Date.now(),
     username: cleanUsername,
     displayName: cleanDisplayName,
+    organization: cleanOrg,
     department: cleanDept,
     position: cleanPosition,
     role: role || 'staff',
@@ -1256,6 +1259,23 @@ export async function registerUser({ username, displayName, department, position
     pendingList.push(pendingEntry);
   }
   savePendingUsers(pendingList);
+
+  // If registering, also immediately update active orgProfile with this chosen organization
+  if (cleanOrg) {
+    try {
+      const rawOrg = localStorage.getItem('ia_org_profile');
+      const parsedOrg = rawOrg ? JSON.parse(rawOrg) : {};
+      const updatedOrg = {
+        ...parsedOrg,
+        name: cleanOrg
+      };
+      localStorage.setItem('ia_org_profile', JSON.stringify(updatedOrg));
+      window.dispatchEvent(new CustomEvent('ia-org-profile-changed', { detail: updatedOrg }));
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
   return pendingEntry;
 }
 
@@ -1604,9 +1624,11 @@ export function loginAsGuest() {
 }
 
 export function startSession(user, remember = true, isImpersonating = false) {
+  const orgName = user.organization || user.orgName || null;
   const session = {
     username: user.username,
     displayName: user.displayName,
+    organization: orgName,
     department: user.department,
     position: user.position,
     role: user.role || 'user',
@@ -1618,6 +1640,22 @@ export function startSession(user, remember = true, isImpersonating = false) {
     loginAt: Date.now()
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
+  if (orgName) {
+    try {
+      const rawOrg = localStorage.getItem('ia_org_profile');
+      const parsedOrg = rawOrg ? JSON.parse(rawOrg) : {};
+      const updatedOrg = {
+        ...parsedOrg,
+        name: orgName
+      };
+      localStorage.setItem('ia_org_profile', JSON.stringify(updatedOrg));
+      window.dispatchEvent(new CustomEvent('ia-org-profile-changed', { detail: updatedOrg }));
+    } catch (e) {
+      console.warn('Update orgProfile on startSession notice:', e);
+    }
+  }
+
   return session;
 }
 
@@ -1647,6 +1685,9 @@ export function getSession() {
       }
       if (currentUser.department) {
         session.department = currentUser.department;
+      }
+      if (currentUser.organization) {
+        session.organization = currentUser.organization;
       }
     } else if (session.role === 'guest') {
       const guestUser = users.find((u) => u.username === 'guest' || u.role === 'guest');

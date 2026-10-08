@@ -1274,7 +1274,7 @@ export const initialKnowledgeBase = [
 ];
 
 // แผนการตรวจสอบระยะยาว (3 - 5 ปี / Strategic Multi-Year Audit Plan)
-// วงรอบการตรวจสอบ (Audit Cycle Matrix: พ.ศ. 2568 - 2572) อบต.ฝางคำ
+// วงรอบการตรวจสอบ (Audit Cycle Matrix: พ.ศ. 2568 - 2572) องค์กรปกครองส่วนท้องถิ่น
 export const initialStrategicPlan = [
   {
     id: 'STRAT-01',
@@ -1449,7 +1449,7 @@ export const initialPublicHealthWorkspaceData = {
 // 6.1 ฐานข้อมูลเฉพาะพื้นที่ทำงาน ศูนย์พัฒนาเด็กเล็กวัดเจริญทัศน์
 export const initialCdcCharoenWorkspaceData = {
   centerName: 'ศูนย์พัฒนาเด็กเล็กวัดเจริญทัศน์',
-  village: 'บ้านเจริญทัศน์ หมู่ที่ 2 ต.ฝางคำ',
+  village: 'หมู่ที่ 2 ในเขตพื้นที่รับผิดชอบ',
   summary: {
     totalChildren: 28,
     boysCount: 15,
@@ -1555,7 +1555,7 @@ export const initialCdcCharoenWorkspaceData = {
       nutritionStatus: 'สมส่วน',
       dentalStatus: 'ฟันน้ำนมสะอาด ไม่มีฟันผุ',
       dspmStatus: 'สมวัยทุกด้าน (4 ด้านผ่านเกณฑ์)',
-      examiner: 'รพ.สต.ฝางคำ ร่วมกับครูผู้ดูแลเด็ก'
+      examiner: 'รพ.สต. ในพื้นที่ ร่วมกับครูผู้ดูแลเด็ก'
     },
     {
       id: 'HEALTH-CJ-002',
@@ -1567,7 +1567,7 @@ export const initialCdcCharoenWorkspaceData = {
       nutritionStatus: 'สมส่วน',
       dentalStatus: 'ฟันสะอาด แนะนำแปรงฟันสม่ำเสมอ',
       dspmStatus: 'สมวัยทุกด้าน (4 ด้านผ่านเกณฑ์)',
-      examiner: 'รพ.สต.ฝางคำ ร่วมกับครูผู้ดูแลเด็ก'
+      examiner: 'รพ.สต. ในพื้นที่ ร่วมกับครูผู้ดูแลเด็ก'
     }
   ],
   materialsAndSafety: [
@@ -1596,7 +1596,7 @@ export const initialCdcCharoenWorkspaceData = {
       quantity: 1,
       condition: 'ยาไม่หมดอายุ พร้อมใช้งานฉุกเฉิน',
       lastInspectedDate: '2026-09-22',
-      inspector: 'เจ้าหน้าที่ รพ.สต.ฝางคำ'
+      inspector: 'เจ้าหน้าที่ รพ.สต. ในพื้นที่'
     }
   ],
   teachers: [
@@ -1624,7 +1624,7 @@ export const initialCdcCharoenWorkspaceData = {
 // 6.2 ฐานข้อมูลเฉพาะพื้นที่ทำงาน ศูนย์พัฒนาเด็กเล็กบ้านฝางเทิง
 export const initialCdcFangthoengWorkspaceData = {
   centerName: 'ศูนย์พัฒนาเด็กเล็กบ้านฝางเทิง',
-  village: 'บ้านฝางเทิง หมู่ที่ 5 ต.ฝางคำ',
+  village: 'หมู่ที่ 5 ในเขตพื้นที่รับผิดชอบ',
   summary: {
     totalChildren: 24,
     boysCount: 11,
@@ -1711,7 +1711,7 @@ export const initialCdcFangthoengWorkspaceData = {
       nutritionStatus: 'สมส่วน',
       dentalStatus: 'ฟันดี ไม่มีฟันน้ำนมผุ',
       dspmStatus: 'สมวัยทุกด้าน (4 ด้านผ่านเกณฑ์)',
-      examiner: 'รพ.สต.ฝางคำ ร่วมกับครู ศพด.'
+      examiner: 'รพ.สต. ในพื้นที่ ร่วมกับครู ศพด.'
     }
   ],
   materialsAndSafety: [
@@ -1722,7 +1722,7 @@ export const initialCdcFangthoengWorkspaceData = {
       quantity: 1,
       condition: 'พร้อมใช้งาน ไม่มีเหลี่ยมคม ตรวจสอบน็อตยึดแน่นหนา',
       lastInspectedDate: '2026-09-24',
-      inspector: 'กองช่าง อบต.ฝางคำ'
+      inspector: 'กองช่าง อปท.'
     },
     {
       id: 'MAT-FT-002',

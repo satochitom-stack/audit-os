@@ -253,7 +253,7 @@ export default function PlanningView({
         dimension: plan.dimension || 'compliance',
         serviceType: plan.dimension === 'consulting' ? 'consulting' : 'assurance',
         year: selectedYear,
-        orgName: orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ',
+        orgName: orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น',
         auditorName: orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน',
         auditorPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'
       });
@@ -515,7 +515,7 @@ export default function PlanningView({
                     ปีงบประมาณ พ.ศ. {selectedYear}
                   </span>
                   <span className="text-blue-100 text-xs">
-                    {orgProfile?.name || 'อบต.ฝางคำ'} {orgProfile?.district || 'อ.สิรินธร'} {orgProfile?.province || 'จ.อุบลราชธานี'}
+                    {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} {orgProfile?.district || ''} {orgProfile?.province || ''}
                   </span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black tracking-tight">
@@ -767,7 +767,7 @@ export default function PlanningView({
                   แผนการตรวจสอบระยะยาว 3-5 ปี (Strategic Multi-Year Audit Plan)
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
-                  กำหนดรอบระยะเวลาการเข้าตรวจของแต่ละกิจกรรมและส่วนราชการตามระดับความเสี่ยง เพื่อประกันความเชื่อมั่นว่าทุกหน่วยรับตรวจในสังกัด อบต.ฝางคำ จะได้รับการตรวจสอบอย่างทั่วถึงตามกรอบเวลา พ.ร.บ.วินัยการเงินการคลัง พ.ศ. 2561
+                  กำหนดรอบระยะเวลาการเข้าตรวจของแต่ละกิจกรรมและส่วนราชการตามระดับความเสี่ยง เพื่อประกันความเชื่อมั่นว่าทุกหน่วยรับตรวจในสังกัด {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} จะได้รับการตรวจสอบอย่างทั่วถึงตามกรอบเวลา พ.ร.บ.วินัยการเงินการคลัง พ.ศ. 2561
                 </p>
               </div>
 
@@ -1079,7 +1079,7 @@ export default function PlanningView({
               {auditCharter?.title || 'กฎบัตรการตรวจสอบภายใน (Internal Audit Charter)'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'} {orgProfile?.district || 'อำเภอสิรินธร'} {orgProfile?.province || 'จังหวัดอุบลราชธานี'}
+              {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} {orgProfile?.district || ''} {orgProfile?.province || ''}
             </p>
             <div className="inline-block mt-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-3.5 py-1 rounded-full font-bold border border-blue-200 dark:border-blue-800">
               อนุมัติและประกาศใช้เมื่อ: {auditCharter?.approvedDate || '1 ตุลาคม 2568'} โดย {orgProfile?.approverName || 'นายก อปท.'}
@@ -1097,7 +1097,7 @@ export default function PlanningView({
             <section className="space-y-1.5">
               <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">2. สายการบังคับบัญชาและความเป็นอิสระ (Reporting Line & Independence)</h3>
               <p className="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 leading-relaxed">
-                ผู้ตรวจสอบภายในขึ้นตรงต่อนายกองค์การบริหารส่วนตำบล ในการปฏิบัติหน้าที่และรายงานผลการตรวจสอบ และประสานงานการปฏิบัติงานผ่านปลัดองค์การบริหารส่วนตำบล เพื่อรักษาความเป็นอิสระและเที่ยงธรรมตามมาตรฐานการตรวจสอบภายในภาครัฐ
+                ผู้ตรวจสอบภายในขึ้นตรงต่อนายก{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ในการปฏิบัติหน้าที่และรายงานผลการตรวจสอบ และประสานงานการปฏิบัติงานผ่านปลัด{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} เพื่อรักษาความเป็นอิสระและเที่ยงธรรมตามมาตรฐานการตรวจสอบภายในภาครัฐ
               </p>
             </section>
 
@@ -1147,7 +1147,7 @@ export default function PlanningView({
               <div>(ลงชื่อ)........................................................</div>
               <div>
                 <div className="font-bold">({orgProfile?.approverName || 'นายก อปท.'})</div>
-                <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
                 <div className="text-[11px] text-slate-400">ผู้อนุมัติและประกาศใช้</div>
               </div>
             </div>
@@ -1312,7 +1312,7 @@ export default function PlanningView({
                 <div className="flex justify-between items-baseline text-xs font-bold text-slate-700 dark:text-slate-300 pt-2">
                   <div className="text-left">
                     <span>ส่วนราชการ: </span>
-                    <span className="font-normal">{orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} {orgProfile?.name || 'อบต.ฝางคำ'} โทร. {orgProfile?.phone || '-'}</span>
+                    <span className="font-normal">{orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} โทร. {orgProfile?.phone || '-'}</span>
                   </div>
                   <div className="text-right">
                     <span>ที่: </span>
@@ -1333,12 +1333,12 @@ export default function PlanningView({
 
               <div className="space-y-4">
                 <div>
-                  <strong>เรียน:</strong> นายก{orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'} (ผ่าน ปลัด{orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'})
+                  <strong>เรียน:</strong> นายก{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})
                 </div>
 
                 <div className="space-y-3 text-justify indent-8">
                   <p>
-                    ด้วยหน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'} ได้ดำเนินการจัดทำแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear} เสร็จเรียบร้อยแล้ว โดยอาศัยอำนาจตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. 2545 และที่แก้ไขเพิ่มเติม (ฉบับที่ 2) พ.ศ. 2558 ข้อ 18 ข้อ 19 และข้อ 20 ประกอบพระราชบัญญัติวินัยการเงินการคลังของรัฐ พ.ศ. 2561 มาตรา 79
+                    ด้วยหน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้ดำเนินการจัดทำแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear} เสร็จเรียบร้อยแล้ว โดยอาศัยอำนาจตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. 2545 และที่แก้ไขเพิ่มเติม (ฉบับที่ 2) พ.ศ. 2558 ข้อ 18 ข้อ 19 และข้อ 20 ประกอบพระราชบัญญัติวินัยการเงินการคลังของรัฐ พ.ศ. 2561 มาตรา 79
                   </p>
                   <p>
                     ในการนี้ หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงตามเกณฑ์มาตรฐานของกระทรวงการคลัง และจัดลำดับความสำคัญของกิจกรรมครอบคลุมทุกส่วนราชการ โดยบรรจุโครงการตรวจสอบในแผนปฏิบัติการประจำปีงบประมาณ พ.ศ. {selectedYear} รวมทั้งสิ้น <strong>{annualPlans.length} โครงการ</strong> วงเงินงบประมาณรวม <strong>{totalBudget.toLocaleString()} บาท</strong> โดยมีรายละเอียดดังต่อไปนี้:
@@ -1398,7 +1398,7 @@ export default function PlanningView({
                     <div>(ลงชื่อ)........................................................</div>
                     <div>
                       <div className="font-bold">({orgProfile?.palatName || 'ปลัด อปท.'})</div>
-                      <div className="text-slate-500">{orgProfile?.palatPosition || 'ปลัดองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                      <div className="text-slate-500">{orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
                       <div className="text-[11px] text-slate-400">ผู้เห็นชอบ</div>
                     </div>
                   </div>
@@ -1411,7 +1411,7 @@ export default function PlanningView({
                   </div>
                   <div>
                     <div className="font-bold">({orgProfile?.approverName || 'นายก อปท.'})</div>
-                    <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                    <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
                     <div className="text-[11px] text-slate-400">ผู้อนุมัติแผน</div>
                   </div>
                 </div>

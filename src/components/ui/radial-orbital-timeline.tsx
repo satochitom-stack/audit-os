@@ -32,9 +32,9 @@ export default function RadialOrbitalTimeline({
   timelineData,
   className,
   slogan,
-  centerTitle = "อบต.ฝางคำ",
-  centerSubtitle = "ศูนย์ปฏิบัติการ 5 กองงาน",
-  badgeLabel = "IA-OS ORBITAL 3D"
+  centerTitle = "Audit-OS",
+  centerSubtitle = "ระบบตรวจสอบภายใน อปท.",
+  badgeLabel = "AUDIT-OS ORBITAL"
 }: RadialOrbitalTimelineProps) {
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
   const [viewMode] = useState<"orbital">("orbital");
@@ -228,7 +228,7 @@ export default function RadialOrbitalTimeline({
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[580px] h-[580px] bg-blue-300/20 dark:bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-sky-300/25 dark:bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
 
-      {/* Floating Slogan Ribbon (คำขวัญประจำตำบล อบต.ฝางคำ) - Redesigned Civic Plaque */}
+      {/* Floating Slogan Ribbon (คำขวัญประจำท้องถิ่น) - Redesigned Civic Plaque */}
       {slogan && (
         <div className="absolute top-3.5 inset-x-2 sm:inset-x-6 z-30 flex justify-center pointer-events-none">
           <div className="group relative max-w-xl lg:max-w-2xl pointer-events-auto transition-all duration-300 hover:scale-[1.01]">
@@ -296,7 +296,7 @@ export default function RadialOrbitalTimeline({
             transform: `translate(${centerOffset.x}px, ${centerOffset.y}px)`,
           }}
         >
-          {/* Orbital Center Core Hub: อบต.ฝางคำ / IA-OS Platform */}
+          {/* Orbital Center Core Hub: Audit-OS Platform */}
           <div className="absolute w-20 h-20 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-cyan-500 animate-pulse flex flex-col items-center justify-center z-10 shadow-[0_0_35px_rgba(37,99,235,0.35)] border-2 border-white/60 dark:border-cyan-300/50">
             <div className="absolute w-24 h-24 rounded-full border border-blue-400/30 dark:border-cyan-400/35 animate-ping opacity-60"></div>
             <div
@@ -304,8 +304,8 @@ export default function RadialOrbitalTimeline({
               style={{ animationDelay: "0.5s" }}
             ></div>
             <div className="w-12 h-12 rounded-full bg-white/95 backdrop-blur-md flex flex-col items-center justify-center text-slate-900 shadow-md">
-              <span className="text-[10px] tracking-tight leading-none font-bold text-slate-700">อบต.</span>
-              <span className="text-[11px] tracking-tight leading-none font-black text-blue-700">ฝางคำ</span>
+              <span className="text-[10px] tracking-tight leading-none font-bold text-slate-700">Audit</span>
+              <span className="text-[11px] tracking-tight leading-none font-black text-blue-700">OS</span>
             </div>
             <span className="absolute -bottom-6 text-[10px] font-bold text-blue-900 dark:text-cyan-200 whitespace-nowrap bg-white/95 dark:bg-blue-950/90 px-2.5 py-0.5 rounded-full border border-blue-200/90 dark:border-cyan-500/40 backdrop-blur-xs shadow-xs">
               {centerSubtitle}

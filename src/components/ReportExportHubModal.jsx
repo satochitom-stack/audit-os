@@ -167,7 +167,7 @@ export default function ReportExportHubModal({
                 ศูนย์ส่งออกรายงาน & ข้อมูล Excel ทางการ (Report & Data Export Hub)
               </h3>
               <p className="text-xs text-slate-500">
-                {orgProfile.name || 'อบต.ฝางคำ'} • ปีงบประมาณ พ.ศ. {selectedYear} • ไฟล์ Microsoft Excel (.xlsx)
+                {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} • ปีงบประมาณ พ.ศ. {selectedYear} • ไฟล์ Microsoft Excel (.xlsx)
               </p>
             </div>
           </div>

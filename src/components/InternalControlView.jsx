@@ -354,10 +354,10 @@ export default function InternalControlView({
               <div className="text-slate-400 font-mono tracking-widest">(ลงชื่อ)........................................................................</div>
               <div>
                 <div className="font-bold text-base text-slate-900 dark:text-slate-100">
-                  ({orgProfile?.approverName || pk1Data?.signer || 'นายกองค์การบริหารส่วนตำบลฝางคำ'})
+                  ({orgProfile?.approverName || pk1Data?.signer || 'นายกองค์กรปกครองส่วนท้องถิ่น'})
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {orgProfile?.approverPosition || pk1Data?.position || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}
+                  {orgProfile?.approverPosition || pk1Data?.position || 'นายกองค์กรปกครองส่วนท้องถิ่น'}
                 </div>
                 <div className="text-xs text-slate-400 dark:text-slate-500 mt-2 font-mono">
                   วันที่ {pk1Data?.signDate || '30 กันยายน 2569'}

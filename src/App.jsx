@@ -249,6 +249,32 @@ export default function App() {
     }
   });
 
+  // Listen for dynamic organization profile changes across windows/components
+  useEffect(() => {
+    const handleOrgChanged = (e) => {
+      if (e?.detail) {
+        setOrgProfile((prev) => ({ ...prev, ...e.detail }));
+      } else {
+        try {
+          const raw = localStorage.getItem('ia_org_profile');
+          if (raw) setOrgProfile(JSON.parse(raw));
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('ia-org-profile-changed', handleOrgChanged);
+    return () => window.removeEventListener('ia-org-profile-changed', handleOrgChanged);
+  }, []);
+
+  // When session has a specific organization, ensure active orgProfile adopts it
+  useEffect(() => {
+    if (session?.organization && session.organization !== orgProfile?.name) {
+      setOrgProfile((prev) => ({
+        ...prev,
+        name: session.organization
+      }));
+    }
+  }, [session?.organization]);
+
   // Persistent States isolated by fiscal year
   const [annualPlansByYear, setAnnualPlansByYear] = useState(() => {
     try {
@@ -1305,6 +1331,7 @@ export default function App() {
           currentTab={currentTab}
           setCurrentTab={handleSelectTab}
           session={session}
+          orgProfile={orgProfile}
           planCount={annualPlans.length}
           activeToolkitTab={activeToolkitTab}
           setActiveToolkitTab={setActiveToolkitTab}

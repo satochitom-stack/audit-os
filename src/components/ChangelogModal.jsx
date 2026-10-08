@@ -31,7 +31,7 @@ export default function ChangelogModal({ isOpen, onClose }) {
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                ประวัติการอัปเดตและพัฒนาเว็บแอพพลิเคชัน IA-OS อบต.ฝางคำ
+                ประวัติการอัปเดตและพัฒนาเว็บแอพพลิเคชัน Audit-OS
               </p>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function ChangelogModal({ isOpen, onClose }) {
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-800 bg-slate-950/70 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="text-slate-500">
-            ระบบปฏิบัติการตรวจสอบภายใน อบต.ฝางคำ (IA-OS)
+            ระบบสารสนเทศเพื่อการตรวจสอบภายในองค์กรปกครองส่วนท้องถิ่น (Audit-OS)
           </div>
           <button
             type="button"

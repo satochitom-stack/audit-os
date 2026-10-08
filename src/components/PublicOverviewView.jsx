@@ -54,23 +54,23 @@ export default function PublicOverviewView({
 
   const isAdmin = session?.role === 'admin';
 
-  const orgName = orgProfile.name || 'องค์การบริหารส่วนตำบลฝางคำ';
-  const rawDistrict = orgProfile.district || 'สิรินธร';
-  const rawProvince = orgProfile.province || 'อุบลราชธานี';
+  const orgName = orgProfile.name || 'องค์กรปกครองส่วนท้องถิ่น';
+  const rawDistrict = orgProfile.district || '';
+  const rawProvince = orgProfile.province || '';
 
   const cleanDistrict = rawDistrict.replace(/^อำเภอ/, '').trim();
   const cleanProvince = rawProvince.replace(/^จังหวัด/, '').trim();
-  const locationDisplay = `${orgName} • อ.${cleanDistrict} จ.${cleanProvince}`;
+  const locationDisplay = cleanDistrict && cleanProvince ? `${orgName} • อ.${cleanDistrict} จ.${cleanProvince}` : orgName;
 
   // Default initial public data
   const defaultOverviewData = {
-    slogan: 'ตำบลฝางคำน่าอยู่ เชิดชูคุณธรรม นำการพัฒนา ประชาชนมีคุณภาพชีวิตที่ดี',
+    slogan: 'เมืองน่าอยู่ เชิดชูคุณธรรม นำการพัฒนา ประชาชนมีคุณภาพชีวิตที่ดี',
     welcomeDesc: 'มุ่งมั่นให้บริการด้วยความโปร่งใส รวดเร็ว ถูกต้องตามระเบียบกฎหมาย พร้อมเปิดเผยข้อมูลสาธารณะแก่พี่น้องประชาชนทุกคน',
     metrics: [
-      { label: 'การบริหารราชการ', value: '5 ส่วนราชการหลัก', note: 'โครงสร้าง อบต.ฝางคำ' },
-      { label: 'เขตพื้นที่ให้บริการ', value: '4 หมู่บ้านตำบลฝางคำ', note: 'ครอบคลุมทุกหลังคาเรือน' },
+      { label: 'การบริหารราชการ', value: '5 ส่วนราชการหลัก', note: `โครงสร้างส่วนราชการ` },
+      { label: 'เขตพื้นที่ให้บริการ', value: 'ครอบคลุมทุกพื้นที่', note: 'ครอบคลุมทุกหลังคาเรือน' },
       { label: 'มาตรฐานความโปร่งใส', value: 'No Gift Policy 100%', note: 'งดรับของขวัญทุกชนิด' },
-      { label: 'ช่องทางรับเรื่องร้องทุกข์', value: 'ศูนย์ดำรงธรรม อบต.', note: 'ยุติธรรม รวดเร็ว โปร่งใส' }
+      { label: 'ช่องทางรับเรื่องร้องทุกข์', value: 'ศูนย์ดำรงธรรม อปท.', note: 'ยุติธรรม รวดเร็ว โปร่งใส' }
     ],
     divisions: [
       {
@@ -85,11 +85,11 @@ export default function PublicOverviewView({
           'งานสารบรรณ รับ-ส่งหนังสือราชการและออกหนังสือรับรอง',
           'งานนิติการและศูนย์ดำรงธรรม รับเรื่องราวร้องทุกข์ของประชาชน',
           'งานป้องกันและบรรเทาสาธารณภัย (อปพร., รถน้ำ, ระงับอัคคีภัย)',
-          'บริการจัดเก็บและขนถ่ายขยะมูลฝอยในเขตตำบล 4 หมู่บ้าน',
+          'บริการจัดเก็บและขนถ่ายขยะมูลฝอยในเขตพื้นที่รับผิดชอบ',
           'การควบคุมและป้องกันโรคติดต่อในชุมชน (ไข้เลือดออก, พิษสุนัขบ้า)',
           'งานสุขาภิบาลอาหาร ตรวจมาตรฐานร้านอาหารและตลาดนัดชุมชน'
         ],
-        location: 'ชั้น 1 อาคารสำนักงาน อบต.ฝางคำ',
+        location: 'ชั้น 1 อาคารสำนักงาน',
         officeHours: 'จันทร์ - ศุกร์ 08.30 - 16.30 น.'
       },
       {
@@ -107,7 +107,7 @@ export default function PublicOverviewView({
           'งานพัสดุ การจัดซื้อจัดจ้างภาครัฐด้วยความโปร่งใส (e-GP)',
           'งานการเงินและบัญชี การเบิกจ่ายเงินงบประมาณโครงการพัฒนา'
         ],
-        location: 'ชั้น 1 อาคารสำนักงาน อบต.ฝางคำ',
+        location: 'ชั้น 1 อาคารสำนักงาน',
         officeHours: 'จันทร์ - ศุกร์ 08.30 - 16.30 น.'
       },
       {
@@ -125,7 +125,7 @@ export default function PublicOverviewView({
           'บริการซ่อมแซมและบำรุงรักษาไฟฟ้าสาธารณะส่องสว่างริมทาง',
           'งานควบคุมและดูแลระบบประปาชนบทเพื่อการอุปโภคบริโภค'
         ],
-        location: 'ชั้น 2 อาคารสำนักงาน อบต.ฝางคำ',
+        location: 'ชั้น 2 อาคารสำนักงาน',
         officeHours: 'จันทร์ - ศุกร์ 08.30 - 16.30 น.'
       },
       {
@@ -137,13 +137,13 @@ export default function PublicOverviewView({
         headerBg: 'bg-purple-50/80 dark:bg-purple-950/40 border-purple-200/80 dark:border-purple-900/60',
         badgeBg: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
         services: [
-          'บริหารจัดการศูนย์พัฒนาเด็กเล็ก 2 แห่ง (ศพด.วัดเจริญทัศน์ & ศพด.บ้านฝางเทิง)',
+          'บริหารจัดการศูนย์พัฒนาเด็กเล็กในสังกัด',
           'จัดสรรงบประมาณอาหารกลางวันนักเรียนคุณภาพ (24 บาท/คน/วัน)',
           'จัดหาและแจกจ่ายนมโรงเรียนตามมาตรฐาน (พาสเจอร์ไรส์/ยูเอชที)',
           'ส่งเสริมสนับสนุนการจัดกิจกรรมทางศาสนาและประเพณีวัฒนธรรมท้องถิ่น',
           'สนับสนุนการพัฒนาการเรียนรู้และสุขอนามัยเด็กปฐมวัย'
         ],
-        location: 'ชั้น 2 อาคารสำนักงาน อบต.ฝางคำ',
+        location: 'ชั้น 2 อาคารสำนักงาน',
         officeHours: 'จันทร์ - ศุกร์ 08.30 - 16.30 น.'
       },
       {
@@ -159,9 +159,9 @@ export default function PublicOverviewView({
           'บริการรับคำขอลงทะเบียนเบี้ยความพิการ (800 - 1,000 บาท/เดือน)',
           'บริการช่วยเหลือสงเคราะห์ผู้ป่วยเอดส์และผู้ยากไร้ในชุมชน',
           'บริการเงินช่วยเหลือผู้ประสบปัญหาทางสังคมและภัยพิบัติฉุกเฉิน',
-          'ส่งเสริมและพัฒนาศักยภาพกลุ่มสตรี เยาวชน และผู้สูงอายุตำบลฝางคำ'
+          'ส่งเสริมและพัฒนาศักยภาพกลุ่มสตรี เยาวชน และผู้สูงอายุในพื้นที่'
         ],
-        location: 'ชั้น 1 อาคารสำนักงาน อบต.ฝางคำ',
+        location: 'ชั้น 1 อาคารสำนักงาน',
         officeHours: 'จันทร์ - ศุกร์ 08.30 - 16.30 น.'
       }
     ],
@@ -255,10 +255,10 @@ export default function PublicOverviewView({
       }
     ],
     contactInfo: {
-      phone: '045-959-699',
-      fax: '045-959-698',
-      email: 'saraban@fangkham.go.th',
-      address: 'เลขที่ 99 หมู่ที่ 1 ตำบลฝางคำ อำเภอสิรินธร จังหวัดอุบลราชธานี 34350',
+      phone: orgProfile.phone || '045-000-000',
+      fax: orgProfile.fax || '-',
+      email: orgProfile.email || 'saraban@localgov.mail.go.th',
+      address: orgProfile.address || `สำนักงาน${orgName} ${locationDisplay}`,
       officeHours: 'จันทร์ - ศุกร์ เวลา 08.30 - 16.30 น. (เว้นวันหยุดราชการ)'
     },
     orbitalNodes: [
@@ -329,10 +329,10 @@ export default function PublicOverviewView({
       },
       {
         id: 6,
-        title: 'เขตพื้นที่ตำบล 4 หมู่บ้าน',
-        subtitle: 'พื้นที่บริการประชาชน ต.ฝางคำ',
+        title: 'เขตพื้นที่รับผิดชอบ',
+        subtitle: `พื้นที่บริการประชาชน ${orgName}`,
         date: 'ครอบคลุม 100%',
-        content: 'ม.1 บ้านฝาง • ม.2 บ้านเทิง • ม.3 บ้านคำกลาง • ม.4 บ้านโนนจันทร์ (ครอบคลุมการให้บริการและดูแลคุณภาพชีวิตทุกหลังคาเรือน)',
+        content: 'ครอบคลุมการให้บริการสาธารณะและดูแลคุณภาพชีวิตประชาชนทุกหลังคาเรือนในเขตพื้นที่รับผิดชอบ',
         category: 'เขตพื้นที่บริการ',
         iconName: 'MapPin',
         relatedIds: [1, 5],
@@ -510,7 +510,7 @@ export default function PublicOverviewView({
         </div>
       )}
 
-      {/* 1. กรอบหน่วยงานด้านบน: องค์การบริหารส่วนตำบลฝางคำ อ.สิรินธร จ.อุบลราชธานี */}
+      {/* 1. กรอบหน่วยงานด้านบน: ข้อมูลองค์กรปกครองส่วนท้องถิ่น */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 rounded-2xl px-4 sm:px-5 py-2.5 sm:py-3 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-cyan-300 border border-blue-200/80 dark:border-blue-800 text-xs sm:text-sm font-bold tracking-wide">
@@ -536,7 +536,7 @@ export default function PublicOverviewView({
         )}
       </div>
 
-      {/* 2. โมเดลวงโคจร 3 มิติ (Radial Orbital): โครงสร้าง 5 ส่วนราชการหลัก & ภารกิจ อบต.ฝางคำ */}
+      {/* 2. โมเดลวงโคจร 3 มิติ (Radial Orbital): โครงสร้าง 5 ส่วนราชการหลัก & ภารกิจ อปท. */}
       {(() => {
         const orbitalNodesToDisplay = (data.orbitalNodes || defaultOverviewData.orbitalNodes).map((node) => ({
           ...node,
@@ -551,7 +551,7 @@ export default function PublicOverviewView({
                   <Orbit className="w-4 h-4" />
                 </span>
                 <h2 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 font-['Prompt',sans-serif]">
-                  โครงสร้าง 5 ส่วนราชการหลัก & ภารกิจ อบต.ฝางคำ
+                  โครงสร้าง 5 ส่วนราชการหลัก & ภารกิจ {orgName}
                 </h2>
               </div>
               {isAdmin && (
@@ -635,7 +635,7 @@ export default function PublicOverviewView({
           <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex items-start gap-3">
             <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
             <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              <strong>โครงสร้างการบริหารราชการ อบต.ฝางคำ:</strong> ปฏิบัติภารกิจตามพระราชบัญญัติสภาตำบลและองค์การบริหารส่วนตำบล พ.ศ. 2537 โดยแบ่งส่วนราชการออกเป็น 5 หน่วยงาน เพื่ออำนวยความสะดวกและให้บริการประชาชนในตำบลฝางคำอย่างทั่วถึง รวดเร็ว และเป็นธรรม
+              <strong>โครงสร้างการบริหารราชการ {orgName}:</strong> ปฏิบัติภารกิจตามระเบียบกฎหมายและพระราชบัญญัติจัดตั้งองค์กรปกครองส่วนท้องถิ่น โดยแบ่งส่วนราชการออกเป็น 5 หน่วยงาน เพื่ออำนวยความสะดวกและให้บริการประชาชนอย่างทั่วถึง รวดเร็ว และเป็นธรรม
             </div>
           </div>
 
@@ -990,7 +990,7 @@ export default function PublicOverviewView({
                     <div className="flex items-center justify-between">
                       <label className="text-slate-800 dark:text-slate-200 font-bold flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>คำขวัญ / สโลแกน อบต.ฝางคำ</span>
+                        <span>คำขวัญ / สโลแกน {orgName}</span>
                       </label>
                       <span className="text-[10px] text-blue-600 dark:text-cyan-400 font-semibold flex items-center gap-1 bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-full border border-blue-200/50 dark:border-blue-800/50">
                         <Cloud className="w-3 h-3" />
@@ -1495,7 +1495,7 @@ export default function PublicOverviewView({
                     <div className="flex items-center justify-between">
                       <label className="text-slate-800 dark:text-slate-200 font-bold flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>คำขวัญ / สโลแกน อบต.ฝางคำ (แสดงที่ป้ายคำขวัญด้านบนวงโคจร)</span>
+                        <span>คำขวัญ / สโลแกน {orgName} (แสดงที่ป้ายคำขวัญด้านบนวงโคจร)</span>
                       </label>
                       <span className="text-[10px] text-blue-600 dark:text-cyan-400 font-semibold flex items-center gap-1 bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-full border border-blue-200/50 dark:border-blue-800/50">
                         <Cloud className="w-3 h-3" />

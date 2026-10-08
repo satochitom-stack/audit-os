@@ -36,8 +36,7 @@ import ConfirmModal from './ConfirmModal';
 import { getDepartments } from '../utils/auth';
 
 // =========================================================================
-// 1. ข้อมูลการประเมินความเสี่ยงจริงของ องค์การบริหารส่วนตำบลฝางคำ (PDF ที่ 3)
-// ผู้ประเมิน: นายศุภมงคล ธรรมพิทักษ์ นักวิชาการตรวจสอบภายในปฏิบัติการ
+// 1. ข้อมูลการประเมินความเสี่ยงมาตรฐาน องค์กรปกครองส่วนท้องถิ่น (21 กิจกรรม)
 // =========================================================================
 export const fangkhamRealAuditUniverse = [
   // --- สำนักปลัด ---
@@ -263,7 +262,7 @@ export const fangkhamRealAuditUniverse = [
     riskOwner: 'นายช่างโยธา / ผู้อำนวยการกองช่าง',
     tolerance: 'ต้องพิจารณาคำขอและแจ้งผลภายในระยะเวลาที่กฎหมายกำหนด (45 วัน)',
     existingControls: 'มีสมุดคุมการรับคำขอและตรวจสอบแบบแปลนโดยนายช่างโยธา',
-    mitigation: 'สุ่มตรวจสำนวนการอนุญาตก่อสร้างอาคารในเขต อบต.ฝางคำ',
+    mitigation: 'สุ่มตรวจสำนวนการอนุญาตก่อสร้างอาคารในเขตพื้นที่รับผิดชอบ',
     includedInPlan: false
   },
 
@@ -313,7 +312,7 @@ export const fangkhamRealAuditUniverse = [
     activity: 'การทำแผนพัฒนาการศึกษา',
     sScore: 1, oScore: 1, fScore: 1, cScore: 1, kScore: 1,
     reason: 'การจัดทำและประสานแผนพัฒนาการศึกษาขององค์กรปกครองส่วนท้องถิ่น',
-    riskScope: 'แผนพัฒนาการศึกษา (พ.ศ. 2566 - 2570) ของ อบต.ฝางคำ',
+    riskScope: 'แผนพัฒนาการศึกษา (พ.ศ. 2566 - 2570) ขององค์กรปกครองส่วนท้องถิ่น',
     riskOwner: 'นักวิชาการศึกษา / ผู้อำนวยการกองการศึกษา',
     tolerance: 'แผนพัฒนาการศึกษาต้องสอดคล้องกับแผนพัฒนาท้องถิ่น',
     existingControls: 'มีคณะกรรมการการศึกษาของ อบต. ร่วมพิจารณาแผน',
@@ -953,14 +952,14 @@ export default function AuditRiskView({
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  // คำนวณคะแนนเฉลี่ย SOFCK 5 มิติ (ตามตารางจริงของ อบต.ฝางคำ)
+  // คำนวณคะแนนเฉลี่ย SOFCK 5 มิติ (ตามเกณฑ์มาตรฐาน อปท.)
   const calculateScore = (item) => {
     const sum = Number(item.sScore || 1) + Number(item.oScore || 1) + Number(item.fScore || 1) + Number(item.cScore || 1) + Number(item.kScore || 1);
     const avg = sum / 5;
-    return Number(avg.toFixed(1)); // อ้างอิงทศนิยมตามเอกสารจริง อบต.ฝางคำ (1.0, 1.2, 1.4, 1.8, 2.0, 2.2, 2.4)
+    return Number(avg.toFixed(1)); // อ้างอิงทศนิยมตามเกณฑ์มาตรฐาน (1.0, 1.2, 1.4, 1.8, 2.0, 2.2, 2.4)
   };
 
-  // แปลผลระดับความเสี่ยงตามเอกสารจริง อบต.ฝางคำ:
+  // แปลผลระดับความเสี่ยงตามเกณฑ์มาตรฐาน อปท.:
   // คะแนน 1.0 - 1.4 = ต่ำ
   // คะแนน 1.6 - 2.2 = ปานกลาง
   // คะแนน 2.4 - 3.0 = สูง / สูงมาก
@@ -1021,16 +1020,16 @@ export default function AuditRiskView({
     });
   }, [scoredActivities, departmentFilter, riskLevelFilter, searchQuery]);
 
-  // โหลดชุดข้อมูลจริงของ อบต.ฝางคำ (21 กิจกรรม)
+  // โหลดชุดข้อมูล 21 กิจกรรมมาตรฐาน
   const handleLoadFangkhamDefaults = () => {
     openConfirm({
-      title: 'โหลดชุดข้อมูลจริง อบต.ฝางคำ (21 กิจกรรม)',
-      message: 'ท่านต้องการโหลดชุดข้อมูล "การประเมินความเสี่ยง องค์การบริหารส่วนตำบลฝางคำ (21 กิจกรรม)" มาเป็นชุดข้อมูลตั้งต้นใช่หรือไม่? ข้อมูลกิจกรรมเดิมจะถูกแทนที่ด้วยชุดข้อมูล อบต.ฝางคำ',
-      confirmText: 'โหลดข้อมูล อบต.ฝางคำ',
+      title: 'โหลดชุดข้อมูล 21 กิจกรรมมาตรฐาน อปท.',
+      message: 'ท่านต้องการโหลดชุดข้อมูล "การประเมินความเสี่ยง อปท. (21 กิจกรรมมาตรฐาน)" มาเป็นชุดข้อมูลตั้งต้นใช่หรือไม่? ข้อมูลกิจกรรมเดิมจะถูกแทนที่ด้วยชุดข้อมูลนี้',
+      confirmText: 'โหลดข้อมูลมาตรฐาน',
       type: 'info',
       onConfirm: () => {
         setAuditUniverse(fangkhamRealAuditUniverse);
-        showToast('โหลดข้อมูลการประเมินความเสี่ยง อบต.ฝางคำ เรียบร้อยแล้ว');
+        showToast('โหลดข้อมูลการประเมินความเสี่ยง 21 กิจกรรมมาตรฐาน เรียบร้อยแล้ว');
       }
     });
   };
@@ -1185,7 +1184,7 @@ export default function AuditRiskView({
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center space-x-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 rounded-full px-3 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
                 <Building className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                <span>การประเมินความเสี่ยง องค์การบริหารส่วนตำบลฝางคำ</span>
+                <span>การประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
               </span>
               <span className="inline-flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                 <Award className="w-3 h-3 text-blue-600 dark:text-blue-400" />
@@ -1196,7 +1195,7 @@ export default function AuditRiskView({
               ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง ประจำปีงบประมาณ พ.ศ. {selectedYear}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-              วิเคราะห์กิจกรรมในจักรวาลการตรวจสอบ (Audit Universe) ของ อบต.ฝางคำ ตามกรอบปัจจัยเสี่ยง 5 มิติ (SOFCK)
+              วิเคราะห์กิจกรรมในจักรวาลการตรวจสอบ (Audit Universe) ของ {orgProfile?.name || 'อปท.'} ตามกรอบปัจจัยเสี่ยง 5 มิติ (SOFCK)
               เพื่อจัดลำดับความเสี่ยงและคัดเลือกกิจกรรมความเสี่ยงสูงบรรจุเข้าสู่แผนการตรวจสอบประจำปี
             </p>
           </div>
@@ -1205,10 +1204,10 @@ export default function AuditRiskView({
             <button
               onClick={handleLoadFangkhamDefaults}
               className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
-              title="โหลดชุดข้อมูล 21 กิจกรรมจริงตามตารางของ อบต.ฝางคำ"
+              title="โหลดชุดข้อมูล 21 กิจกรรมมาตรฐานตามเกณฑ์การตรวจสอบ อปท."
             >
               <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span>โหลดข้อมูล อบต.ฝางคำ (21 กิจกรรม)</span>
+              <span>โหลดข้อมูลตัวอย่าง (21 กิจกรรมมาตรฐาน)</span>
             </button>
 
             {setCurrentTab && (
@@ -1301,7 +1300,7 @@ export default function AuditRiskView({
       {/* Sub Tabs Selector */}
       <div className="bg-slate-100/80 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 flex space-x-1 overflow-x-auto text-xs font-bold scrollbar-none">
         {[
-          { id: 'fangkham-matrix', label: 'ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง (อบต.ฝางคำ)' },
+          { id: 'fangkham-matrix', label: `ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง (${orgProfile?.name || 'อปท.'})` },
           { id: 'ranking', label: 'การจัดลำดับคะแนน & คัดเลือกเข้าแผนประจำปี' },
           { id: 'catalog', label: 'คลังโครงสร้างกิจกรรม อปท. (Activity Catalog)' },
           { id: 'risk-desc', label: 'ตารางคำอธิบายความเสี่ยง 8 มิติ (ภาคผนวก 2)' },
@@ -1324,7 +1323,7 @@ export default function AuditRiskView({
       </div>
 
       {/* =========================================================================
-          TAB 1: ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง องค์การบริหารส่วนตำบลฝางคำ (PDF 3)
+          TAB 1: ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง
       ========================================================================= */}
       {activeSubTab === 'fangkham-matrix' && (
         <div className="space-y-4">
@@ -1375,7 +1374,7 @@ export default function AuditRiskView({
             <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <div>
                 <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
-                  การประเมินความเสี่ยง องค์การบริหารส่วนตำบลฝางคำ
+                  การประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
                 </span>
                 <span className="text-slate-500 ml-2">ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง</span>
               </div>
@@ -1528,7 +1527,7 @@ export default function AuditRiskView({
                 <div className="text-slate-400">ลงชื่อ............................................................</div>
                 <div className="font-bold text-slate-800 dark:text-slate-200">({orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'})</div>
                 <div className="text-slate-500">นักวิชาการตรวจสอบภายในปฏิบัติการ</div>
-                <div className="text-[10px] text-slate-400">ผู้ประเมินความเสี่ยง องค์การบริหารส่วนตำบลฝางคำ</div>
+                <div className="text-[10px] text-slate-400">ผู้ประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</div>
               </div>
             </div>
           </div>
@@ -1765,7 +1764,7 @@ export default function AuditRiskView({
                       <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
                         คำอธิบายความเสี่ยง: {currentItem.activity}
                       </span>
-                      <span className="ml-2 text-slate-500">({currentItem.department} องค์การบริหารส่วนตำบลฝางคำ)</span>
+                      <span className="ml-2 text-slate-500">({currentItem.department} {orgProfile?.name || 'อปท.'})</span>
                     </div>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${currentItem.badgeClass || 'bg-blue-100 text-blue-800 border-blue-200'}`}>
                       คะแนน {currentItem.score ? currentItem.score.toFixed(1) : '2.4'} ({currentItem.level || 'สูง'})
@@ -1856,7 +1855,7 @@ export default function AuditRiskView({
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800/60 dark:to-indigo-950/40 p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 text-xs space-y-2">
               <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-2">
                 <Scale className="w-4 h-4 text-blue-600" />
-                <span>สูตรคำนวณช่วงคะแนนและการแปลผลตามตารางประเมินของ อบต.ฝางคำ</span>
+                <span>สูตรคำนวณช่วงคะแนนและการแปลผลตามเกณฑ์มาตรฐาน ({orgProfile?.name || 'อปท.'})</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-600 dark:text-slate-400">
                 <div>
@@ -1992,7 +1991,7 @@ export default function AuditRiskView({
           {/* Header */}
           <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-4 text-center space-y-1">
             <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              การประเมินความเสี่ยง องค์การบริหารส่วนตำบลฝางคำ
+              การประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h2>
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง

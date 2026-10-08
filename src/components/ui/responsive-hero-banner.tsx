@@ -62,20 +62,20 @@ export interface ResponsiveHeroBannerProps {
 }
 
 export const ResponsiveHeroBanner: React.FC<ResponsiveHeroBannerProps> = ({
-  logoText = "IA-OS",
-  subLogoText = "อบต.ฝางคำ",
+  logoText = "Audit-OS",
+  subLogoText = "ระบบตรวจสอบภายใน อปท.",
   backgroundImageUrl = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80",
   navLinks = [
     { label: "ภาพรวมระบบ", href: "#welcome-features", isActive: true },
-    { label: "หน่วยรับตรวจและหน่วยงานในสังกัด", href: "#departments" },
+    { label: "หน่วยรับตรวจและส่วนราชการ", href: "#departments" },
     { label: "ฟังก์ชันการตรวจสอบ", href: "#modules" }
   ],
   ctaButtonText = "เข้าสู่ระบบ",
   onCtaClick,
-  badgeLabel = "✨ Welcome",
-  badgeText = "Next-Gen Digital Governance & Internal Audit Platform",
-  title = "ระบบงานตรวจสอบภายใน",
-  titleLine2 = "องค์การบริหารส่วนตำบลฝางคำ",
+  badgeLabel = "✨ Audit-OS Network",
+  badgeText = "แพลตฟอร์มสารสนเทศเพื่อการตรวจสอบภายใน อปท.",
+  title = "ระบบสารสนเทศเพื่อการตรวจสอบภายใน",
+  titleLine2 = "องค์กรปกครองส่วนท้องถิ่น",
   description = "",
   primaryButtonText = "เข้าสู่ระบบ",
   onPrimaryClick,
@@ -85,7 +85,7 @@ export const ResponsiveHeroBanner: React.FC<ResponsiveHeroBannerProps> = ({
   guestButtonText = "โหมดผู้เยี่ยมชม",
   executiveLeader,
   permanentSecretary,
-  partnersTitle = "โครงสร้างหน่วยรับตรวจที่เชื่อมโยงในระบบ (CONNECTED DEPARTMENTS)",
+  partnersTitle = "โครงสร้างส่วนราชการและหน่วยรับตรวจในระบบ (AUDITEE UNITS)",
   partners = [
     { name: "สำนักปลัด", label: "งานบริหารทั่วไปและนโยบาย" },
     { name: "กองคลัง", label: "งานการเงิน พัสดุ และบัญชี" },
@@ -137,7 +137,7 @@ export const ResponsiveHeroBanner: React.FC<ResponsiveHeroBannerProps> = ({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/95 via-white/80 to-blue-50/70" />
       <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-blue-900/5 rounded-3xl sm:rounded-[2.5rem]" />
 
-      {/* 2. Dynamic Electric Royal Blue & Cyan Cutting Light Beam (เส้นแสงโค้งตามรูปวาด ผ่าน ภายใน และ ฝางคำ) */}
+      {/* 2. Dynamic Electric Royal Blue & Cyan Cutting Light Beam (เส้นแสงโค้งตามรูปวาด ผ่านข้อความพาดหัว) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0">
         <svg 
           viewBox="0 0 1440 900" 
@@ -164,10 +164,10 @@ export const ResponsiveHeroBanner: React.FC<ResponsiveHeroBannerProps> = ({
               <stop offset="48%" stopColor="#ffffff" stopOpacity="1" />
               <stop offset="68%" stopColor="#e0f2fe" stopOpacity="0.95" />
               <stop offset="90%" stopColor="#38bdf8" stopOpacity="0.7" />
-              <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
+              <stop offset="100%" stopColor="#0284c7" stopOpacity="0.1" />
             </linearGradient>
 
-            {/* Radiant lens glow around ภายใน and ฝางคำ */}
+            {/* Radiant lens glow around headline text */}
             <radialGradient id="textBacklight" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.35" />
               <stop offset="50%" stopColor="#0284c7" stopOpacity="0.12" />
@@ -186,12 +186,12 @@ export const ResponsiveHeroBanner: React.FC<ResponsiveHeroBannerProps> = ({
             </filter>
           </defs>
 
-          {/* Soft radiant aura behind text intersection at ภายใน and ฝางคำ matching Omi reference */}
+          {/* Soft radiant aura behind text intersection matching design */}
           <circle cx="870" cy="355" r="160" fill="url(#textBacklight)" />
           <circle cx="950" cy="420" r="160" fill="url(#textBacklight)" />
           <ellipse cx="910" cy="385" rx="220" ry="75" fill="url(#textBacklight)" transform="rotate(30 910 385)" />
 
-          {/* Planetary horizon arc matching reference: Starts far left (-50, 130) with gentle slope, smoothly curves over and accelerates through ภายใน and ฝางคำ, exiting bottom-right (1420, 930) */}
+          {/* Planetary horizon arc matching reference */}
           {/* Layer 1: Wide atmospheric blue dispersion aura */}
           <path 
             d="M -50 130 C 540 90, 1120 390, 1420 930" 

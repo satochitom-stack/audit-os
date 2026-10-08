@@ -18,9 +18,9 @@ export default function OrgChartStructure({
   onSelectUser,
   onSelectDepartment,
   orgProfile = {
-    name: 'องค์การบริหารส่วนตำบลฝางคำ',
-    district: 'อำเภอสิรินธร',
-    province: 'จังหวัดอุบลราชธานี'
+    name: 'องค์กรปกครองส่วนท้องถิ่น',
+    district: '',
+    province: ''
   }
 }) {
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -110,7 +110,7 @@ export default function OrgChartStructure({
             <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto mt-2" />
           </div>
 
-          {/* TOP TIER: 1. ผู้บริหาร (นายก อบต.ฝางคำ) */}
+          {/* TOP TIER: 1. ผู้บริหาร (นายก อปท.) */}
           <div className="flex flex-col items-center">
             <div
               onClick={() => handleBoxClick('mayor', 'ผู้บริหาร')}
@@ -123,10 +123,10 @@ export default function OrgChartStructure({
                 </span>
               </div>
               <div className="text-sm font-black text-slate-900 group-hover:text-amber-800 transition-colors">
-                นายกองค์การบริหารส่วนตำบลฝางคำ
+                {orgProfile?.approverPosition || `นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`}
               </div>
               <div className="text-[11px] text-slate-600 mt-0.5 font-medium">
-                {orgProfile.approverName || 'นายจรูญ ธรรมพิทักษ์'}
+                {orgProfile.approverName || 'ผู้บริหาร อปท.'}
               </div>
             </div>
 
@@ -134,28 +134,28 @@ export default function OrgChartStructure({
             <div className="w-0.5 h-6 bg-emerald-600 my-0" />
           </div>
 
-          {/* MIDDLE TIER: 2. ปลัด อบต.ฝางคำ & หน่วยตรวจสอบภายใน (กิ่งแยกด้านขวา) */}
+          {/* MIDDLE TIER: 2. ปลัด อปท. & หน่วยตรวจสอบภายใน (กิ่งแยกด้านขวา) */}
           <div className="flex items-center justify-center w-full mb-1">
             
             {/* Left Spacer to perfectly balance the right side so ปลัด remains exactly in the center */}
             <div className="w-72 shrink-0 hidden md:block" />
 
-            {/* Center Box: ปลัด อบต.ฝางคำ (สีเขียวแบบตัวอย่างเทศบาล) */}
+            {/* Center Box: ปลัด อปท. (สีเขียวแบบตัวอย่างเทศบาล) */}
             <div
-              onClick={() => handleBoxClick('palat', 'ปลัด อบต.ฝางคำ')}
+              onClick={() => handleBoxClick('palat', orgProfile?.palatPosition || `ปลัด${orgProfile?.name || 'อปท.'}`)}
               className="w-72 bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-2 border-emerald-500 hover:border-emerald-600 rounded-2xl p-3 text-center transition-all shadow-xs hover:shadow-md cursor-pointer group hover:scale-[1.02] shrink-0 z-10"
             >
               <div className="flex items-center justify-center space-x-1 mb-1">
                 <span className="text-base">🏛️</span>
                 <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
-                  หัวหน้าพนักงานส่วนตำบล
+                  หัวหน้าพนักงานส่วนตำบล / ปลัด อปท.
                 </span>
               </div>
               <div className="text-sm font-black text-slate-900 group-hover:text-emerald-800 transition-colors">
-                ปลัดองค์การบริหารส่วนตำบลฝางคำ
+                {orgProfile?.palatPosition || `ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`}
               </div>
               <div className="text-[11px] text-slate-600 mt-0.5 font-medium">
-                {orgProfile.palatName || 'นายชาญชัย อักโข'}
+                {orgProfile.palatName || 'ปลัด อปท.'}
               </div>
             </div>
 
@@ -189,7 +189,7 @@ export default function OrgChartStructure({
           {/* Central Vertical Connector line from ปลัด down to Trunk bar */}
           <div className="w-0.5 h-6 bg-emerald-600" />
 
-          {/* 4. The 5 Main Divisions Columns (ตามข้อมูลจริงของ อบต.ฝางคำ) */}
+          {/* 4. The 5 Main Divisions Columns (ตามโครงสร้างส่วนราชการ อปท.) */}
           <div className="grid grid-cols-5 gap-3 w-[98%] max-w-[1060px]">
             
             {/* COLUMN 1: สำนักปลัด (สีฟ้า สไตล์แบบเทศบาล) */}
@@ -568,7 +568,7 @@ export default function OrgChartStructure({
           <div className="mt-8 pt-4 border-t border-slate-200 w-full flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>โครงสร้างการแบ่งส่วนราชการตามกรอบอัตรากำลัง องค์การบริหารส่วนตำบลฝางคำ</span>
+              <span>โครงสร้างการแบ่งส่วนราชการตามกรอบอัตรากำลัง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
             </div>
             <div className="text-[11px] text-slate-400">
               สายการบังคับบัญชาและหน่วยรับตรวจที่เชื่อมโยงในระบบ IA-OS

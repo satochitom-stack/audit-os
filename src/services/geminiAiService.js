@@ -1,5 +1,5 @@
 /**
- * Google Gemini Generative AI Service for IA-OS Local Government (อบต.ฝางคำ)
+ * Google Gemini Generative AI Service for Audit-OS Platform (อปท.)
  * Handles integration with Google Generative Language API (Gemini models)
  * with domain-specific system prompts for public sector risk management & internal audit.
  */
@@ -162,7 +162,7 @@ async function callGeminiApi({ prompt, systemInstruction = LOCAL_GOV_SYSTEM_PROM
 export async function testGeminiConnection(apiKey, model = DEFAULT_GEMINI_MODEL) {
   const startTime = Date.now();
   try {
-    const prompt = 'ตอบข้อความสั้นๆ 1 ประโยคว่า "ระบบเชื่อมต่อ Google Gemini API สำเร็จพร้อมใช้งานสำหรับ อบต.ฝางคำ"';
+    const prompt = 'ตอบข้อความสั้นๆ 1 ประโยคว่า "ระบบเชื่อมต่อ Google Gemini API สำเร็จพร้อมใช้งานสำหรับระบบตรวจสอบภายใน อปท."';
     const text = await callGeminiApi({
       prompt,
       modelOverride: model,
@@ -202,7 +202,7 @@ export async function analyzeProblemAndSolutionWithAI({
   if (isGeminiConfigured()) {
     try {
       const prompt = `
-กรุณาวิเคราะห์ "ปัญหาอุปสรรค และแนวทางแก้ไข" สำหรับรายงานติดตามผลการบริหารความเสี่ยง (แบบ บส. 4 คอลัมน์ 11) ของ อบต.ฝางคำ:
+กรุณาวิเคราะห์ "ปัญหาอุปสรรค และแนวทางแก้ไข" สำหรับรายงานติดตามผลการบริหารความเสี่ยง (แบบ บส. 4 คอลัมน์ 11) ขององค์กรปกครองส่วนท้องถิ่น (อปท.):
 - รหัสความเสี่ยง: ${riskCode}
 - ส่วนราชการ: ${department}
 - โครงการ/ภารกิจ: ${activity}

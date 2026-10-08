@@ -94,7 +94,7 @@ export const THAI_MONTH_FULL = [
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
 ];
 
-// 7 ยุทธศาสตร์การบริหารความเสี่ยง องค์การบริหารส่วนตำบลฝางคำ (5.2)
+// 7 ยุทธศาสตร์มาตรฐานการบริหารความเสี่ยง อปท. (5.2)
 export const FANGKHAM_STRATEGIES = [
   'ยุทธศาสตร์ที่ 1 การพัฒนาโครงสร้างพื้นฐาน',
   'ยุทธศาสตร์ที่ 2 การพัฒนาคุณภาพชีวิต',
@@ -139,7 +139,7 @@ const FORM_GUIDELINES = {
     title: 'คำอธิบายแบบกำหนดขอบเขตความรับผิดชอบตามประเด็นยุทธศาสตร์/ข้อบัญญัติ/เทศบัญญัติ/อื่น ๆ (ถ้ามี)',
     subtitle: 'ตามหนังสือสั่งการ มท 0805.2/ว 3482 ลงวันที่ 18 สิงหาคม 2566',
     items: [
-      { num: '1', title: 'ชื่อ อปท.', desc: 'ระบุชื่อองค์กรปกครองส่วนท้องถิ่น เช่น องค์การบริหารส่วนตำบลฝางคำ' },
+      { num: '1', title: 'ชื่อ อปท.', desc: 'ระบุชื่อองค์กรปกครองส่วนท้องถิ่นที่สังกัด' },
       { num: '2', title: 'ปีงบประมาณ', desc: 'ปีงบประมาณในการบริหารจัดการความเสี่ยง' },
       { num: '3', title: 'รหัสความเสี่ยง', desc: 'รหัสความเสี่ยงตามลำดับจำนวนความเสี่ยงโครงการ/กิจกรรม/ภารกิจ อปท. ที่สำคัญ (เช่น RSK-01, RSK-02)' },
       { num: '4', title: 'ยุทธศาสตร์ที่รับผิดชอบ', desc: 'ระบุโครงการ/กิจกรรม/ภารกิจ อปท. ที่จัดทำขึ้นเพื่อตอบสนองยุทธศาสตร์ใดหรือภารกิจใดของ อปท.' },
@@ -649,9 +649,9 @@ export default function RiskManagementView({
         });
 
     return {
-      summary: raw.summary || `ภาพรวมการบริหารจัดการความเสี่ยงระดับองค์กรของ${orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'} ในรอบปีงบประมาณ พ.ศ. ${selectedYear} มีการระบุและประเมินความเสี่ยงครบถ้วนทุกส่วนราชการ โดยความเสี่ยงระดับสูงได้รับการบริหารจัดการและติดตามผลจนลดระดับลงมาอยู่ในเกณฑ์ที่ยอมรับได้ การดำเนินงานเป็นไปตามเกณฑ์มาตรฐานการบริหารความเสี่ยงของ อปท. ตามหนังสือสั่งการ มท 0805.2/ว 3482`,
-      approvedBy: raw.approvedBy || orgProfile?.approverName || 'นายกองค์การบริหารส่วนตำบลฝางคำ',
-      approverPosition: raw.approverPosition || orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ',
+      summary: raw.summary || `ภาพรวมการบริหารจัดการความเสี่ยงระดับองค์กรของ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ในรอบปีงบประมาณ พ.ศ. ${selectedYear} มีการระบุและประเมินความเสี่ยงครบถ้วนทุกส่วนราชการ โดยความเสี่ยงระดับสูงได้รับการบริหารจัดการและติดตามผลจนลดระดับลงมาอยู่ในเกณฑ์ที่ยอมรับได้ การดำเนินงานเป็นไปตามเกณฑ์มาตรฐานการบริหารความเสี่ยงของ อปท. ตามหนังสือสั่งการ มท 0805.2/ว 3482`,
+      approvedBy: raw.approvedBy || orgProfile?.approverName || 'นายกองค์กรปกครองส่วนท้องถิ่น',
+      approverPosition: raw.approverPosition || orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น',
       reportDate: raw.reportDate || `30 กันยายน ${selectedYear}`,
       items
     };
@@ -2882,7 +2882,7 @@ export default function RiskManagementView({
               <span className="font-mono text-sm font-black text-slate-800 dark:text-slate-200 print:text-black print:text-sm ml-auto">แบบ บส. 1</span>
             </div>
             <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 print:text-black print:text-lg">
-              {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'}
+              {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h3>
             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 print:text-black print:text-sm">
               กำหนดขอบเขตความรับผิดชอบตามประเด็นยุทธศาสตร์/ข้อบัญญัติ/เทศบัญญัติ/อื่น ๆ (ถ้ามี)
@@ -3046,8 +3046,8 @@ export default function RiskManagementView({
                   </>
                 ) : (
                   <>
-                    <div className="whitespace-nowrap">( {orgProfile?.approverName || 'นายกองค์การบริหารส่วนตำบลฝางคำ'} )</div>
-                    <div className="whitespace-nowrap">ตำแหน่ง {orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                    <div className="whitespace-nowrap">( {orgProfile?.approverName || 'นายกองค์กรปกครองส่วนท้องถิ่น'} )</div>
+                    <div className="whitespace-nowrap">ตำแหน่ง {orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
                   </>
                 )}
                 <div className="whitespace-nowrap">วันที่..........เดือน........................พ.ศ. ............</div>
@@ -3069,7 +3069,7 @@ export default function RiskManagementView({
               <span className="font-mono text-sm font-black text-slate-800 dark:text-slate-200 print:text-black print:text-sm ml-auto">แบบ บส. 2</span>
             </div>
             <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 print:text-black print:text-lg">
-              {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'}
+              {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h3>
             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 print:text-black print:text-sm">
               การวิเคราะห์โอกาส ผลกระทบ และการตอบสนองความเสี่ยง
@@ -3198,8 +3198,8 @@ export default function RiskManagementView({
                   </>
                 ) : (
                   <>
-                    <div className="whitespace-nowrap">( {orgProfile?.approverName || 'นายกองค์การบริหารส่วนตำบลฝางคำ'} )</div>
-                    <div className="whitespace-nowrap">ตำแหน่ง {orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                    <div className="whitespace-nowrap">( {orgProfile?.approverName || 'นายกองค์กรปกครองส่วนท้องถิ่น'} )</div>
+                    <div className="whitespace-nowrap">ตำแหน่ง {orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
                   </>
                 )}
                 <div className="whitespace-nowrap">วันที่..........เดือน........................พ.ศ. ............</div>
@@ -3221,7 +3221,7 @@ export default function RiskManagementView({
               <span className="font-mono text-sm font-black text-slate-800 dark:text-slate-200 print:text-black print:text-sm ml-auto">แบบ บส. 3</span>
             </div>
             <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 print:text-black print:text-lg">
-              {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'}
+              {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h3>
             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 print:text-black print:text-sm">
               รายงานการจัดทำแผนบริหารความเสี่ยง
@@ -3341,8 +3341,8 @@ export default function RiskManagementView({
                   </>
                 ) : (
                   <>
-                    <div className="whitespace-nowrap">( {orgProfile?.approverName || 'นายกองค์การบริหารส่วนตำบลฝางคำ'} )</div>
-                    <div className="whitespace-nowrap">ตำแหน่ง {orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                    <div className="whitespace-nowrap">( {orgProfile?.approverName || 'นายกองค์กรปกครองส่วนท้องถิ่น'} )</div>
+                    <div className="whitespace-nowrap">ตำแหน่ง {orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
                   </>
                 )}
                 <div className="whitespace-nowrap">วันที่..........เดือน........................พ.ศ. ............</div>
@@ -3364,7 +3364,7 @@ export default function RiskManagementView({
               <span className="font-mono text-sm font-black text-slate-800 dark:text-slate-200 print:text-black print:text-sm ml-auto">แบบ บส. 4</span>
             </div>
             <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 print:text-black print:text-lg">
-              {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'}
+              {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h3>
             
             <div className="flex flex-col items-center justify-center gap-3 text-xs font-bold text-slate-800 dark:text-slate-200 print:text-black print:text-sm">
@@ -3576,8 +3576,8 @@ export default function RiskManagementView({
                   </>
                 ) : (
                   <>
-                    <div className="whitespace-nowrap">( {orgProfile?.approverName || 'นายกองค์การบริหารส่วนตำบลฝางคำ'} )</div>
-                    <div className="whitespace-nowrap">ตำแหน่ง {orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                    <div className="whitespace-nowrap">( {orgProfile?.approverName || 'นายกองค์กรปกครองส่วนท้องถิ่น'} )</div>
+                    <div className="whitespace-nowrap">ตำแหน่ง {orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
                   </>
                 )}
                 <div className="whitespace-nowrap">วันที่..........เดือน........................พ.ศ. ............</div>
@@ -3599,7 +3599,7 @@ export default function RiskManagementView({
               <span className="font-mono text-sm font-black text-slate-800 dark:text-slate-200 print:text-black print:text-sm ml-auto">แบบ บส. 5</span>
             </div>
             <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 print:text-black print:text-lg">
-              {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'}
+              {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h3>
             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 print:text-black print:text-sm">
               รายงานผลการดำเนินการและทบทวนแผนการบริหารความเสี่ยง
@@ -3795,8 +3795,8 @@ export default function RiskManagementView({
                   </>
                 ) : (
                   <>
-                    <div>( {bs5Data.approvedBy || orgProfile?.approverName || 'นายกองค์การบริหารส่วนตำบลฝางคำ'} )</div>
-                    <div>ตำแหน่ง {bs5Data.approverPosition || orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
+                    <div>( {bs5Data.approvedBy || orgProfile?.approverName || 'นายกองค์กรปกครองส่วนท้องถิ่น'} )</div>
+                    <div>ตำแหน่ง {bs5Data.approverPosition || orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
                   </>
                 )}
                 <div className="whitespace-nowrap">วันที่..........เดือน........................พ.ศ. ............</div>
@@ -3920,7 +3920,7 @@ export default function RiskManagementView({
                   onChange={(e) => setFormBs1({ ...formBs1, strategy: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 >
-                  <option value="">-- คลิกเพื่อเลือกยุทธศาสตร์ อบต.ฝางคำ (7 ยุทธศาสตร์) --</option>
+                  <option value="">-- คลิกเพื่อเลือกยุทธศาสตร์ {orgProfile?.name || 'อปท.'} (7 ยุทธศาสตร์มาตรฐาน) --</option>
                   {FANGKHAM_STRATEGIES.map((strat) => (
                     <option key={strat} value={strat}>
                       🎯 {strat}
@@ -4173,7 +4173,7 @@ export default function RiskManagementView({
                   onChange={(e) => setEditingBs1({ ...editingBs1, strategy: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 >
-                  <option value="">-- คลิกเพื่อเลือกยุทธศาสตร์ อบต.ฝางคำ (7 ยุทธศาสตร์) --</option>
+                  <option value="">-- คลิกเพื่อเลือกยุทธศาสตร์ {orgProfile?.name || 'อปท.'} (7 ยุทธศาสตร์มาตรฐาน) --</option>
                   {FANGKHAM_STRATEGIES.map((strat) => (
                     <option key={strat} value={strat}>
                       🎯 {strat}

@@ -60,7 +60,7 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
   const [receiptNo, setReceiptNo] = useState('เล่มที่ 014 เลขที่ 05');
 
   // 4. State for Capital Project / Ordinance Helper
-  const [projectName, setProjectName] = useState('โครงการก่อสร้างถนน คสล. สายบ้านฝางคำ หมู่ที่ 3');
+  const [projectName, setProjectName] = useState('โครงการก่อสร้างถนน คสล. สายทางหลัก หมู่ที่ 3');
   const [budgetAmount, setBudgetAmount] = useState('480000');
   const [isInLocalPlan, setIsInLocalPlan] = useState(true);
   const [hasContractBySep30, setHasContractBySep30] = useState(true);

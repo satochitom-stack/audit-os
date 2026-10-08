@@ -33,6 +33,7 @@ export default function Sidebar({
   currentTab,
   setCurrentTab,
   session,
+  orgProfile,
   activeToolkitTab = 'factor-f',
   setActiveToolkitTab,
   pendingCount = 0
@@ -178,8 +179,8 @@ export default function Sidebar({
       {/* Sidebar Header */}
       <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between shrink-0 bg-slate-50/60 dark:bg-slate-900/60">
         <div>
-          <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-cyan-400 block font-mono">
-            อบต.ฝางคำ
+          <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-cyan-400 block font-mono truncate max-w-[150px]" title={orgProfile?.name || session?.organization || 'อปท. เครือข่าย'}>
+            {orgProfile?.name || session?.organization || 'อปท. เครือข่าย'}
           </span>
           <div className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 tracking-tight flex items-center gap-1.5">
             <span>เมนูระบบปฏิบัติการ</span>

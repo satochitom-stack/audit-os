@@ -70,9 +70,10 @@ export default function WelcomeView({
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
-  const [regDepartment, setRegDepartment] = useState('กองคลัง');
-  const [regPosition, setRegPosition] = useState('');
-  const [regRole, setRegRole] = useState('staff');
+  const [regOrganization, setRegOrganization] = useState(() => orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ');
+  const [regDepartment, setRegDepartment] = useState('หน่วยตรวจสอบภายใน');
+  const [regPosition, setRegPosition] = useState('นักวิชาการตรวจสอบภายใน');
+  const [regRole, setRegRole] = useState('auditor');
   const [regEmail, setRegEmail] = useState('');
   const [regError, setRegError] = useState('');
   const [regSuccess, setRegSuccess] = useState('');
@@ -271,7 +272,7 @@ export default function WelcomeView({
     setRegError('');
     setRegSuccess('');
 
-    if (!regDisplayName.trim() || !regUsername.trim() || !regPassword) {
+    if (!regDisplayName.trim() || !regUsername.trim() || !regPassword || !regOrganization.trim()) {
       setRegError('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน');
       return;
     }
@@ -292,13 +293,14 @@ export default function WelcomeView({
         displayName: regDisplayName.trim(),
         username: regUsername.trim(),
         password: regPassword,
-        department: regDepartment,
-        position: regPosition.trim(),
+        organization: regOrganization.trim(),
+        department: regDepartment.trim() || 'หน่วยตรวจสอบภายใน',
+        position: regPosition.trim() || 'ผู้ตรวจสอบภายใน',
         role: regRole,
         email: regEmail.trim()
       });
 
-      setRegSuccess(`ส่งคำขอลงทะเบียนของ "${regDisplayName}" เรียบร้อยแล้ว! คำขอจะถูกส่งไปยังผู้ดูแลระบบ (ADMIN) เพื่ออนุมัติสิทธิ์เข้าใช้งาน`);
+      setRegSuccess(`ส่งคำขอลงทะเบียนของ "${regDisplayName}" ในสังกัด "${regOrganization.trim()}" เรียบร้อยแล้ว! คำขอจะถูกส่งไปยังผู้ดูแลระบบ (ADMIN) เพื่ออนุมัติสิทธิ์เข้าใช้งาน`);
       setRegDisplayName('');
       setRegUsername('');
       setRegPassword('');
@@ -472,6 +474,10 @@ export default function WelcomeView({
           onGuestClick={handleEnterGuest}
           primaryButtonText="เข้าสู่ระบบ"
           guestButtonText="โหมดผู้เยี่ยมชม"
+          logoText="Audit-OS"
+          subLogoText={orgProfile?.name || "เครือข่ายผู้ตรวจสอบภายใน อปท."}
+          title="ระบบสารสนเทศเพื่อการตรวจสอบภายใน"
+          titleLine2={orgProfile?.name ? orgProfile.name : "สำหรับองค์กรปกครองส่วนท้องถิ่น"}
           executiveLeader={executiveLeaderPartner}
           permanentSecretary={permanentSecretaryPartner}
           partners={heroPartners}
@@ -696,7 +702,7 @@ export default function WelcomeView({
                 })}
               </div>
 
-              {/* หน่วยงานภายใต้สังกัด อบต.ฝางคำ (อยู่ใต้กองต่างๆ) */}
+              {/* หน่วยงานภายใต้สังกัด อปท. (อยู่ใต้กองต่างๆ) */}
               <div className="pt-6 border-t border-slate-200/80 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2.5">
@@ -708,7 +714,7 @@ export default function WelcomeView({
                         <span>หน่วยงานภายใต้สังกัด (AFFILIATED AGENCIES)</span>
                       </h4>
                       <p className="text-xs text-slate-500">
-                        ศูนย์พัฒนาเด็กเล็กและสถานศึกษาในสังกัด อบต.ฝางคำ
+                        ศูนย์พัฒนาเด็กเล็กและสถานศึกษาในสังกัด {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
                       </p>
                     </div>
                   </div>
@@ -785,7 +791,7 @@ export default function WelcomeView({
               </div>
               <h4 className="font-bold text-sm text-slate-900">การประเมินความเสี่ยง SOFCK</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                จัดลำดับความเสี่ยง 21 กิจกรรม อบต.ฝางคำ ด้วยระบบ 5 ปัจจัย คำนวณความเสี่ยงสูง-กลาง-ต่ำอัตโนมัติ
+                จัดลำดับความเสี่ยง 21 กิจกรรมงาน อปท. ด้วยระบบ 5 ปัจจัย คำนวณความเสี่ยงสูง-กลาง-ต่ำอัตโนมัติ
               </p>
             </div>
 
@@ -984,49 +990,38 @@ export default function WelcomeView({
               </button>
             </div>
 
-            {/* Quick account selector chips */}
+            {/* Quick account selector chips (Auditor & Executive Roles only) */}
             <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
               <span className="text-[11px] text-slate-500 block font-medium">
-                เลือกเข้าสู่ระบบด่วนตามบทบาท / กอง:
+                เลือกเข้าสู่ระบบด่วนตามบทบาท (Auditor & Executive Roles):
               </span>
               <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
                 {(() => {
+                  const allowedUsernames = ['admin', 'mayor', 'palat'];
                   const sorted = [...availableUsers]
-                    .filter((u) => u.username !== 'health' && !u.department?.includes('สาธารณสุข'))
+                    .filter((u) => 
+                      allowedUsernames.includes(u.username) || 
+                      u.role === 'admin' || 
+                      u.role === 'executive' || 
+                      u.role === 'auditor' ||
+                      u.department?.includes('ตรวจสอบ')
+                    )
                     .sort((a, b) => {
-                      const order = { 
-                        mayor: 1, 
-                        palat: 2, 
-                        admin: 3, 
-                        office: 4, 
-                        finance: 5, 
-                        engineering: 6, 
-                        education: 7, 
-                        welfare: 8,
-                        cdc_charoen: 9,
-                        cdc_fangthoeng: 10
-                      };
+                      const order = { admin: 1, mayor: 2, palat: 3 };
                       return (order[a.username] || 99) - (order[b.username] || 99);
                     });
                   return sorted.map((u) => {
                     let label = u.displayName || u.username;
-                    let icon = '🏢 ';
-                    if (u.username === 'mayor' || (u.role === 'executive' && u.username !== 'palat') || label === 'ผู้บริหาร') {
+                    let icon = '🛡️ ';
+                    if (u.username === 'mayor' || (u.role === 'executive' && u.username !== 'palat') || label.includes('ผู้บริหาร') || label.includes('นายก')) {
                       icon = '👑 ';
-                      label = 'ผู้บริหาร';
-                    } else if (u.username === 'palat' || (label.includes('ปลัด') && u.username !== 'office' && !label.includes('สำนัก'))) {
+                      label = 'ผู้บริหาร อปท.';
+                    } else if (u.username === 'palat' || (label.includes('ปลัด') && !label.includes('สำนัก'))) {
                       icon = '🏛️ ';
                       label = 'ปลัด อปท.';
-                    } else if (u.role === 'admin' || u.username === 'admin') {
+                    } else if (u.role === 'admin' || u.username === 'admin' || u.department?.includes('ตรวจสอบ')) {
                       icon = '👑 ';
-                      label = 'หน่วยตรวจสอบฯ';
-                    } else if (u.username === 'office' || label.includes('สำนักปลัด')) {
-                      icon = '🏢 ';
-                      label = 'สำนักปลัด';
-                    } else if (u.username?.startsWith('cdc_') || label.includes('ศพด.')) {
-                      icon = '🏫 ';
-                    } else if (label === 'กองสาธารณสุขและสิ่งแวดล้อม') {
-                      label = 'กองสวัสดิการสังคม';
+                      label = 'ผู้ตรวจสอบภายใน';
                     }
                     return (
                       <button
@@ -1214,21 +1209,44 @@ export default function WelcomeView({
                     />
                   </div>
 
+                  <div className="sm:col-span-2">
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      องค์กรปกครองส่วนท้องถิ่น (อปท.) / หน่วยงานที่สังกัด <span className="text-rose-500">*</span>:
+                    </label>
+                    <div className="relative">
+                      <Building className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        list="welcome-org-options"
+                        value={regOrganization}
+                        onChange={(e) => setRegOrganization(e.target.value)}
+                        placeholder="พิมพ์หรือเลือกชื่อ อปท. เช่น องค์การบริหารส่วนตำบล..., เทศบาลตำบล..."
+                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                      <datalist id="welcome-org-options">
+                        <option value="องค์การบริหารส่วนตำบลต้นแบบ" />
+                        <option value="เทศบาลตำบลเมืองทอง" />
+                        <option value="เทศบาลนครสุรนารี" />
+                        <option value="องค์การบริหารส่วนจังหวัด" />
+                      </datalist>
+                    </div>
+                    <p className="text-[11px] text-blue-600 mt-1">
+                      💡 ชื่อหน่วยงานนี้จะถูกเชื่อมโยงเป็นชื่อ อปท. หลักของระบบ และแสดงในเอกสาร/รายงานการตรวจสอบทันที
+                    </p>
+                  </div>
+
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
-                      สังกัด / สำนัก-กอง <span className="text-rose-500">*</span>:
+                      กลุ่มงาน / หน่วยงานตรวจสอบ:
                     </label>
-                    <select
+                    <input
+                      type="text"
                       value={regDepartment}
                       onChange={(e) => setRegDepartment(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer"
-                    >
-                      {departments.map((dept) => (
-                        <option key={dept} value={dept}>
-                          {dept}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="เช่น หน่วยตรวจสอบภายใน"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 font-medium"
+                    />
                   </div>
 
                   <div>
@@ -1239,7 +1257,7 @@ export default function WelcomeView({
                       type="text"
                       value={regPosition}
                       onChange={(e) => setRegPosition(e.target.value)}
-                      placeholder="เช่น เจ้าพนักงานพัสดุปฏิบัติงาน"
+                      placeholder="เช่น นักวิชาการตรวจสอบภายในปฏิบัติการ"
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>

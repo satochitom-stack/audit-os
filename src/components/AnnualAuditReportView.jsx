@@ -37,14 +37,14 @@ export default function AnnualAuditReportView({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const orgName = orgProfile.name || 'องค์การบริหารส่วนตำบลฝางคำ';
+  const orgName = orgProfile.name || 'องค์กรปกครองส่วนท้องถิ่น';
   const agencyName = orgProfile.agencyName || 'หน่วยตรวจสอบภายใน';
   const auditorName = orgProfile.auditorName?.trim() || 'หน่วยตรวจสอบภายใน';
   const auditorPosition = orgProfile.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
-  const approverName = orgProfile.approverName?.trim() || 'นายกองค์การบริหารส่วนตำบลฝางคำ';
-  const approverPosition = orgProfile.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ';
-  const palatName = orgProfile.palatName?.trim() || 'ปลัดองค์การบริหารส่วนตำบลฝางคำ';
-  const palatPosition = orgProfile.palatPosition || 'ปลัดองค์การบริหารส่วนตำบลฝางคำ';
+  const approverName = orgProfile.approverName?.trim() || 'นายกองค์กรปกครองส่วนท้องถิ่น';
+  const approverPosition = orgProfile.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น';
+  const palatName = orgProfile.palatName?.trim() || 'ปลัดองค์กรปกครองส่วนท้องถิ่น';
+  const palatPosition = orgProfile.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น';
 
   // Statistics
   const totalPlans = annualPlans.length;

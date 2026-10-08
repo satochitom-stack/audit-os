@@ -99,7 +99,7 @@ export default function EngagementPlanView({
         serviceType: aiServiceType,
         dimension: aiDimension,
         year: selectedYear,
-        orgName: orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ',
+        orgName: orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น',
         auditorName: orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน',
         auditorPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
         customGoal: aiCustomNotes
@@ -480,10 +480,10 @@ export default function EngagementPlanView({
               </div>
             </div>
 
-            {/* Quick Pick: กิจกรรมความเสี่ยงสูงจาก อบต.ฝางคำ */}
+            {/* Quick Pick: กิจกรรมความเสี่ยงมาตรฐาน อปท. */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                🎯 เลือกจากกิจกรรมประเมินความเสี่ยง อบต.ฝางคำ:
+                🎯 เลือกจากกิจกรรมประเมินความเสี่ยงมาตรฐาน อปท.:
               </label>
               <div className="grid grid-cols-1 gap-1.5 max-h-40 overflow-y-auto pr-1">
                 {[
@@ -985,7 +985,7 @@ export default function EngagementPlanView({
                 บันทึกข้อความ
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div><strong>ส่วนราชการ:</strong> หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'}</div>
+                <div><strong>ส่วนราชการ:</strong> หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</div>
                 <div><strong>โทรศัพท์:</strong> 045-XXXXXX</div>
                 <div><strong>ที่:</strong> ฝค 01/2568</div>
                 <div><strong>วันที่:</strong> {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
@@ -997,7 +997,7 @@ export default function EngagementPlanView({
                 <strong>เรียน:</strong> ผู้อำนวยการ{selectedPlan.department}
               </div>
               <p className="indent-8">
-                ด้วยหน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'} มีกำหนดการเข้าปฏิบัติงานตรวจสอบภายใน ประจำปีงบประมาณ พ.ศ. {selectedYear} กิจกรรม "<strong>{selectedPlan.activityName}</strong>" ในระหว่างวันที่ <strong>{selectedPlan.fieldworkPeriod || selectedPlan.period}</strong> ตามแผนปฏิบัติงานตรวจสอบที่ได้รับอนุมัติจากนายกองค์การบริหารส่วนตำบลฝางคำแล้ว
+                ด้วยหน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} มีกำหนดการเข้าปฏิบัติงานตรวจสอบภายใน ประจำปีงบประมาณ พ.ศ. {selectedYear} กิจกรรม "<strong>{selectedPlan.activityName}</strong>" ในระหว่างวันที่ <strong>{selectedPlan.fieldworkPeriod || selectedPlan.period}</strong> ตามแผนปฏิบัติงานตรวจสอบที่ได้รับอนุมัติจากนายก{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}แล้ว
               </p>
               <p className="indent-8">
                 การเข้าปฏิบัติงานตรวจสอบในครั้งนี้ เป็นไปตามแนวทาง <strong>{selectedPlan.serviceSubtype}</strong> ตามหนังสือกรมบัญชีกลาง ว 614 โดยมีวัตถุประสงค์เพื่อร่วมสนับสนุน ให้คำปรึกษา และตรวจทานความถูกต้องของการปฏิบัติงานให้สอดคล้องกับระเบียบกระทรวงมหาดไทยฉบับใหม่ เพื่อป้องกันความเสี่ยงและข้อทักท้วงจากหน่วยงานกำกับภายนอก มิได้มีเจตนาเพื่อการจับผิดแต่อย่างใด
@@ -1027,7 +1027,7 @@ export default function EngagementPlanView({
               กิจกรรม: {selectedPlan.activityName} ({selectedPlan.department})
             </h3>
             <div className="text-xs">
-              หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์การบริหารส่วนตำบลฝางคำ'} ประจำปีงบประมาณ พ.ศ. {selectedYear}
+              หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ประจำปีงบประมาณ พ.ศ. {selectedYear}
             </div>
             <div className="text-xs italic text-slate-700">
               อ้างอิงตามหนังสือกรมบัญชีกลาง ด่วนที่สุด ที่ กค 0409.2/ว 614 ลงวันที่ 23 ธันวาคม 2563
@@ -1111,14 +1111,14 @@ export default function EngagementPlanView({
             <div className="space-y-1">
               <div>ลงชื่อ....................................................ผู้เห็นชอบ</div>
               <div className="font-bold">({orgProfile?.palatName || '....................................................'})</div>
-              <div>{orgProfile?.palatPosition || 'ปลัดองค์การบริหารส่วนตำบลฝางคำ'}</div>
+              <div>{orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
               <div>วันที่ ....../....../......</div>
             </div>
 
             <div className="space-y-1">
               <div>ลงชื่อ....................................................ผู้อนุมัติ</div>
               <div className="font-bold">({orgProfile?.approverName || '....................................................'})</div>
-              <div>{orgProfile?.approverPosition || 'นายกองค์การบริหารส่วนตำบลฝางคำ'}</div>
+              <div>{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
               <div>วันที่ ....../....../......</div>
             </div>
           </div>

@@ -256,7 +256,7 @@ export default function ExecutiveDashboardView({
               <span>แดชบอร์ดและรายงานภาพรวมสำหรับผู้บริหาร (Executive Governance Cockpit)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-              แดชบอร์ดผู้บริหาร {orgProfile.name || 'อบต.ฝางคำ'}
+              แดชบอร์ดผู้บริหาร {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
               ติดตามสถานะความเสี่ยงองค์กร 5 สำนัก/กอง, วินัยการเงินการคลัง, กรอบเวลากฎหมายสำคัญ 

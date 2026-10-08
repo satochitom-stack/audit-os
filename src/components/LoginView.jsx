@@ -45,9 +45,10 @@ export default function LoginView({ onLogin, orgProfile, onOpenOnboarding }) {
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
-  const [regDepartment, setRegDepartment] = useState('กองคลัง');
-  const [regPosition, setRegPosition] = useState('');
-  const [regRole, setRegRole] = useState('staff');
+  const [regOrganization, setRegOrganization] = useState(() => orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ');
+  const [regDepartment, setRegDepartment] = useState('หน่วยตรวจสอบภายใน');
+  const [regPosition, setRegPosition] = useState('นักวิชาการตรวจสอบภายใน');
+  const [regRole, setRegRole] = useState('auditor');
   const [regEmail, setRegEmail] = useState('');
   const [regError, setRegError] = useState('');
   const [regSuccess, setRegSuccess] = useState('');
@@ -114,7 +115,7 @@ export default function LoginView({ onLogin, orgProfile, onOpenOnboarding }) {
     setRegError('');
     setRegSuccess('');
 
-    if (!regDisplayName.trim() || !regUsername.trim() || !regPassword) {
+    if (!regDisplayName.trim() || !regUsername.trim() || !regPassword || !regOrganization.trim()) {
       setRegError('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน');
       return;
     }
@@ -135,13 +136,14 @@ export default function LoginView({ onLogin, orgProfile, onOpenOnboarding }) {
         displayName: regDisplayName.trim(),
         username: regUsername.trim(),
         password: regPassword,
-        department: regDepartment,
-        position: regPosition.trim(),
+        organization: regOrganization.trim(),
+        department: regDepartment.trim() || 'หน่วยตรวจสอบภายใน',
+        position: regPosition.trim() || 'ผู้ตรวจสอบภายใน',
         role: regRole,
         email: regEmail.trim()
       });
 
-      setRegSuccess(`ส่งคำขอลงทะเบียนของ "${regDisplayName}" เรียบร้อยแล้ว! คำขอจะถูกส่งไปยังผู้ดูแลระบบ (ADMIN) เพื่ออนุมัติสิทธิ์เข้าใช้งาน`);
+      setRegSuccess(`ส่งคำขอลงทะเบียนของ "${regDisplayName}" ในสังกัด "${regOrganization.trim()}" เรียบร้อยแล้ว! คำขอจะถูกส่งไปยังผู้ดูแลระบบ (ADMIN) เพื่ออนุมัติสิทธิ์เข้าใช้งาน`);
       setRegDisplayName('');
       setRegUsername('');
       setRegPassword('');
@@ -286,61 +288,50 @@ export default function LoginView({ onLogin, orgProfile, onOpenOnboarding }) {
             </button>
           </div>
 
-          {/* Quick Login Account Picker */}
+          {/* Quick Login Account Picker (Auditor & Executive Roles) */}
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
             <button
               type="button"
               onClick={() => setShowQuickLogin(!showQuickLogin)}
               className="w-full flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 cursor-pointer"
             >
-              <span>🏢 เลือกเข้าสู่ระบบด่วนรายกอง (Quick Switch):</span>
+              <span>🛡️ เลือกเข้าสู่ระบบด่วนตามบทบาท (Auditor & Executive Roles):</span>
               {showQuickLogin ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
 
             {showQuickLogin && (
-              <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-48 overflow-y-auto pr-1">
                 {(() => {
+                  const allowedUsernames = ['admin', 'mayor', 'palat'];
                   const sorted = [...availableUsers]
-                    .filter((u) => u.username !== 'health' && !u.department?.includes('สาธารณสุข'))
+                    .filter((u) => 
+                      allowedUsernames.includes(u.username) || 
+                      u.role === 'admin' || 
+                      u.role === 'executive' || 
+                      u.role === 'auditor' ||
+                      u.department?.includes('ตรวจสอบ')
+                    )
                     .sort((a, b) => {
-                      const order = { 
-                        mayor: 1, 
-                        palat: 2, 
-                        admin: 3, 
-                        office: 4, 
-                        finance: 5, 
-                        engineering: 6, 
-                        education: 7, 
-                        welfare: 8,
-                        cdc_charoen: 9,
-                        cdc_fangthoeng: 10
-                      };
+                      const order = { admin: 1, mayor: 2, palat: 3 };
                       return (order[a.username] || 99) - (order[b.username] || 99);
                     });
                   return sorted.map((u) => {
                     const isSelected = Boolean(username && u.username && username.toLowerCase() === u.username.toLowerCase());
-                    const isAdmin = u.role === 'admin' || u.username === 'admin';
-                    const isPalat = u.username === 'palat' || (u.displayName?.includes('ปลัด') && u.username !== 'office' && !u.displayName?.includes('สำนัก'));
-                    const isCdc = u.username?.startsWith('cdc_') || u.displayName?.includes('ศพด.');
+                    const isMayor = u.username === 'mayor' || (u.role === 'executive' && u.username !== 'palat') || u.displayName?.includes('ผู้บริหาร') || u.displayName?.includes('นายก');
+                    const isPalat = u.username === 'palat' || (u.displayName?.includes('ปลัด') && !u.displayName?.includes('สำนัก'));
+                    const isAdmin = u.role === 'admin' || u.username === 'admin' || u.department?.includes('ตรวจสอบ');
 
-                    let icon = '🏢';
+                    let icon = '🛡️';
                     let displayTitle = u.displayName || u.username;
                     if (isMayor) {
                       icon = '👑';
-                      displayTitle = 'ผู้บริหาร';
+                      displayTitle = 'ผู้บริหาร อปท.';
                     } else if (isPalat) {
                       icon = '🏛️';
-                      displayTitle = 'ปลัด อบต.ฝางคำ';
+                      displayTitle = 'ปลัด อปท.';
                     } else if (isAdmin) {
                       icon = '👑';
-                      displayTitle = 'หน่วยตรวจสอบฯ';
-                    } else if (u.username === 'office' || displayTitle?.includes('สำนักปลัด')) {
-                      icon = '🏢';
-                      displayTitle = 'สำนักปลัด';
-                    } else if (isCdc) {
-                      icon = '🏫';
-                    } else if (displayTitle === 'กองสาธารณสุขและสิ่งแวดล้อม') {
-                      displayTitle = 'กองสวัสดิการสังคม';
+                      displayTitle = 'ผู้ตรวจสอบภายใน';
                     }
 
                     return (
@@ -535,21 +526,44 @@ export default function LoginView({ onLogin, orgProfile, onOpenOnboarding }) {
                     />
                   </div>
 
+                  <div className="sm:col-span-2">
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      องค์กรปกครองส่วนท้องถิ่น (อปท.) / หน่วยงานที่สังกัด <span className="text-rose-500">*</span>:
+                    </label>
+                    <div className="relative">
+                      <Building className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        list="login-org-options"
+                        value={regOrganization}
+                        onChange={(e) => setRegOrganization(e.target.value)}
+                        placeholder="พิมพ์หรือเลือกชื่อ อปท. เช่น องค์การบริหารส่วนตำบล..., เทศบาลตำบล..."
+                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <datalist id="login-org-options">
+                        <option value="องค์การบริหารส่วนตำบลต้นแบบ" />
+                        <option value="เทศบาลตำบลเมืองทอง" />
+                        <option value="เทศบาลนครสุรนารี" />
+                        <option value="องค์การบริหารส่วนจังหวัด" />
+                      </datalist>
+                    </div>
+                    <p className="text-[11px] text-blue-600 dark:text-blue-400 mt-1">
+                      💡 ชื่อหน่วยงานนี้จะถูกเชื่อมโยงเป็นชื่อ อปท. หลักของระบบ และแสดงในเอกสาร/รายงานการตรวจสอบทันที
+                    </p>
+                  </div>
+
                   <div>
                     <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      สังกัด / สำนัก-กอง <span className="text-rose-500">*</span>:
+                      กลุ่มงาน / หน่วยงานตรวจสอบ:
                     </label>
-                    <select
+                    <input
+                      type="text"
                       value={regDepartment}
                       onChange={(e) => setRegDepartment(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer"
-                    >
-                      {departments.map((dept) => (
-                        <option key={dept} value={dept}>
-                          {dept}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="เช่น หน่วยตรวจสอบภายใน"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500 font-medium"
+                    />
                   </div>
 
                   <div>
@@ -560,7 +574,7 @@ export default function LoginView({ onLogin, orgProfile, onOpenOnboarding }) {
                       type="text"
                       value={regPosition}
                       onChange={(e) => setRegPosition(e.target.value)}
-                      placeholder="เช่น เจ้าพนักงานพัสดุปฏิบัติงาน"
+                      placeholder="เช่น นักวิชาการตรวจสอบภายในปฏิบัติการ"
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
