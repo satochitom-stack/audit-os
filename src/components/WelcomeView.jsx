@@ -326,7 +326,7 @@ export default function WelcomeView({
     <div className="min-h-screen bg-gradient-to-b from-[#f7f6f2] via-[#f5f2eb] to-[#ede8dc] text-stone-800 font-sans selection:bg-amber-700 selection:text-white relative overflow-x-hidden">
       {/* Expired Subscription Alert Bar (Persistent Banner) */}
       {session && subStatus.expired && (
-        <div className="bg-gradient-to-r from-stone-900 via-rose-950 to-stone-900 text-amber-100 py-3 px-4 border-b border-rose-500/50 shadow-md flex items-center justify-between text-xs sticky top-0 z-50">
+        <div className="bg-gradient-to-r from-stone-900 via-rose-950 to-stone-900 text-amber-100 py-3 px-4 border-b border-rose-500/50 shadow-md flex items-center justify-between text-xs sticky top-0 z-50 no-print print:hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between max-w-6xl mx-auto w-full gap-2">
             <div className="flex items-center space-x-2.5">
               <Lock className="w-4 h-4 text-rose-400 shrink-0" />
@@ -347,12 +347,12 @@ export default function WelcomeView({
       )}
 
       {/* Soft warm ambient background orbs */}
-      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-stone-400/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 -left-40 w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none no-print print:hidden" />
+      <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-stone-400/10 rounded-full blur-3xl pointer-events-none no-print print:hidden" />
+      <div className="absolute bottom-10 -left-40 w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-3xl pointer-events-none no-print print:hidden" />
 
       {/* 1. Floating Glass Island Header (Appears smoothly when scrolling down) */}
-      <div className={`fixed top-3 sm:top-4 inset-x-0 z-50 px-3 sm:px-6 transition-all duration-300 ${
+      <div className={`fixed top-3 sm:top-4 inset-x-0 z-50 px-3 sm:px-6 transition-all duration-300 no-print print:hidden ${
         scrolled ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-6 pointer-events-none'
       }`}>
         <header className="max-w-6xl mx-auto pointer-events-auto rounded-2xl md:rounded-full bg-white/90 backdrop-blur-xl border border-stone-200/80 shadow-[0_8px_30px_rgba(40,30,20,0.08)] px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between transition-all relative overflow-hidden ring-1 ring-stone-900/5">
@@ -457,7 +457,7 @@ export default function WelcomeView({
       </div>
 
       {/* 2. Responsive Hero Banner (Option B: Royal Blue & Cyber Cyan Cosmic Beam) */}
-      <section className="relative w-full pt-2 sm:pt-3 pb-4 sm:pb-6 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto">
+      <section className="relative w-full pt-2 sm:pt-3 pb-4 sm:pb-6 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto no-print print:hidden">
         <ResponsiveHeroBanner
           session={session}
           onPrimaryClick={handleDashboardEntry}
@@ -498,7 +498,7 @@ export default function WelcomeView({
         />
 
         {/* 4. Core System Modules */}
-        <div id="modules" className="space-y-6 pt-6 border-t border-slate-200/80 dark:border-slate-800">
+        <div id="modules" className="space-y-6 pt-6 border-t border-slate-200/80 dark:border-slate-800 no-print print:hidden">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
             <h3 className="text-lg md:text-2xl font-bold text-slate-900">
               ระบบงานอัจฉริยะครบวงจร (Audit Modules)
@@ -552,7 +552,7 @@ export default function WelcomeView({
         </div>
 
         {/* 6. Call to Action Banner */}
-        <div className="p-8 md:p-12 rounded-3xl bg-gradient-to-r from-stone-100/90 via-amber-50/70 to-white border border-stone-300/80 text-center space-y-5 relative overflow-hidden shadow-xs">
+        <div className="p-8 md:p-12 rounded-3xl bg-gradient-to-r from-stone-100/90 via-amber-50/70 to-white border border-stone-300/80 text-center space-y-5 relative overflow-hidden shadow-xs no-print print:hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
           <h3 className="text-xl md:text-3xl font-extrabold text-stone-900">
             พร้อมเริ่มต้นปฏิบัติงานตรวจสอบภายในแล้วหรือยัง?
@@ -585,7 +585,7 @@ export default function WelcomeView({
       </section>
 
       {/* 7. Footer */}
-      <footer className="border-t border-stone-200/80 py-8 px-4 text-center text-xs text-stone-500 space-y-1 bg-white/40">
+      <footer className="border-t border-stone-200/80 py-8 px-4 text-center text-xs text-stone-500 space-y-1 bg-white/40 no-print print:hidden">
         <p className="font-semibold text-stone-700">
           หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
         </p>

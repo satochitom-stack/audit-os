@@ -261,63 +261,81 @@ export default function OrgChartStructure({
       case 'sky':
         return {
           bg: 'bg-sky-600',
-          border: 'border-sky-300',
+          headerHex: '#0284c7',
+          borderHex: '#38bdf8',
+          lightHex: '#f0f9ff',
           badge: 'bg-sky-100 text-sky-900 border-sky-300',
           lightBg: 'bg-sky-50/70 border-sky-200'
         };
       case 'purple':
         return {
           bg: 'bg-purple-700',
-          border: 'border-purple-300',
+          headerHex: '#7e22ce',
+          borderHex: '#c084fc',
+          lightHex: '#faf5ff',
           badge: 'bg-purple-100 text-purple-900 border-purple-300',
           lightBg: 'bg-purple-50/70 border-purple-200'
         };
       case 'amber':
         return {
           bg: 'bg-amber-600',
-          border: 'border-amber-300',
+          headerHex: '#d97706',
+          borderHex: '#fbbf24',
+          lightHex: '#fffbeb',
           badge: 'bg-amber-100 text-amber-900 border-amber-300',
           lightBg: 'bg-amber-50/70 border-amber-200'
         };
       case 'yellow':
         return {
           bg: 'bg-amber-500',
-          border: 'border-yellow-400',
+          headerHex: '#ca8a04',
+          borderHex: '#facc15',
+          lightHex: '#fefce8',
           badge: 'bg-yellow-100 text-yellow-900 border-yellow-300',
           lightBg: 'bg-yellow-50/70 border-yellow-200'
         };
       case 'emerald':
         return {
           bg: 'bg-emerald-600',
-          border: 'border-emerald-300',
+          headerHex: '#059669',
+          borderHex: '#34d399',
+          lightHex: '#ecfdf5',
           badge: 'bg-emerald-100 text-emerald-900 border-emerald-300',
           lightBg: 'bg-emerald-50/70 border-emerald-200'
         };
       case 'teal':
         return {
           bg: 'bg-teal-600',
-          border: 'border-teal-300',
+          headerHex: '#0d9488',
+          borderHex: '#2dd4bf',
+          lightHex: '#f0fdfa',
           badge: 'bg-teal-100 text-teal-900 border-teal-300',
           lightBg: 'bg-teal-50/70 border-teal-200'
         };
       case 'indigo':
         return {
           bg: 'bg-indigo-600',
-          border: 'border-indigo-300',
+          headerHex: '#4f46e5',
+          borderHex: '#818cf8',
+          lightHex: '#eef2ff',
           badge: 'bg-indigo-100 text-indigo-900 border-indigo-300',
           lightBg: 'bg-indigo-50/70 border-indigo-200'
         };
       case 'rose':
         return {
           bg: 'bg-rose-600',
-          border: 'border-rose-300',
+          headerHex: '#e11d48',
+          borderHex: '#fb7185',
+          lightHex: '#fff1f2',
           badge: 'bg-rose-100 text-rose-900 border-rose-300',
           lightBg: 'bg-rose-50/70 border-rose-200'
         };
       default:
         return {
           bg: 'bg-blue-600',
-          border: 'border-blue-300',
+          headerHex: '#2563eb',
+          borderHex: '#60a5fa',
+          lightHex: '#eff6ff',
           badge: 'bg-blue-100 text-blue-900 border-blue-300',
           lightBg: 'bg-blue-50/70 border-blue-200'
         };
@@ -325,17 +343,22 @@ export default function OrgChartStructure({
   };
 
   const handlePrint = () => {
-    window.print();
+    if (viewMode !== 'chart') {
+      setViewMode('chart');
+      setTimeout(() => window.print(), 150);
+    } else {
+      window.print();
+    }
   };
 
   const renderDeptColumn = (dept, idx, totalInRow) => {
     const colors = getColorClasses(dept.color);
     return (
-      <div key={dept.id || idx} className="flex flex-col items-center w-full min-w-0">
+      <div key={dept.id || idx} className="flex flex-col items-center w-full min-w-0 org-dept-col">
         {/* Top Branch Connector */}
         <div className="relative w-full h-5 flex justify-center">
           <div
-            className={`absolute top-0 h-0.5 bg-emerald-600 ${
+            className={`absolute top-0 h-0.5 ${
               totalInRow === 1
                 ? 'hidden'
                 : idx === 0
@@ -344,16 +367,28 @@ export default function OrgChartStructure({
                 ? 'left-0 right-1/2'
                 : 'left-0 right-0'
             }`}
+            style={{ backgroundColor: '#059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
           />
-          <div className="w-0.5 h-full bg-emerald-600" />
+          <div
+            className="w-0.5 h-full"
+            style={{ backgroundColor: '#059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+          />
         </div>
 
         {/* Department Header Box */}
-        <div className={`w-full ${colors.bg} text-white rounded-2xl p-2.5 text-center shadow-xs transition-all`}>
-          <div className="text-xs font-black tracking-wide truncate" title={dept.name}>
+        <div
+          className={`w-full ${colors.bg} text-white rounded-2xl p-2.5 text-center shadow-xs transition-all`}
+          style={{
+            backgroundColor: colors.headerHex,
+            color: '#ffffff',
+            WebkitPrintColorAdjust: 'exact',
+            printColorAdjust: 'exact'
+          }}
+        >
+          <div className="text-xs font-black tracking-wide truncate text-white" title={dept.name} style={{ color: '#ffffff' }}>
             {dept.name}
           </div>
-          <div className="text-[10px] opacity-90 mt-0.5 line-clamp-1" title={dept.headTitle}>
+          <div className="text-[10px] opacity-90 mt-0.5 line-clamp-1 text-white" title={dept.headTitle} style={{ color: '#ffffff' }}>
             {dept.headTitle || 'หัวหน้าหน่วยงาน'}
           </div>
         </div>
@@ -363,7 +398,13 @@ export default function OrgChartStructure({
           {(dept.divisions || []).map((div, divIdx) => (
             <div
               key={div.id || divIdx}
-              className={`${colors.lightBg} border rounded-xl p-2 space-y-1.5 text-[11px] shadow-2xs`}
+              className={`${colors.lightBg} border rounded-xl p-2 space-y-1.5 text-[11px] shadow-2xs break-inside-avoid`}
+              style={{
+                backgroundColor: colors.lightHex,
+                borderColor: colors.borderHex,
+                WebkitPrintColorAdjust: 'exact',
+                printColorAdjust: 'exact'
+              }}
             >
               <div className="font-bold text-slate-900 dark:text-slate-100 pb-1 border-b border-slate-200/60 dark:border-slate-700 text-[11px] truncate" title={div.name}>
                 {div.name}
@@ -371,7 +412,10 @@ export default function OrgChartStructure({
 
               {/* ตำแหน่งหัวหน้าฝ่าย (สอดคล้องกับโครงสร้างจริงของเทศบาลและ อปท.) */}
               {(div.headTitle || div.headName) && (
-                <div className="flex items-center space-x-1 text-[9.5px] font-semibold text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-900/60 px-1.5 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+                <div
+                  className="flex items-center space-x-1 text-[9.5px] font-semibold text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/60 px-1.5 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-700/60 shadow-2xs"
+                  style={{ backgroundColor: '#ffffff', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                >
                   <span className="text-[10px]">👤</span>
                   <span className="truncate">{div.headTitle || 'หัวหน้าฝ่าย'}{div.headName ? `: ${div.headName}` : ''}</span>
                 </div>
@@ -390,7 +434,7 @@ export default function OrgChartStructure({
 
           {/* Affiliated Units (ศพด., โรงเรียน, รพ.สต.) */}
           {Array.isArray(dept.affiliatedUnits) && dept.affiliatedUnits.length > 0 && (
-            <div className="pt-1 space-y-1">
+            <div className="pt-1 space-y-1 break-inside-avoid">
               <div className="text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider text-center">
                 หน่วยงานในสังกัด:
               </div>
@@ -398,6 +442,7 @@ export default function OrgChartStructure({
                 <div
                   key={aff.id || affIdx}
                   className="bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl p-2 text-center shadow-2xs"
+                  style={{ backgroundColor: '#ecfdf5', borderColor: '#34d399', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
                 >
                   <div className="text-[10px] font-extrabold text-emerald-950 dark:text-emerald-200 flex items-center justify-center space-x-1">
                     <School className="w-3 h-3 text-emerald-600 shrink-0" />
@@ -416,17 +461,17 @@ export default function OrgChartStructure({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden transition-all p-4 sm:p-6 lg:p-8 print:p-0 print:border-none print:shadow-none">
+    <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden transition-all p-4 sm:p-6 lg:p-8 print:p-0 print:border-none print:shadow-none print:bg-white org-chart-print-container">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 p-4 rounded-2xl bg-emerald-700 text-white shadow-2xl flex items-center space-x-2 text-xs font-bold animate-in fade-in duration-200">
+        <div className="fixed top-6 right-6 z-50 p-4 rounded-2xl bg-emerald-700 text-white shadow-2xl flex items-center space-x-2 text-xs font-bold animate-in fade-in duration-200 no-print print:hidden">
           <CheckCircle2 className="w-4 h-4" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* 1. Header Toolbar */}
-      <div className="space-y-3.5 pb-4 border-b border-slate-200/80 dark:border-slate-800 no-print">
+      <div className="space-y-3.5 pb-4 border-b border-slate-200/80 dark:border-slate-800 no-print print:hidden">
         {/* Row 1: Title (แถวบนเต็มความกว้างแถวเดียว) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
           <div className="flex items-center space-x-2.5 min-w-0">
@@ -966,10 +1011,27 @@ export default function OrgChartStructure({
 
               {/* TOP TIER: 1. ผู้บริหารสูงสุด (นายก อปท.) */}
               <div className="flex flex-col items-center">
-                <div className="w-80 bg-gradient-to-br from-amber-50 via-white to-amber-100/70 dark:from-amber-950/60 dark:via-slate-900 dark:to-amber-900/40 border-2 border-amber-400 dark:border-amber-600 rounded-2xl p-3 text-center shadow-xs transition-all hover:scale-[1.01]">
+                <div
+                  className="w-80 bg-gradient-to-br from-amber-50 via-white to-amber-100/70 dark:from-amber-950/60 dark:via-slate-900 dark:to-amber-900/40 border-2 border-amber-400 dark:border-amber-600 rounded-2xl p-3 text-center shadow-xs transition-all hover:scale-[1.01]"
+                  style={{
+                    backgroundColor: '#fffbeb',
+                    borderColor: '#f59e0b',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact'
+                  }}
+                >
                   <div className="flex items-center justify-center space-x-1.5 mb-1">
                     <span className="text-sm">👑</span>
-                    <span className="text-[10px] font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full border border-amber-300">
+                    <span
+                      className="text-[10px] font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full border border-amber-300"
+                      style={{
+                        backgroundColor: '#fef3c7',
+                        color: '#78350f',
+                        borderColor: '#f59e0b',
+                        WebkitPrintColorAdjust: 'exact',
+                        printColorAdjust: 'exact'
+                      }}
+                    >
                       ฝ่ายบริหาร / ผู้บริหารสูงสุด
                     </span>
                   </div>
@@ -982,7 +1044,10 @@ export default function OrgChartStructure({
                 </div>
 
                 {/* Vertical connector line down from นายก to ปลัด */}
-                <div className="w-0.5 h-6 bg-emerald-600 my-0" />
+                <div
+                  className="w-0.5 h-6 bg-emerald-600 my-0"
+                  style={{ backgroundColor: '#059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                />
               </div>
 
               {/* MIDDLE TIER: 2. ปลัด อปท. & หน่วยตรวจสอบภายใน (กิ่งขวา รายงานตรง) */}
@@ -991,10 +1056,27 @@ export default function OrgChartStructure({
                 <div className="w-72 shrink-0 hidden md:block" />
 
                 {/* Center Box: ปลัด อปท. */}
-                <div className="w-80 bg-gradient-to-br from-emerald-50 via-white to-emerald-100/70 dark:from-emerald-950/60 dark:via-slate-900 dark:to-emerald-900/40 border-2 border-emerald-500 hover:border-emerald-600 rounded-2xl p-3 text-center shadow-xs transition-all hover:scale-[1.01] shrink-0 z-10">
+                <div
+                  className="w-80 bg-gradient-to-br from-emerald-50 via-white to-emerald-100/70 dark:from-emerald-950/60 dark:via-slate-900 dark:to-emerald-900/40 border-2 border-emerald-500 hover:border-emerald-600 rounded-2xl p-3 text-center shadow-xs transition-all hover:scale-[1.01] shrink-0 z-10"
+                  style={{
+                    backgroundColor: '#ecfdf5',
+                    borderColor: '#10b981',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact'
+                  }}
+                >
                   <div className="flex items-center justify-center space-x-1 mb-1">
                     <span className="text-sm">🏛️</span>
-                    <span className="text-[10px] font-bold text-emerald-900 dark:text-emerald-200 uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-300">
+                    <span
+                      className="text-[10px] font-bold text-emerald-900 dark:text-emerald-200 uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full border border-emerald-300"
+                      style={{
+                        backgroundColor: '#d1fae5',
+                        color: '#065f46',
+                        borderColor: '#10b981',
+                        WebkitPrintColorAdjust: 'exact',
+                        printColorAdjust: 'exact'
+                      }}
+                    >
                       หัวหน้าพนักงานส่วนท้องถิ่น / ปลัด อปท.
                     </span>
                   </div>
@@ -1008,13 +1090,33 @@ export default function OrgChartStructure({
 
                 {/* Right Side: Connector Line & หน่วยตรวจสอบภายใน */}
                 <div className="flex items-center w-72 shrink-0">
-                  <div className="w-10 h-0.5 bg-blue-500 shrink-0" />
+                  <div
+                    className="w-10 h-0.5 bg-blue-500 shrink-0"
+                    style={{ backgroundColor: '#3b82f6', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                  />
                   
                   {/* Box: หน่วยตรวจสอบภายใน */}
-                  <div className="w-60 bg-white dark:bg-slate-900 border-2 border-blue-600 dark:border-blue-500 rounded-2xl p-2.5 text-center shadow-md shrink-0 ring-2 ring-blue-500/20">
+                  <div
+                    className="w-60 bg-white dark:bg-slate-900 border-2 border-blue-600 dark:border-blue-500 rounded-2xl p-2.5 text-center shadow-md shrink-0 ring-2 ring-blue-500/20"
+                    style={{
+                      backgroundColor: '#eff6ff',
+                      borderColor: '#2563eb',
+                      WebkitPrintColorAdjust: 'exact',
+                      printColorAdjust: 'exact'
+                    }}
+                  >
                     <div className="flex items-center justify-center space-x-1 mb-1">
                       <span className="text-xs">🛡️</span>
-                      <span className="text-[9px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded-full border border-blue-200">
+                      <span
+                        className="text-[9px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded-full border border-blue-200"
+                        style={{
+                          backgroundColor: '#dbeafe',
+                          color: '#1e40af',
+                          borderColor: '#3b82f6',
+                          WebkitPrintColorAdjust: 'exact',
+                          printColorAdjust: 'exact'
+                        }}
+                      >
                         รายงานตรงต่อนายก/ปลัด
                       </span>
                     </div>
@@ -1032,7 +1134,10 @@ export default function OrgChartStructure({
               </div>
 
               {/* Central Vertical Connector line from ปลัด down to Trunk bar or รองปลัด */}
-              <div className="w-0.5 h-6 bg-emerald-600" />
+              <div
+                className="w-0.5 h-6 bg-emerald-600"
+                style={{ backgroundColor: '#059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+              />
 
               {/* TIER 2.5: รองปลัด อปท. (สายงานบังคับบัญชากลางตามกรอบ อปท. ถ้ามี) */}
               {Array.isArray(structure.deputyPalats) && structure.deputyPalats.length > 0 && (
@@ -1042,10 +1147,25 @@ export default function OrgChartStructure({
                       <div
                         key={deputy.id || depIdx}
                         className="w-72 bg-gradient-to-br from-teal-50 via-white to-teal-100/70 dark:from-teal-950/60 dark:via-slate-900 dark:to-teal-900/40 border-2 border-teal-500 hover:border-teal-600 rounded-2xl p-2.5 text-center shadow-xs transition-all hover:scale-[1.01]"
+                        style={{
+                          backgroundColor: '#f0fdfa',
+                          borderColor: '#14b8a6',
+                          WebkitPrintColorAdjust: 'exact',
+                          printColorAdjust: 'exact'
+                        }}
                       >
                         <div className="flex items-center justify-center space-x-1 mb-1">
                           <span className="text-xs">🏛️</span>
-                          <span className="text-[9px] font-bold text-teal-900 dark:text-teal-200 uppercase tracking-wider bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-full border border-teal-300">
+                          <span
+                            className="text-[9px] font-bold text-teal-900 dark:text-teal-200 uppercase tracking-wider bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-full border border-teal-300"
+                            style={{
+                              backgroundColor: '#ccfbf1',
+                              color: '#115e59',
+                              borderColor: '#14b8a6',
+                              WebkitPrintColorAdjust: 'exact',
+                              printColorAdjust: 'exact'
+                            }}
+                          >
                             {deputy.role || 'รองปลัด อปท. (นักบริหารงานท้องถิ่น)'}
                           </span>
                         </div>
@@ -1059,7 +1179,10 @@ export default function OrgChartStructure({
                     ))}
                   </div>
                   {/* Central Vertical Connector line down from รองปลัด to Trunk bar */}
-                  <div className="w-0.5 h-6 bg-emerald-600" />
+                  <div
+                    className="w-0.5 h-6 bg-emerald-600"
+                    style={{ backgroundColor: '#059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                  />
                 </div>
               )}
 
@@ -1090,11 +1213,20 @@ export default function OrgChartStructure({
 
                         {/* Connector down to Tier 2 */}
                         <div className="flex flex-col items-center">
-                          <div className="w-0.5 h-6 bg-emerald-600" />
-                          <div className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                          <div
+                            className="w-0.5 h-6 bg-emerald-600"
+                            style={{ backgroundColor: '#059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                          />
+                          <div
+                            className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300"
+                            style={{ backgroundColor: '#f1f5f9', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                          >
                             ชั้นที่ 2: ส่วนราชการบริการและสาธารณูปโภค ({row2.length} ส่วนราชการ)
                           </div>
-                          <div className="w-0.5 h-4 bg-emerald-600" />
+                          <div
+                            className="w-0.5 h-4 bg-emerald-600"
+                            style={{ backgroundColor: '#059669', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                          />
                         </div>
 
                         {/* Row 2: Bottom Tier (e.g. 3 depts) */}
@@ -1115,7 +1247,7 @@ export default function OrgChartStructure({
               ) : (
                 /* SINGLE-ROW GRID (Fit or Wide) */
                 <div
-                  className="grid gap-3 w-full"
+                  className="grid gap-3 w-full org-chart-dept-grid print:gap-1.5"
                   style={{
                     gridTemplateColumns:
                       chartLayout === 'fit'

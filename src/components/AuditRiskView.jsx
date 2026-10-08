@@ -1264,7 +1264,7 @@ export default function AuditRiskView({
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 no-print print:hidden">
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs">
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">กิจกรรมที่ประเมินทั้งหมด</div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">{totalActivities}</div>
@@ -1300,7 +1300,7 @@ export default function AuditRiskView({
       </div>
 
       {/* Sub Tabs Selector */}
-      <div className="bg-stone-100/90 dark:bg-stone-900/90 p-1.5 rounded-xl border border-stone-200/90 dark:border-stone-800 flex space-x-1 overflow-x-auto text-xs font-bold scrollbar-none">
+      <div className="bg-stone-100/90 dark:bg-stone-900/90 p-1.5 rounded-xl border border-stone-200/90 dark:border-stone-800 flex space-x-1 overflow-x-auto text-xs font-bold scrollbar-none no-print print:hidden">
         {[
           { id: 'org-universe', label: '🏛️ โครงสร้างการแบ่งส่วนราชการ' },
           { id: 'fangkham-matrix', label: `ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง (${orgProfile?.name || 'อปท.'})` },
