@@ -20,9 +20,10 @@ import {
   Layers,
   Award,
   ShieldCheck,
-  DollarSign
+  DollarSign,
+  Lock
 } from 'lucide-react';
-import { MEMBERSHIP_PLANS } from '../utils/auth';
+import { MEMBERSHIP_PLANS, checkUserSubscription } from '../utils/auth';
 
 export default function Sidebar({
   currentTab,
@@ -31,9 +32,12 @@ export default function Sidebar({
   orgProfile,
   activeToolkitTab = 'factor-f',
   setActiveToolkitTab,
-  pendingCount = 0
+  pendingCount = 0,
+  onShowExpiredModal
 }) {
   const isAdmin = session?.role === 'admin';
+  const subStatus = checkUserSubscription(session);
+  const isExpired = subStatus.expired;
   const [toolkitSubmenuOpen, setToolkitSubmenuOpen] = useState(false);
 
   const planKey = session?.plan || 'annual';
@@ -94,9 +98,23 @@ export default function Sidebar({
           <span className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-wider uppercase">
             {isAdmin ? '👑 SUPER ADMIN WORKSPACE' : '🛡️ AUDITOR WORKSPACE'}
           </span>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${isAdmin ? 'bg-amber-100 text-amber-800 border-amber-300' : planInfo.badgeColor}`}>
-            {isAdmin ? 'ผู้ดูแลระบบ' : planInfo.name.split(' ')[0]}
-          </span>
+          {isAdmin ? (
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300">
+              ผู้ดูแลระบบ
+            </span>
+          ) : isExpired ? (
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1">
+              <Lock className="w-2.5 h-2.5" /> หมดอายุ (ล็อค)
+            </span>
+          ) : subStatus.isTrial ? (
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300">
+              ทดลองใช้ ({subStatus.daysRemaining} วัน)
+            </span>
+          ) : (
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${planInfo.badgeColor}`}>
+              {planInfo.name.split(' ')[0]} {subStatus.lifetime ? '(ตลอดชีพ)' : `(${subStatus.daysRemaining} วัน)`}
+            </span>
+          )}
         </div>
 
         <div className="space-y-0.5">
@@ -110,6 +128,19 @@ export default function Sidebar({
             {session?.position || 'นักวิชาการตรวจสอบภายใน'}
           </div>
         </div>
+
+        {/* Expired warning badge */}
+        {isExpired && !isAdmin && (
+          <div className="mt-2 p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-[11px] text-rose-800 dark:text-rose-300 flex items-start gap-1.5">
+            <Lock className="w-3.5 h-3.5 shrink-0 text-rose-600 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold">หมดอายุทดลองใช้ 30 วัน</p>
+              <p className="text-[10px] text-rose-600 dark:text-rose-400">
+                ล็อคเมนูขั้นตอนการตรวจสอบ
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation Scrollable Body */}
@@ -145,6 +176,11 @@ export default function Sidebar({
                   <div key={item.id} className="space-y-0.5">
                     <button
                       onClick={() => {
+                        if (isExpired && !isAdmin) {
+                          if (onShowExpiredModal) onShowExpiredModal();
+                          else setCurrentTab('welcome');
+                          return;
+                        }
                         setCurrentTab(item.id);
                         if (item.hasSubmenu) {
                           setToolkitSubmenuOpen(!toolkitSubmenuOpen);
@@ -153,15 +189,19 @@ export default function Sidebar({
                       className={`w-full text-left p-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer ${
                         isActive
                           ? 'bg-stone-800 text-amber-100 shadow-xs font-bold border-l-4 border-amber-500'
+                          : isExpired && !isAdmin
+                          ? 'text-stone-400 dark:text-stone-600 opacity-60 hover:bg-stone-100 dark:hover:bg-stone-900'
                           : 'text-stone-600 dark:text-stone-400 hover:bg-stone-200/60 dark:hover:bg-stone-800/80 hover:text-stone-900 dark:hover:text-stone-200'
                       }`}
                     >
                       <div className="flex items-center space-x-2.5 truncate">
-                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : 'text-stone-400 dark:text-stone-500'}`} />
+                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : isExpired && !isAdmin ? 'text-stone-400' : 'text-stone-400 dark:text-stone-500'}`} />
                         <span className="truncate">{item.label}</span>
                       </div>
 
-                      {item.hasSubmenu && (
+                      {isExpired && !isAdmin ? (
+                        <Lock className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500 shrink-0 ml-1" />
+                      ) : item.hasSubmenu ? (
                         <div className="p-0.5">
                           {toolkitSubmenuOpen ? (
                             <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
@@ -169,7 +209,7 @@ export default function Sidebar({
                             <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
                           )}
                         </div>
-                      )}
+                      ) : null}
                     </button>
 
                     {/* Submenu for Technical Toolkits */}
@@ -183,17 +223,27 @@ export default function Sidebar({
                             <button
                               key={sub.toolId}
                               onClick={() => {
+                                if (isExpired && !isAdmin) {
+                                  if (onShowExpiredModal) onShowExpiredModal();
+                                  else setCurrentTab('welcome');
+                                  return;
+                                }
                                 setCurrentTab('audit-toolkits');
                                 if (setActiveToolkitTab) setActiveToolkitTab(sub.toolId);
                               }}
-                              className={`w-full text-left py-1.5 px-2.5 rounded-lg text-[11px] font-medium transition-all flex items-center space-x-2 cursor-pointer ${
+                              className={`w-full text-left py-1.5 px-2.5 rounded-lg text-[11px] font-medium transition-all flex items-center justify-between cursor-pointer ${
                                 isSubActive
                                   ? 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-bold border-l-2 border-amber-600'
+                                  : isExpired && !isAdmin
+                                  ? 'text-stone-400 opacity-60'
                                   : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/60'
                               }`}
                             >
-                              <SubIcon className="w-3 h-3 text-stone-400" />
-                              <span className="truncate">{sub.label}</span>
+                              <div className="flex items-center space-x-2 truncate">
+                                <SubIcon className="w-3 h-3 text-stone-400" />
+                                <span className="truncate">{sub.label}</span>
+                              </div>
+                              {isExpired && !isAdmin && <Lock className="w-2.5 h-2.5 text-stone-400 shrink-0 ml-1" />}
                             </button>
                           );
                         })}

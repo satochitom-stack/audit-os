@@ -24,7 +24,6 @@ import {
 import {
   verifyLogin,
   startSession,
-  loginAsGuest,
   getLastUsername,
   setLastUsername,
   registerUser,
@@ -105,27 +104,22 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
 
     setRegBusy(true);
     try {
-      await registerUser({
+      const newUser = await registerUser({
         displayName: regDisplayName.trim(),
-        position: regPosition.trim(),
+        position: regPosition.trim() || 'นักวิชาการตรวจสอบภายใน',
         organization: regOrganization.trim(),
         province: regProvince.trim(),
         phone: regPhone.trim(),
         username: regUsername.trim(),
         password: regPassword,
-        plan: regPlan
+        plan: 'trial'
       });
 
-      setRegSuccess(
-        `ส่งคำขอลงทะเบียนของ "${regDisplayName}" สังกัด "${regOrganization}" เรียบร้อยแล้ว! คำขอจะถูกส่งไปยังผู้ดูแลระบบ (ADMIN) เพื่ออนุมัติสิทธิ์เข้าใช้งาน`
-      );
-      setRegDisplayName('');
-      setRegUsername('');
-      setRegPassword('');
-      setRegConfirmPassword('');
-      setRegOrganization('');
-      setRegProvince('');
-      setRegPhone('');
+      // Instant 30-day Free Trial - automatically log in!
+      setLastUsername(newUser.username);
+      const newSession = startSession(newUser, true);
+      setShowRegisterModal(false);
+      onLogin(newSession);
     } catch (err) {
       setRegError(err.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
     } finally {
@@ -266,10 +260,10 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
               <div className="space-y-0.5">
                 <h3 className="text-base font-bold text-stone-100 flex items-center space-x-2">
                   <ShieldCheck className="w-5 h-5 text-amber-400" />
-                  <span>สมัครสมาชิก Audit-OS (ผู้ตรวจสอบภายใน อปท.)</span>
+                  <span>สมัครสมาชิกเปิดใช้งานระบบ Audit-OS</span>
                 </h3>
                 <p className="text-[11px] text-stone-400">
-                  กรอกข้อมูลหน่วยงานและเลือกแพ็กเกจสมาชิกเพื่อส่งคำขอเปิดสิทธิ์
+                  สำหรับผู้ตรวจสอบภายใน อปท. (เปิดใช้งานทันที ฟรี 30 วัน ไม่ต้องรออนุมัติ)
                 </p>
               </div>
               <button
@@ -468,7 +462,7 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                     disabled={regBusy}
                     className="bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer disabled:opacity-50"
                   >
-                    {regBusy ? 'กำลังส่งคำขอ...' : 'ส่งคำขอสมัครสมาชิก'}
+                    {regBusy ? 'กำลังสร้างบัญชี...' : 'เปิดใช้งาน & ทดลองใช้ฟรี 30 วัน'}
                   </button>
                 </div>
               </form>

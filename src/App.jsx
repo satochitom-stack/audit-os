@@ -42,7 +42,7 @@ import AuditFollowUpView from './components/AuditFollowUpView';
 import { INITIAL_ENGAGEMENT_PLANS } from './data/engagementPlanTemplates';
 import {
   getSession,
-  loginAsGuest,
+  checkUserSubscription,
   logout as authLogout,
   switchSessionTo,
   autoRepairDataLinkages,
@@ -1152,10 +1152,19 @@ export default function App() {
     return 'audit-risk';
   };
 
-  // Route Guard: Ensure auditors and admin access appropriate tabs
+  // Route Guard: Ensure auditors and admin access appropriate tabs and check subscription
   useEffect(() => {
     if (!session) return;
     if (session.role === 'admin') return;
+
+    // Check expiration lockout (Trial 30 days or expired subscription)
+    const sub = checkUserSubscription(session);
+    if (sub.expired) {
+      if (currentTab !== 'welcome') {
+        setCurrentTab('welcome');
+      }
+      return;
+    }
 
     // All 11 lifecycle steps for auditors
     const allowed = [
@@ -1194,15 +1203,20 @@ export default function App() {
           onLogin={(sess) => {
             const s = sess || getSession();
             setSession(s);
-            setCurrentTab('audit-risk');
-          }}
-          onGuestLogin={() => {
-            const s = loginAsGuest();
-            setSession(s);
-            setCurrentTab('audit-risk');
+            const sub = checkUserSubscription(s);
+            if (sub.expired && s.role !== 'admin') {
+              setCurrentTab('welcome');
+            } else {
+              setCurrentTab('audit-risk');
+            }
           }}
           onEnterDashboard={() => {
-            setCurrentTab('audit-risk');
+            const sub = checkUserSubscription(session);
+            if (sub.expired && session?.role !== 'admin') {
+              setCurrentTab('welcome');
+            } else {
+              setCurrentTab('audit-risk');
+            }
           }}
         />
         {showOnboarding && (
@@ -1385,6 +1399,7 @@ export default function App() {
           activeToolkitTab={activeToolkitTab}
           setActiveToolkitTab={setActiveToolkitTab}
           pendingCount={pendingCount}
+          onShowExpiredModal={() => handleSelectTab('welcome')}
         />
 
         <main ref={mainContentRef} className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 lg:p-8 bg-slate-100/80 dark:bg-slate-950 custom-scrollbar print:p-0 print:m-0 print:bg-white print:overflow-visible">

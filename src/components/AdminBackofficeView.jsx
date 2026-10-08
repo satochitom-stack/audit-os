@@ -661,6 +661,14 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
                           </button>
 
                           <button
+                            onClick={() => handleQuickExtend(u.username, 'lifetime', 'lifetime')}
+                            className="bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                            title="ปลดล็อคตลอดชีพ (ไม่จำกัดวัน)"
+                          >
+                            ตลอดชีพ
+                          </button>
+
+                          <button
                             onClick={() => handleToggleSuspend(u)}
                             className={`p-1.5 rounded-lg text-xs transition-all cursor-pointer ${
                               isSuspended

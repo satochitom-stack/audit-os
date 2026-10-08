@@ -35,12 +35,13 @@ import { getTenantOrgStructure } from '../data/orgStructureData';
 import {
   verifyLogin,
   startSession,
-  loginAsGuest,
   getUsers,
   getLastUsername,
   setLastUsername,
   getDepartments,
   registerUser,
+  checkUserSubscription,
+  getSystemSettings,
   ENTERPRISE_ROLES
 } from '../utils/auth';
 import { loginWithFirebase } from '../services/firebaseAuthService';
@@ -50,10 +51,13 @@ export default function WelcomeView({
   orgProfile,
   onOpenOnboarding,
   onLogin,
-  onGuestLogin,
   onEnterDashboard
 }) {
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const subStatus = checkUserSubscription(session);
+  const systemSettings = getSystemSettings();
+
   const [username, setUsername] = useState(() => getLastUsername());
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -105,10 +109,17 @@ export default function WelcomeView({
 
   const DEPARTMENT_ORDER = ['สำนักปลัด', 'กองคลัง', 'กองช่าง', 'กองการศึกษา', 'กองสวัสดิการสังคม'];
 
-  // Filter out internal audit, executive titles, and CDCs to get main auditee departments (5 กองหลัก)
-  const auditeeDepartments = departments
+  // Derive dynamic org structure and affiliated units from tenant settings
+  const tenantOrg = getTenantOrgStructure(session, orgProfile);
+  const rawTenantDepts = Array.isArray(tenantOrg?.departments) && tenantOrg.departments.length > 0
+    ? tenantOrg.departments.map((d) => typeof d === 'string' ? d : d.name)
+    : departments;
+
+  // Filter out internal audit, executive titles, and CDCs to get main auditee departments
+  const auditeeDepartments = rawTenantDepts
     .filter(
-      (d) => d !== 'หน่วยตรวจสอบภายใน' && 
+      (d) => d &&
+             d !== 'หน่วยตรวจสอบภายใน' && 
              d !== 'ผู้บริหาร' && 
              !d.includes('ปลัด') && 
              !d.startsWith('ศพด.')
@@ -122,8 +133,6 @@ export default function WelcomeView({
       return a.localeCompare(b, 'th');
     });
 
-  // Derive dynamic org structure and affiliated units from tenant settings
-  const tenantOrg = getTenantOrgStructure(session, orgProfile);
   const affiliatedUnits = [];
   if (Array.isArray(tenantOrg?.departments)) {
     tenantOrg.departments.forEach((d) => {
@@ -248,24 +257,22 @@ export default function WelcomeView({
 
     setRegBusy(true);
     try {
-      await registerUser({
+      const newUser = await registerUser({
         displayName: regDisplayName.trim(),
         username: regUsername.trim(),
         password: regPassword,
         organization: regOrganization.trim(),
         department: regDepartment.trim() || 'หน่วยตรวจสอบภายใน',
-        position: regPosition.trim() || 'ผู้ตรวจสอบภายใน',
+        position: regPosition.trim() || 'นักวิชาการตรวจสอบภายใน',
         role: regRole,
         email: regEmail.trim()
       });
 
-      setRegSuccess(`ส่งคำขอลงทะเบียนของ "${regDisplayName}" ในสังกัด "${regOrganization.trim()}" เรียบร้อยแล้ว! คำขอจะถูกส่งไปยังผู้ดูแลระบบ (ADMIN) เพื่ออนุมัติสิทธิ์เข้าใช้งาน`);
-      setRegDisplayName('');
-      setRegUsername('');
-      setRegPassword('');
-      setRegConfirmPassword('');
-      setRegPosition('');
-      setRegEmail('');
+      // Instant 30-day Free Trial - automatically log in!
+      setLastUsername(newUser.username);
+      const newSession = startSession(newUser, true);
+      setShowRegisterModal(false);
+      onLogin(newSession);
     } catch (err) {
       setRegError(err.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
     } finally {
@@ -273,22 +280,20 @@ export default function WelcomeView({
     }
   };
 
-  const handleEnterGuest = () => {
-    setShowLoginModal(false);
-    if (onGuestLogin) {
-      onGuestLogin();
-    } else {
-      const guestSession = loginAsGuest();
-      onLogin(guestSession);
+  const handleDashboardEntry = () => {
+    if (session && subStatus.expired) {
+      setShowExpiredModal(true);
+      return;
     }
-  };
-
-  const scrollToLogin = () => {
     if (session) {
       onEnterDashboard();
       return;
     }
     setShowLoginModal(true);
+  };
+
+  const scrollToLogin = () => {
+    handleDashboardEntry();
   };
 
   const scrollToExplore = () => {
@@ -300,6 +305,28 @@ export default function WelcomeView({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f7f6f2] via-[#f5f2eb] to-[#ede8dc] text-stone-800 font-sans selection:bg-amber-700 selection:text-white relative overflow-x-hidden">
+      {/* Expired Subscription Alert Bar (Persistent Banner) */}
+      {session && subStatus.expired && (
+        <div className="bg-gradient-to-r from-stone-900 via-rose-950 to-stone-900 text-amber-100 py-3 px-4 border-b border-rose-500/50 shadow-md flex items-center justify-between text-xs sticky top-0 z-50">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between max-w-6xl mx-auto w-full gap-2">
+            <div className="flex items-center space-x-2.5">
+              <Lock className="w-4 h-4 text-rose-400 shrink-0" />
+              <div>
+                <span className="font-bold text-rose-300">บัญชีของคุณ (@{session.username}) หมดอายุทดลองใช้งานฟรี 30 วันแล้ว:</span>
+                <span className="text-stone-300 ml-1.5">ทุกเมนูการทำงานถูกล็อค กรุณาติดต่อผู้ดูแลระบบ (ADMIN) เพื่อต่ออายุการใช้งานหรือปลดล็อคสิทธิ์</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowExpiredModal(true)}
+              className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold rounded-lg text-xs transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+            >
+              ติดต่อต่ออายุ / ปลดล็อค
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Soft warm ambient background orbs */}
       <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-stone-400/10 rounded-full blur-3xl pointer-events-none" />
@@ -338,10 +365,6 @@ export default function WelcomeView({
                   {orgProfile?.name || 'อปท. เครือข่าย'}
                 </span>
               </div>
-              <div className="text-[10px] sm:text-[11px] text-stone-500 flex items-center space-x-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                <span>ระบบสารสนเทศเพื่อการตรวจสอบภายใน อปท. (Multi-Tenant)</span>
-              </div>
             </div>
           </div>
 
@@ -376,14 +399,13 @@ export default function WelcomeView({
             {session ? (
               <button
                 type="button"
-                onClick={onEnterDashboard}
+                onClick={handleDashboardEntry}
                 className="relative group p-[1px] rounded-full overflow-hidden bg-gradient-to-r from-stone-800 via-stone-700 to-amber-700 shadow-md shadow-stone-900/20 hover:shadow-lg transition-all cursor-pointer"
               >
-                <div className="px-4 sm:px-5 py-2 rounded-full bg-stone-800 text-amber-100 font-bold text-xs flex items-center space-x-2 transition-all">
+                <div className="px-4 sm:px-5 py-2 rounded-full bg-stone-800 hover:bg-stone-900 text-amber-100 font-bold text-xs flex items-center space-x-2 transition-all">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="hidden sm:inline">ไปยังแดชบอร์ดงาน</span>
-                  <span className="text-amber-300">({session.displayName || session.username})</span>
-                  <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  <span>เข้าสู่ระบบงานตรวจสอบ</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-300 transform group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
             ) : (
@@ -396,18 +418,9 @@ export default function WelcomeView({
                     title="ตั้งค่าและลงทะเบียน อปท. ใหม่ (ทดลองใช้งานฟรี 30 วัน)"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                    <span>ลงทะเบียน อปท. (Free Trial)</span>
+                    <span>ลงทะเบียน อปท. (Free Trial 30 วัน)</span>
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={handleEnterGuest}
-                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white hover:bg-stone-100 border border-stone-200 hover:border-amber-300 text-stone-700 hover:text-amber-900 font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs"
-                  title="เข้าชมแดชบอร์ดในฐานะผู้เยี่ยมชม (ไม่ต้องใช้รหัสผ่าน)"
-                >
-                  <Users className="w-3.5 h-3.5 text-stone-600" />
-                  <span>ผู้เยี่ยมชม (Guest)</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(true)}
@@ -415,7 +428,7 @@ export default function WelcomeView({
                 >
                   <div className="px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-stone-800 to-stone-900 hover:from-stone-900 hover:to-stone-950 text-amber-100 font-bold text-xs flex items-center space-x-2 transition-all border border-amber-600/30">
                     <LogIn className="w-3.5 h-3.5 text-amber-300" />
-                    <span>เข้าสู่ระบบ (Sign In)</span>
+                    <span>เข้าสู่ระบบงานตรวจสอบ</span>
                   </div>
                 </button>
               </div>
@@ -428,11 +441,9 @@ export default function WelcomeView({
       <section className="relative w-full pt-2 sm:pt-3 pb-4 sm:pb-6 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto">
         <ResponsiveHeroBanner
           session={session}
-          onPrimaryClick={scrollToLogin}
-          onCtaClick={scrollToLogin}
-          onGuestClick={handleEnterGuest}
-          primaryButtonText="เข้าสู่ระบบ"
-          guestButtonText="โหมดผู้เยี่ยมชม"
+          onPrimaryClick={handleDashboardEntry}
+          onCtaClick={handleDashboardEntry}
+          primaryButtonText="เข้าสู่ระบบงานตรวจสอบ"
           logoText="Audit-OS"
           subLogoText={orgProfile?.name || "เครือข่ายผู้ตรวจสอบภายใน อปท."}
           title="ระบบสารสนเทศเพื่อการตรวจสอบภายใน"
@@ -457,8 +468,8 @@ export default function WelcomeView({
       {/* 3. Quick Stats & System Pillars */}
       <section id="welcome-features" className="py-20 px-4 md:px-8 max-w-7xl mx-auto space-y-16">
         <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full text-xs font-semibold text-blue-700 shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+          <div className="inline-flex items-center space-x-2 bg-amber-50 border border-amber-200/80 px-3 py-1 rounded-full text-xs font-semibold text-amber-800 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
             <span>Digital Internal Audit Transformation</span>
           </div>
           <h2 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900">
@@ -688,27 +699,6 @@ export default function WelcomeView({
               </button>
             </form>
 
-            {/* Quick Guest Entry in Modal */}
-            <div className="pt-2">
-              <div className="relative my-2.5">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-stone-200"></div>
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase">
-                  <span className="bg-white px-2 text-stone-400 font-semibold tracking-wider">หรือเข้าชมทั่วไป</span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleEnterGuest}
-                className="w-full py-2.5 px-3 rounded-xl border border-stone-300 hover:border-amber-400 bg-stone-50 hover:bg-amber-50/40 text-stone-700 hover:text-amber-900 font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-xs"
-              >
-                <Users className="w-4 h-4 text-stone-600" />
-                <span>เข้าใช้งานในฐานะผู้เยี่ยมชม (Guest View - ไม่ต้องใช้รหัสผ่าน)</span>
-              </button>
-            </div>
-
             {/* Register New Account Action */}
             <div className="pt-3 border-t border-stone-100 space-y-2 text-xs">
               {onOpenOnboarding && (
@@ -764,10 +754,10 @@ export default function WelcomeView({
                 <UserPlus className="w-6 h-6" />
               </div>
               <h3 className="text-base font-bold text-stone-900">
-                ลงทะเบียนขอสิทธิ์เข้าใช้งานระบบ
+                ลงทะเบียนเปิดใช้งานระบบ Audit-OS
               </h3>
               <p className="text-xs text-stone-500">
-                สำหรับบุคลากร เจ้าหน้าที่ และหัวหน้าส่วนราชการ อปท. (คำขอจะถูกส่งให้ ADMIN อนุมัติ)
+                สำหรับผู้ตรวจสอบภายใน อปท. (เปิดใช้งานทันที ฟรี 30 วัน ไม่ต้องรออนุมัติ)
               </p>
             </div>
 
@@ -898,7 +888,7 @@ export default function WelcomeView({
                       </datalist>
                     </div>
                     <p className="text-[11px] text-amber-800 mt-1">
-                      💡 ชื่อหน่วยงานนี้จะถูกเชื่อมโยงเป็นชื่อ อปท. หลักของระบบ และแสดงในเอกสาร/รายงานการตรวจสอบทันที
+                      💡 ชื่อหน่วยงานนี้จะถูกเชื่อมโยงเป็นชื่อ อปท. หลักของระบบ และสามารถเข้าใช้งานเครื่องมือตรวจสอบได้ทันที 30 วัน
                     </p>
                   </div>
 
@@ -967,11 +957,78 @@ export default function WelcomeView({
                     className="flex-1 bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 font-bold py-2.5 px-3 rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
                   >
                     <Check className="w-4 h-4 text-amber-200" />
-                    <span>{regBusy ? 'กำลังส่งคำขอ...' : 'ส่งคำขอลงทะเบียน'}</span>
+                    <span>{regBusy ? 'กำลังสร้างบัญชี...' : 'เปิดใช้งาน & ทดลองใช้ฟรี 30 วัน'}</span>
                   </button>
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          EXPIRED SUBSCRIPTION MODAL (แจ้งเตือนหมดอายุทดลองใช้ 30 วัน)
+      ========================================================================= */}
+      {showExpiredModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white border border-stone-200 rounded-3xl shadow-2xl max-w-md w-full p-6 md:p-8 space-y-5 relative text-stone-900">
+            <button
+              type="button"
+              onClick={() => setShowExpiredModal(false)}
+              className="absolute top-5 right-5 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-stone-100 transition-all cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-800 border border-amber-200/80 flex items-center justify-center mx-auto shadow-xs">
+                <Lock className="w-7 h-7 text-amber-700" />
+              </div>
+              <h3 className="text-base font-bold text-stone-900">
+                หมดอายุการทดลองใช้งาน 30 วันแล้ว
+              </h3>
+              <p className="text-xs text-stone-500 leading-relaxed">
+                ระยะเวลาทดลองใช้ระบบ Audit-OS ฟรี 30 วัน ของบัญชี <span className="font-bold text-stone-800">@{session?.username}</span> สิ้นสุดแล้ว เมนูขั้นตอนการปฏิบัติงานตรวจสอบทั้งหมดถูกล็อค
+              </p>
+            </div>
+
+            <div className="bg-[#faf8f4] border border-amber-200/80 rounded-2xl p-4 text-xs space-y-2 text-stone-700">
+              <div className="font-bold text-amber-900 flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+                <span>ช่องทางต่ออายุหรือปลดล็อคโดย ADMIN:</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] pt-1">
+                <div className="flex justify-between py-1 border-b border-stone-200/60">
+                  <span className="text-stone-500">อัตราค่าสมาชิกรายปี:</span>
+                  <span className="font-bold text-amber-900">฿{systemSettings.annualPrice || '2,990'} / ปี</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-stone-200/60">
+                  <span className="text-stone-500">อัตราค่าสมาชิกรายเดือน:</span>
+                  <span className="font-bold text-stone-800">฿{systemSettings.monthlyPrice || '299'} / เดือน</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-stone-200/60">
+                  <span className="text-stone-500">พร้อมเพย์ (PromptPay):</span>
+                  <span className="font-mono font-bold text-stone-900">{systemSettings.promptPayNo || '081-234-5678'}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-stone-500">บัญชีธนาคาร:</span>
+                  <span className="font-medium text-stone-900">{systemSettings.bankName} {systemSettings.bankAccountNo}</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-stone-500 pt-1 italic">
+                * หรือแจ้ง ADMIN ผู้ดูแลระบบ ให้กด "ปลดล็อค / ต่ออายุ" ผ่านระบบหลังบ้าน (Super Admin Backoffice) ได้ทันที
+              </p>
+            </div>
+
+            <div className="pt-2 flex space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowExpiredModal(false)}
+                className="w-full py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-amber-100 font-bold text-xs transition-all cursor-pointer text-center border border-amber-600/30"
+              >
+                รับทราบ (อยู่หน้าแรก)
+              </button>
+            </div>
           </div>
         </div>
       )}

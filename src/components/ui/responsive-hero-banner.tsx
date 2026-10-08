@@ -412,18 +412,6 @@ export const ResponsiveHeroBanner: React.FC<ResponsiveHeroBannerProps> = ({
               <ArrowRight className="w-4 h-4 text-amber-200 group-hover:translate-x-0.5 transition-transform" />
             </button>
 
-            {/* Guest / Visitor Button */}
-            {onGuestClick && (
-              <button
-                type="button"
-                onClick={onGuestClick}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white/90 hover:bg-white text-stone-700 hover:text-amber-800 font-semibold text-sm sm:text-base px-6 py-2.5 sm:py-3 border border-stone-300/90 hover:border-amber-400 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all cursor-pointer group"
-              >
-                <Eye className="w-4 h-4 text-stone-500 group-hover:text-amber-600 group-hover:scale-110 transition-colors" />
-                <span>{guestButtonText}</span>
-              </button>
-            )}
-
             {secondaryButtonText && onSecondaryClick && (
               <button
                 type="button"

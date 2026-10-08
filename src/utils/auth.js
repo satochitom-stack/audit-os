@@ -20,10 +20,10 @@ export const ENTERPRISE_ROLES = [
 export const MEMBERSHIP_PLANS = {
   trial: {
     id: 'trial',
-    name: 'ทดลองใช้งานฟรี (Free Trial)',
+    name: 'ทดลองใช้งานฟรี (Free Trial 30 วัน)',
     price: 0,
-    priceLabel: 'ฟรี 14 วัน',
-    durationDays: 14,
+    priceLabel: 'ฟรี 30 วัน',
+    durationDays: 30,
     badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
   },
   monthly: {
@@ -32,7 +32,7 @@ export const MEMBERSHIP_PLANS = {
     price: 299,
     priceLabel: '฿299 / เดือน',
     durationDays: 30,
-    badgeColor: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-300'
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
   },
   annual: {
     id: 'annual',
@@ -50,7 +50,7 @@ export function getSystemSettings() {
     if (raw) return JSON.parse(raw);
   } catch (_) {}
   return {
-    trialDays: 14,
+    trialDays: 30,
     monthlyPrice: 299,
     annualPrice: 2990,
     bankName: 'ธนาคารกรุงไทย',
@@ -435,19 +435,59 @@ export function deleteUser(username) {
 // -------------------------------------------------------------
 // Subscription & Member Management Functions
 // -------------------------------------------------------------
+export function checkUserSubscription(user) {
+  if (!user) return { expired: false, daysRemaining: 0, isTrial: false, planName: 'ทั่วไป' };
+  if (user.role === 'admin' || user.username === 'admin') {
+    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'Super Admin' };
+  }
+  if (user.plan === 'lifetime') {
+    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'ตลอดชีพ (Lifetime)' };
+  }
+  if (user.status === 'suspended') {
+    return { expired: true, daysRemaining: 0, isSuspended: true, reason: 'บัญชีถูกระงับสิทธิ์การใช้งาน', planName: 'ระงับสิทธิ์' };
+  }
+  if (!user.expiresAt) {
+    return { expired: false, daysRemaining: 30, isTrial: user.plan === 'trial', planName: 'สมาชิก' };
+  }
+  const expiryTime = new Date(user.expiresAt).getTime();
+  const now = Date.now();
+  const diffMs = expiryTime - now;
+  const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  const isExpired = diffMs <= 0;
+  return {
+    expired: isExpired,
+    daysRemaining,
+    expiresAt: user.expiresAt,
+    isTrial: user.plan === 'trial',
+    planName: user.plan === 'trial' ? 'ทดลองใช้ฟรี 30 วัน' : user.plan === 'annual' ? 'สมาชิกรายปี' : 'สมาชิกรายเดือน'
+  };
+}
+
 export function extendMemberSubscription(username, extraDays = 30, planId = 'monthly') {
   const users = getUsers();
   const idx = users.findIndex((u) => u.username?.toLowerCase() === username.toLowerCase());
   if (idx === -1) throw new Error('ไม่พบสมาชิกนี้ในระบบ');
 
   const user = users[idx];
+  if (extraDays === 'lifetime' || planId === 'lifetime') {
+    users[idx] = {
+      ...user,
+      plan: 'lifetime',
+      status: 'active',
+      expiresAt: null
+    };
+    saveUsers(users);
+    return users[idx];
+  }
+
   const now = Date.now();
   let baseTime = now;
   if (user.expiresAt && new Date(user.expiresAt).getTime() > now) {
     baseTime = new Date(user.expiresAt).getTime();
   }
 
-  const newExpiry = new Date(baseTime + extraDays * 24 * 60 * 60 * 1000).toISOString();
+  const numDays = Number(extraDays) || 30;
+  const newExpiry = new Date(baseTime + numDays * 24 * 60 * 60 * 1000).toISOString();
   users[idx] = {
     ...user,
     plan: planId || user.plan || 'monthly',
@@ -460,7 +500,7 @@ export function extendMemberSubscription(username, extraDays = 30, planId = 'mon
 }
 
 // -------------------------------------------------------------
-// Pending Registrations Workflow
+// Registrations Workflow (Instant 30-Day Free Trial - No Waiting for Approval)
 // -------------------------------------------------------------
 export function getPendingUsers() {
   try {
@@ -488,7 +528,7 @@ export async function pullPendingUsersFromCloud() {
   return getPendingUsers();
 }
 
-export async function registerUser({ username, displayName, organization, province, position, phone, email, plan = 'annual', password, slipUrl }) {
+export async function registerUser({ username, displayName, organization, province, position, department, phone, email, plan = 'trial', password }) {
   const cleanUsername = username.trim().toLowerCase();
   const cleanOrg = organization ? organization.trim() : '';
   const cleanDisplayName = displayName.trim();
@@ -506,35 +546,55 @@ export async function registerUser({ username, displayName, organization, provin
   const salt = generateSalt();
   const hash = await hashPassword(password, salt);
 
-  const pendingList = getPendingUsers();
-  const existingIdx = pendingList.findIndex((p) => p.username?.toLowerCase() === cleanUsername);
+  // Instant 30-day Free Trial without waiting for Admin approval
+  const trialDurationDays = 30;
+  const expiresAt = new Date(Date.now() + trialDurationDays * 24 * 60 * 60 * 1000).toISOString();
 
-  const pendingEntry = {
-    id: 'pend_' + Date.now(),
+  const newUser = {
     username: cleanUsername,
     displayName: cleanDisplayName,
     organization: cleanOrg,
     province: province?.trim() || '',
     position: position?.trim() || 'นักวิชาการตรวจสอบภายใน',
-    department: 'หน่วยตรวจสอบภายใน',
+    department: department?.trim() || 'หน่วยตรวจสอบภายใน',
     phone: phone?.trim() || '',
     email: email?.trim() || `${cleanUsername}@ia-os.local`,
-    requestedPlan: plan || 'annual',
-    slipUrl: slipUrl || null,
+    role: 'auditor',
     salt,
     hash,
     passwordText: password,
-    requestedAt: Date.now(),
-    status: 'pending'
+    permissions: ALL_MENU_IDS.map((m) => m.id).filter((id) => id !== 'backoffice'),
+    canManageUsers: false,
+    plan: 'trial',
+    status: 'active',
+    trialDays: 30,
+    expiresAt,
+    registeredAt: Date.now(),
+    createdAt: Date.now()
   };
 
-  if (existingIdx !== -1) {
-    pendingList[existingIdx] = pendingEntry;
-  } else {
-    pendingList.push(pendingEntry);
-  }
+  existingUsers.push(newUser);
+  saveUsers(existingUsers);
+
+  // Keep a record in registration log
+  const pendingList = getPendingUsers();
+  pendingList.unshift({
+    id: 'reg_' + Date.now(),
+    username: cleanUsername,
+    displayName: cleanDisplayName,
+    organization: cleanOrg,
+    province: province?.trim() || '',
+    position: newUser.position,
+    department: newUser.department,
+    email: newUser.email,
+    requestedPlan: 'trial',
+    status: 'active_trial',
+    expiresAt,
+    requestedAt: Date.now()
+  });
   savePendingUsers(pendingList);
-  return pendingEntry;
+
+  return newUser;
 }
 
 export function approveMemberRegistration(pendingId, planId = 'annual', durationDays = 365) {
