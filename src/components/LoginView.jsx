@@ -33,7 +33,7 @@ import {
 } from '../utils/auth';
 
 export default function LoginView({ onLogin, orgProfile }) {
-  const [username, setUsername] = useState(() => getLastUsername() || 'admin');
+  const [username, setUsername] = useState(() => getLastUsername() || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
@@ -81,16 +81,6 @@ export default function LoginView({ onLogin, orgProfile }) {
       setError(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
       setBusy(false);
     }
-  };
-
-  const handleQuickLogin = (uname, pwd) => {
-    setUsername(uname);
-    setPassword(pwd);
-    setError('');
-    setLastUsername(uname);
-    setTimeout(() => {
-      passwordInputRef.current?.focus();
-    }, 50);
   };
 
   const handleRegisterSubmit = async (e) => {
@@ -240,34 +230,8 @@ export default function LoginView({ onLogin, orgProfile }) {
             </button>
           </form>
 
-          {/* Quick Login Bar */}
-          <div className="pt-2 border-t border-slate-700/60 space-y-2">
-            <div className="text-[11px] text-slate-400 font-semibold text-center">
-              เข้าสู่ระบบด่วน (Quick Login)
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin', 'admin')}
-                className="p-2.5 rounded-xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700 text-slate-300 hover:text-white transition-all text-center cursor-pointer"
-              >
-                <div className="font-bold text-amber-400">👑 ผู้ดูแลระบบ</div>
-                <div className="text-[10px] text-slate-400">admin / admin</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('auditor', '1234')}
-                className="p-2.5 rounded-xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700 text-slate-300 hover:text-white transition-all text-center cursor-pointer"
-              >
-                <div className="font-bold text-blue-400">🛡️ ผู้ตรวจสอบ (ตัวอย่าง)</div>
-                <div className="text-[10px] text-slate-400">auditor / 1234</div>
-              </button>
-            </div>
-          </div>
-
           {/* Register Button */}
-          <div className="pt-2 text-center">
+          <div className="pt-3 border-t border-slate-700/60 text-center">
             <button
               type="button"
               onClick={() => {
