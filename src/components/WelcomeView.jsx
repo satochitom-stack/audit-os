@@ -93,24 +93,39 @@ export default function WelcomeView({
 
   const [departments, setDepartments] = useState(() => getDepartments());
   const [availableUsers, setAvailableUsers] = useState(() => getUsers());
+  const [tenantOrg, setTenantOrg] = useState(() => getTenantOrgStructure(session, orgProfile));
 
   useEffect(() => {
     const handleSync = () => {
       setDepartments(getDepartments());
       setAvailableUsers(getUsers());
+      setTenantOrg(getTenantOrgStructure(session, orgProfile));
     };
     window.addEventListener('ia-departments-changed', handleSync);
+    window.addEventListener('ia-departments-updated', handleSync);
+    window.addEventListener('ia-org-structure-changed', handleSync);
     window.addEventListener('storage', handleSync);
     return () => {
       window.removeEventListener('ia-departments-changed', handleSync);
+      window.removeEventListener('ia-departments-updated', handleSync);
+      window.removeEventListener('ia-org-structure-changed', handleSync);
       window.removeEventListener('storage', handleSync);
     };
-  }, []);
+  }, [session, orgProfile]);
 
-  const DEPARTMENT_ORDER = ['สำนักปลัด', 'กองคลัง', 'กองช่าง', 'กองการศึกษา', 'กองสวัสดิการสังคม'];
+  const DEPARTMENT_ORDER = [
+    'สำนักปลัด',
+    'กองยุทธศาสตร์และงบประมาณ',
+    'กองคลัง',
+    'กองช่าง',
+    'กองสาธารณสุขและสิ่งแวดล้อม',
+    'กองการศึกษา',
+    'กองสวัสดิการสังคม',
+    'กองการเจ้าหน้าที่',
+    'กองการประปา'
+  ];
 
   // Derive dynamic org structure and affiliated units from tenant settings
-  const tenantOrg = getTenantOrgStructure(session, orgProfile);
   const rawTenantDepts = Array.isArray(tenantOrg?.departments) && tenantOrg.departments.length > 0
     ? tenantOrg.departments.map((d) => typeof d === 'string' ? d : d.name)
     : departments;
@@ -121,7 +136,11 @@ export default function WelcomeView({
       (d) => d &&
              d !== 'หน่วยตรวจสอบภายใน' && 
              d !== 'ผู้บริหาร' && 
-             !d.includes('ปลัด') && 
+             d !== 'ปลัด อปท.' &&
+             d !== 'ปลัด' &&
+             d !== 'ผู้ช่วยปลัด' &&
+             d !== 'ปลัดเทศบาล' &&
+             d !== 'ปลัด อบต.' &&
              !d.startsWith('ศพด.')
     )
     .sort((a, b) => {
@@ -497,6 +516,10 @@ export default function WelcomeView({
           <OrgChartStructure
             session={session}
             orgProfile={orgProfile}
+            onStructureChange={(updatedStruct) => {
+              setTenantOrg(updatedStruct);
+              setDepartments(getDepartments());
+            }}
             onSelectDepartment={() => {
               if (!session) setShowLoginModal(true);
             }}

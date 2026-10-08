@@ -324,6 +324,8 @@ export function saveTenantOrgStructure(structure, userOrSession) {
     localStorage.setItem('ia_departments', JSON.stringify(deptNames));
 
     window.dispatchEvent(new CustomEvent('ia-departments-updated', { detail: deptNames }));
+    window.dispatchEvent(new CustomEvent('ia-departments-changed', { detail: deptNames }));
+    window.dispatchEvent(new CustomEvent('ia-org-structure-changed', { detail: structure }));
   } catch (e) {
     console.warn('Could not save tenant org structure:', e);
   }
