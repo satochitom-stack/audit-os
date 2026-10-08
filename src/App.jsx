@@ -1147,10 +1147,8 @@ export default function App() {
     else if (data.capaFindings) setCapaFindingsByYear({ [selectedYear]: data.capaFindings });
   };
 
-  // Helper: Default landing tab based on role
+  // Helper: Default landing tab based on role (auditor and admin start on Step 1: Audit Risk)
   const getDefaultTabForUser = (s) => {
-    if (!s) return 'audit-risk';
-    if (s.role === 'admin') return 'backoffice';
     return 'audit-risk';
   };
 
@@ -1185,19 +1183,7 @@ export default function App() {
     }
   }, [session, currentTab]);
 
-  if (!session) {
-    return (
-      <LoginView
-        orgProfile={orgProfile}
-        onLogin={(sess) => {
-          const s = sess || getSession();
-          setSession(s);
-          setCurrentTab(getDefaultTabForUser(s));
-        }}
-      />
-    );
-  }
-
+  // 1. หน้าแรก (Welcome View / Landing Page)
   if (currentTab === 'welcome') {
     return (
       <>
@@ -1208,15 +1194,15 @@ export default function App() {
           onLogin={(sess) => {
             const s = sess || getSession();
             setSession(s);
-            setCurrentTab(getDefaultTabForUser(s));
+            setCurrentTab('audit-risk');
           }}
           onGuestLogin={() => {
             const s = loginAsGuest();
             setSession(s);
-            setCurrentTab(getDefaultTabForUser(s));
+            setCurrentTab('audit-risk');
           }}
           onEnterDashboard={() => {
-            setCurrentTab(getDefaultTabForUser(session));
+            setCurrentTab('audit-risk');
           }}
         />
         {showOnboarding && (
@@ -1231,6 +1217,21 @@ export default function App() {
     );
   }
 
+  // 2. หน้าเข้าสู่ระบบ (หากยังไม่ได้เข้าสู่ระบบและไม่ได้อยู่ในหน้าแรก)
+  if (!session) {
+    return (
+      <LoginView
+        orgProfile={orgProfile}
+        onLogin={(sess) => {
+          const s = sess || getSession();
+          setSession(s);
+          setCurrentTab('audit-risk');
+        }}
+        onBackToWelcome={() => setCurrentTab('welcome')}
+      />
+    );
+  }
+
   const handleLogout = async () => {
     try {
       await logoutFirebase();
@@ -1239,6 +1240,7 @@ export default function App() {
     }
     authLogout();
     setSession(null);
+    setCurrentTab('welcome');
   };
 
   const handleCloneToWorkingPapers = (clonedWp) => {

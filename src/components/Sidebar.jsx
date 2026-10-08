@@ -113,7 +113,22 @@ export default function Sidebar({
       </div>
 
       {/* Navigation Scrollable Body */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-5 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+        {/* Navigation to Welcome Page (หน้าแรก) */}
+        <div>
+          <button
+            onClick={() => setCurrentTab('welcome')}
+            className={`w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer ${
+              currentTab === 'welcome'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 border border-slate-200/60 dark:border-slate-700/60'
+            }`}
+          >
+            <span className="text-sm">🏠</span>
+            <span>หน้าแรก (ภาพรวมระบบ)</span>
+          </button>
+        </div>
+
         {/* 12-Step Lifecycle Groups */}
         {LIFECYCLE_STEPS.map((group, gIdx) => (
           <div key={gIdx} className="space-y-1">

@@ -69,7 +69,7 @@ export default function Header({
         <div className="flex justify-between items-center h-16 gap-3">
           {/* Brand & Organization Title */}
           <div className="flex items-center space-x-3 shrink-0 min-w-0">
-            <div className="relative group cursor-pointer shrink-0" onClick={() => setCurrentTab && setCurrentTab('audit-risk')} title="คลิกเพื่อกลับสู่พื้นที่ทำงานตรวจสอบ">
+            <div className="relative group cursor-pointer shrink-0" onClick={() => setCurrentTab && setCurrentTab('welcome')} title="คลิกเพื่อกลับสู่หน้าแรก (ภาพรวมระบบ)">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-600/25 group-hover:scale-105 transition-all">
                 <Shield className="w-5 h-5 text-white drop-shadow-xs" />
               </div>
@@ -291,6 +291,16 @@ export default function Header({
                       )}
                     </button>
                   )}
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (setCurrentTab) setCurrentTab('welcome');
+                    }}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer font-medium border-b border-slate-100 dark:border-slate-800"
+                  >
+                    <span>🏠 หน้าแรก (ภาพรวมระบบ)</span>
+                  </button>
 
                   <button
                     onClick={() => {

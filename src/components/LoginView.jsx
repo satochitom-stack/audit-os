@@ -32,7 +32,7 @@ import {
   getSystemSettings
 } from '../utils/auth';
 
-export default function LoginView({ onLogin, orgProfile }) {
+export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
   const [username, setUsername] = useState(() => getLastUsername() || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -230,8 +230,8 @@ export default function LoginView({ onLogin, orgProfile }) {
             </button>
           </form>
 
-          {/* Register Button */}
-          <div className="pt-3 border-t border-slate-700/60 text-center">
+          {/* Register Button & Back to Home */}
+          <div className="pt-3 border-t border-slate-700/60 flex flex-col items-center space-y-2.5">
             <button
               type="button"
               onClick={() => {
@@ -244,6 +244,16 @@ export default function LoginView({ onLogin, orgProfile }) {
               <UserPlus className="w-3.5 h-3.5" />
               <span>สมัครสมาชิกใหม่ (สำหรับผู้ตรวจสอบภายใน อปท.)</span>
             </button>
+
+            {onBackToWelcome && (
+              <button
+                type="button"
+                onClick={onBackToWelcome}
+                className="text-xs text-slate-400 hover:text-white inline-flex items-center space-x-1 cursor-pointer transition-colors pt-1"
+              >
+                <span>🏠 กลับสู่หน้าแรก (ภาพรวมระบบ)</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
