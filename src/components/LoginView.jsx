@@ -134,30 +134,30 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-900 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen w-full bg-[#171b23] text-stone-200 flex items-center justify-center p-4 relative overflow-hidden font-sans">
       {/* Background Glows */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-stone-700/20 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-md w-full space-y-6 relative z-10">
         {/* Logo and Brand Title */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/20 mb-2 border border-blue-400/30">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-tr from-stone-800 via-stone-700 to-amber-700 text-amber-200 shadow-xl shadow-amber-950/40 mb-2 border border-amber-600/30">
             <ShieldCheck className="w-9 h-9" />
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-white flex items-center justify-center space-x-2">
+          <h1 className="text-3xl font-black tracking-tight text-stone-100 flex items-center justify-center space-x-2">
             <span>Audit-OS</span>
-            <span className="text-xs bg-blue-500/20 text-blue-300 border border-blue-400/30 px-2.5 py-0.5 rounded-full font-bold">
+            <span className="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-bold">
               อปท.
             </span>
           </h1>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+          <p className="text-xs text-stone-400 max-w-sm mx-auto leading-relaxed">
             แพลตฟอร์มบริหารงานตรวจสอบภายใน สำหรับตำแหน่งผู้ตรวจสอบภายใน อปท. ทั่วประเทศ (กระบวนการครบวงจร 12 ขั้นตอน)
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-slate-800/80 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-700/80 shadow-2xl space-y-5">
+        <div className="bg-[#1f2633]/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-stone-700/80 shadow-2xl space-y-5 text-stone-200">
           {error && (
             <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start space-x-2.5 animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -167,41 +167,41 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-stone-300 mb-1.5">
                 ชื่อผู้ใช้งาน (Username)
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+                <User className="w-4 h-4 absolute left-3.5 top-3 text-stone-400" />
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="เช่น admin หรือ auditor"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/60 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#2b3545] border border-stone-600/80 rounded-xl text-xs text-amber-50 placeholder-stone-400 focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400 transition-colors"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-stone-300 mb-1.5">
                 รหัสผ่าน (Password)
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+                <Lock className="w-4 h-4 absolute left-3.5 top-3 text-stone-400" />
                 <input
                   ref={passwordInputRef}
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="กรอกรหัสผ่าน"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-900/60 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#2b3545] border border-stone-600/80 rounded-xl text-xs text-amber-50 placeholder-stone-400 focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400 transition-colors"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-200"
+                  className="absolute right-3.5 top-3 text-stone-400 hover:text-amber-200 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -209,12 +209,12 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
             </div>
 
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center space-x-2 cursor-pointer text-slate-400 hover:text-slate-200">
+              <label className="flex items-center space-x-2 cursor-pointer text-stone-400 hover:text-stone-200">
                 <input
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
-                  className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-stone-600 bg-[#2b3545] text-amber-600 focus:ring-amber-500"
                 />
                 <span>จดจำการเข้าสู่ระบบ</span>
               </label>
@@ -223,15 +223,15 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
             <button
               type="submit"
               disabled={busy}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-lg shadow-amber-950/40 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
             >
-              <LogIn className="w-4 h-4" />
+              <LogIn className="w-4 h-4 text-amber-200" />
               <span>{busy ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}</span>
             </button>
           </form>
 
           {/* Register Button & Back to Home */}
-          <div className="pt-3 border-t border-slate-700/60 flex flex-col items-center space-y-2.5">
+          <div className="pt-3 border-t border-stone-700/60 flex flex-col items-center space-y-2.5">
             <button
               type="button"
               onClick={() => {
@@ -239,7 +239,7 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                 setRegError('');
                 setRegSuccess('');
               }}
-              className="text-xs text-blue-400 hover:text-blue-300 font-bold inline-flex items-center space-x-1.5 cursor-pointer hover:underline"
+              className="text-xs text-amber-400 hover:text-amber-300 font-bold inline-flex items-center space-x-1.5 cursor-pointer hover:underline"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>สมัครสมาชิกใหม่ (สำหรับผู้ตรวจสอบภายใน อปท.)</span>
@@ -249,7 +249,7 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
               <button
                 type="button"
                 onClick={onBackToWelcome}
-                className="text-xs text-slate-400 hover:text-white inline-flex items-center space-x-1 cursor-pointer transition-colors pt-1"
+                className="text-xs text-stone-400 hover:text-amber-200 inline-flex items-center space-x-1 cursor-pointer transition-colors pt-1"
               >
                 <span>🏠 กลับสู่หน้าแรก (ภาพรวมระบบ)</span>
               </button>
@@ -260,21 +260,21 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
 
       {/* REGISTRATION MODAL */}
       {showRegisterModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 text-slate-100 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 border border-slate-700 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#1c222d] text-stone-200 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 border border-stone-700 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between border-b border-stone-700/80 pb-3">
               <div className="space-y-0.5">
-                <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                  <ShieldCheck className="w-5 h-5 text-blue-400" />
+                <h3 className="text-base font-bold text-stone-100 flex items-center space-x-2">
+                  <ShieldCheck className="w-5 h-5 text-amber-400" />
                   <span>สมัครสมาชิก Audit-OS (ผู้ตรวจสอบภายใน อปท.)</span>
                 </h3>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-stone-400">
                   กรอกข้อมูลหน่วยงานและเลือกแพ็กเกจสมาชิกเพื่อส่งคำขอเปิดสิทธิ์
                 </p>
               </div>
               <button
                 onClick={() => setShowRegisterModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-stone-400 hover:text-white p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -295,7 +295,7 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                 <div>{regSuccess}</div>
                 <button
                   onClick={() => setShowRegisterModal(false)}
-                  className="mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 px-4 rounded-lg text-xs"
+                  className="mt-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-1.5 px-4 rounded-lg text-xs cursor-pointer"
                 >
                   กลับไปหน้าเข้าสู่ระบบ
                 </button>
@@ -305,7 +305,7 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
             {!regSuccess && (
               <form onSubmit={handleRegisterSubmit} className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
+                  <label className="block font-semibold text-stone-300 mb-1">
                     ชื่อ - สกุล ผู้ตรวจสอบภายใน *
                   </label>
                   <input
@@ -313,14 +313,14 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                     value={regDisplayName}
                     onChange={(e) => setRegDisplayName(e.target.value)}
                     placeholder="เช่น นายสมคิด สุจริตธรรม"
-                    className="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-800/80 text-white"
+                    className="w-full p-2.5 rounded-xl border border-stone-600/80 bg-[#2b3545] text-amber-50 placeholder-stone-400 focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">
+                    <label className="block font-semibold text-stone-300 mb-1">
                       องค์กรปกครองส่วนท้องถิ่น (อปท.) *
                     </label>
                     <input
@@ -328,19 +328,19 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                       value={regOrganization}
                       onChange={(e) => setRegOrganization(e.target.value)}
                       placeholder="เช่น อบต.ฝางคำ, เทศบาลตำบล..."
-                      className="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-800/80 text-white font-bold"
+                      className="w-full p-2.5 rounded-xl border border-stone-600/80 bg-[#2b3545] text-amber-50 placeholder-stone-400 font-bold focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">จังหวัด *</label>
+                    <label className="block font-semibold text-stone-300 mb-1">จังหวัด *</label>
                     <input
                       type="text"
                       value={regProvince}
                       onChange={(e) => setRegProvince(e.target.value)}
                       placeholder="เช่น อุบลราชธานี, เชียงใหม่"
-                      className="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-800/80 text-white"
+                      className="w-full p-2.5 rounded-xl border border-stone-600/80 bg-[#2b3545] text-amber-50 placeholder-stone-400 focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400"
                       required
                     />
                   </div>
@@ -348,18 +348,18 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">ตำแหน่ง</label>
+                    <label className="block font-semibold text-stone-300 mb-1">ตำแหน่ง</label>
                     <input
                       type="text"
                       value={regPosition}
                       onChange={(e) => setRegPosition(e.target.value)}
                       placeholder="นักวิชาการตรวจสอบภายในชำนาญการ"
-                      className="w-full p-2 rounded-xl border border-slate-700 bg-slate-800/80 text-white"
+                      className="w-full p-2 rounded-xl border border-stone-600/80 bg-[#2b3545] text-amber-50 placeholder-stone-400 focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">
+                    <label className="block font-semibold text-stone-300 mb-1">
                       เบอร์โทรศัพท์ / LINE ID *
                     </label>
                     <input
@@ -367,15 +367,15 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                       value={regPhone}
                       onChange={(e) => setRegPhone(e.target.value)}
                       placeholder="081-234-5678"
-                      className="w-full p-2 rounded-xl border border-slate-700 bg-slate-800/80 text-white"
+                      className="w-full p-2 rounded-xl border border-stone-600/80 bg-[#2b3545] text-amber-50 placeholder-stone-400 focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-800">
+                <div className="grid grid-cols-2 gap-3 pt-1 border-t border-stone-700/80">
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">
+                    <label className="block font-semibold text-stone-300 mb-1">
                       ชื่อผู้ใช้ที่ต้องการ (Username) *
                     </label>
                     <input
@@ -383,39 +383,39 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                       value={regUsername}
                       onChange={(e) => setRegUsername(e.target.value)}
                       placeholder="เช่น somkid_ia"
-                      className="w-full p-2 rounded-xl border border-slate-700 bg-slate-800/80 font-mono text-white font-bold"
+                      className="w-full p-2 rounded-xl border border-stone-600/80 bg-[#2b3545] font-mono text-amber-50 placeholder-stone-400 font-bold focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">รหัสผ่าน *</label>
+                    <label className="block font-semibold text-stone-300 mb-1">รหัสผ่าน *</label>
                     <input
                       type="password"
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
                       placeholder="อย่างน้อย 4 ตัวอักษร"
-                      className="w-full p-2 rounded-xl border border-slate-700 bg-slate-800/80 text-white"
+                      className="w-full p-2 rounded-xl border border-stone-600/80 bg-[#2b3545] text-amber-50 placeholder-stone-400 focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">ยืนยันรหัสผ่าน *</label>
+                  <label className="block font-semibold text-stone-300 mb-1">ยืนยันรหัสผ่าน *</label>
                   <input
                     type="password"
                     value={regConfirmPassword}
                     onChange={(e) => setRegConfirmPassword(e.target.value)}
                     placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง"
-                    className="w-full p-2 rounded-xl border border-slate-700 bg-slate-800/80 text-white"
+                    className="w-full p-2 rounded-xl border border-stone-600/80 bg-[#2b3545] text-amber-50 placeholder-stone-400 focus:bg-[#323d4f] focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400"
                     required
                   />
                 </div>
 
                 {/* Membership Plan Choice */}
-                <div className="pt-2 border-t border-slate-800 space-y-2">
-                  <label className="block font-semibold text-slate-300">
+                <div className="pt-2 border-t border-stone-700/80 space-y-2">
+                  <label className="block font-semibold text-stone-300">
                     เลือกแพ็กเกจสมาชิกที่ต้องการสมัคร
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -426,11 +426,11 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                         onClick={() => setRegPlan(p.id)}
                         className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                           regPlan === p.id
-                            ? 'bg-blue-600/20 border-blue-500 text-white ring-1 ring-blue-500'
-                            : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-600'
+                            ? 'bg-amber-600/25 border-amber-500 text-white ring-1 ring-amber-500'
+                            : 'bg-[#2b3545]/70 border-stone-600/80 text-stone-400 hover:border-stone-500'
                         }`}
                       >
-                        <div className="font-bold text-[11px] text-white">{p.name}</div>
+                        <div className="font-bold text-[11px] text-stone-100">{p.name}</div>
                         <div className="text-xs font-black text-amber-400">{p.priceLabel}</div>
                       </button>
                     ))}
@@ -439,34 +439,34 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
 
                 {/* Banking info for paid plans */}
                 {regPlan !== 'trial' && (
-                  <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-[11px] text-slate-300 space-y-1">
+                  <div className="bg-[#242c38] p-3 rounded-xl border border-stone-700/80 text-[11px] text-stone-300 space-y-1">
                     <div className="font-bold text-amber-400 flex items-center space-x-1">
                       <CreditCard className="w-3.5 h-3.5" />
                       <span>ข้อมูลการชำระเงินค่าสมาชิก:</span>
                     </div>
                     <div>ธนาคาร: {settings.bankName || 'ธนาคารกรุงไทย'}</div>
-                    <div className="font-mono font-bold text-white">
+                    <div className="font-mono font-bold text-amber-100">
                       เลขบัญชี: {settings.bankAccountNo || '123-4-56789-0'} ({settings.bankAccountName || 'Audit-OS'})
                     </div>
                     {settings.promptPayNo && <div>พร้อมเพย์: {settings.promptPayNo}</div>}
-                    <div className="text-[10px] text-slate-400 pt-1">
+                    <div className="text-[10px] text-stone-400 pt-1">
                       * หลังโอนเงิน ท่านสามารถแจ้งสลิปผ่านทาง LINE หรือรอให้แอดมินอนุมัติสิทธิ์ภายใน 24 ชม.
                     </div>
                   </div>
                 )}
 
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-end space-x-2">
+                <div className="pt-3 border-t border-stone-700/80 flex items-center justify-end space-x-2">
                   <button
                     type="button"
                     onClick={() => setShowRegisterModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-400 hover:text-white cursor-pointer"
                   >
                     ยกเลิก
                   </button>
                   <button
                     type="submit"
                     disabled={regBusy}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer disabled:opacity-50"
+                    className="bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer disabled:opacity-50"
                   >
                     {regBusy ? 'กำลังส่งคำขอ...' : 'ส่งคำขอสมัครสมาชิก'}
                   </button>

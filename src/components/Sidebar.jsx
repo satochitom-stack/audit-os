@@ -87,11 +87,11 @@ export default function Sidebar({
   ];
 
   return (
-    <aside className="w-64 sm:w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full shrink-0 select-none print:hidden shadow-xs">
+    <aside className="w-64 sm:w-72 bg-[#faf9f6] dark:bg-[#1a1e28] border-r border-stone-200/90 dark:border-stone-800 flex flex-col h-full shrink-0 select-none print:hidden shadow-xs">
       {/* User Org Card Header */}
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 space-y-2">
+      <div className="p-4 border-b border-stone-200/70 dark:border-stone-800 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+          <span className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-wider uppercase">
             {isAdmin ? '👑 SUPER ADMIN WORKSPACE' : '🛡️ AUDITOR WORKSPACE'}
           </span>
           <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${isAdmin ? 'bg-amber-100 text-amber-800 border-amber-300' : planInfo.badgeColor}`}>
@@ -100,13 +100,13 @@ export default function Sidebar({
         </div>
 
         <div className="space-y-0.5">
-          <div className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">
+          <div className="font-extrabold text-xs sm:text-sm text-stone-900 dark:text-stone-100 truncate">
             {session?.organization || orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}
           </div>
-          <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold truncate">
+          <div className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold truncate">
             {session?.displayName || 'ผู้ตรวจสอบภายใน'}
           </div>
-          <div className="text-[10px] text-slate-400 truncate">
+          <div className="text-[10px] text-stone-400 truncate">
             {session?.position || 'นักวิชาการตรวจสอบภายใน'}
           </div>
         </div>
@@ -120,8 +120,8 @@ export default function Sidebar({
             onClick={() => setCurrentTab('welcome')}
             className={`w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer ${
               currentTab === 'welcome'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 border border-slate-200/60 dark:border-slate-700/60'
+                ? 'bg-stone-800 text-amber-100 shadow-xs border-l-4 border-amber-500'
+                : 'bg-white dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 hover:text-amber-800 dark:hover:text-amber-300 border border-stone-200/80 dark:border-stone-800'
             }`}
           >
             <span className="text-sm">🏠</span>
@@ -132,7 +132,7 @@ export default function Sidebar({
         {/* 12-Step Lifecycle Groups */}
         {LIFECYCLE_STEPS.map((group, gIdx) => (
           <div key={gIdx} className="space-y-1">
-            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 px-2 tracking-wider uppercase">
+            <div className="text-[10px] font-bold text-stone-400 dark:text-stone-500 px-2 tracking-wider uppercase">
               {group.groupTitle}
             </div>
 
@@ -152,21 +152,21 @@ export default function Sidebar({
                       }}
                       className={`w-full text-left p-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer ${
                         isActive
-                          ? 'bg-blue-600 text-white shadow-xs font-bold'
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                          ? 'bg-stone-800 text-amber-100 shadow-xs font-bold border-l-4 border-amber-500'
+                          : 'text-stone-600 dark:text-stone-400 hover:bg-stone-200/60 dark:hover:bg-stone-800/80 hover:text-stone-900 dark:hover:text-stone-200'
                       }`}
                     >
                       <div className="flex items-center space-x-2.5 truncate">
-                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'}`} />
+                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : 'text-stone-400 dark:text-stone-500'}`} />
                         <span className="truncate">{item.label}</span>
                       </div>
 
                       {item.hasSubmenu && (
                         <div className="p-0.5">
                           {toolkitSubmenuOpen ? (
-                            <ChevronDown className="w-3.5 h-3.5" />
+                            <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
                           ) : (
-                            <ChevronRight className="w-3.5 h-3.5" />
+                            <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
                           )}
                         </div>
                       )}
@@ -188,11 +188,11 @@ export default function Sidebar({
                               }}
                               className={`w-full text-left py-1.5 px-2.5 rounded-lg text-[11px] font-medium transition-all flex items-center space-x-2 cursor-pointer ${
                                 isSubActive
-                                  ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-bold'
-                                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                                  ? 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-bold border-l-2 border-amber-600'
+                                  : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/60'
                               }`}
                             >
-                              <SubIcon className="w-3 h-3 text-slate-400" />
+                              <SubIcon className="w-3 h-3 text-stone-400" />
                               <span className="truncate">{sub.label}</span>
                             </button>
                           );
@@ -208,7 +208,7 @@ export default function Sidebar({
 
         {/* Super Admin Backoffice Menu Item (Exclusive for Admin - Step 12 at bottom) */}
         {isAdmin && (
-          <div className="space-y-1 pt-3 border-t border-slate-200/80 dark:border-slate-800">
+          <div className="space-y-1 pt-3 border-t border-stone-200/80 dark:border-stone-800">
             <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 px-2 tracking-wider uppercase flex items-center justify-between">
               <span>ส่วนผู้ดูแลระบบกลาง</span>
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
@@ -218,7 +218,7 @@ export default function Sidebar({
               onClick={() => setCurrentTab('backoffice')}
               className={`w-full text-left p-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
                 currentTab === 'backoffice'
-                  ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-amber-700 via-amber-800 to-stone-800 text-amber-100 shadow-md border-l-4 border-amber-400'
                   : 'bg-amber-50/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 hover:bg-amber-100 border border-amber-200/80 dark:border-amber-800/60'
               }`}
             >

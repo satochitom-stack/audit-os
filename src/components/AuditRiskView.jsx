@@ -1300,7 +1300,7 @@ export default function AuditRiskView({
       </div>
 
       {/* Sub Tabs Selector */}
-      <div className="bg-slate-100/80 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 flex space-x-1 overflow-x-auto text-xs font-bold scrollbar-none">
+      <div className="bg-stone-100/90 dark:bg-stone-900/90 p-1.5 rounded-xl border border-stone-200/90 dark:border-stone-800 flex space-x-1 overflow-x-auto text-xs font-bold scrollbar-none">
         {[
           { id: 'org-universe', label: '🏛️ โครงสร้าง อปท. & จักรวาลหน่วยรับตรวจ' },
           { id: 'fangkham-matrix', label: `ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง (${orgProfile?.name || 'อปท.'})` },
@@ -1316,8 +1316,8 @@ export default function AuditRiskView({
             onClick={() => setActiveSubTab(tab.id)}
             className={`px-3 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === tab.id
-                ? 'bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 shadow-xs font-bold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'bg-stone-800 text-amber-100 dark:bg-stone-800 dark:text-amber-200 shadow-xs font-bold border-l-2 border-amber-500'
+                : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
             }`}
           >
             {tab.label}
@@ -1348,23 +1348,23 @@ export default function AuditRiskView({
       {activeSubTab === 'fangkham-matrix' && (
         <div className="space-y-4">
           {/* Filter Bar */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-stone-800 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
                   placeholder="ค้นหากิจกรรมที่ประเมิน..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 outline-none text-xs w-48 sm:w-64"
+                  className="pl-8 pr-3 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-[#faf8f4] dark:bg-[#2b3545] outline-none text-xs w-48 sm:w-64 text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
                 />
               </div>
 
               <select
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 outline-none text-xs font-medium"
+                className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-[#faf8f4] dark:bg-[#2b3545] outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
               >
                 <option value="all">ทุกสำนัก/กอง</option>
                 {getDepartments().filter((d) => d !== 'หน่วยตรวจสอบภายใน').map((dept) => (
@@ -1375,7 +1375,7 @@ export default function AuditRiskView({
               <select
                 value={riskLevelFilter}
                 onChange={(e) => setRiskLevelFilter(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 outline-none text-xs font-medium"
+                className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-[#faf8f4] dark:bg-[#2b3545] outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
               >
                 <option value="all">ทุกระดับความเสี่ยง</option>
                 <option value="สูง">สูง (2.4 - 3.0)</option>
