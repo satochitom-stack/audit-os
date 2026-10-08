@@ -197,15 +197,8 @@ export async function exportOrgChartToWord(elementId = 'org-chart-printable-area
     }
 
     const htmlBody = `
-      <div class="text-right font-bold" style="font-size: 13pt; color: #444;">
-        เอกสารแนบประกอบกฎบัตรและแผนการตรวจสอบประจำปี พ.ศ. ${fiscalYear}
-      </div>
-
-      <h1 style="margin-top: 6pt;">โครงสร้างการแบ่งส่วนราชการและการจัดกรอบอัตรากำลัง</h1>
+      <h1 style="margin-top: 6pt;">โครงสร้างการแบ่งส่วนราชการ</h1>
       <h2>${orgName} ${district} ${province}</h2>
-      <p class="text-center no-indent" style="font-size: 14pt; color: #333;">
-        (สำหรับใช้ประกอบการวิเคราะห์ความเสี่ยงและกำหนดขอบเขตการตรวจสอบภายใน)
-      </p>
 
       <!-- ส่วนที่ 1: แผนภูมิโครงสร้างสีตรงตามหน้าเว็บ -->
       ${chartImgHtml}

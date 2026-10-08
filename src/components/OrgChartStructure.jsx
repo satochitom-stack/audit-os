@@ -1334,16 +1334,6 @@ export default function OrgChartStructure({
                 </div>
               )}
 
-              {/* Formal Footer Notes */}
-              <div className="w-full mt-10 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span>โครงสร้างการแบ่งส่วนราชการตามกรอบอัตรากำลังขององค์กรปกครองส่วนท้องถิ่น</span>
-                </div>
-                <div className="text-slate-400 text-[10px] mt-1 sm:mt-0">
-                  เอกสารแนบประกอบกฎบัตรการตรวจสอบภายใน / แผนการตรวจสอบประจำปี พ.ศ. {orgProfile.fiscalYear || '2569'}
-                </div>
-              </div>
             </div>
           </div>
         </div>
