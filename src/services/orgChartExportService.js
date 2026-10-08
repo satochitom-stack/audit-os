@@ -1,12 +1,12 @@
 // บริการส่งออกโครงสร้างการแบ่งส่วนราชการเป็นไฟล์ PDF และ Microsoft Word (.doc)
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 /**
  * 1. ดาวน์โหลดโครงสร้างการแบ่งส่วนราชการเป็นไฟล์ PDF สีความละเอียดสูง (A4 แนวนอน พอดี 1 หน้า)
  */
 export async function exportOrgChartToPdf(elementId = 'org-chart-printable-area', orgProfile = {}) {
   const wasDark = document.documentElement.classList.contains('dark');
-  let clone = null;
   try {
     const element = document.getElementById(elementId);
     if (!element) {
@@ -18,70 +18,67 @@ export async function exportOrgChartToPdf(elementId = 'org-chart-printable-area'
     const fiscalYear = orgProfile?.fiscalYear || '2569';
     const fileName = `โครงสร้างการแบ่งส่วนราชการ_${orgName}_ปี${fiscalYear}.pdf`;
 
-    // ปิดโหมดมืดชั่วคราวเพื่อให้ html2canvas เรนเดอร์สีและตัวอักษรเป็นโหมดเอกสารราชการจริง 100%
+    // 1. ปิดโหมดมืดชั่วคราว เพื่อให้ Canvas เรนเดอร์ตัวอักษรและสีพื้นหลังได้คมชัดถูกต้อง 100%
     if (wasDark) {
       document.documentElement.classList.remove('dark');
+      // รอ browser repaint ให้เสร็จสิ้น
+      await new Promise((r) => setTimeout(r, 60));
     }
 
-    // สร้าง Clone ที่จัดขนาดเฉพาะสำหรับ A4 Landscape (1180px)
-    clone = element.cloneNode(true);
-    clone.id = 'org-chart-pdf-clone';
-    clone.style.width = '1180px';
-    clone.style.maxWidth = '1180px';
-    clone.style.minWidth = '1180px';
-    clone.style.padding = '16px 20px';
-    clone.style.backgroundColor = '#ffffff';
-    clone.style.color = '#0f172a';
-    clone.style.overflow = 'visible';
-    clone.style.position = 'fixed';
-    clone.style.left = '-9999px';
-    clone.style.top = '0';
-    clone.style.zIndex = '-1000';
-    clone.style.fontFamily = "'Prompt', 'Plus Jakarta Sans', system-ui, sans-serif";
+    // 2. เรนเดอร์ Canvas จากองค์ประกอบจริงบนหน้าจอโดยตรง
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: Math.max(element.scrollWidth || 0, 1200),
+      onclone: (clonedDoc, clonedEl) => {
+        // ลบปุ่มและเครื่องมือที่ไม่ต้องการให้ออกใน PDF
+        clonedEl.querySelectorAll('.no-print').forEach((el) => el.remove());
+      }
+    });
 
-    // กำจัดส่วนที่เป็นปุ่มหรือ no-print ออกจาก clone
-    clone.querySelectorAll('.no-print').forEach((el) => el.remove());
-
-    // ปรับ Grid ใน clone ให้แสดงเต็ม 1180px พอดี
-    const gridEl = clone.querySelector('.org-chart-dept-grid');
-    if (gridEl) {
-      gridEl.style.width = '100%';
-      gridEl.style.overflow = 'visible';
+    if (!canvas || !canvas.width || !canvas.height) {
+      throw new Error('Canvas rendering produced empty image');
     }
 
-    document.body.appendChild(clone);
+    // 3. สร้างเอกสาร PDF ขนาด A4 แนวนอน (297 x 210 มม.)
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
 
-    const opt = {
-      margin: [5, 6, 5, 6],
-      filename: fileName,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: 1200
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'landscape'
-      },
-      pagebreak: { mode: 'avoid-all' }
-    };
+    const pageWidth = 297;
+    const pageHeight = 210;
+    const margin = 8; // ขอบ 8 มม.
+    const printableWidth = pageWidth - margin * 2; // 281 มม.
+    const printableHeight = pageHeight - margin * 2; // 194 มม.
 
-    await html2pdf().set(opt).from(clone).save();
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
+    // คำนวณอัตราส่วนย่อ/ขยายให้พอดีหน้ากระดาษ A4 หน้าเดียวเสมอ ไม่ล้นหน้า
+    const scale = Math.min(printableWidth / canvasWidth, printableHeight / canvasHeight);
+    const finalWidth = canvasWidth * scale;
+    const finalHeight = canvasHeight * scale;
+
+    // จัดวางกึ่งกลางหน้ากระดาษ
+    const posX = (pageWidth - finalWidth) / 2;
+    const posY = (pageHeight - finalHeight) / 2;
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    pdf.addImage(imgData, 'JPEG', posX, posY, finalWidth, finalHeight);
+
+    // 4. สั่งดาวน์โหลดไฟล์
+    pdf.save(fileName);
     return true;
   } catch (err) {
     console.error('PDF Export Error:', err);
     return false;
   } finally {
-    if (clone && clone.parentNode) {
-      clone.parentNode.removeChild(clone);
-    }
-    const staleClone = document.getElementById('org-chart-pdf-clone');
-    if (staleClone) staleClone.remove();
-
     // คืนค่าสถานะโหมดมืดกลับคืนสู่ค่าเดิม
     if (wasDark) {
       document.documentElement.classList.add('dark');
@@ -99,34 +96,39 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
     const district = orgProfile.district ? `อำเภอ${orgProfile.district}` : '';
     const province = orgProfile.province ? `จังหวัด${orgProfile.province}` : '';
     const fiscalYear = orgProfile.fiscalYear || '2569';
-    const approverName = structure.approver?.name || orgProfile.approverName || 'นายกองค์กรปกครองส่วนท้องถิ่น';
-    const approverTitle = structure.approver?.title || `นายก${orgName}`;
-    const palatName = structure.palat?.name || orgProfile.palatName || 'ปลัดองค์กรปกครองส่วนท้องถิ่น';
-    const palatTitle = structure.palat?.title || `ปลัด${orgName}`;
-    const auditorName = structure.auditor?.name || orgProfile.auditorName || 'ผู้ตรวจสอบภายใน';
-    const auditorTitle = structure.auditor?.title || orgProfile.auditorPosition || 'นักวิชาการตรวจสอบภายใน';
+    const approverName = structure?.approver?.name || orgProfile.approverName || 'นายกองค์กรปกครองส่วนท้องถิ่น';
+    const approverTitle = structure?.approver?.title || `นายก${orgName}`;
+    const palatName = structure?.palat?.name || orgProfile.palatName || 'ปลัดองค์กรปกครองส่วนท้องถิ่น';
+    const palatTitle = structure?.palat?.title || `ปลัด${orgName}`;
+    const auditorName = structure?.auditor?.name || orgProfile.auditorName || 'ผู้ตรวจสอบภายใน';
+    const auditorTitle = structure?.auditor?.title || orgProfile.auditorPosition || 'นักวิชาการตรวจสอบภายใน';
 
-    const depts = Array.isArray(structure.departments) ? structure.departments : [];
-    const deputies = Array.isArray(structure.deputyPalats) ? structure.deputyPalats : [];
+    const depts = Array.isArray(structure?.departments) ? structure.departments : [];
+    const deputies = Array.isArray(structure?.deputyPalats) ? structure.deputyPalats : [];
 
-    // สร้างตารางข้อมูลส่วนราชการและฝ่าย
+    // สร้างตารางข้อมูลส่วนราชการและฝ่าย (รองรับทั้ง object และ string อย่างปลอดภัย)
     let deptRowsHtml = '';
     depts.forEach((dept, idx) => {
-      const divisions = Array.isArray(dept.divisions) && dept.divisions.length > 0 ? dept.divisions : [{ name: 'ฝ่ายบริหารงานทั่วไป', jobs: [] }];
-      
-      divisions.forEach((div, divIdx) => {
-        const jobsList = Array.isArray(div.jobs) && div.jobs.length > 0
+      const deptName = typeof dept === 'string' ? dept : dept?.name || `ส่วนราชการที่ ${idx + 1}`;
+      const deptHeadTitle = typeof dept === 'object' && dept?.headTitle ? dept.headTitle : 'ผู้อำนวยการ/หัวหน้าส่วนราชการ';
+      const rawDivisions = typeof dept === 'object' && Array.isArray(dept?.divisions) && dept.divisions.length > 0
+        ? dept.divisions
+        : [{ name: 'ฝ่ายบริหารงานทั่วไป', jobs: [] }];
+
+      rawDivisions.forEach((div, divIdx) => {
+        const divName = typeof div === 'string' ? div : div?.name || 'ฝ่ายบริหารทั่วไป';
+        const jobsList = typeof div === 'object' && Array.isArray(div?.jobs) && div.jobs.length > 0
           ? div.jobs.map((j) => `• ${j}`).join('<br/>')
           : '- งานตามภารกิจที่ได้รับมอบหมาย';
 
-        const headOfDiv = div.headTitle || 'หัวหน้าฝ่าย';
-        const headOfDivName = div.headName ? ` (${div.headName})` : '';
+        const headOfDiv = typeof div === 'object' && div?.headTitle ? div.headTitle : 'หัวหน้าฝ่าย';
+        const headOfDivName = typeof div === 'object' && div?.headName ? ` (${div.headName})` : '';
 
         deptRowsHtml += `
           <tr>
-            ${divIdx === 0 ? `<td rowspan="${divisions.length}" class="text-center font-bold">${idx + 1}</td>` : ''}
-            ${divIdx === 0 ? `<td rowspan="${divisions.length}" class="font-bold">${dept.name}<br/><span style="font-size: 13pt; color: #555;">${dept.headTitle || 'ผู้อำนวยการ/หัวหน้าหน่วยงาน'}</span></td>` : ''}
-            <td><strong>${div.name}</strong></td>
+            ${divIdx === 0 ? `<td rowspan="${rawDivisions.length}" class="text-center font-bold">${idx + 1}</td>` : ''}
+            ${divIdx === 0 ? `<td rowspan="${rawDivisions.length}" class="font-bold">${deptName}<br/><span style="font-size: 13pt; color: #555;">${deptHeadTitle}</span></td>` : ''}
+            <td><strong>${divName}</strong></td>
             <td>${headOfDiv}${headOfDivName}</td>
             <td>${jobsList}</td>
           </tr>
@@ -134,12 +136,13 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
       });
 
       // หากมีหน่วยงานในสังกัด (เช่น ศูนย์พัฒนาเด็กเล็ก, โรงเรียน)
-      if (Array.isArray(dept.affiliatedUnits) && dept.affiliatedUnits.length > 0) {
+      if (typeof dept === 'object' && Array.isArray(dept?.affiliatedUnits) && dept.affiliatedUnits.length > 0) {
         dept.affiliatedUnits.forEach((aff) => {
+          const affName = typeof aff === 'string' ? aff : aff?.name || 'หน่วยงานบริการชุมชน';
           deptRowsHtml += `
             <tr style="background-color: #f9fbf9;">
               <td class="text-center font-bold">-</td>
-              <td class="font-bold" style="color: #0d6e3c;">[หน่วยงานสังกัด ${dept.name}]<br/>${aff.name}</td>
+              <td class="font-bold" style="color: #0d6e3c;">[หน่วยงานสังกัด ${deptName}]<br/>${affName}</td>
               <td>สถานศึกษา/หน่วยบริการชุมชน</td>
               <td>หัวหน้าสถานศึกษา/รักษาการ</td>
               <td>การจัดการศึกษาปฐมวัยและการบริการชุมชน</td>
@@ -155,7 +158,7 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
       deputySectionHtml = `
         <div style="margin: 10pt 0; padding: 8pt; background-color: #f0fdfa; border: 1pt solid #14b8a6;">
           <strong>สายการบังคับบัญชาฝ่ายประจำ (รองปลัด อปท.):</strong><br/>
-          ${deputies.map((d, i) => `• <strong>${d.title || 'รองปลัด อปท.'}:</strong> ${d.name || '-'} (${d.role || 'กำกับดูแลตามมอบหมาย'})`).join('<br/>')}
+          ${deputies.map((d) => `• <strong>${d.title || 'รองปลัด อปท.'}:</strong> ${d.name || '-'} (${d.role || 'กำกับดูแลตามมอบหมาย'})`).join('<br/>')}
         </div>
       `;
     }
@@ -282,7 +285,7 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
 </body>
 </html>`;
 
-    const blob = new Blob(['\ufeff', fullHtml], {
+    const blob = new Blob(['\ufeff' + fullHtml], {
       type: 'application/msword;charset=utf-8'
     });
     const url = URL.createObjectURL(blob);
@@ -292,8 +295,13 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
     link.download = cleanFileName;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+
+    // หน่วงเวลาในการลบ element และ URL เพื่อให้แน่ใจว่าเบราว์เซอร์เริ่มดาวน์โหลดเสร็จสิ้น
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 1500);
+
     return true;
   } catch (err) {
     console.error('Word Export Error:', err);

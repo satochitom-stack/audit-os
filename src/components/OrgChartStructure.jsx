@@ -527,88 +527,85 @@ export default function OrgChartStructure({
           </div>
         </div>
 
-        {/* Row 2: Controls & Menus (เมนูต่างๆ บรรทัดล่าง จัดวางพอดี ไม่เบียด) */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/60">
-          {/* Left: View Mode + Layout Switcher */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* View Mode Toggle */}
-            {!isEditing && (
-              <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('chart')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    viewMode === 'chart'
-                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                  }`}
-                >
-                  <GitFork className="w-3.5 h-3.5" />
-                  <span>มุมมองแผนภูมิ</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('table')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    viewMode === 'table'
-                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>ตารางส่วนราชการ ({structure.departments.length} กอง)</span>
-                </button>
-              </div>
-            )}
+        {/* Row 2: Controls & Menus (จัดกลุ่มเมนูเป็นระเบียบ ไม่กระจายแยกฝั่ง และเอาคำในวงเล็บออก) */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+          {/* View Mode Toggle */}
+          {!isEditing && (
+            <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewMode('chart')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  viewMode === 'chart'
+                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                }`}
+              >
+                <GitFork className="w-3.5 h-3.5" />
+                <span>มุมมองแผนภูมิ</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                }`}
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>ตารางส่วนราชการ</span>
+              </button>
+            </div>
+          )}
 
-            {/* Chart Layout Mode Switcher */}
-            {!isEditing && viewMode === 'chart' && (
-              <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setChartLayout('fit')}
-                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    chartLayout === 'fit'
-                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                  }`}
-                  title="ย่อขนาดทุกกองให้พอดีหน้าจอพร้อมกันทั้งหมด (ไม่ตกขอบจอ)"
-                >
-                  <Monitor className="w-3.5 h-3.5" />
-                  <span>พอดีจอ (Fit)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChartLayout('tworows')}
-                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    chartLayout === 'tworows'
-                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                  }`}
-                  title="จัดแบ่งเป็น 2 ชั้นสมดุล ตัวหนังสือใหญ่ อ่านง่าย"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>จัด 2 ชั้น</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChartLayout('wide')}
-                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    chartLayout === 'wide'
-                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                  }`}
-                  title="แนวนอนเต็มขนาด 100% พร้อมปุ่มเลื่อนซ้าย-ขวา"
-                >
-                  <ArrowLeftRight className="w-3.5 h-3.5" />
-                  <span>แนวนอน 100%</span>
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Chart Layout Mode Switcher */}
+          {!isEditing && viewMode === 'chart' && (
+            <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs shrink-0">
+              <button
+                type="button"
+                onClick={() => setChartLayout('fit')}
+                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  chartLayout === 'fit'
+                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                }`}
+                title="ย่อขนาดทุกกองให้พอดีหน้าจอพร้อมกันทั้งหมด"
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span>พอดีจอ</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartLayout('tworows')}
+                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  chartLayout === 'tworows'
+                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                }`}
+                title="จัดแบ่งเป็น 2 ชั้นสมดุล ตัวหนังสือใหญ่ อ่านง่าย"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>จัด 2 ชั้น</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartLayout('wide')}
+                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  chartLayout === 'wide'
+                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                }`}
+                title="แนวนอนเต็มขนาด 100%"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <span>แนวนอน 100%</span>
+              </button>
+            </div>
+          )}
 
-          {/* Right: Actions */}
-          <div className="flex items-center space-x-2 shrink-0">
+          {/* Action Buttons: Customization & Exports */}
+          <div className="flex items-center space-x-2 shrink-0 flex-wrap gap-y-2">
             {!isEditing ? (
               <button
                 type="button"
@@ -616,7 +613,7 @@ export default function OrgChartStructure({
                 className="px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/60 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>ปรับแต่งโครงสร้าง อปท. ของฉัน</span>
+                <span>ปรับแต่งโครงสร้าง อปท.</span>
               </button>
             ) : (
               <div className="flex items-center space-x-2">
@@ -647,7 +644,7 @@ export default function OrgChartStructure({
               title="ดาวน์โหลดผังโครงสร้างสีความละเอียดสูง (A4 แนวนอน พอดี 1 หน้า)"
             >
               <Download className={`w-3.5 h-3.5 ${isExportingPdf ? 'animate-bounce' : ''}`} />
-              <span>{isExportingPdf ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF (สี A4)'}</span>
+              <span>{isExportingPdf ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF'}</span>
             </button>
 
             <button
@@ -657,8 +654,7 @@ export default function OrgChartStructure({
               title="ดาวน์โหลดโครงสร้างและฝ่ายเป็นเอกสาร Microsoft Word (.doc) พร้อมตารางและช่องลงนาม"
             >
               <FileText className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">ดาวน์โหลด Word (.doc)</span>
-              <span className="sm:hidden">Word (.doc)</span>
+              <span>ดาวน์โหลด Word</span>
             </button>
           </div>
         </div>
@@ -1001,31 +997,6 @@ export default function OrgChartStructure({
       {/* 3. Mode: VISUAL ORG CHART (แผนภูมิสายงานราชการเป็นทางการ) */}
       {viewMode === 'chart' && (
         <div className="mt-6 relative">
-          {/* Scroll indicators / Floating buttons when wide layout is active */}
-          {chartLayout === 'wide' && (
-            <div className="no-print hidden sm:flex items-center justify-between absolute -top-11 right-0 space-x-1.5 z-20">
-              <span className="text-[11px] text-stone-500 font-medium mr-2">
-                เลื่อนดู {structure.departments.length} กอง:
-              </span>
-              <button
-                type="button"
-                onClick={scrollLeft}
-                className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-stone-700 shadow-2xs cursor-pointer transition-all active:scale-95"
-                title="เลื่อนไปทางซ้าย"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={scrollRight}
-                className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-stone-700 shadow-2xs cursor-pointer transition-all active:scale-95"
-                title="เลื่อนไปทางขวา"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
           <div
             ref={chartScrollRef}
             className={`w-full overflow-x-auto pb-6 transition-all scroll-smooth ${

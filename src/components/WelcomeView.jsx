@@ -11,8 +11,6 @@ import {
   EyeOff,
   AlertCircle,
   FileText,
-  ShieldAlert,
-  ClipboardCheck,
   FileSpreadsheet,
   ShieldCheck,
   Award,
@@ -482,14 +480,13 @@ export default function WelcomeView({
           description=""
           partnersTitle={`โครงสร้าง ${auditeeDepartments.length} หน่วยรับตรวจที่เชื่อมโยงในระบบ (CONNECTED DEPARTMENTS)`}
           navLinks={[
-            { label: "แผนภูมิโครงสร้าง & หน่วยรับตรวจ", href: "#departments", isActive: true },
-            { label: "ฟังก์ชันระบบงานตรวจสอบ", href: "#modules" }
+            { label: "แผนภูมิโครงสร้าง & หน่วยรับตรวจ", href: "#departments", isActive: true }
           ]}
         />
       </section>
 
       {/* 3. Departments Grid & Flowchart (หน่วยรับตรวจและโครงสร้าง อปท.) */}
-      <section id="departments" className="pt-1 sm:pt-2 pb-10 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto space-y-10">
+      <section id="departments" className="pt-1 sm:pt-2 pb-6 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto">
         <OrgChartStructure
           session={session}
           orgProfile={orgProfile}
@@ -501,103 +498,17 @@ export default function WelcomeView({
             if (!session) setShowLoginModal(true);
           }}
         />
-
-        {/* 4. Core System Modules */}
-        <div id="modules" className="space-y-6 pt-6 border-t border-slate-200/80 dark:border-slate-800 no-print print:hidden">
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <h3 className="text-lg md:text-2xl font-bold text-slate-900">
-              ระบบงานอัจฉริยะครบวงจร (Audit Modules)
-            </h3>
-            <p className="text-xs text-slate-500">
-              ขับเคลื่อนงานตรวจสอบภายในอย่างเป็นระบบ ตรงตามระเบียบกระทรวงการคลังและมาตรฐานสถ.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-white border border-stone-200/90 space-y-2.5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 border border-amber-200/80 flex items-center justify-center">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
-              <h4 className="font-bold text-sm text-stone-900">การประเมินความเสี่ยง SOFCK</h4>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                จัดลำดับความเสี่ยง 21 กิจกรรมงาน อปท. ด้วยระบบ 5 ปัจจัย คำนวณความเสี่ยงสูง-กลาง-ต่ำอัตโนมัติ
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white border border-stone-200/90 space-y-2.5 shadow-xs hover:shadow-md hover:border-stone-400 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-stone-100 text-stone-800 border border-stone-200/80 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-amber-600" />
-              </div>
-              <h4 className="font-bold text-sm text-stone-900">แผนปฏิบัติงานตรวจ (ว 614)</h4>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                สร้างแผนรายกิจกรรมอัตโนมัติ พร้อมเทมเพลตและระบบผู้ช่วย AI ช่วยเขียนวัตถุประสงค์และแนวการตรวจ
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white border border-stone-200/90 space-y-2.5 shadow-xs hover:shadow-md hover:border-emerald-300 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center justify-center">
-                <ClipboardCheck className="w-5 h-5" />
-              </div>
-              <h4 className="font-bold text-sm text-stone-900">กระดาษทำการตรวจ & LPA</h4>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                บันทึกการสุ่มตรวจ บันทึกผล และเตรียมหลักฐานประเมินประสิทธิภาพ อปท. (LPA) ครบทุกมิติ
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white border border-stone-200/90 space-y-2.5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all">
-              <div className="w-9 h-9 rounded-xl bg-stone-800 text-amber-200 border border-amber-600/30 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-amber-300" />
-              </div>
-              <h4 className="font-bold text-sm text-stone-900">การควบคุมภายใน ปอ.1 - ปค.5</h4>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                ให้แต่ละกองเข้ามาจัดทำและบันทึกรายงานการควบคุมภายในประจำปีได้อย่างถูกต้องตามมาตรฐาน
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 6. Call to Action Banner */}
-        <div className="p-8 md:p-12 rounded-3xl bg-gradient-to-r from-stone-100/90 via-amber-50/70 to-white border border-stone-300/80 text-center space-y-5 relative overflow-hidden shadow-xs no-print print:hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-          <h3 className="text-xl md:text-3xl font-extrabold text-stone-900">
-            พร้อมเริ่มต้นปฏิบัติงานตรวจสอบภายในแล้วหรือยัง?
-          </h3>
-          <p className="text-xs md:text-sm text-stone-600 max-w-xl mx-auto">
-            เข้าสู่ระบบด้วยชื่อผู้ใช้งานประจำกองของท่าน หรือติดต่อผู้ดูแลระบบ (หน่วยตรวจสอบภายใน) เพื่อเปิดสิทธิ์การใช้งาน
-          </p>
-          <div>
-            {session ? (
-              <button
-                type="button"
-                onClick={onEnterDashboard}
-                className="bg-stone-800 hover:bg-stone-900 text-amber-100 border border-amber-600/30 font-bold text-sm px-6 py-3 rounded-2xl inline-flex items-center space-x-2 shadow-sm transition-all cursor-pointer"
-              >
-                <span>กลับสู่หน้าทำงาน (Dashboard)</span>
-                <ArrowRight className="w-4 h-4 text-amber-300" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowLoginModal(true)}
-                className="bg-stone-800 hover:bg-stone-900 text-amber-100 border border-amber-600/30 font-bold text-sm px-6 py-3 rounded-2xl inline-flex items-center space-x-2 shadow-sm transition-all cursor-pointer"
-              >
-                <LogIn className="w-4 h-4 text-amber-300" />
-                <span>เข้าสู่ระบบตรวจสอบภายในทันที</span>
-              </button>
-            )}
-          </div>
-        </div>
       </section>
 
-      {/* 7. Footer */}
-      <footer className="border-t border-stone-200/80 py-8 px-4 text-center text-xs text-stone-500 space-y-1 bg-white/40 no-print print:hidden">
+      {/* Footer */}
+      <footer className="border-t border-stone-200/80 py-6 px-4 text-center text-xs text-stone-500 space-y-1 bg-white/40 no-print print:hidden">
         <p className="font-semibold text-stone-700">
           หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
         </p>
         <p>
           {orgProfile?.district || ''} {orgProfile?.province ? 'จังหวัด' + orgProfile.province : ''} | พัฒนาและดูแลระบบโดย: เครือข่ายผู้ตรวจสอบภายใน อปท. (Audit-OS)
         </p>
-        <p className="text-[10px] text-stone-400 pt-2">
+        <p className="text-[10px] text-stone-400 pt-1">
           Audit-OS: Cloud Internal Audit Operating System for Local Administrative Organizations
         </p>
       </footer>
