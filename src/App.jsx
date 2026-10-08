@@ -33,8 +33,28 @@ import ExecutiveDashboardView from './components/ExecutiveDashboardView';
 import CentralCalendarView from './components/CentralCalendarView';
 import PublicOverviewView from './components/PublicOverviewView';
 import ErrorBoundary from './components/ErrorBoundary';
+import AdminBackofficeView from './components/AdminBackofficeView';
+import CentralKnowledgeHubView from './components/CentralKnowledgeHubView';
+import StrategicPlanView from './components/StrategicPlanView';
+import OpeningMeetingView from './components/OpeningMeetingView';
+import ClosingMeetingView from './components/ClosingMeetingView';
+import AuditFollowUpView from './components/AuditFollowUpView';
 import { INITIAL_ENGAGEMENT_PLANS } from './data/engagementPlanTemplates';
-import { getSession, loginAsGuest, logout as authLogout, switchSessionTo, autoRepairDataLinkages, getUsers, saveUsers, getDepartments, saveDepartments, getPendingUsers, pullPendingUsersFromCloud } from './utils/auth';
+import {
+  getSession,
+  loginAsGuest,
+  logout as authLogout,
+  switchSessionTo,
+  autoRepairDataLinkages,
+  getUsers,
+  saveUsers,
+  getDepartments,
+  saveDepartments,
+  getPendingUsers,
+  pullPendingUsersFromCloud,
+  loadTenantData,
+  saveTenantData
+} from './utils/auth';
 import { cloudSyncService, mergeRiskManagement } from './services/cloudSyncService';
 import { isSupabaseConfigured, getSupabaseClient } from './services/supabaseClient';
 
@@ -627,30 +647,36 @@ export default function App() {
     }
   }, [formsBase]);
 
-  // Save year-scoped states to localStorage
+  // Save year-scoped states to localStorage with Multi-Tenant isolation
   useEffect(() => {
+    if (session) saveTenantData('ia_org_profile', orgProfile, session);
     localStorage.setItem('ia_org_profile', JSON.stringify(orgProfile));
-  }, [orgProfile]);
+  }, [orgProfile, session]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_annual_plans_by_year', annualPlansByYear, session);
     localStorage.setItem('ia_annual_plans_by_year', JSON.stringify(annualPlansByYear));
-  }, [annualPlansByYear]);
+  }, [annualPlansByYear, session]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_working_papers_by_year', workingPapersByYear, session);
     localStorage.setItem('ia_working_papers_by_year', JSON.stringify(workingPapersByYear));
-  }, [workingPapersByYear]);
+  }, [workingPapersByYear, session]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_risk_assessments_by_year', riskAssessmentsByYear, session);
     localStorage.setItem('ia_risk_assessments_by_year', JSON.stringify(riskAssessmentsByYear));
-  }, [riskAssessmentsByYear]);
+  }, [riskAssessmentsByYear, session]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_internal_controls_by_year', internalControlsByYear, session);
     localStorage.setItem('ia_internal_controls_by_year', JSON.stringify(internalControlsByYear));
-  }, [internalControlsByYear]);
+  }, [internalControlsByYear, session]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_risk_management_by_year', riskManagementByYear, session);
     localStorage.setItem('ia_risk_management_by_year', JSON.stringify(riskManagementByYear));
-  }, [riskManagementByYear]);
+  }, [riskManagementByYear, session]);
 
   // Initialize Cloud Realtime Synchronization (Supabase)
   useEffect(() => {
@@ -790,37 +816,58 @@ export default function App() {
   }, [auditCharterByYear]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_audit_universe_by_year', auditUniverseByYear, session);
     localStorage.setItem('ia_audit_universe_by_year', JSON.stringify(auditUniverseByYear));
-  }, [auditUniverseByYear]);
+  }, [auditUniverseByYear, session]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_engagement_plans_by_year', engagementPlansByYear, session);
     localStorage.setItem('ia_engagement_plans_by_year', JSON.stringify(engagementPlansByYear));
-  }, [engagementPlansByYear]);
+  }, [engagementPlansByYear, session]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_strategic_plan', strategicPlan, session);
     localStorage.setItem('ia_strategic_plan', JSON.stringify(strategicPlan));
-  }, [strategicPlan]);
+  }, [strategicPlan, session]);
 
   useEffect(() => {
+    if (session) saveTenantData('ia_capa_findings_by_year', capaFindingsByYear, session);
     localStorage.setItem('ia_capa_findings_by_year', JSON.stringify(capaFindingsByYear));
-  }, [capaFindingsByYear]);
+  }, [capaFindingsByYear, session]);
 
-  const reloadDataFromStorage = () => {
+  const reloadDataFromStorage = (currentSess = session) => {
     try {
-      const au = localStorage.getItem('ia_audit_universe_by_year');
-      if (au) setAuditUniverseByYear(JSON.parse(au));
-      const ap = localStorage.getItem('ia_annual_plans_by_year');
-      if (ap) setAnnualPlansByYear(JSON.parse(ap));
-      const ep = localStorage.getItem('ia_engagement_plans_by_year');
-      if (ep) setEngagementPlansByYear(JSON.parse(ep));
-      const wp = localStorage.getItem('ia_working_papers_by_year');
-      if (wp) setWorkingPapersByYear(JSON.parse(wp));
-      const rm = localStorage.getItem('ia_risk_management_by_year');
-      if (rm) setRiskManagementByYear(JSON.parse(rm));
+      const org = loadTenantData('ia_org_profile', null, currentSess);
+      if (org) setOrgProfile((prev) => ({ ...prev, ...org }));
+      const au = loadTenantData('ia_audit_universe_by_year', null, currentSess);
+      if (au) setAuditUniverseByYear(au);
+      const ap = loadTenantData('ia_annual_plans_by_year', null, currentSess);
+      if (ap) setAnnualPlansByYear(ap);
+      const ep = loadTenantData('ia_engagement_plans_by_year', null, currentSess);
+      if (ep) setEngagementPlansByYear(ep);
+      const wp = loadTenantData('ia_working_papers_by_year', null, currentSess);
+      if (wp) setWorkingPapersByYear(wp);
+      const ra = loadTenantData('ia_risk_assessments_by_year', null, currentSess);
+      if (ra) setRiskAssessmentsByYear(ra);
+      const ic = loadTenantData('ia_internal_controls_by_year', null, currentSess);
+      if (ic) setInternalControlsByYear(ic);
+      const rm = loadTenantData('ia_risk_management_by_year', null, currentSess);
+      if (rm) setRiskManagementByYear(rm);
+      const st = loadTenantData('ia_strategic_plan', null, currentSess);
+      if (st) setStrategicPlan(st);
+      const cf = loadTenantData('ia_capa_findings_by_year', null, currentSess);
+      if (cf) setCapaFindingsByYear(cf);
     } catch (e) {
       console.error(e);
     }
   };
+
+  // Reload isolated data whenever logged-in user changes
+  useEffect(() => {
+    if (session?.username) {
+      reloadDataFromStorage(session);
+    }
+  }, [session?.username]);
 
   // Dynamic getters & setters for the currently selected fiscal year
   const auditUniverse = auditUniverseByYear[selectedYear] || defaultAuditUniverse;
@@ -1100,69 +1147,54 @@ export default function App() {
     else if (data.capaFindings) setCapaFindingsByYear({ [selectedYear]: data.capaFindings });
   };
 
-  // Helper: Default landing tab based on role and department
+  // Helper: Default landing tab based on role
   const getDefaultTabForUser = (s) => {
-    if (!s) return 'welcome';
-    if (s.role === 'admin') return 'dashboard';
-    if (s.role === 'executive') return 'executive-dashboard';
-    // ปรับหน้าแรกทุกกอง เข้าใช้งานครั้งแรก ไปที่หน้า ภาพรวม ทั้งหมด
-    return 'public-overview';
+    if (!s) return 'audit-risk';
+    if (s.role === 'admin') return 'backoffice';
+    return 'audit-risk';
   };
 
-  // Route Guard: Ensure non-admin users only access allowed menu tabs
+  // Route Guard: Ensure auditors and admin access appropriate tabs
   useEffect(() => {
     if (!session) return;
-    if (session.role === 'admin' || session.role === 'executive') return;
+    if (session.role === 'admin') return;
 
-    if (session.role === 'guest') {
-      const allowed = [...(session.permissions || ['public-overview']), 'welcome', 'public-overview'];
-      if (!allowed.includes(currentTab)) {
-        setCurrentTab('public-overview');
-      }
-      return;
-    }
-
-    const allowed = Array.isArray(session.permissions) && session.permissions.length > 0
-      ? [...session.permissions, 'public-overview']
-      : ['public-overview', 'risk-management', 'knowledge', 'forms'];
+    // All 11 lifecycle steps for auditors
+    const allowed = [
+      'audit-risk',
+      'strategic-plan',
+      'planning',
+      'engagement-plan',
+      'opening-meeting',
+      'execution',
+      'closing-meeting',
+      'reporting',
+      'tracking-register',
+      'central-hub',
+      'audit-toolkits',
+      'internal-control',
+      'risk-management',
+      'lpa',
+      'knowledge',
+      'forms',
+      'welcome'
+    ];
 
     if (!allowed.includes(currentTab)) {
-      setCurrentTab('public-overview');
+      setCurrentTab('audit-risk');
     }
   }, [session, currentTab]);
 
   if (!session) {
     return (
-      <>
-        <WelcomeView
-          session={null}
-          orgProfile={orgProfile}
-          onOpenOnboarding={() => setShowOnboarding(true)}
-          onLogin={(sess) => {
-            const s = sess || getSession();
-            setSession(s);
-            setCurrentTab(getDefaultTabForUser(s));
-          }}
-          onGuestLogin={() => {
-            const s = loginAsGuest();
-            setSession(s);
-            setCurrentTab(getDefaultTabForUser(s));
-          }}
-          onEnterDashboard={() => {
-            const s = getSession() || loginAsGuest();
-            setSession(s);
-            setCurrentTab(getDefaultTabForUser(s));
-          }}
-        />
-        {showOnboarding && (
-          <OnboardingModal
-            isOpen={showOnboarding}
-            initialData={orgProfile}
-            onComplete={handleCompleteOnboarding}
-            onCancel={() => setShowOnboarding(false)}
-          />
-        )}
-      </>
+      <LoginView
+        orgProfile={orgProfile}
+        onLogin={(sess) => {
+          const s = sess || getSession();
+          setSession(s);
+          setCurrentTab(getDefaultTabForUser(s));
+        }}
+      />
     );
   }
 
@@ -1209,6 +1241,19 @@ export default function App() {
     setSession(null);
   };
 
+  const handleCloneToWorkingPapers = (clonedWp) => {
+    if (!clonedWp) return;
+    setWorkingPapers((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      if (list.some((w) => w.id === clonedWp.id)) {
+        return list.map((w) => (w.id === clonedWp.id ? { ...w, ...clonedWp } : w));
+      }
+      return [clonedWp, ...list];
+    });
+    setSelectedWp(clonedWp.id);
+    handleSelectTab('execution');
+  };
+
   return (
     <div className="h-screen w-full bg-slate-100 dark:bg-slate-800 flex flex-col font-sans overflow-hidden print:h-auto print:overflow-visible print:bg-white">
       <Header
@@ -1222,11 +1267,13 @@ export default function App() {
         onLogout={handleLogout}
         onChangePassword={() => setShowChangePassword(true)}
         onOpenSettings={() => setShowSettings(true)}
-        onOpenUsersManagement={() => handleSelectTab('users')}
+        onOpenUsersManagement={() => handleSelectTab('backoffice')}
         onOpenWelcome={() => handleSelectTab('welcome')}
         onOpenCloudSync={() => setShowCloudSyncModal(true)}
         onOpenOnboarding={() => setShowOnboarding(true)}
         pendingCount={pendingCount}
+        currentTab={currentTab}
+        setCurrentTab={handleSelectTab}
       />
 
       {/* Impersonate / Department Preview Banner (แสดงเฉพาะเมื่อ ADMIN กำลังกดทดสอบมุมมองเท่านั้น) */}
@@ -1367,7 +1414,17 @@ export default function App() {
                 setAuditUniverse={setAuditUniverse}
                 annualPlans={annualPlans}
                 setAnnualPlans={setAnnualPlans}
-                setCurrentTab={setCurrentTab}
+                setCurrentTab={handleSelectTab}
+              />
+            )}
+
+            {currentTab === 'strategic-plan' && (
+              <StrategicPlanView
+                key={`strategic-plan-${selectedYear}`}
+                selectedYear={selectedYear}
+                orgProfile={orgProfile}
+                auditUniverse={auditUniverse}
+                annualPlans={annualPlans}
               />
             )}
 
@@ -1387,7 +1444,7 @@ export default function App() {
                 strategicPlan={strategicPlan}
                 setStrategicPlan={setStrategicPlan}
                 orgProfile={orgProfile}
-                setCurrentTab={setCurrentTab}
+                setCurrentTab={handleSelectTab}
               />
             )}
 
@@ -1403,6 +1460,15 @@ export default function App() {
               />
             )}
 
+            {currentTab === 'opening-meeting' && (
+              <OpeningMeetingView
+                key={`opening-meeting-${selectedYear}`}
+                selectedYear={selectedYear}
+                orgProfile={orgProfile}
+                annualPlans={annualPlans}
+              />
+            )}
+
             {currentTab === 'execution' && (
               <ExecutionView
                 key={`execution-${selectedYear}`}
@@ -1415,6 +1481,34 @@ export default function App() {
               />
             )}
 
+            {currentTab === 'closing-meeting' && (
+              <ClosingMeetingView
+                key={`closing-meeting-${selectedYear}`}
+                selectedYear={selectedYear}
+                orgProfile={orgProfile}
+                annualPlans={annualPlans}
+                workingPapers={workingPapers}
+              />
+            )}
+
+            {currentTab === 'tracking-register' && (
+              <AuditFollowUpView
+                key={`tracking-register-${selectedYear}`}
+                selectedYear={selectedYear}
+                orgProfile={orgProfile}
+                capaFindings={capaFindings}
+                setCapaFindings={setCapaFindings}
+              />
+            )}
+
+            {currentTab === 'central-hub' && (
+              <CentralKnowledgeHubView
+                key={`central-hub-${selectedYear}`}
+                session={session}
+                onCloneToWorkingPapers={handleCloneToWorkingPapers}
+              />
+            )}
+
             {currentTab === 'audit-toolkits' && (
               <TechnicalToolkitsView
                 key={`toolkits-${selectedYear}`}
@@ -1422,7 +1516,7 @@ export default function App() {
                 workingPapers={workingPapers}
                 setWorkingPapers={setWorkingPapers}
                 setSelectedWp={setSelectedWp}
-                setCurrentTab={setCurrentTab}
+                setCurrentTab={handleSelectTab}
                 initialTool={activeToolkitTab}
               />
             )}
@@ -1575,16 +1669,11 @@ export default function App() {
               />
             )}
 
-            {currentTab === 'users' && session?.role === 'admin' && (
-              <UserManagementView
+            {(currentTab === 'backoffice' || currentTab === 'users') && session?.role === 'admin' && (
+              <AdminBackofficeView
+                key={`backoffice-${session?.username}`}
                 currentSession={session}
-                initialTab={pendingCount > 0 ? 'pending' : 'matrix'}
-                onSwitchSession={(newSession) => {
-                  setSession(newSession);
-                  if (newSession.role !== 'admin') {
-                    setCurrentTab(getDefaultTabForUser(newSession));
-                  }
-                }}
+                onSwitchToWorkbench={() => handleSelectTab('audit-risk')}
                 onRefreshUser={() => {
                   setSession(getSession());
                   reloadDataFromStorage();

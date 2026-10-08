@@ -36,7 +36,9 @@ export default function Header({
   onOpenWelcome,
   onOpenCloudSync,
   onOpenOnboarding,
-  pendingCount = 0
+  pendingCount = 0,
+  currentTab = 'audit-risk',
+  setCurrentTab
 }) {
   const [syncStatus, setSyncStatus] = useState(() => cloudSyncService.getSyncStatus());
 
@@ -58,8 +60,8 @@ export default function Header({
   }, []);
 
   const isAdmin = session?.role === 'admin';
-  const userTitle = session?.displayName || (isAdmin ? orgProfile?.auditorName : session?.username);
-  const departmentLabel = session?.department || (isAdmin ? 'หน่วยตรวจสอบภายใน' : 'ส่วนราชการ');
+  const userTitle = session?.displayName || (isAdmin ? 'ผู้ดูแลระบบส่วนกลาง (Admin)' : (orgProfile?.auditorName || session?.username));
+  const departmentLabel = isAdmin ? 'Super Admin Backoffice' : (session?.organization || orgProfile?.name || 'หน่วยตรวจสอบภายใน');
 
   return (
     <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 shadow-xs no-print shrink-0 transition-colors">
@@ -67,7 +69,7 @@ export default function Header({
         <div className="flex justify-between items-center h-16 gap-3">
           {/* Brand & Organization Title */}
           <div className="flex items-center space-x-3 shrink-0 min-w-0">
-            <div className="relative group cursor-pointer shrink-0" onClick={onOpenWelcome} title="คลิกเพื่อกลับสู่หน้าแรก / ภาพรวม">
+            <div className="relative group cursor-pointer shrink-0" onClick={() => setCurrentTab && setCurrentTab('audit-risk')} title="คลิกเพื่อกลับสู่พื้นที่ทำงานตรวจสอบ">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-600/25 group-hover:scale-105 transition-all">
                 <Shield className="w-5 h-5 text-white drop-shadow-xs" />
               </div>
@@ -89,20 +91,16 @@ export default function Header({
 
                 {/* Role Capsule Badge */}
                 {isAdmin ? (
-                  <span className="hidden sm:inline-flex items-center gap-1 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/60 dark:to-blue-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 text-[10px] px-2 py-0.5 rounded-full font-black tracking-wide shrink-0">
-                    👑 ADMIN
-                  </span>
-                ) : session?.role === 'executive' ? (
-                  <span className="hidden sm:inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0">
-                    🏛️ ผู้บริหาร
-                  </span>
-                ) : session?.role === 'guest' ? (
-                  <span className="hidden sm:inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60 text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0">
-                    👥 ผู้เยี่ยมชม
-                  </span>
+                  <button
+                    onClick={() => setCurrentTab && setCurrentTab('backoffice')}
+                    className="hidden sm:inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs text-[10px] px-2 py-0.5 rounded-full font-black tracking-wide shrink-0 hover:brightness-110 cursor-pointer"
+                    title="คลิกเพื่อสลับไประบบหลังบ้าน Super Admin"
+                  >
+                    👑 SUPER ADMIN
+                  </button>
                 ) : (
-                  <span className="hidden sm:inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0">
-                    🏢 {session?.department || 'ส่วนราชการ'}
+                  <span className="hidden sm:inline-flex items-center gap-1 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/60 dark:to-indigo-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0">
+                    🛡️ ผู้ตรวจสอบภายใน
                   </span>
                 )}
               </div>
@@ -198,25 +196,24 @@ export default function Header({
               )}
             </button>
 
-            {/* Welcome Page Portal Button */}
-            <button
-              onClick={onOpenWelcome}
-              title="เปิดหน้าต้อนรับ / ภาพรวมระบบ (Welcome Page)"
-              className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 transition-all text-xs font-semibold cursor-pointer shrink-0 shadow-2xs"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>หน้าต้อนรับ</span>
-            </button>
-
-            {/* Quick Staff Login Button for Guest View */}
-            {session?.role === 'guest' && (
+            {/* Quick Super Admin Backoffice / Workbench Switcher */}
+            {isAdmin && (
               <button
-                onClick={onLogout}
-                title="เข้าสู่ระบบด้วยบัญชีเจ้าหน้าที่ / ผู้ดูแลระบบ"
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transition-all text-xs font-bold cursor-pointer shadow-xs shrink-0"
+                onClick={() => setCurrentTab && setCurrentTab(currentTab === 'backoffice' ? 'audit-risk' : 'backoffice')}
+                title={currentTab === 'backoffice' ? 'สลับไปยังพื้นที่ปฏิบัติงานตรวจสอบ' : 'สลับไปยังระบบหลังบ้าน Super Admin'}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs shrink-0 ${
+                  currentTab === 'backoffice'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20'
+                    : 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-amber-600/20'
+                }`}
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">เข้าสู่ระบบ</span>
+                <Settings className="w-3.5 h-3.5" />
+                <span>{currentTab === 'backoffice' ? '🛡️ สลับไปหน้าตรวจ' : '⚙️ หลังบ้าน Admin'}</span>
+                {pendingCount > 0 && currentTab !== 'backoffice' && (
+                  <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                    {pendingCount}
+                  </span>
+                )}
               </button>
             )}
 
@@ -233,19 +230,17 @@ export default function Header({
             <div className="relative pl-1 border-l border-slate-200 dark:border-slate-800" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center space-x-2 px-2 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer border border-transparent hover:border-slate-200/80 dark:hover:border-slate-700"
+                className="flex items-center space-x-2 px-2 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer border border-transparent hover:border-slate-200/80 dark:border-slate-700"
               >
                 <div className="relative">
                   <div
                     className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shadow-xs shrink-0 ${
                       isAdmin
-                        ? 'bg-gradient-to-br from-indigo-500 to-blue-600 text-white'
-                        : session?.role === 'guest'
-                        ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white'
-                        : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'
+                        ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white'
+                        : 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white'
                     }`}
                   >
-                    {isAdmin ? '👑' : session?.role === 'guest' ? '👥' : '🏢'}
+                    {isAdmin ? '👑' : '🛡️'}
                   </div>
                   {isAdmin && pendingCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4">
@@ -256,7 +251,7 @@ export default function Header({
                     </span>
                   )}
                 </div>
-                <div className="hidden lg:block text-left max-w-[130px]">
+                <div className="hidden lg:block text-left max-w-[140px]">
                   <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
                     {userTitle}
                   </div>
@@ -268,45 +263,30 @@ export default function Header({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden z-40 text-xs">
-                  <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden z-40 text-xs">
+                  <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
                     <div className="font-bold text-slate-800 dark:text-slate-200 truncate">{userTitle}</div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{departmentLabel}</div>
                     <div className="text-[10px] text-blue-600 dark:text-blue-400 mt-0.5">
-                      {session?.role === 'guest'
-                        ? 'เข้าชมในโหมดผู้เยี่ยมชมทั่วไป'
-                        : `ชื่อผู้ใช้: @${session?.username} • ${isAdmin ? 'สิทธิ์ผู้ดูแลระบบ' : 'สิทธิ์ประจำกอง'}`}
+                      {isAdmin ? 'สิทธิ์ผู้ดูแลระบบสูงสุด (Super Admin)' : `ชื่อผู้ใช้: @${session?.username} • สมาชิกผู้ตรวจสอบภายใน`}
                     </div>
                   </div>
 
-                  {session?.role === 'guest' && (
+                  {isAdmin && (
                     <button
                       onClick={() => {
                         setMenuOpen(false);
-                        onLogout();
+                        if (setCurrentTab) setCurrentTab('backoffice');
                       }}
-                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer font-bold border-b border-slate-100 dark:border-slate-800"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span>เข้าสู่ระบบด้วยบัญชีเจ้าหน้าที่</span>
-                    </button>
-                  )}
-
-                  {isAdmin && onOpenUsersManagement && (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onOpenUsersManagement();
-                      }}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer font-bold border-b border-slate-100 dark:border-slate-800"
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100 cursor-pointer font-bold border-b border-slate-100 dark:border-slate-800"
                     >
                       <div className="flex items-center space-x-2">
-                        <Users className="w-3.5 h-3.5" />
-                        <span>จัดการผู้ใช้งาน & กำหนดสิทธิ์</span>
+                        <Settings className="w-3.5 h-3.5" />
+                        <span>⚙️ 12. ระบบหลังบ้าน Super Admin</span>
                       </div>
                       {pendingCount > 0 && (
                         <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
-                          {pendingCount} คำขอ
+                          {pendingCount} คำขอใหม่
                         </span>
                       )}
                     </button>
@@ -315,26 +295,24 @@ export default function Header({
                   <button
                     onClick={() => {
                       setMenuOpen(false);
-                      if (onOpenWelcome) onOpenWelcome();
+                      if (setCurrentTab) setCurrentTab('audit-risk');
                     }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/30 cursor-pointer font-medium border-b border-slate-100 dark:border-slate-800"
+                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer font-semibold border-b border-slate-100 dark:border-slate-800"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>🌟 หน้าต้อนรับ (Welcome Page)</span>
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>🛡️ พื้นที่ทำงานตรวจสอบ 12 ขั้นตอน</span>
                   </button>
 
-                  {isAdmin && onOpenOnboarding && (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onOpenOnboarding();
-                      }}
-                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer font-medium border-b border-slate-100 dark:border-slate-800"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Onboarding / ตั้งค่าองค์กร อปท.</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (setCurrentTab) setCurrentTab('central-hub');
+                    }}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer font-medium border-b border-slate-100 dark:border-slate-800"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>📚 คลังเอกสารกลาง & ระเบียบปฏิบัติ</span>
+                  </button>
 
                   {isAdmin && (
                     <button
