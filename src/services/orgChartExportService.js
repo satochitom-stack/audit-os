@@ -1,5 +1,5 @@
 // บริการส่งออกโครงสร้างการแบ่งส่วนราชการเป็นไฟล์ PDF และ Microsoft Word (.doc)
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 
 /**
@@ -11,21 +11,20 @@ export async function exportOrgChartToPdf(elementId = 'org-chart-printable-area'
     const element = document.getElementById(elementId);
     if (!element) {
       console.error('Target element not found:', elementId);
-      return false;
+      return { success: false, error: 'ไม่พบส่วนแสดงผลผังองค์กรบนหน้าเว็บ' };
     }
 
     const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
     const fiscalYear = orgProfile?.fiscalYear || '2569';
     const fileName = `โครงสร้างการแบ่งส่วนราชการ_${orgName}_ปี${fiscalYear}.pdf`;
 
-    // 1. ปิดโหมดมืดชั่วคราว เพื่อให้ Canvas เรนเดอร์ตัวอักษรและสีพื้นหลังได้คมชัดถูกต้อง 100%
+    // 1. ชั่วคราว: ปิดโหมดมืดเพื่อให้ Canvas เรนเดอร์ตัวอักษรและสีพื้นหลังได้คมชัดตามสีทางการ 100%
     if (wasDark) {
       document.documentElement.classList.remove('dark');
-      // รอ browser repaint ให้เสร็จสิ้น
-      await new Promise((r) => setTimeout(r, 60));
+      await new Promise((r) => setTimeout(r, 80));
     }
 
-    // 2. เรนเดอร์ Canvas จากองค์ประกอบจริงบนหน้าจอโดยตรง
+    // 2. เรนเดอร์ Canvas ด้วย html2canvas-pro (รองรับ oklch และ CSS ยุคใหม่ของ Tailwind v4)
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
@@ -41,7 +40,7 @@ export async function exportOrgChartToPdf(elementId = 'org-chart-printable-area'
     });
 
     if (!canvas || !canvas.width || !canvas.height) {
-      throw new Error('Canvas rendering produced empty image');
+      throw new Error('การประมวลผล Canvas ได้ภาพว่างเปล่า');
     }
 
     // 3. สร้างเอกสาร PDF ขนาด A4 แนวนอน (297 x 210 มม.)
@@ -74,10 +73,10 @@ export async function exportOrgChartToPdf(elementId = 'org-chart-printable-area'
 
     // 4. สั่งดาวน์โหลดไฟล์
     pdf.save(fileName);
-    return true;
+    return { success: true };
   } catch (err) {
     console.error('PDF Export Error:', err);
-    return false;
+    return { success: false, error: err?.message || 'เกิดข้อผิดพลาดในการสร้างไฟล์ PDF' };
   } finally {
     // คืนค่าสถานะโหมดมืดกลับคืนสู่ค่าเดิม
     if (wasDark) {
@@ -88,9 +87,10 @@ export async function exportOrgChartToPdf(elementId = 'org-chart-printable-area'
 
 /**
  * 2. ดาวน์โหลดโครงสร้างการแบ่งส่วนราชการเป็นไฟล์ Microsoft Word (.doc)
- * จัดรูปแบบตามมาตรฐานงานสารบรรณราชการไทย พร้อมตารางแนบเล่มแผนตรวจสอบประจำปี
+ * บรรจุภาพผังโครงสร้างสีความละเอียดสูงตามหน้าเว็บ พร้อมตารางข้อมูลและช่องลงนามครบถ้วน
  */
-export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
+export async function exportOrgChartToWord(elementId = 'org-chart-printable-area', structure = {}, orgProfile = {}) {
+  const wasDark = document.documentElement.classList.contains('dark');
   try {
     const orgName = orgProfile.name || 'องค์กรปกครองส่วนท้องถิ่น';
     const district = orgProfile.district ? `อำเภอ${orgProfile.district}` : '';
@@ -105,6 +105,39 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
 
     const depts = Array.isArray(structure?.departments) ? structure.departments : [];
     const deputies = Array.isArray(structure?.deputyPalats) ? structure.deputyPalats : [];
+
+    // แคปเจอร์ภาพผังโครงสร้างจากหน้าเว็บ เพื่อฝังลงในเอกสาร Word ให้ตรงตามภาพหน้าเว็บ 100%
+    let chartImgHtml = '';
+    const element = document.getElementById(elementId);
+    if (element) {
+      if (wasDark) {
+        document.documentElement.classList.remove('dark');
+        await new Promise((r) => setTimeout(r, 80));
+      }
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: Math.max(element.scrollWidth || 0, 1200),
+        onclone: (clonedDoc, clonedEl) => {
+          clonedEl.querySelectorAll('.no-print').forEach((el) => el.remove());
+        }
+      });
+
+      if (canvas && canvas.width && canvas.height) {
+        const imgData = canvas.toDataURL('image/png', 0.95);
+        chartImgHtml = `
+          <div style="text-align: center; margin: 15pt 0; page-break-inside: avoid;">
+            <p style="font-weight: bold; font-size: 14pt; margin-bottom: 8pt; color: #1e3a8a;">
+              แผนภูมิโครงสร้างการแบ่งส่วนราชการ (ตามกรอบอัตรากำลังของ อปท.)
+            </p>
+            <img src="${imgData}" style="width: 100%; max-width: 960px; border: 1pt solid #cbd5e1;" />
+          </div>
+        `;
+      }
+    }
 
     // สร้างตารางข้อมูลส่วนราชการและฝ่าย (รองรับทั้ง object และ string อย่างปลอดภัย)
     let deptRowsHtml = '';
@@ -164,19 +197,24 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
     }
 
     const htmlBody = `
-      <div class="text-right font-bold" style="font-size: 14pt; color: #444;">
+      <div class="text-right font-bold" style="font-size: 13pt; color: #444;">
         เอกสารแนบประกอบกฎบัตรและแผนการตรวจสอบประจำปี พ.ศ. ${fiscalYear}
       </div>
 
-      <h1 style="margin-top: 10pt;">โครงสร้างการแบ่งส่วนราชการและการจัดกรอบอัตรากำลัง</h1>
+      <h1 style="margin-top: 6pt;">โครงสร้างการแบ่งส่วนราชการและการจัดกรอบอัตรากำลัง</h1>
       <h2>${orgName} ${district} ${province}</h2>
-      <p class="text-center no-indent" style="font-size: 15pt; color: #333;">
+      <p class="text-center no-indent" style="font-size: 14pt; color: #333;">
         (สำหรับใช้ประกอบการวิเคราะห์ความเสี่ยงและกำหนดขอบเขตการตรวจสอบภายใน)
       </p>
-      <hr style="border: 1pt solid #222; margin: 10pt 0;" />
 
-      <!-- ตารางผู้บริหารและสายบังคับบัญชาสูงสุด -->
-      <table style="margin-bottom: 15pt; border: 1.5pt solid #000;">
+      <!-- ส่วนที่ 1: แผนภูมิโครงสร้างสีตรงตามหน้าเว็บ -->
+      ${chartImgHtml}
+
+      <div style="page-break-before: always;"></div>
+
+      <!-- ส่วนที่ 2: ตารางผู้บริหารและสายบังคับบัญชาสูงสุด -->
+      <h3 style="margin-top: 14pt;">สายการบังคับบัญชาฝ่ายบริหารและผู้บริหารสูงสุด</h3>
+      <table style="margin-bottom: 12pt; border: 1.5pt solid #000;">
         <tr style="background-color: #f5f5f5;">
           <th style="width: 33%; padding: 8pt;">ฝ่ายบริหาร / ผู้บริหารสูงสุด</th>
           <th style="width: 34%; padding: 8pt;">หัวหน้าพนักงานส่วนท้องถิ่น (ปลัด อปท.)</th>
@@ -201,8 +239,8 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
 
       ${deputySectionHtml}
 
-      <h3>ตารางการแบ่งส่วนราชการ ฝ่าย และงานในสังกัด (${depts.length} ส่วนราชการหลัก)</h3>
-
+      <!-- ส่วนที่ 3: ตารางการแบ่งส่วนราชการและภารกิจ -->
+      <h3 style="margin-top: 14pt;">ตารางการแบ่งส่วนราชการ ฝ่าย และงานในสังกัด (${depts.length} ส่วนราชการหลัก)</h3>
       <table style="width: 100%; border-collapse: collapse; margin-top: 8pt;">
         <thead>
           <tr style="background-color: #e2e8f0;">
@@ -218,6 +256,7 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
         </tbody>
       </table>
 
+      <!-- ส่วนที่ 4: ช่องลงนามกำกับ -->
       <br/><br/>
       <table class="signature-table" style="width: 100%; border: none;">
         <tr>
@@ -252,7 +291,7 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
   @page Section1 {
     size: 297mm 210mm;
     mso-page-orientation: landscape;
-    margin: 15mm 15mm 15mm 15mm;
+    margin: 12mm 12mm 12mm 12mm;
   }
   div.Section1 { page: Section1; }
   body {
@@ -274,8 +313,8 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
   .text-right { text-align: right; }
   .text-left { text-align: left; }
   .font-bold { font-weight: bold; }
-  .signature-table { border: none !important; width: 100%; margin-top: 30pt; }
-  .signature-table td { border: none !important; text-align: center; padding: 10pt 5pt; }
+  .signature-table { border: none !important; width: 100%; margin-top: 25pt; }
+  .signature-table td { border: none !important; text-align: center; padding: 8pt 5pt; }
 </style>
 </head>
 <body>
@@ -296,15 +335,18 @@ export function exportOrgChartToWord(structure = {}, orgProfile = {}) {
     document.body.appendChild(link);
     link.click();
 
-    // หน่วงเวลาในการลบ element และ URL เพื่อให้แน่ใจว่าเบราว์เซอร์เริ่มดาวน์โหลดเสร็จสิ้น
     setTimeout(() => {
       if (link.parentNode) link.parentNode.removeChild(link);
       URL.revokeObjectURL(url);
-    }, 1500);
+    }, 2000);
 
-    return true;
+    return { success: true };
   } catch (err) {
     console.error('Word Export Error:', err);
-    return false;
+    return { success: false, error: err?.message || 'เกิดข้อผิดพลาดในการสร้างไฟล์ Word' };
+  } finally {
+    if (wasDark) {
+      document.documentElement.classList.add('dark');
+    }
   }
 }

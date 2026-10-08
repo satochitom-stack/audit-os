@@ -23,6 +23,7 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Monitor,
   ArrowLeftRight
 } from 'lucide-react';
@@ -45,7 +46,21 @@ export default function OrgChartStructure({
   const [chartLayout, setChartLayout] = useState(() => (structure.departments?.length >= 6 ? 'fit' : 'wide')); // 'fit', 'tworows', 'wide'
   const [toastMessage, setToastMessage] = useState('');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingWord, setIsExportingWord] = useState(false);
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  const downloadDropdownRef = useRef(null);
   const chartScrollRef = useRef(null);
+
+  // Close download dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (downloadDropdownRef.current && !downloadDropdownRef.current.contains(e.target)) {
+        setShowDownloadDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
 
   // Editable Draft state
   const [draft, setDraft] = useState(structure);
@@ -353,32 +368,39 @@ export default function OrgChartStructure({
         await new Promise((r) => setTimeout(r, 250));
       }
       showToast('กำลังประมวลผลไฟล์ PDF (A4 แนวนอน พอดี 1 หน้า)...');
-      const ok = await exportOrgChartToPdf('org-chart-printable-area', orgProfile);
-      if (ok) {
+      const res = await exportOrgChartToPdf('org-chart-printable-area', orgProfile);
+      if (res?.success) {
         showToast('ดาวน์โหลดไฟล์ PDF สี (A4 แนวนอน) สำเร็จเรียบร้อยแล้ว!');
       } else {
-        showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF');
+        showToast(`เกิดข้อผิดพลาด: ${res?.error || 'ไม่สามารถสร้างไฟล์ PDF ได้'}`);
       }
     } catch (err) {
       console.error(err);
-      showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF');
+      showToast(`เกิดข้อผิดพลาด: ${err?.message || 'สร้างไฟล์ PDF ไม่สำเร็จ'}`);
     } finally {
       setIsExportingPdf(false);
     }
   };
 
-  const handleDownloadWord = () => {
+  const handleDownloadWord = async () => {
     try {
-      showToast('กำลังดาวน์โหลดไฟล์ Microsoft Word (.doc)...');
-      const ok = exportOrgChartToWord(structure, orgProfile);
-      if (ok) {
-        showToast('ดาวน์โหลดไฟล์ Word สำเร็จเรียบร้อยแล้ว!');
+      setIsExportingWord(true);
+      if (viewMode !== 'chart') {
+        setViewMode('chart');
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      showToast('กำลังประมวลผลไฟล์ Word พร้อมภาพผังสีตามหน้าเว็บ...');
+      const res = await exportOrgChartToWord('org-chart-printable-area', structure, orgProfile);
+      if (res?.success) {
+        showToast('ดาวน์โหลดไฟล์ Word พร้อมภาพผังสีสำเร็จเรียบร้อยแล้ว!');
       } else {
-        showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ Word');
+        showToast(`เกิดข้อผิดพลาด: ${res?.error || 'ไม่สามารถสร้างไฟล์ Word ได้'}`);
       }
     } catch (err) {
       console.error(err);
-      showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ Word');
+      showToast(`เกิดข้อผิดพลาด: ${err?.message || 'สร้างไฟล์ Word ไม่สำเร็จ'}`);
+    } finally {
+      setIsExportingWord(false);
     }
   };
 
@@ -527,85 +549,88 @@ export default function OrgChartStructure({
           </div>
         </div>
 
-        {/* Row 2: Controls & Menus (จัดกลุ่มเมนูเป็นระเบียบ ไม่กระจายแยกฝั่ง และเอาคำในวงเล็บออก) */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
-          {/* View Mode Toggle */}
-          {!isEditing && (
-            <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs shrink-0">
-              <button
-                type="button"
-                onClick={() => setViewMode('chart')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  viewMode === 'chart'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-              >
-                <GitFork className="w-3.5 h-3.5" />
-                <span>มุมมองแผนภูมิ</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  viewMode === 'table'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>ตารางส่วนราชการ</span>
-              </button>
-            </div>
-          )}
+        {/* Row 2: Controls & Menus (จัดกลุ่มซ้าย-ขวาอย่างลงตัว: ซ้าย=มุมมอง/จัดชั้น, ขวา=ปรับแต่ง/ดาวน์โหลด) */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+          {/* ฝั่งซ้าย: View Mode + Layout Switcher */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* View Mode Toggle */}
+            {!isEditing && (
+              <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('chart')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    viewMode === 'chart'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                >
+                  <GitFork className="w-3.5 h-3.5" />
+                  <span>มุมมองแผนภูมิ</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    viewMode === 'table'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>ตารางส่วนราชการ</span>
+                </button>
+              </div>
+            )}
 
-          {/* Chart Layout Mode Switcher */}
-          {!isEditing && viewMode === 'chart' && (
-            <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs shrink-0">
-              <button
-                type="button"
-                onClick={() => setChartLayout('fit')}
-                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  chartLayout === 'fit'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-                title="ย่อขนาดทุกกองให้พอดีหน้าจอพร้อมกันทั้งหมด"
-              >
-                <Monitor className="w-3.5 h-3.5" />
-                <span>พอดีจอ</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setChartLayout('tworows')}
-                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  chartLayout === 'tworows'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-                title="จัดแบ่งเป็น 2 ชั้นสมดุล ตัวหนังสือใหญ่ อ่านง่าย"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>จัด 2 ชั้น</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setChartLayout('wide')}
-                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  chartLayout === 'wide'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-                title="แนวนอนเต็มขนาด 100%"
-              >
-                <ArrowLeftRight className="w-3.5 h-3.5" />
-                <span>แนวนอน 100%</span>
-              </button>
-            </div>
-          )}
+            {/* Chart Layout Mode Switcher */}
+            {!isEditing && viewMode === 'chart' && (
+              <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setChartLayout('fit')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    chartLayout === 'fit'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                  title="ย่อขนาดทุกกองให้พอดีหน้าจอพร้อมกันทั้งหมด"
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                  <span>พอดีจอ</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartLayout('tworows')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    chartLayout === 'tworows'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                  title="จัดแบ่งเป็น 2 ชั้นสมดุล ตัวหนังสือใหญ่ อ่านง่าย"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>จัด 2 ชั้น</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartLayout('wide')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    chartLayout === 'wide'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                  title="แนวนอนเต็มขนาด 100%"
+                >
+                  <ArrowLeftRight className="w-3.5 h-3.5" />
+                  <span>แนวนอน 100%</span>
+                </button>
+              </div>
+            )}
+          </div>
 
-          {/* Action Buttons: Customization & Exports */}
-          <div className="flex items-center space-x-2 shrink-0 flex-wrap gap-y-2">
+          {/* ฝั่งขวา: ปรับแต่งโครงสร้าง และปุ่มดาวน์โหลด (Dropdown สัญลักษณ์ดาวน์โหลด) */}
+          <div className="flex items-center space-x-2 shrink-0 ml-auto relative">
             {!isEditing ? (
               <button
                 type="button"
@@ -636,26 +661,59 @@ export default function OrgChartStructure({
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleDownloadPdf}
-              disabled={isExportingPdf}
-              className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs disabled:opacity-50"
-              title="ดาวน์โหลดผังโครงสร้างสีความละเอียดสูง (A4 แนวนอน พอดี 1 หน้า)"
-            >
-              <Download className={`w-3.5 h-3.5 ${isExportingPdf ? 'animate-bounce' : ''}`} />
-              <span>{isExportingPdf ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF'}</span>
-            </button>
+            {/* Dropdown ดาวน์โหลด (แสดงเป็นสัญลักษณ์ดาวน์โหลดแทนข้อความ) */}
+            <div className="relative" ref={downloadDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowDownloadDropdown((v) => !v)}
+                disabled={isExportingPdf || isExportingWord}
+                className="px-2.5 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs disabled:opacity-50"
+                title="ดาวน์โหลดโครงสร้างองค์กร (PDF / Word)"
+              >
+                <Download className={`w-4 h-4 ${isExportingPdf || isExportingWord ? 'animate-bounce text-amber-600' : 'text-stone-700 dark:text-stone-200'}`} />
+                <ChevronDown className="w-3 h-3 text-stone-500" />
+              </button>
 
-            <button
-              type="button"
-              onClick={handleDownloadWord}
-              className="px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
-              title="ดาวน์โหลดโครงสร้างและฝ่ายเป็นเอกสาร Microsoft Word (.doc) พร้อมตารางและช่องลงนาม"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>ดาวน์โหลด Word</span>
-            </button>
+              {showDownloadDropdown && (
+                <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in slide-in-from-top-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDownloadDropdown(false);
+                      handleDownloadPdf();
+                    }}
+                    disabled={isExportingPdf}
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-800 dark:text-stone-200 hover:text-rose-700 dark:hover:text-rose-300 flex items-center space-x-2.5 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <span className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-300 shrink-0">
+                      <Download className="w-3.5 h-3.5" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-bold">ดาวน์โหลดไฟล์ PDF</div>
+                      <div className="text-[10px] text-stone-400 font-normal">ผังโครงสร้างสี A4 แนวนอน (1 หน้า)</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDownloadDropdown(false);
+                      handleDownloadWord();
+                    }}
+                    disabled={isExportingWord}
+                    className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/40 text-stone-800 dark:text-stone-200 hover:text-blue-700 dark:hover:text-blue-300 flex items-center space-x-2.5 text-xs font-bold transition-all cursor-pointer mt-1"
+                  >
+                    <span className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 shrink-0">
+                      <FileText className="w-3.5 h-3.5" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-bold">ดาวน์โหลดไฟล์ Word (.doc)</div>
+                      <div className="text-[10px] text-stone-400 font-normal">ผังสีตามหน้าเว็บ + ตารางและช่องลงนาม</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
