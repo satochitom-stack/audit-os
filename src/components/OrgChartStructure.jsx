@@ -434,16 +434,8 @@ export default function OrgChartStructure({
               <GitFork className="w-5 h-5" />
             </span>
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 flex-wrap">
-                <span>แผนภูมิโครงสร้างการแบ่งส่วนราชการ & จักรวาลหน่วยรับตรวจ</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 shrink-0">
-                  {structure.departments?.length || 0} หน่วยรับตรวจหลัก
-                </span>
-                {Array.isArray(structure.deputyPalats) && structure.deputyPalats.length > 0 && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 shrink-0">
-                    รองปลัด {structure.deputyPalats.length} อัตรา
-                  </span>
-                )}
+              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">
+                โครงสร้างการแบ่งส่วนราชการ
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium truncate">
                 {orgProfile.name || 'องค์กรปกครองส่วนท้องถิ่น'} • {orgProfile.district || ''} {orgProfile.province || ''}
@@ -488,7 +480,7 @@ export default function OrgChartStructure({
                   }`}
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>ตารางหน่วยรับตรวจ ({structure.departments.length} กอง)</span>
+                  <span>ตารางส่วนราชการ ({structure.departments.length} กอง)</span>
                 </button>
               </div>
             )}
@@ -566,7 +558,7 @@ export default function OrgChartStructure({
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-md shadow-emerald-600/30"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>บันทึก & ซิงค์จักรวาลตรวจ</span>
+                  <span>บันทึกโครงสร้าง</span>
                 </button>
               </div>
             )}
@@ -964,14 +956,11 @@ export default function OrgChartStructure({
               {/* Formal Title for Print & Screen */}
               <div className="text-center mb-6 space-y-1">
                 <h4 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
-                  แผนภูมิโครงสร้างการแบ่งส่วนราชการและการบังคับบัญชา
+                  โครงสร้างการแบ่งส่วนราชการ
                 </h4>
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   {orgProfile.name || 'องค์กรปกครองส่วนท้องถิ่น'} {orgProfile.district || ''} {orgProfile.province || ''}
                 </p>
-                <div className="text-[11px] text-slate-500 font-medium">
-                  (กรอบจักรวาลการตรวจสอบภายใน - Auditable Universe ครอบคลุม {structure.departments.length} หน่วยรับตรวจหลัก)
-                </div>
                 <div className="w-28 h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent mx-auto mt-2" />
               </div>
 

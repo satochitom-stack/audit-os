@@ -1302,7 +1302,7 @@ export default function AuditRiskView({
       {/* Sub Tabs Selector */}
       <div className="bg-stone-100/90 dark:bg-stone-900/90 p-1.5 rounded-xl border border-stone-200/90 dark:border-stone-800 flex space-x-1 overflow-x-auto text-xs font-bold scrollbar-none">
         {[
-          { id: 'org-universe', label: '🏛️ โครงสร้าง อปท. & จักรวาลหน่วยรับตรวจ' },
+          { id: 'org-universe', label: '🏛️ โครงสร้างการแบ่งส่วนราชการ' },
           { id: 'fangkham-matrix', label: `ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง (${orgProfile?.name || 'อปท.'})` },
           { id: 'ranking', label: 'การจัดลำดับคะแนน & คัดเลือกเข้าแผนประจำปี' },
           { id: 'catalog', label: 'คลังโครงสร้างกิจกรรม อปท. (Activity Catalog)' },
@@ -1326,7 +1326,7 @@ export default function AuditRiskView({
       </div>
 
       {/* =========================================================================
-          TAB 0: ผังโครงสร้าง อปท. & จักรวาลหน่วยรับตรวจ (Auditable Universe Builder)
+          TAB 0: ผังโครงสร้างการแบ่งส่วนราชการ
       ========================================================================= */}
       {activeSubTab === 'org-universe' && (
         <div className="space-y-4">
