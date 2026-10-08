@@ -114,35 +114,6 @@ export default function Sidebar({
 
       {/* Navigation Scrollable Body */}
       <div className="flex-1 overflow-y-auto p-3 space-y-5 custom-scrollbar">
-        {/* Super Admin Backoffice Menu Item (Exclusive for Admin) */}
-        {isAdmin && (
-          <div className="space-y-1">
-            <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 px-2 tracking-wider uppercase flex items-center justify-between">
-              <span>ส่วนผู้ดูแลระบบกลาง</span>
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            </div>
-
-            <button
-              onClick={() => setCurrentTab('backoffice')}
-              className={`w-full text-left p-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                currentTab === 'backoffice'
-                  ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md'
-                  : 'bg-amber-50/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 hover:bg-amber-100 border border-amber-200/80 dark:border-amber-800/60'
-              }`}
-            >
-              <div className="flex items-center space-x-2.5">
-                <Settings className="w-4 h-4 text-amber-700 dark:text-amber-300" />
-                <span>12. ระบบหลังบ้าน Super Admin</span>
-              </div>
-              {pendingCount > 0 && (
-                <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
-
         {/* 12-Step Lifecycle Groups */}
         {LIFECYCLE_STEPS.map((group, gIdx) => (
           <div key={gIdx} className="space-y-1">
@@ -219,6 +190,35 @@ export default function Sidebar({
             </div>
           </div>
         ))}
+
+        {/* Super Admin Backoffice Menu Item (Exclusive for Admin - Step 12 at bottom) */}
+        {isAdmin && (
+          <div className="space-y-1 pt-3 border-t border-slate-200/80 dark:border-slate-800">
+            <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 px-2 tracking-wider uppercase flex items-center justify-between">
+              <span>ส่วนผู้ดูแลระบบกลาง</span>
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            </div>
+
+            <button
+              onClick={() => setCurrentTab('backoffice')}
+              className={`w-full text-left p-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                currentTab === 'backoffice'
+                  ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md'
+                  : 'bg-amber-50/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 hover:bg-amber-100 border border-amber-200/80 dark:border-amber-800/60'
+              }`}
+            >
+              <div className="flex items-center space-x-2.5">
+                <Settings className="w-4 h-4 text-amber-700 dark:text-amber-300" />
+                <span>12. ระบบหลังบ้าน Super Admin</span>
+              </div>
+              {pendingCount > 0 && (
+                <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Sidebar Footer */}
