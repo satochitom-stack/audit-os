@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Building2,
   Shield,
-  Printer,
+  Download,
+  FileText,
   Edit3,
   Plus,
   Trash2,
@@ -31,6 +32,7 @@ import {
   getTenantOrgStructure,
   saveTenantOrgStructure
 } from '../data/orgStructureData';
+import { exportOrgChartToPdf, exportOrgChartToWord } from '../services/orgChartExportService';
 
 export default function OrgChartStructure({
   session,
@@ -42,6 +44,7 @@ export default function OrgChartStructure({
   const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'table'
   const [chartLayout, setChartLayout] = useState(() => (structure.departments?.length >= 6 ? 'fit' : 'wide')); // 'fit', 'tworows', 'wide'
   const [toastMessage, setToastMessage] = useState('');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const chartScrollRef = useRef(null);
 
   // Editable Draft state
@@ -342,12 +345,40 @@ export default function OrgChartStructure({
     }
   };
 
-  const handlePrint = () => {
-    if (viewMode !== 'chart') {
-      setViewMode('chart');
-      setTimeout(() => window.print(), 150);
-    } else {
-      window.print();
+  const handleDownloadPdf = async () => {
+    try {
+      setIsExportingPdf(true);
+      if (viewMode !== 'chart') {
+        setViewMode('chart');
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      showToast('กำลังประมวลผลไฟล์ PDF (A4 แนวนอน พอดี 1 หน้า)...');
+      const ok = await exportOrgChartToPdf('org-chart-printable-area', orgProfile);
+      if (ok) {
+        showToast('ดาวน์โหลดไฟล์ PDF สี (A4 แนวนอน) สำเร็จเรียบร้อยแล้ว!');
+      } else {
+        showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleDownloadWord = () => {
+    try {
+      showToast('กำลังดาวน์โหลดไฟล์ Microsoft Word (.doc)...');
+      const ok = exportOrgChartToWord(structure, orgProfile);
+      if (ok) {
+        showToast('ดาวน์โหลดไฟล์ Word สำเร็จเรียบร้อยแล้ว!');
+      } else {
+        showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ Word');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('เกิดข้อผิดพลาดในการสร้างไฟล์ Word');
     }
   };
 
@@ -610,12 +641,24 @@ export default function OrgChartStructure({
 
             <button
               type="button"
-              onClick={handlePrint}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
-              title="พิมพ์แผนภูมิสำหรับแนบเล่มแผนตรวจสอบประจำปี"
+              onClick={handleDownloadPdf}
+              disabled={isExportingPdf}
+              className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs disabled:opacity-50"
+              title="ดาวน์โหลดผังโครงสร้างสีความละเอียดสูง (A4 แนวนอน พอดี 1 หน้า)"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">พิมพ์แนบเล่มแผน (A4)</span>
+              <Download className={`w-3.5 h-3.5 ${isExportingPdf ? 'animate-bounce' : ''}`} />
+              <span>{isExportingPdf ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลด PDF (สี A4)'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownloadWord}
+              className="px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+              title="ดาวน์โหลดโครงสร้างและฝ่ายเป็นเอกสาร Microsoft Word (.doc) พร้อมตารางและช่องลงนาม"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">ดาวน์โหลด Word (.doc)</span>
+              <span className="sm:hidden">Word (.doc)</span>
             </button>
           </div>
         </div>
@@ -990,6 +1033,7 @@ export default function OrgChartStructure({
             }`}
           >
             <div
+              id="org-chart-printable-area"
               className={`mx-auto flex flex-col items-center select-none text-slate-800 dark:text-slate-200 ${
                 chartLayout === 'tworows'
                   ? 'max-w-6xl w-full'

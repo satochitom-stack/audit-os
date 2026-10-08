@@ -84,6 +84,11 @@ export default function WelcomeView({
   const [regBusy, setRegBusy] = useState(false);
 
   useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 150);
     };

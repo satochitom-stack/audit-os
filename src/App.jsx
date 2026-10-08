@@ -228,6 +228,24 @@ export default function App() {
   const [activeToolkitTab, setActiveToolkitTab] = useState('factor-f');
   const mainContentRef = useRef(null);
 
+  // บังคับให้การโหลดหน้าเว็บหรือรีเฟรช (F5) กลับไปเริ่มต้นที่จุดบนสุดของหน้าเสมอ
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+    if (window.location.hash) {
+      try {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, []);
+
   // Auto-scroll main content panel and window to top whenever the active menu/tab changes
   useEffect(() => {
     if (mainContentRef.current) {
