@@ -13,6 +13,14 @@ export const DEFAULT_ORG_STRUCTURE = {
     name: 'ปลัด อปท.',
     role: 'หัวหน้าพนักงานส่วนท้องถิ่น / ปลัด อปท.'
   },
+  deputyPalats: [
+    {
+      id: 'deputy-1',
+      title: 'รองปลัดองค์กรปกครองส่วนท้องถิ่น',
+      name: '',
+      role: 'รองปลัด อปท. (นักบริหารงานท้องถิ่น)'
+    }
+  ],
   auditor: {
     title: 'นักวิชาการตรวจสอบภายใน',
     name: 'ผู้ตรวจสอบภายใน',
@@ -29,11 +37,15 @@ export const DEFAULT_ORG_STRUCTURE = {
         {
           id: 'div-off-1',
           name: 'ฝ่ายอำนวยการ',
+          headTitle: 'หัวหน้าฝ่ายอำนวยการ',
+          headName: '',
           jobs: ['งานสารบรรณทั่วไป', 'งานนโยบายและแผน', 'งานการเจ้าหน้าที่', 'งานประชาสัมพันธ์']
         },
         {
           id: 'div-off-2',
           name: 'ฝ่ายปกครอง',
+          headTitle: 'หัวหน้าฝ่ายปกครอง',
+          headName: '',
           jobs: ['งานป้องกันและบรรเทาสาธารณภัย', 'งานกฎหมายและคดี', 'งานรักษาความสงบเรียบร้อย']
         }
       ],
@@ -49,16 +61,22 @@ export const DEFAULT_ORG_STRUCTURE = {
         {
           id: 'div-fin-1',
           name: 'ฝ่ายบริหารงานคลัง',
+          headTitle: 'หัวหน้าฝ่ายบริหารงานคลัง',
+          headName: '',
           jobs: ['งานการเงินและบัญชี (e-LAAS)', 'งานระเบียบการเงินการคลัง']
         },
         {
           id: 'div-fin-2',
           name: 'ฝ่ายพัฒนารายได้',
+          headTitle: 'หัวหน้าฝ่ายพัฒนารายได้',
+          headName: '',
           jobs: ['งานจัดเก็บภาษีและค่าธรรมเนียม', 'งานแผนที่ภาษีและทะเบียนทรัพย์สิน']
         },
         {
           id: 'div-fin-3',
           name: 'ฝ่ายพัสดุและทรัพย์สิน',
+          headTitle: 'หัวหน้าฝ่ายพัสดุและทรัพย์สิน',
+          headName: '',
           jobs: ['งานจัดซื้อจัดจ้าง (e-GP)', 'งานทะเบียนและคุมพัสดุ']
         }
       ],
@@ -74,11 +92,15 @@ export const DEFAULT_ORG_STRUCTURE = {
         {
           id: 'div-tech-1',
           name: 'ฝ่ายแบบแผนและก่อสร้าง',
+          headTitle: 'หัวหน้าฝ่ายแบบแผนและก่อสร้าง',
+          headName: '',
           jobs: ['งานสำรวจออกแบบและคำนวณราคา', 'งานควบคุมอาคาร (พ.ร.บ.อาคาร)', 'งานประมาณราคากลาง Factor F']
         },
         {
           id: 'div-tech-2',
           name: 'ฝ่ายสาธารณูปโภค',
+          headTitle: 'หัวหน้าฝ่ายสาธารณูปโภค',
+          headName: '',
           jobs: ['งานไฟฟ้าสาธารณะ', 'งานซ่อมบำรุงทางและสะพาน', 'งานเครื่องจักรกล']
         }
       ],
@@ -94,6 +116,8 @@ export const DEFAULT_ORG_STRUCTURE = {
         {
           id: 'div-edu-1',
           name: 'ฝ่ายบริหารการศึกษา',
+          headTitle: 'หัวหน้าฝ่ายบริหารการศึกษา',
+          headName: '',
           jobs: ['งานแผนการศึกษา', 'งานศาสนาและวัฒนธรรม', 'งานกิจกรรมเด็กและเยาวชน']
         }
       ],
@@ -111,11 +135,15 @@ export const DEFAULT_ORG_STRUCTURE = {
         {
           id: 'div-wel-1',
           name: 'ฝ่ายสังคมสงเคราะห์',
+          headTitle: 'หัวหน้าฝ่ายสังคมสงเคราะห์',
+          headName: '',
           jobs: ['งานเบี้ยยังชีพผู้สูงอายุ/คนพิการ', 'งานสงเคราะห์ผู้ด้อยโอกาส', 'งานสวัสดิการเด็กและสตรี']
         },
         {
           id: 'div-wel-2',
           name: 'ฝ่ายพัฒนาชุมชน',
+          headTitle: 'หัวหน้าฝ่ายพัฒนาชุมชน',
+          headName: '',
           jobs: ['งานส่งเสริมอาชีพและกลุ่ม', 'งานสำรวจจัดตั้งกลุ่ม', 'งานกองทุนและสวัสดิการชุมชน']
         }
       ],
@@ -131,7 +159,8 @@ export const ORG_STRUCTURE_TEMPLATES = {
   tao_small: {
     id: 'tao_small',
     title: 'อบต. ขนาดเล็ก (3 กองหลัก)',
-    desc: 'สำนักปลัด, กองคลัง, กองช่าง (เหมาะกับ อบต. ขนาดเล็กทั่วไป)',
+    desc: 'สำนักปลัด, กองคลัง, กองช่าง (ไม่มีกรอบรองปลัด เหมาะกับ อบต. ขนาดเล็ก)',
+    deputyPalats: [],
     departments: [
       DEFAULT_ORG_STRUCTURE.departments[0], // สำนักปลัด
       DEFAULT_ORG_STRUCTURE.departments[1], // กองคลัง
@@ -140,14 +169,30 @@ export const ORG_STRUCTURE_TEMPLATES = {
   },
   tao_standard: {
     id: 'tao_standard',
-    title: 'อบต. ขนาดกลาง / มาตรฐาน (5 กอง)',
-    desc: 'สำนักปลัด, กองคลัง, กองช่าง, กองการศึกษา (มี ศพด.), กองสวัสดิการสังคม',
+    title: 'อบต. ขนาดกลาง / มาตรฐาน (5 กอง + รองปลัด)',
+    desc: 'สำนักปลัด, กองคลัง, กองช่าง, กองการศึกษา (มี ศพด.), กองสวัสดิการสังคม และรองปลัด อบต.',
+    deputyPalats: [
+      {
+        id: 'deputy-1',
+        title: 'รองปลัด อบต.',
+        name: '',
+        role: 'รองปลัด อบต. (นักบริหารงานท้องถิ่น ระดับต้น/กลาง)'
+      }
+    ],
     departments: [...DEFAULT_ORG_STRUCTURE.departments]
   },
   thessaban: {
     id: 'thessaban',
-    title: 'เทศบาลตำบล / เทศบาลเมือง (7 กอง)',
-    desc: 'เพิ่มกองสาธารณสุขและสิ่งแวดล้อม, กองยุทธศาสตร์และงบประมาณ, โรงเรียนเทศบาล',
+    title: 'เทศบาลตำบล / เทศบาลเมือง (7 กอง + รองปลัดเทศบาล + หัวหน้าฝ่าย)',
+    desc: 'โครงสร้างเทศบาลมาตรฐาน มีรองปลัดเทศบาล, กองสาธารณสุขและสิ่งแวดล้อม, กองยุทธศาสตร์และงบประมาณ และมีหัวหน้าฝ่ายกำกับดูแลทุกฝ่าย',
+    deputyPalats: [
+      {
+        id: 'deputy-1',
+        title: 'รองปลัดเทศบาล',
+        name: '',
+        role: 'รองปลัดเทศบาล (นักบริหารงานเทศบาล)'
+      }
+    ],
     departments: [
       ...DEFAULT_ORG_STRUCTURE.departments,
       {
@@ -160,6 +205,8 @@ export const ORG_STRUCTURE_TEMPLATES = {
           {
             id: 'div-hea-1',
             name: 'ฝ่ายบริการสาธารณสุข',
+            headTitle: 'หัวหน้าฝ่ายบริการสาธารณสุข',
+            headName: '',
             jobs: ['งานรักษาความสะอาดและขยะ', 'งานควบคุมโรคและสุขาภิบาล', 'งานคุ้มครองผู้บริโภค']
           }
         ],
@@ -177,6 +224,8 @@ export const ORG_STRUCTURE_TEMPLATES = {
           {
             id: 'div-str-1',
             name: 'ฝ่ายแผนงานและงบประมาณ',
+            headTitle: 'หัวหน้าฝ่ายแผนงานและงบประมาณ',
+            headName: '',
             jobs: ['งานวิเคราะห์นโยบายและแผน', 'งานจัดทำงบประมาณรายจ่าย', 'งานติดตามและประเมินผล']
           }
         ],
@@ -186,8 +235,22 @@ export const ORG_STRUCTURE_TEMPLATES = {
   },
   pao_city: {
     id: 'pao_city',
-    title: 'เทศบาลนคร / อบจ. (8+ ส่วนราชการ)',
-    desc: 'โครงสร้างเต็มรูปแบบ มีกองการเจ้าหน้าที่ กองการประปา และสถานศึกษาในสังกัดหลายแห่ง',
+    title: 'เทศบาลนคร / อบจ. (8+ ส่วนราชการ + รองปลัด 2 ท่าน + หัวหน้าฝ่าย)',
+    desc: 'โครงสร้างเต็มรูปแบบ มีรองปลัด 2 ท่าน (สายงานบริหารทั่วไป & สายงานพัฒนา/บริการ), กองการเจ้าหน้าที่, กองการประปา และหัวหน้าฝ่ายครบทุกฝ่าย',
+    deputyPalats: [
+      {
+        id: 'deputy-1',
+        title: 'รองปลัด อบจ. / เทศบาล (คนที่ 1)',
+        name: '',
+        role: 'กำกับดูแลสายงานบริหารทั่วไป และการคลัง'
+      },
+      {
+        id: 'deputy-2',
+        title: 'รองปลัด อบจ. / เทศบาล (คนที่ 2)',
+        name: '',
+        role: 'กำกับดูแลสายงานพัฒนา ช่าง และบริการสาธารณะ'
+      }
+    ],
     departments: [
       ...DEFAULT_ORG_STRUCTURE.departments,
       {
@@ -200,6 +263,8 @@ export const ORG_STRUCTURE_TEMPLATES = {
           {
             id: 'div-hea-1',
             name: 'ฝ่ายบริการสาธารณสุข',
+            headTitle: 'หัวหน้าฝ่ายบริการสาธารณสุข',
+            headName: '',
             jobs: ['งานรักษาความสะอาดและขยะ', 'งานควบคุมโรคและสุขาภิบาล']
           }
         ],
@@ -217,6 +282,8 @@ export const ORG_STRUCTURE_TEMPLATES = {
           {
             id: 'div-hr-1',
             name: 'ฝ่ายสรรหาและบรรจุแต่งตั้ง',
+            headTitle: 'หัวหน้าฝ่ายสรรหาและบรรจุแต่งตั้ง',
+            headName: '',
             jobs: ['งานวางแผนอัตรากำลัง', 'งานบรรจุแต่งตั้งและโอนย้าย', 'งานประเมินผลงานและวินัย']
           }
         ],
@@ -232,6 +299,8 @@ export const ORG_STRUCTURE_TEMPLATES = {
           {
             id: 'div-wat-1',
             name: 'ฝ่ายผลิตและจำหน่ายน้ำ',
+            headTitle: 'หัวหน้าฝ่ายผลิตและจำหน่ายน้ำ',
+            headName: '',
             jobs: ['งานระบบประปา', 'งานจัดเก็บค่าน้ำประปา', 'งานบำรุงรักษาท่อส่งน้ำ']
           }
         ],
@@ -255,6 +324,9 @@ export function getTenantOrgStructure(userOrSession, orgProfile = {}) {
       if (parsed && Array.isArray(parsed.departments) && parsed.departments.length > 0) {
         return {
           ...parsed,
+          deputyPalats: Array.isArray(parsed.deputyPalats)
+            ? parsed.deputyPalats
+            : (parsed.deputyPalat ? [parsed.deputyPalat] : []),
           approver: {
             ...parsed.approver,
             name: orgProfile.approverName || parsed.approver?.name || 'ผู้บริหาร อปท.',
@@ -269,7 +341,15 @@ export function getTenantOrgStructure(userOrSession, orgProfile = {}) {
             ...parsed.auditor,
             name: orgProfile.auditorName || parsed.auditor?.name || 'ผู้ตรวจสอบภายใน',
             title: orgProfile.auditorPosition || parsed.auditor?.title || 'นักวิชาการตรวจสอบภายใน'
-          }
+          },
+          departments: (parsed.departments || []).map((dept) => ({
+            ...dept,
+            divisions: (dept.divisions || []).map((div) => ({
+              ...div,
+              headTitle: div.headTitle || (div.name ? `หัวหน้า${div.name}` : 'หัวหน้าฝ่าย'),
+              headName: div.headName || ''
+            }))
+          }))
         };
       }
     }
@@ -280,6 +360,7 @@ export function getTenantOrgStructure(userOrSession, orgProfile = {}) {
   // Fallback default populated with active orgProfile
   return {
     ...DEFAULT_ORG_STRUCTURE,
+    deputyPalats: DEFAULT_ORG_STRUCTURE.deputyPalats || [],
     approver: {
       ...DEFAULT_ORG_STRUCTURE.approver,
       name: orgProfile.approverName || 'ผู้บริหาร อปท.',

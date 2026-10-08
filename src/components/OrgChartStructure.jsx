@@ -89,6 +89,7 @@ export default function OrgChartStructure({
     if (!tpl) return;
     setDraft((prev) => ({
       ...prev,
+      deputyPalats: tpl.deputyPalats ? JSON.parse(JSON.stringify(tpl.deputyPalats)) : [],
       departments: JSON.parse(JSON.stringify(tpl.departments))
     }));
     showToast(`โหลดเทมเพลต "${tpl.title}" สำเร็จ! ตรวจสอบและกดบันทึก`);
@@ -103,6 +104,41 @@ export default function OrgChartStructure({
     }
     if (onStructureChange) onStructureChange(draft);
     showToast('บันทึกโครงสร้างองค์กร & ซิงค์หน่วยรับตรวจเข้าสู่ระบบเรียบร้อยแล้ว!');
+  };
+
+  // Deputy Palat Helpers inside draft
+  const handleAddDeputyPalat = () => {
+    setDraft((prev) => {
+      const current = Array.isArray(prev.deputyPalats) ? prev.deputyPalats : [];
+      const num = current.length + 1;
+      return {
+        ...prev,
+        deputyPalats: [
+          ...current,
+          {
+            id: `deputy-${Date.now()}`,
+            title: current.length === 0 ? 'รองปลัดองค์กรปกครองส่วนท้องถิ่น' : `รองปลัดองค์กรปกครองส่วนท้องถิ่น (คนที่ ${num})`,
+            name: '',
+            role: current.length === 0 ? 'รองปลัด อปท. (นักบริหารงานท้องถิ่น)' : `กำกับดูแลกลุ่มภารกิจที่ ${num}`
+          }
+        ]
+      };
+    });
+  };
+
+  const handleDeleteDeputyPalat = (index) => {
+    setDraft((prev) => ({
+      ...prev,
+      deputyPalats: (prev.deputyPalats || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDeputyPalatChange = (index, field, value) => {
+    setDraft((prev) => {
+      const next = [...(prev.deputyPalats || [])];
+      next[index] = { ...next[index], [field]: value };
+      return { ...prev, deputyPalats: next };
+    });
   };
 
   // Division Helpers inside draft
@@ -327,11 +363,20 @@ export default function OrgChartStructure({
           {(dept.divisions || []).map((div, divIdx) => (
             <div
               key={div.id || divIdx}
-              className={`${colors.lightBg} border rounded-xl p-2 space-y-1 text-[11px]`}
+              className={`${colors.lightBg} border rounded-xl p-2 space-y-1.5 text-[11px] shadow-2xs`}
             >
               <div className="font-bold text-slate-900 dark:text-slate-100 pb-1 border-b border-slate-200/60 dark:border-slate-700 text-[11px] truncate" title={div.name}>
                 {div.name}
               </div>
+
+              {/* ตำแหน่งหัวหน้าฝ่าย (สอดคล้องกับโครงสร้างจริงของเทศบาลและ อปท.) */}
+              {(div.headTitle || div.headName) && (
+                <div className="flex items-center space-x-1 text-[9.5px] font-semibold text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-900/60 px-1.5 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+                  <span className="text-[10px]">👤</span>
+                  <span className="truncate">{div.headTitle || 'หัวหน้าฝ่าย'}{div.headName ? `: ${div.headName}` : ''}</span>
+                </div>
+              )}
+
               <ul className="space-y-0.5 text-slate-600 dark:text-slate-300 text-[10px]">
                 {(div.jobs || []).map((job, jobIdx) => (
                   <li key={jobIdx} className="flex items-start space-x-1">
@@ -381,145 +426,161 @@ export default function OrgChartStructure({
       )}
 
       {/* 1. Header Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-slate-200/80 dark:border-slate-800 gap-3 no-print">
-        <div>
-          <div className="flex items-center space-x-2.5">
-            <span className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+      <div className="space-y-3.5 pb-4 border-b border-slate-200/80 dark:border-slate-800 no-print">
+        {/* Row 1: Title (แถวบนเต็มความกว้างแถวเดียว) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <span className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
               <GitFork className="w-5 h-5" />
             </span>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 flex-wrap">
                 <span>แผนภูมิโครงสร้างการแบ่งส่วนราชการ & จักรวาลหน่วยรับตรวจ</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300">
-                  Customizable Universe
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 shrink-0">
+                  {structure.departments?.length || 0} หน่วยรับตรวจหลัก
                 </span>
+                {Array.isArray(structure.deputyPalats) && structure.deputyPalats.length > 0 && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 shrink-0">
+                    รองปลัด {structure.deputyPalats.length} อัตรา
+                  </span>
+                )}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium truncate">
                 {orgProfile.name || 'องค์กรปกครองส่วนท้องถิ่น'} • {orgProfile.district || ''} {orgProfile.province || ''}
               </p>
             </div>
           </div>
+
+          <div className="hidden lg:flex items-center space-x-2 shrink-0 text-xs">
+            <span className="px-2.5 py-1 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>สายบังคับบัญชาตามกรอบอัตรากำลัง อปท.</span>
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2 shrink-0 flex-wrap gap-y-2">
-          {/* View Mode Toggle */}
-          {!isEditing && (
-            <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs">
-              <button
-                type="button"
-                onClick={() => setViewMode('chart')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  viewMode === 'chart'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-              >
-                <GitFork className="w-3.5 h-3.5" />
-                <span>มุมมองแผนภูมิ</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  viewMode === 'table'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>ตารางหน่วยรับตรวจ ({structure.departments.length} กอง)</span>
-              </button>
-            </div>
-          )}
+        {/* Row 2: Controls & Menus (เมนูต่างๆ บรรทัดล่าง จัดวางพอดี ไม่เบียด) */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+          {/* Left: View Mode + Layout Switcher */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* View Mode Toggle */}
+            {!isEditing && (
+              <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('chart')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    viewMode === 'chart'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                >
+                  <GitFork className="w-3.5 h-3.5" />
+                  <span>มุมมองแผนภูมิ</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    viewMode === 'table'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>ตารางหน่วยรับตรวจ ({structure.departments.length} กอง)</span>
+                </button>
+              </div>
+            )}
 
-          {/* Chart Layout Mode Switcher (เมื่ออยู่ในมุมมองแผนภูมิ) */}
-          {!isEditing && viewMode === 'chart' && (
-            <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs">
+            {/* Chart Layout Mode Switcher */}
+            {!isEditing && viewMode === 'chart' && (
+              <div className="bg-stone-100 dark:bg-stone-800 p-1 rounded-xl flex items-center space-x-1 border border-stone-200/80 dark:border-stone-700 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setChartLayout('fit')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    chartLayout === 'fit'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                  title="ย่อขนาดทุกกองให้พอดีหน้าจอพร้อมกันทั้งหมด (ไม่ตกขอบจอ)"
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                  <span>พอดีจอ (Fit)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartLayout('tworows')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    chartLayout === 'tworows'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                  title="จัดแบ่งเป็น 2 ชั้นสมดุล ตัวหนังสือใหญ่ อ่านง่าย"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>จัด 2 ชั้น</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartLayout('wide')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    chartLayout === 'wide'
+                      ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                  title="แนวนอนเต็มขนาด 100% พร้อมปุ่มเลื่อนซ้าย-ขวา"
+                >
+                  <ArrowLeftRight className="w-3.5 h-3.5" />
+                  <span>แนวนอน 100%</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center space-x-2 shrink-0">
+            {!isEditing ? (
               <button
                 type="button"
-                onClick={() => setChartLayout('fit')}
-                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  chartLayout === 'fit'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-                title="ย่อขนาดทุกกองให้พอดีหน้าจอพร้อมกันทั้งหมด (ไม่ตกขอบจอ)"
+                onClick={handleStartEdit}
+                className="px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/60 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
               >
-                <Monitor className="w-3.5 h-3.5" />
-                <span>พอดีจอ (Fit)</span>
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>ปรับแต่งโครงสร้าง อปท. ของฉัน</span>
               </button>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>ยกเลิก</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-md shadow-emerald-600/30"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>บันทึก & ซิงค์จักรวาลตรวจ</span>
+                </button>
+              </div>
+            )}
 
-              <button
-                type="button"
-                onClick={() => setChartLayout('tworows')}
-                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  chartLayout === 'tworows'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-                title="จัดแบ่งเป็น 2 ชั้นสมดุล (4 กองบน / 3 กองล่าง) ตัวหนังสือใหญ่ อ่านง่าย"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>จัด 2 ชั้น</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setChartLayout('wide')}
-                className={`px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  chartLayout === 'wide'
-                    ? 'bg-stone-800 text-amber-100 dark:bg-stone-900 dark:text-amber-300 shadow-xs'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
-                }`}
-                title="แนวนอนเต็มขนาด 100% พร้อมปุ่มเลื่อนซ้าย-ขวา"
-              >
-                <ArrowLeftRight className="w-3.5 h-3.5" />
-                <span>แนวนอน 100%</span>
-              </button>
-            </div>
-          )}
-
-          {/* Edit Mode Button */}
-          {!isEditing ? (
             <button
               type="button"
-              onClick={handleStartEdit}
-              className="px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/60 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+              onClick={handlePrint}
+              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+              title="พิมพ์แผนภูมิสำหรับแนบเล่มแผนตรวจสอบประจำปี"
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>ปรับแต่งโครงสร้าง อปท. ของฉัน</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">พิมพ์แนบเล่มแผน (A4)</span>
             </button>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>ยกเลิก</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveEdit}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-md shadow-emerald-600/30"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>บันทึก & ซิงค์จักรวาลตรวจ</span>
-              </button>
-            </div>
-          )}
-
-          {/* Print Button */}
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
-            title="พิมพ์แผนภูมิสำหรับแนบเล่มแผนตรวจสอบประจำปี"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">พิมพ์แนบเล่มแผน (A4)</span>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -548,9 +609,9 @@ export default function OrgChartStructure({
               >
                 <option value="" disabled>-- เลือกแม่แบบมาตรฐาน --</option>
                 <option value="tao_small">อบต. ขนาดเล็ก (3 กองหลัก)</option>
-                <option value="tao_standard">อบต. ขนาดกลาง / มาตรฐาน (5 กอง)</option>
-                <option value="thessaban">เทศบาลตำบล / เทศบาลเมือง (7 กอง)</option>
-                <option value="pao_city">เทศบาลนคร / อบจ. (8+ ส่วนราชการ)</option>
+                <option value="tao_standard">อบต. ขนาดกลาง / มาตรฐาน (5 กอง + รองปลัด)</option>
+                <option value="thessaban">เทศบาลตำบล / เทศบาลเมือง (7 กอง + รองปลัด + หน.ฝ่าย)</option>
+                <option value="pao_city">เทศบาลนคร / อบจ. (8+ ส่วนราชการ + รองปลัด 2 ท่าน)</option>
               </select>
             </div>
           </div>
@@ -583,6 +644,89 @@ export default function OrgChartStructure({
                 onChange={(e) => setDraft({ ...draft, auditor: { ...draft.auditor, title: e.target.value } })}
                 className="w-full p-2 bg-[#faf8f4] dark:bg-[#2b3545] border border-stone-200 dark:border-stone-700 rounded-lg text-xs font-medium focus:ring-1 focus:ring-amber-500/30 focus:border-amber-500 outline-none"
               />
+            </div>
+          </div>
+
+          {/* Deputy Palats (รองปลัด อปท. - เพิ่มได้ 0, 1 หรือ 2 คนตามขนาด อปท.) */}
+          <div className="bg-white dark:bg-stone-900 p-4 rounded-xl border border-stone-200 dark:border-stone-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                  สายการบังคับบัญชา: รองปลัด อปท. ({(draft.deputyPalats || []).length} อัตรา)
+                </span>
+                <p className="text-[11px] text-stone-500 mt-0.5">
+                  อบต. ขนาดเล็ก (0 คน), อบต. ขนาดกลาง / เทศบาลตำบล (1 คน), เทศบาลเมือง / นคร / อบจ. (1-2 คน)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddDeputyPalat}
+                className="px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-800 text-xs font-bold flex items-center space-x-1 hover:bg-teal-100 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>เพิ่มรองปลัด อปท.</span>
+              </button>
+            </div>
+
+            {(!draft.deputyPalats || draft.deputyPalats.length === 0) && (
+              <div className="text-center py-2.5 text-xs text-stone-400 italic bg-stone-50 dark:bg-stone-800/40 rounded-lg border border-dashed border-stone-200 dark:border-stone-800">
+                ไม่มีตำแหน่งรองปลัด (สายตรงจากปลัด อปท. ไปยังหัวหน้าส่วนราชการระดับกอง)
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(draft.deputyPalats || []).map((deputy, depIdx) => (
+                <div
+                  key={deputy.id || depIdx}
+                  className="bg-teal-50/50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl p-3 space-y-2 relative shadow-2xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-teal-900 dark:text-teal-300">
+                      รองปลัด ลำดับที่ {depIdx + 1}:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDeputyPalat(depIdx)}
+                      className="text-rose-400 hover:text-rose-600 p-0.5 cursor-pointer"
+                      title="ลบรองปลัดท่านนี้"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <label className="block text-[10px] font-bold text-stone-500 mb-0.5">ชื่อตำแหน่ง:</label>
+                      <input
+                        type="text"
+                        value={deputy.title || ''}
+                        onChange={(e) => handleDeputyPalatChange(depIdx, 'title', e.target.value)}
+                        placeholder="เช่น รองปลัดเทศบาล"
+                        className="w-full p-1.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-stone-500 mb-0.5">ชื่อ-นามสกุล:</label>
+                      <input
+                        type="text"
+                        value={deputy.name || ''}
+                        onChange={(e) => handleDeputyPalatChange(depIdx, 'name', e.target.value)}
+                        placeholder="เช่น นาย/นาง..."
+                        className="w-full p-1.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-stone-500 mb-0.5">สายงาน / กลุ่มภารกิจที่กำกับดูแล:</label>
+                    <input
+                      type="text"
+                      value={deputy.role || ''}
+                      onChange={(e) => handleDeputyPalatChange(depIdx, 'role', e.target.value)}
+                      placeholder="เช่น กำกับดูแลสายงานบริหารทั่วไป และการคลัง"
+                      className="w-full p-1.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded text-[11px]"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -676,24 +820,49 @@ export default function OrgChartStructure({
                     </div>
 
                     {(dept.divisions || []).map((div, divIdx) => (
-                      <div key={div.id || divIdx} className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl space-y-1.5 border border-slate-100 dark:border-slate-800 text-xs">
+                      <div key={div.id || divIdx} className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl space-y-2 border border-slate-100 dark:border-slate-800 text-xs">
                         <div className="flex items-center justify-between">
                           <input
                             type="text"
                             value={div.name}
                             onChange={(e) => handleDivisionChange(deptIdx, divIdx, 'name', e.target.value)}
                             placeholder="ชื่อฝ่าย เช่น ฝ่ายอำนวยการ"
-                            className="font-bold text-xs p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded flex-1 mr-2"
+                            className="font-bold text-xs p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded flex-1 mr-2"
                           />
                           <button
                             type="button"
                             onClick={() => handleDeleteDivision(deptIdx, divIdx)}
-                            className="text-rose-400 hover:text-rose-600 p-0.5"
+                            className="text-rose-400 hover:text-rose-600 p-0.5 cursor-pointer"
+                            title="ลบฝ่ายนี้"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
+                        {/* ตำแหน่ง & ชื่อหัวหน้าฝ่าย (สอดคล้องกับโครงสร้างจริงของเทศบาล / อปท.) */}
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <div>
+                            <label className="block text-[9.5px] font-bold text-slate-400 mb-0.5">ตำแหน่งหัวหน้าฝ่าย:</label>
+                            <input
+                              type="text"
+                              value={div.headTitle || ''}
+                              onChange={(e) => handleDivisionChange(deptIdx, divIdx, 'headTitle', e.target.value)}
+                              placeholder="เช่น หัวหน้าฝ่ายอำนวยการ"
+                              className="w-full text-[10.5px] p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-200 font-medium"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9.5px] font-bold text-slate-400 mb-0.5">ชื่อ-นามสกุลหัวหน้าฝ่าย (ถ้ามี):</label>
+                            <input
+                              type="text"
+                              value={div.headName || ''}
+                              onChange={(e) => handleDivisionChange(deptIdx, divIdx, 'headName', e.target.value)}
+                              placeholder="เช่น นาย/นาง..."
+                              className="w-full text-[10.5px] p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-200 font-medium"
+                            />
+                          </div>
+                        </div>
                         <div>
+                          <label className="block text-[9.5px] font-bold text-slate-400 mb-0.5">งานในสังกัด (คั่นด้วย ,):</label>
                           <input
                             type="text"
                             value={(div.jobs || []).join(', ')}
@@ -774,42 +943,6 @@ export default function OrgChartStructure({
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-            </div>
-          )}
-
-          {/* Helper hint for 6+ departments */}
-          {structure.departments.length >= 6 && (
-            <div className="no-print mb-4 p-2.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between text-xs text-amber-800 dark:text-amber-300">
-              <div className="flex items-center space-x-2">
-                <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>
-                  อปท. ของท่านมี <strong>{structure.departments.length} ส่วนราชการ</strong>: 
-                  ท่านสามารถเลือกจัดมุมมอง <strong>"พอดีจอ (Fit)"</strong>, <strong>"จัด 2 ชั้น"</strong>, หรือ <strong>"แนวนอน 100%"</strong> เพื่อความชัดเจนสูงสุดได้
-                </span>
-              </div>
-              <div className="hidden md:flex items-center space-x-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setChartLayout('fit')}
-                  className={`px-2 py-0.5 rounded text-[11px] font-bold ${chartLayout === 'fit' ? 'bg-amber-700 text-white' : 'bg-white dark:bg-stone-800 border'}`}
-                >
-                  พอดีจอ
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChartLayout('tworows')}
-                  className={`px-2 py-0.5 rounded text-[11px] font-bold ${chartLayout === 'tworows' ? 'bg-amber-700 text-white' : 'bg-white dark:bg-stone-800 border'}`}
-                >
-                  จัด 2 ชั้น
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChartLayout('wide')}
-                  className={`px-2 py-0.5 rounded text-[11px] font-bold ${chartLayout === 'wide' ? 'bg-amber-700 text-white' : 'bg-white dark:bg-stone-800 border'}`}
-                >
-                  แนวนอน 100%
-                </button>
-              </div>
             </div>
           )}
 
@@ -909,8 +1042,37 @@ export default function OrgChartStructure({
                 </div>
               </div>
 
-              {/* Central Vertical Connector line from ปลัด down to Trunk bar */}
+              {/* Central Vertical Connector line from ปลัด down to Trunk bar or รองปลัด */}
               <div className="w-0.5 h-6 bg-emerald-600" />
+
+              {/* TIER 2.5: รองปลัด อปท. (สายงานบังคับบัญชากลางตามกรอบ อปท. ถ้ามี) */}
+              {Array.isArray(structure.deputyPalats) && structure.deputyPalats.length > 0 && (
+                <div className="flex flex-col items-center w-full my-0.5">
+                  <div className="flex items-center justify-center gap-4 flex-wrap max-w-4xl">
+                    {structure.deputyPalats.map((deputy, depIdx) => (
+                      <div
+                        key={deputy.id || depIdx}
+                        className="w-72 bg-gradient-to-br from-teal-50 via-white to-teal-100/70 dark:from-teal-950/60 dark:via-slate-900 dark:to-teal-900/40 border-2 border-teal-500 hover:border-teal-600 rounded-2xl p-2.5 text-center shadow-xs transition-all hover:scale-[1.01]"
+                      >
+                        <div className="flex items-center justify-center space-x-1 mb-1">
+                          <span className="text-xs">🏛️</span>
+                          <span className="text-[9px] font-bold text-teal-900 dark:text-teal-200 uppercase tracking-wider bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-full border border-teal-300">
+                            {deputy.role || 'รองปลัด อปท. (นักบริหารงานท้องถิ่น)'}
+                          </span>
+                        </div>
+                        <div className="text-xs font-black text-slate-900 dark:text-slate-100">
+                          {deputy.title || 'รองปลัดองค์กรปกครองส่วนท้องถิ่น'}
+                        </div>
+                        <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
+                          {deputy.name || 'รองปลัด อปท.'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Central Vertical Connector line down from รองปลัด to Trunk bar */}
+                  <div className="w-0.5 h-6 bg-emerald-600" />
+                </div>
+              )}
 
               {/* 3. Main Departments Rows / Grid */}
               {chartLayout === 'tworows' && structure.departments.length >= 6 ? (
@@ -1021,7 +1183,13 @@ export default function OrgChartStructure({
                     {dept.headTitle || 'ผู้อำนวยการกอง'}
                   </td>
                   <td className="p-3 text-slate-600 dark:text-slate-400">
-                    {(dept.divisions || []).map((d) => d.name).join(', ') || '-'}
+                    {(dept.divisions || []).map((d, dIdx) => (
+                      <div key={d.id || dIdx} className="py-0.5">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">{d.name}</span>
+                        {d.headTitle && <span className="text-[10px] text-amber-700 dark:text-amber-400 ml-1 font-medium">({d.headTitle})</span>}
+                      </div>
+                    ))}
+                    {(!dept.divisions || dept.divisions.length === 0) && '-'}
                   </td>
                   <td className="p-3">
                     {Array.isArray(dept.affiliatedUnits) && dept.affiliatedUnits.length > 0 ? (

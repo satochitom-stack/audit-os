@@ -477,57 +477,28 @@ export default function WelcomeView({
           description=""
           partnersTitle={`โครงสร้าง ${auditeeDepartments.length} หน่วยรับตรวจที่เชื่อมโยงในระบบ (CONNECTED DEPARTMENTS)`}
           navLinks={[
-            { label: "ภาพรวมระบบ", href: "#welcome-features", isActive: true },
-            { label: "หน่วยรับตรวจและหน่วยงานในสังกัด", href: "#departments" },
-            { label: "ฟังก์ชันการตรวจสอบ", href: "#modules" }
+            { label: "แผนภูมิโครงสร้าง & หน่วยรับตรวจ", href: "#departments", isActive: true },
+            { label: "ฟังก์ชันระบบงานตรวจสอบ", href: "#modules" }
           ]}
         />
       </section>
 
-      {/* 3. Quick Stats & System Pillars */}
-      <section id="welcome-features" className="py-20 px-4 md:px-8 max-w-7xl mx-auto space-y-16">
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="inline-flex items-center space-x-2 bg-amber-50 border border-amber-200/80 px-3 py-1 rounded-full text-xs font-semibold text-amber-800 shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            <span>Digital Internal Audit Transformation</span>
-          </div>
-          <h2 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900">
-            ยกระดับงานตรวจสอบภายใน {orgProfile?.name || 'อปท. เครือข่าย'} สู่มาตรฐานสากล
-          </h2>
-          <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-            ผสานการประเมินความเสี่ยงตามหลักสากล SOFCK Matrix, แผนการตรวจสอบประจำปี, แนวการตรวจด้วย AI ตามหนังสือ ว 614 และการประเมินการควบคุมภายใน ปอ.1 - ปค.5 ในที่เดียว
-          </p>
-        </div>
+      {/* 3. Departments Grid & Flowchart (หน่วยรับตรวจและโครงสร้าง อปท.) */}
+      <section id="departments" className="pt-1 sm:pt-2 pb-10 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto space-y-10">
+        <OrgChartStructure
+          session={session}
+          orgProfile={orgProfile}
+          onStructureChange={(updatedStruct) => {
+            setTenantOrg(updatedStruct);
+            setDepartments(getDepartments());
+          }}
+          onSelectDepartment={() => {
+            if (!session) setShowLoginModal(true);
+          }}
+        />
 
-        {/* 4. Departments Grid & Flowchart (หน่วยรับตรวจและโครงสร้างฝ่ายบริหาร) */}
-        <div id="departments" className="space-y-6 pt-4">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-slate-200 pb-4">
-            <div>
-              <h3 className="text-lg md:text-xl font-bold text-slate-900 flex items-center space-x-2">
-                <Building className="w-5 h-5 text-blue-600" />
-                <span>โครงสร้างการแบ่งส่วนราชการและหน่วยรับตรวจ ({departments.length} สำนัก/กอง/หน่วย)</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                แผนภูมิสายการบังคับบัญชา ส่วนราชการ และจักรวาลหน่วยรับตรวจ (Auditable Universe) {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
-              </p>
-            </div>
-          </div>
-
-          <OrgChartStructure
-            session={session}
-            orgProfile={orgProfile}
-            onStructureChange={(updatedStruct) => {
-              setTenantOrg(updatedStruct);
-              setDepartments(getDepartments());
-            }}
-            onSelectDepartment={() => {
-              if (!session) setShowLoginModal(true);
-            }}
-          />
-        </div>
-
-        {/* 5. Core System Modules */}
-        <div id="modules" className="space-y-6 pt-10">
+        {/* 4. Core System Modules */}
+        <div id="modules" className="space-y-6 pt-6 border-t border-slate-200/80 dark:border-slate-800">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
             <h3 className="text-lg md:text-2xl font-bold text-slate-900">
               ระบบงานอัจฉริยะครบวงจร (Audit Modules)
