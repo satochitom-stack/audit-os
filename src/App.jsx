@@ -1415,6 +1415,7 @@ export default function App() {
                 annualPlans={annualPlans}
                 setAnnualPlans={setAnnualPlans}
                 setCurrentTab={handleSelectTab}
+                session={session}
               />
             )}
 

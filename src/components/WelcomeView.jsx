@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { ResponsiveHeroBanner } from './ui/responsive-hero-banner';
 import OrgChartStructure from './OrgChartStructure';
+import { getTenantOrgStructure } from '../data/orgStructureData';
 import {
   verifyLogin,
   startSession,
@@ -62,7 +63,6 @@ export default function WelcomeView({
   const [scrolled, setScrolled] = useState(false);
   const passwordInputRef = useRef(null);
   const loginSectionRef = useRef(null);
-  const [structureViewMode, setStructureViewMode] = useState('chart');
 
   // Registration modal states
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -122,93 +122,63 @@ export default function WelcomeView({
       return a.localeCompare(b, 'th');
     });
 
-  // Child Development Centers
-  const childDevelopmentCenters = ['ศพด.วัดเจริญทัศน์', 'ศพด.บ้านฝางเทิง'];
+  // Derive dynamic org structure and affiliated units from tenant settings
+  const tenantOrg = getTenantOrgStructure(session, orgProfile);
+  const affiliatedUnits = [];
+  if (Array.isArray(tenantOrg?.departments)) {
+    tenantOrg.departments.forEach((d) => {
+      if (Array.isArray(d.affiliatedUnits)) {
+        d.affiliatedUnits.forEach((aff) => {
+          if (aff?.name && !affiliatedUnits.includes(aff.name)) {
+            affiliatedUnits.push(aff.name);
+          }
+        });
+      }
+    });
+  }
 
   const KNOWN_LABELS = {
-    'สำนักปลัด': 'งานบริหารทั่วไป นโยบาย และงานสาธารณสุข',
-    'กองคลัง': 'งานการเงิน พัสดุ และบัญชี',
-    'กองช่าง': 'งานโยธาและโครงการก่อสร้าง',
+    'สำนักปลัด': 'งานบริหารทั่วไป นโยบาย และงานสารบรรณ',
+    'กองคลัง': 'งานการเงิน พัสดุ และบัญชี (e-LAAS)',
+    'กองช่าง': 'งานโยธา ประมาณราคา และโครงการก่อสร้าง',
     'กองการศึกษา': 'ศูนย์พัฒนาเด็กเล็กและการศึกษา',
     'กองสวัสดิการสังคม': 'เบี้ยยังชีพและการพัฒนาชุมชน',
-    'ศพด.วัดเจริญทัศน์': 'ศูนย์พัฒนาเด็กเล็กวัดเจริญทัศน์',
-    'ศพด.บ้านฝางเทิง': 'ศูนย์พัฒนาเด็กเล็กบ้านฝางเทิง',
     'ศพด.': 'ศูนย์พัฒนาเด็กเล็ก',
     'ศูนย์พัฒนาเด็กเล็ก': 'ศูนย์พัฒนาเด็กเล็ก'
   };
 
+  const scrollToDepartments = () => {
+    const el = document.getElementById('departments');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    else scrollToLogin();
+  };
+
   const executiveLeaderPartner = {
-    name: 'ผู้บริหาร',
-    label: orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น',
-    onClick: () => {
-      const user = availableUsers.find(
-        (u) => u.username === 'mayor' || (u.role === 'executive' && u.username !== 'palat') || u.displayName === 'ผู้บริหาร'
-      );
-      if (user) {
-        handleQuickSelect(user);
-      } else {
-        setUsername('mayor');
-        setPassword('');
-        setError('');
-        setShowLoginModal(true);
-      }
-    }
+    name: tenantOrg.approver?.title || 'ฝ่ายบริหาร / นายก อปท.',
+    label: tenantOrg.approver?.name || orgProfile?.approverName || 'ผู้บริหารองค์กรปกครองส่วนท้องถิ่น',
+    onClick: scrollToDepartments
   };
 
   const permanentSecretaryPartner = {
-    name: orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น',
-    label: 'การบริหารราชการและกำกับดูแลภาพรวม',
-    onClick: () => {
-      const user = availableUsers.find(
-        (u) => u.username === 'palat' || (u.username !== 'office' && !u.displayName?.includes('สำนัก') && (u.displayName?.includes('ปลัด') || u.position?.includes('ปลัด')))
-      );
-      if (user) {
-        handleQuickSelect(user);
-      } else {
-        setUsername('palat');
-        setPassword('');
-        setError('');
-        setShowLoginModal(true);
-      }
-    }
+    name: tenantOrg.palat?.title || 'ปลัดองค์กรปกครองส่วนท้องถิ่น',
+    label: tenantOrg.palat?.name || orgProfile?.palatName || 'การบริหารราชการและกำกับดูแลภาพรวม',
+    onClick: scrollToDepartments
   };
 
   const heroPartners = auditeeDepartments.map((deptName) => {
-    const matchedUser = availableUsers.find(
-      (u) => (u.department && (u.department === deptName || u.department.includes(deptName))) ||
-             (u.displayName && (u.displayName === deptName || u.displayName.includes(deptName)))
-    );
     return {
       name: deptName,
-      label: KNOWN_LABELS[deptName] || matchedUser?.position || 'งานในภารกิจและหน่วยรับตรวจ',
-      onClick: () => {
-        if (matchedUser) {
-          handleQuickSelect(matchedUser);
-        } else {
-          scrollToLogin();
-        }
-      }
+      label: KNOWN_LABELS[deptName] || 'หน่วยรับตรวจในจักรวาลการตรวจสอบ',
+      onClick: scrollToDepartments
     };
   });
 
-  const heroSubUnits = childDevelopmentCenters.map((cdcName) => {
-    const matchedUser = availableUsers.find(
-      (u) => (u.department && (u.department === cdcName || u.department.includes(cdcName))) ||
-             (u.displayName && (u.displayName === cdcName || u.displayName.includes(cdcName))) ||
-             (cdcName.includes('เจริญทัศน์') && u.username === 'cdc_charoen') ||
-             (cdcName.includes('ฝางเทิง') && u.username === 'cdc_fangthoeng')
-    );
+  const heroSubUnits = (affiliatedUnits.length > 0 ? affiliatedUnits : ['ศูนย์พัฒนาเด็กเล็กในสังกัด']).map((affName) => {
     return {
-      name: cdcName,
-      label: KNOWN_LABELS[cdcName] || matchedUser?.position || 'สถานศึกษา/ศูนย์พัฒนาเด็กเล็กในสังกัด',
+      name: affName,
+      label: 'สถานศึกษา/หน่วยงานภายใต้สังกัด อปท.',
       icon: '🏫',
-      onClick: () => {
-        if (matchedUser) {
-          handleQuickSelect(matchedUser);
-        } else {
-          scrollToLogin();
-        }
-      }
+      onClick: scrollToDepartments
     };
   });
 
@@ -254,17 +224,6 @@ export default function WelcomeView({
       setError(err.message || 'เกิดข้อผิดพลาดระหว่างเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง');
       setBusy(false);
     }
-  };
-
-  const handleQuickSelect = (u) => {
-    setUsername(u.username);
-    setPassword('');
-    setError('');
-    setLastUsername(u.username);
-    setShowLoginModal(true);
-    setTimeout(() => {
-      passwordInputRef.current?.focus();
-    }, 150);
   };
 
   const handleRegisterSubmit = async (e) => {
@@ -519,258 +478,18 @@ export default function WelcomeView({
                 <span>โครงสร้างการแบ่งส่วนราชการและหน่วยรับตรวจ ({departments.length} สำนัก/กอง/หน่วย)</span>
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                แผนภูมิสายการบังคับบัญชา ส่วนราชการ และหน่วยงานภายใต้สังกัด {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
+                แผนภูมิสายการบังคับบัญชา ส่วนราชการ และจักรวาลหน่วยรับตรวจ (Auditable Universe) {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
               </p>
-            </div>
-            
-            {/* View Mode Toggle: Org Chart Flowchart vs Card Grid */}
-            <div className="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0 self-start md:self-auto">
-              <button
-                type="button"
-                onClick={() => setStructureViewMode('chart')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  structureViewMode === 'chart'
-                    ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/80'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <GitFork className="w-3.5 h-3.5 text-emerald-600" />
-                <span>แผนภูมิผังองค์กร (Org Chart)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStructureViewMode('grid')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  structureViewMode === 'grid'
-                    ? 'bg-white text-blue-700 shadow-xs border border-slate-200/80'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5 text-blue-600" />
-                <span>มุมมองการ์ด (Card Grid)</span>
-              </button>
             </div>
           </div>
 
-          {structureViewMode === 'chart' ? (
-            <OrgChartStructure
-              availableUsers={availableUsers}
-              onSelectUser={handleQuickSelect}
-              onSelectDepartment={(dept) => {
-                const user = availableUsers.find(u => u.department === dept);
-                if (user) handleQuickSelect(user);
-                else setShowLoginModal(true);
-              }}
-            />
-          ) : (
-            <>
-              {/* Executive Leadership Cards (ระดับนโยบายและบริหารงานประจำ) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
-                {/* 1. ผู้บริหาร */}
-                <div
-                  onClick={() => {
-                    const user = availableUsers.find(
-                      (u) => u.username === 'mayor' || (u.role === 'executive' && u.username !== 'palat') || u.displayName === 'ผู้บริหาร'
-                    );
-                    if (user) handleQuickSelect(user);
-                    else {
-                      setUsername('mayor');
-                      setShowLoginModal(true);
-                    }
-                  }}
-                  className="p-5 rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/70 via-white to-amber-50/30 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer group hover:scale-[1.01] flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-bold shadow-2xs group-hover:scale-105 transition-transform">
-                        👑
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-100 text-amber-800 border border-amber-200">
-                        EXECUTIVE: ฝ่ายบริหาร
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-base text-slate-900 group-hover:text-amber-800 transition-colors flex items-center space-x-1.5">
-                        <span>ผู้บริหาร ({orgProfile?.approverPosition || 'นายก อปท.'})</span>
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {orgProfile?.approverName || 'ผู้บริหารท้องถิ่น'} • กำหนดนโยบาย ยุทธศาสตร์ และการบริหารงานภาพรวม
-                      </p>
-                    </div>
-                  </div>
-                  <div className="pt-4 mt-4 border-t border-amber-100 flex items-center justify-between text-xs text-amber-700 font-medium">
-                    <span>เข้าสู่ระบบในฐานะ @mayor</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-
-                {/* 2. ปลัด อปท. */}
-                <div
-                  onClick={() => {
-                    const user = availableUsers.find(
-                      (u) => u.username === 'palat' || (u.username !== 'office' && !u.displayName?.includes('สำนัก') && (u.displayName?.includes('ปลัด') || u.position?.includes('ปลัด')))
-                    );
-                    if (user) handleQuickSelect(user);
-                    else {
-                      setUsername('palat');
-                      setShowLoginModal(true);
-                    }
-                  }}
-                  className="p-5 rounded-2xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/70 via-white to-indigo-50/30 hover:border-indigo-400 hover:shadow-md transition-all cursor-pointer group hover:scale-[1.01] flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg font-bold shadow-2xs group-hover:scale-105 transition-transform">
-                        🏛️
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-indigo-100 text-indigo-800 border border-indigo-200">
-                        CHIEF ADMINISTRATIVE OFFICER
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-base text-slate-900 group-hover:text-indigo-800 transition-colors flex items-center space-x-1.5">
-                        <span>{orgProfile?.palatPosition || 'ปลัด อปท.'}</span>
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {orgProfile?.palatName || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'} • หัวหน้าส่วนราชการประจำ บังคับบัญชาข้าราชการและกำกับดูแลทุกกอง
-                      </p>
-                    </div>
-                  </div>
-                  <div className="pt-4 mt-4 border-t border-indigo-100 flex items-center justify-between text-xs text-indigo-700 font-medium">
-                    <span>เข้าสู่ระบบในฐานะ @palat</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {departments.filter((d) => !d.startsWith('ศพด.')).map((dept) => {
-                  const matchedUser = availableUsers.find((u) => u.department === dept);
-                  const isAudit = dept === 'หน่วยตรวจสอบภายใน';
-
-                  return (
-                    <div
-                      key={dept}
-                      onClick={() => {
-                        if (matchedUser) handleQuickSelect(matchedUser);
-                        else setShowLoginModal(true);
-                      }}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer group hover:scale-[1.02] flex flex-col justify-between ${
-                        isAudit
-                          ? 'bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-white border-blue-200 hover:border-blue-400 shadow-sm shadow-blue-100/60'
-                          : 'bg-white border-slate-200/80 hover:border-blue-300 hover:bg-blue-50/30 hover:shadow-md shadow-xs'
-                      }`}
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow-xs ${
-                              isAudit ? 'bg-blue-600 text-white' : 'bg-slate-100 text-blue-600 group-hover:bg-blue-50'
-                            }`}
-                          >
-                            {isAudit ? '👑' : '🏢'}
-                          </div>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                              isAudit
-                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                : 'bg-slate-100 text-slate-600'
-                            }`}
-                          >
-                            {isAudit ? 'ADMIN' : 'หน่วยรับตรวจ'}
-                          </span>
-                        </div>
-
-                        <div>
-                          <h4 className="font-bold text-sm text-slate-900 group-hover:text-blue-700 transition-colors">
-                            {dept}
-                          </h4>
-                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                            {matchedUser?.position || 'บุคลากรและเจ้าหน้าที่ผู้รับผิดชอบงานประจำกอง'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-blue-600 group-hover:text-blue-700">
-                        <span className="font-medium">
-                          {matchedUser ? `เข้าใช้งานในฐานะ @${matchedUser.username}` : 'คลิกเพื่อเข้าสู่ระบบ'}
-                        </span>
-                        <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* หน่วยงานภายใต้สังกัด อปท. (อยู่ใต้กองต่างๆ) */}
-              <div className="pt-6 border-t border-slate-200/80 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-bold shadow-2xs">
-                      🏫
-                    </div>
-                    <div>
-                      <h4 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-                        <span>หน่วยงานภายใต้สังกัด (AFFILIATED AGENCIES)</span>
-                      </h4>
-                      <p className="text-xs text-slate-500">
-                        ศูนย์พัฒนาเด็กเล็กและสถานศึกษาในสังกัด {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                    2 หน่วยงานภายใต้สังกัด
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {childDevelopmentCenters.map((cdc) => {
-                    const matchedUser = availableUsers.find(
-                      (u) => u.department === cdc || 
-                             (cdc.includes('เจริญทัศน์') && u.username === 'cdc_charoen') || 
-                             (cdc.includes('ฝางเทิง') && u.username === 'cdc_fangthoeng')
-                    );
-                    return (
-                      <div
-                        key={cdc}
-                        onClick={() => {
-                          if (matchedUser) handleQuickSelect(matchedUser);
-                          else setShowLoginModal(true);
-                        }}
-                        className="p-5 rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/20 hover:border-emerald-400 hover:shadow-md transition-all cursor-pointer group hover:scale-[1.01] flex flex-col justify-between"
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-bold shadow-2xs group-hover:scale-105 transition-transform">
-                              🏫
-                            </div>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              สถานศึกษาในสังกัด
-                            </span>
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-base text-slate-900 group-hover:text-emerald-700 transition-colors">
-                              {cdc}
-                            </h4>
-                            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                              {matchedUser?.position || 'หัวหน้าศูนย์พัฒนาเด็กเล็ก / ครูผู้ดูแลเด็ก'}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="pt-4 mt-4 border-t border-emerald-100 flex items-center justify-between text-xs text-emerald-700 group-hover:text-emerald-800 font-medium">
-                          <span>
-                            {matchedUser ? `เข้าใช้งานในฐานะ @${matchedUser.username}` : 'คลิกเพื่อเข้าสู่ระบบ'}
-                          </span>
-                          <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
+          <OrgChartStructure
+            session={session}
+            orgProfile={orgProfile}
+            onSelectDepartment={() => {
+              if (!session) setShowLoginModal(true);
+            }}
+          />
         </div>
 
         {/* 5. Core System Modules */}
@@ -990,58 +709,7 @@ export default function WelcomeView({
               </button>
             </div>
 
-            {/* Quick account selector chips (Auditor & Executive Roles only) */}
-            <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
-              <span className="text-[11px] text-slate-500 block font-medium">
-                เลือกเข้าสู่ระบบด่วนตามบทบาท (Auditor & Executive Roles):
-              </span>
-              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                {(() => {
-                  const allowedUsernames = ['admin', 'mayor', 'palat'];
-                  const sorted = [...availableUsers]
-                    .filter((u) => 
-                      allowedUsernames.includes(u.username) || 
-                      u.role === 'admin' || 
-                      u.role === 'executive' || 
-                      u.role === 'auditor' ||
-                      u.department?.includes('ตรวจสอบ')
-                    )
-                    .sort((a, b) => {
-                      const order = { admin: 1, mayor: 2, palat: 3 };
-                      return (order[a.username] || 99) - (order[b.username] || 99);
-                    });
-                  return sorted.map((u) => {
-                    let label = u.displayName || u.username;
-                    let icon = '🛡️ ';
-                    if (u.username === 'mayor' || (u.role === 'executive' && u.username !== 'palat') || label.includes('ผู้บริหาร') || label.includes('นายก')) {
-                      icon = '👑 ';
-                      label = 'ผู้บริหาร อปท.';
-                    } else if (u.username === 'palat' || (label.includes('ปลัด') && !label.includes('สำนัก'))) {
-                      icon = '🏛️ ';
-                      label = 'ปลัด อปท.';
-                    } else if (u.role === 'admin' || u.username === 'admin' || u.department?.includes('ตรวจสอบ')) {
-                      icon = '👑 ';
-                      label = 'ผู้ตรวจสอบภายใน';
-                    }
-                    return (
-                      <button
-                        key={u.username}
-                        type="button"
-                        onClick={() => handleQuickSelect(u)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
-                          Boolean(username && u.username && username.toLowerCase() === u.username.toLowerCase())
-                            ? 'bg-blue-600 text-white font-bold shadow-xs'
-                            : 'bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
-                        }`}
-                      >
-                        {icon}
-                        {label}
-                      </button>
-                    );
-                  });
-                })()}
-              </div>
-            </div>
+
 
             {/* Register New Account Action */}
             <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">

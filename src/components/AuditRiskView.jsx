@@ -33,6 +33,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import OrgChartStructure from './OrgChartStructure';
 import { getDepartments } from '../utils/auth';
 
 // =========================================================================
@@ -890,7 +891,8 @@ export default function AuditRiskView({
   setAuditUniverse,
   annualPlans = [],
   setAnnualPlans,
-  setCurrentTab
+  setCurrentTab,
+  session
 }) {
   // Sub Tabs: 'fangkham-matrix', 'ranking', 'catalog', 'risk-desc', 'criteria-guide', 'comparison', 'report'
   const [activeSubTab, setActiveSubTab] = useState('fangkham-matrix');
@@ -1300,6 +1302,7 @@ export default function AuditRiskView({
       {/* Sub Tabs Selector */}
       <div className="bg-slate-100/80 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800 flex space-x-1 overflow-x-auto text-xs font-bold scrollbar-none">
         {[
+          { id: 'org-universe', label: '🏛️ โครงสร้าง อปท. & จักรวาลหน่วยรับตรวจ' },
           { id: 'fangkham-matrix', label: `ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง (${orgProfile?.name || 'อปท.'})` },
           { id: 'ranking', label: 'การจัดลำดับคะแนน & คัดเลือกเข้าแผนประจำปี' },
           { id: 'catalog', label: 'คลังโครงสร้างกิจกรรม อปท. (Activity Catalog)' },
@@ -1321,6 +1324,23 @@ export default function AuditRiskView({
           </button>
         ))}
       </div>
+
+      {/* =========================================================================
+          TAB 0: ผังโครงสร้าง อปท. & จักรวาลหน่วยรับตรวจ (Auditable Universe Builder)
+      ========================================================================= */}
+      {activeSubTab === 'org-universe' && (
+        <div className="space-y-4">
+          <OrgChartStructure
+            session={session}
+            orgProfile={orgProfile}
+            onSelectDepartment={(deptName) => {
+              setDepartmentFilter(deptName);
+              setActiveSubTab('fangkham-matrix');
+              showToast(`กรองกิจกรรมของ "${deptName}" ในตารางประเมินความเสี่ยงแล้ว`);
+            }}
+          />
+        </div>
+      )}
 
       {/* =========================================================================
           TAB 1: ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยง

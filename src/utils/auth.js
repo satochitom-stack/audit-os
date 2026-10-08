@@ -122,14 +122,13 @@ export function saveTenantData(baseKey, value, userOrSession) {
 // Departments list
 // -------------------------------------------------------------
 export const DEFAULT_DEPARTMENTS = [
-  'หน่วยตรวจสอบภายใน',
   'สำนักปลัด',
   'กองคลัง',
   'กองช่าง',
   'กองการศึกษา',
   'กองสวัสดิการสังคม',
-  'ศพด.วัดเจริญทัศน์',
-  'ศพด.บ้านฝางเทิง'
+  'กองสาธารณสุขและสิ่งแวดล้อม',
+  'หน่วยตรวจสอบภายใน'
 ];
 
 const DEPARTMENTS_KEY = 'ia_departments';
