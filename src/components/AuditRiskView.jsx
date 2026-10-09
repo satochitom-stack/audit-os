@@ -1133,91 +1133,25 @@ export default function AuditRiskView({
       )}
 
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ผู้ประเมิน: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-              </span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              การประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}
-            </h2>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ผู้ประเมิน: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              onClick={() => setShowCatalogModal(true)}
-              className="bg-stone-50 hover:bg-stone-100 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-750 dark:text-stone-200 border border-stone-300 dark:border-stone-700 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
-              title="เปิดคลังโครงสร้างกิจกรรม อปท. (สำนักปลัด กองคลัง กองช่าง กองการศึกษา)"
-            >
-              <FolderPlus className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>คลังกิจกรรม อปท.</span>
-            </button>
-
-            <button
-              onClick={() => setShowReferencesModal(true)}
-              className="bg-stone-50 hover:bg-stone-100 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-750 dark:text-stone-200 border border-stone-300 dark:border-stone-700 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
-              title="เปิดคู่มือเกณฑ์ 22 ปัจจัยเสี่ยง และคำอธิบายความเสี่ยง 8 มิติ"
-            >
-              <BookOpen className="w-4 h-4 text-stone-600 dark:text-stone-300" />
-              <span>เกณฑ์ & อ้างอิงระเบียบ</span>
-            </button>
-
-            <button
-              onClick={handleLoadDlaDefaults}
-              className="bg-amber-750 hover:bg-amber-700 text-white border border-amber-600/30 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all active:scale-95"
-              title="โหลดชุดข้อมูล 16 กิจกรรมมาตรฐานตามคู่มือ สถ."
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-              <span>โหลด 16 กิจกรรม สถ.</span>
-            </button>
-
-            <button
-              onClick={handleClearAllActivities}
-              className="bg-stone-50 hover:bg-rose-50 dark:bg-stone-800 dark:hover:bg-rose-950/40 text-stone-600 hover:text-rose-600 dark:text-stone-300 dark:hover:text-rose-400 border border-stone-300 dark:border-stone-700 hover:border-rose-300 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
-              title="ล้างข้อมูลกิจกรรมทั้งหมดเพื่อเริ่มกำหนดกิจกรรมของ อปท. ตนเองจากศูนย์"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
-              <span>ล้างตาราง (เริ่มใหม่)</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setEditingItem(null);
-                setFormData({
-                  department: 'กองคลัง',
-                  activity: '',
-                  sScore: 1,
-                  oScore: 1,
-                  fScore: 1,
-                  cScore: 1,
-                  kScore: 1,
-                  reason: '',
-                  riskScope: '',
-                  riskOwner: '',
-                  tolerance: '',
-                  existingControls: '',
-                  mitigation: ''
-                });
-                setShowAddModal(true);
-              }}
-              className="bg-stone-900 hover:bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ เพิ่มกิจกรรม</span>
-            </button>
-          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            การประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}
+          </h2>
         </div>
       </div>
 
@@ -1294,55 +1228,111 @@ export default function AuditRiskView({
       ========================================================================= */}
       {activeSubTab === 'matrix' && (
         <div className="space-y-4">
-          {/* Filter Bar */}
-          <div className="bg-white dark:bg-stone-900 rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" />
-                <input
-                  type="text"
-                  placeholder="ค้นหากิจกรรมที่ประเมิน..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs w-48 sm:w-64 text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
-                />
+          {/* Action Toolbar & Filters */}
+          <div className="bg-white dark:bg-stone-900 rounded-2xl p-3.5 sm:p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-3 no-print print:hidden">
+            {/* Row 1: Action Buttons */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-amber-800 hover:bg-amber-900 active:scale-98 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+                  title="เพิ่มกิจกรรมการตรวจสอบใหม่เข้าสู่ตาราง"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>เพิ่มกิจกรรม</span>
+                </button>
+
+                <button
+                  onClick={() => setShowCatalogModal(true)}
+                  className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300/80 dark:border-stone-700 text-xs font-bold px-3 py-2 rounded-xl shadow-2xs flex items-center space-x-1.5 cursor-pointer transition-all"
+                  title="เปิดคลังกิจกรรมตามภารกิจ อปท. เพื่อเลือกนำเข้าตาราง"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
+                  <span>คลังกิจกรรม อปท.</span>
+                </button>
+
+                <button
+                  onClick={handleLoadDlaDefaults}
+                  className="bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white border border-emerald-800/40 text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+                  title="โหลดชุดข้อมูล 16 กิจกรรมมาตรฐานตามคู่มือ สถ. หน้า 9"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+                  <span>โหลด 16 กิจกรรม สถ.</span>
+                </button>
+
+                <button
+                  onClick={() => setShowReferencesModal(true)}
+                  className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300/80 dark:border-stone-700 text-xs font-bold px-3 py-2 rounded-xl shadow-2xs flex items-center space-x-1.5 cursor-pointer transition-all"
+                  title="ดูหลักเกณฑ์การให้คะแนน SOFCK และระเบียบกระทรวงมหาดไทย"
+                >
+                  <Scale className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
+                  <span>เกณฑ์ & อ้างอิงระเบียบ</span>
+                </button>
+
+                <button
+                  onClick={handleClearAllActivities}
+                  className="bg-stone-100 hover:bg-rose-50 dark:bg-stone-800 dark:hover:bg-rose-950/40 text-stone-700 hover:text-rose-700 dark:text-stone-300 dark:hover:text-rose-300 border border-stone-300/80 hover:border-rose-300 dark:hover:border-rose-800/60 text-xs font-bold px-3 py-2 rounded-xl shadow-2xs flex items-center space-x-1.5 cursor-pointer transition-all"
+                  title="ล้างรายการกิจกรรมทั้งหมดเพื่อเริ่มทำเองจากตารางว่าง"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-rose-500" />
+                  <span>ล้างตาราง (เริ่มใหม่)</span>
+                </button>
               </div>
 
-              <select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
-              >
-                <option value="all">ทุกสำนัก/กอง</option>
-                {getDepartments().filter((d) => d !== 'หน่วยตรวจสอบภายใน').map((dept) => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-
-              <select
-                value={riskLevelFilter}
-                onChange={(e) => setRiskLevelFilter(e.target.value)}
-                className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
-              >
-                <option value="all">ทุกระดับความเสี่ยง</option>
-                <option value="สูง">ความเสี่ยงสูง (2.4 - 3.0)</option>
-                <option value="ปานกลาง">ความเสี่ยงปานกลาง (1.6 - 2.2)</option>
-                <option value="ต่ำ">ความเสี่ยงต่ำ (1.0 - 1.4)</option>
-              </select>
-            </div>
-
-            <div className="text-stone-500 text-[11px] flex items-center space-x-3">
-              <span>แสดง {filteredActivities.length} จาก {totalActivities} รายการ</span>
               <button
                 onClick={() => {
                   setActiveSubTab('report');
                   setTimeout(() => window.print(), 200);
                 }}
-                className="text-amber-800 dark:text-amber-400 hover:underline flex items-center space-x-1 cursor-pointer font-bold"
+                className="text-amber-800 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40 px-3 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer transition-all"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>พิมพ์รายงาน</span>
               </button>
+            </div>
+
+            {/* Row 2: Search & Filters Bar */}
+            <div className="pt-2.5 border-t border-stone-100 dark:border-stone-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="ค้นหากิจกรรมที่ประเมิน..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs w-48 sm:w-64 text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                  />
+                </div>
+
+                <select
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                >
+                  <option value="all">ทุกสำนัก/กอง</option>
+                  {getDepartments().filter((d) => d !== 'หน่วยตรวจสอบภายใน').map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={riskLevelFilter}
+                  onChange={(e) => setRiskLevelFilter(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                >
+                  <option value="all">ทุกระดับความเสี่ยง</option>
+                  <option value="สูง">ความเสี่ยงสูง (2.4 - 3.0)</option>
+                  <option value="ปานกลาง">ความเสี่ยงปานกลาง (1.6 - 2.2)</option>
+                  <option value="ต่ำ">ความเสี่ยงต่ำ (1.0 - 1.4)</option>
+                </select>
+              </div>
+
+              <div className="text-stone-500 text-[11px] flex items-center space-x-2">
+                <span className="bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-md font-medium">
+                  แสดง {filteredActivities.length} จาก {totalActivities} รายการ
+                </span>
+              </div>
             </div>
           </div>
 
