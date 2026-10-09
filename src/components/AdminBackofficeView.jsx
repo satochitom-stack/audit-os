@@ -37,6 +37,10 @@ import {
   Crown,
   Star,
   Zap,
+  ChevronDown,
+  ChevronUp,
+  Megaphone,
+  Bell,
   Image as ImageIcon
 } from 'lucide-react';
 import {
@@ -120,6 +124,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
   const [broadcastTitle, setBroadcastTitle] = useState('Audit-OS อัปเดตเวอร์ชันใหม่');
   const [broadcastDesc, setBroadcastDesc] = useState('ระบบได้รับการอัปเดตฟังก์ชันและปรับปรุงประสิทธิภาพล่าสุดเรียบร้อยแล้ว');
   const [broadcastSummary, setBroadcastSummary] = useState('ปรับปรุงระบบกระดาษทำการ และการจัดการสมาชิก อปท.');
+  const [isBroadcastExpanded, setIsBroadcastExpanded] = useState(false);
 
   // File upload input ref for custom QR
   const qrFileInputRef = useRef(null);
@@ -220,6 +225,30 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         return (b.createdAt || 0) - (a.createdAt || 0);
       });
   }, [users, searchTerm, statusFilter, pinnedUsernames]);
+
+  // Combined list with ADMIN pinned permanently at index 0
+  const displayedUsers = useMemo(() => {
+    const adminUser = users.find((u) => u.role === 'admin' || u.username?.toLowerCase() === 'admin');
+    if (!adminUser) return filteredMembers;
+
+    // Check if search query matches admin or is blank
+    const q = searchTerm.toLowerCase();
+    const adminMatchesSearch = !q ||
+      'admin'.includes(q) ||
+      (adminUser.displayName || '').toLowerCase().includes(q) ||
+      (adminUser.organization || '').toLowerCase().includes(q) ||
+      (adminUser.email || '').toLowerCase().includes(q) ||
+      'ผู้ดูแลระบบ'.includes(q);
+
+    // Admin matches when viewing all or active
+    const adminMatchesStatus = statusFilter === 'all' || statusFilter === 'active';
+
+    if (adminMatchesSearch && adminMatchesStatus) {
+      // ADMIN is ALWAYS pinned at index 0 permanently, never pushed down by newly registered members!
+      return [adminUser, ...filteredMembers];
+    }
+    return filteredMembers;
+  }, [users, filteredMembers, searchTerm, statusFilter]);
 
   // Toggle Pin User
   const handleTogglePin = (username) => {
@@ -427,11 +456,16 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       ? Math.max(0, Math.ceil((new Date(user.expiresAt).getTime() - now) / 86400000))
       : 0;
 
-    if (user.role === 'admin') {
+    if (user.role === 'admin' || user.username?.toLowerCase() === 'admin' || user.plan === 'admin') {
       return (
-        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-stone-900 via-amber-950 to-stone-900 text-amber-300 border border-amber-500/80 shadow-md shadow-amber-600/20">
-          <span>👑</span>
-          <span className="tracking-wide">SUPER ADMIN (ถาวร)</span>
+        <div className="inline-flex flex-col items-start gap-1">
+          <div className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border border-amber-200 shadow-md shadow-amber-500/40 tracking-wider">
+            <span>👑</span>
+            <span className="tracking-wide font-black">ADMIN</span>
+          </div>
+          <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1">
+            สถานะพิเศษ (ถาวร • ไม่จำกัดเวลา)
+          </span>
         </div>
       );
     }
@@ -818,58 +852,113 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       {/* ========================================================================= */}
       {activeTab === 'users' && (
         <div className="space-y-6">
-          {/* Top Section: ((o)) ระบบประกาศข่าวสารหลังบ้าน (Broadcast / Announcement) matching Image 2 */}
-          <div className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 dark:border-stone-800 pb-3">
-              <div className="flex items-center space-x-2">
-                <span className="text-amber-500 font-black text-sm">((o))</span>
-                <h3 className="text-sm sm:text-base font-black text-stone-900 dark:text-stone-100">
-                  ระบบประกาศข่าวสารหลังบ้าน (Broadcast / Announcement)
-                </h3>
+          {/* Top Section: ((o)) ระบบประกาศข่าวสารหลังบ้าน (Broadcast / Announcement) - Collapsible */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-sm overflow-hidden transition-all duration-300">
+            {/* Header toggle bar */}
+            <div
+              onClick={() => setIsBroadcastExpanded(!isBroadcastExpanded)}
+              className="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-stone-50/70 dark:hover:bg-stone-850 transition-colors select-none"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 flex items-center justify-center font-black text-sm shrink-0 border border-amber-300/60 dark:border-amber-800/60 shadow-xs">
+                  <Megaphone className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-amber-600 dark:text-amber-400 font-black text-xs">((o))</span>
+                    <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
+                      ระบบประกาศข่าวสารหลังบ้าน (Broadcast / Announcement)
+                    </h3>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        isBroadcastActive
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60'
+                          : 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400'
+                      }`}
+                    >
+                      {isBroadcastActive ? '● กำลังเปิดแสดงผลหน้าบ้าน' : '○ ปิดการแสดงผล'}
+                    </span>
+                  </div>
+                  {!isBroadcastExpanded && (
+                    <p className="text-xs text-stone-500 mt-1 truncate max-w-xl">
+                      {broadcastText ? `ข้อความประกาศ: "${broadcastText}"` : 'คลิกเพื่อเปิดกล่องพิมพ์และส่งประกาศข่าวสารไปยังแถบแบนเนอร์หน้าบ้าน'}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
+
+              <div className="flex items-center space-x-2 shrink-0">
                 <button
                   type="button"
-                  onClick={handleToggleBroadcastActive}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    isBroadcastActive
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
-                      : 'bg-stone-200 text-stone-600 dark:bg-stone-800 dark:text-stone-400'
-                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsBroadcastExpanded(!isBroadcastExpanded);
+                  }}
+                  className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-bold transition-all cursor-pointer"
                 >
-                  {isBroadcastActive ? '● กำลังเปิดแสดงผลหน้าบ้าน' : '○ ปิดการแสดงผล'}
+                  <span>{isBroadcastExpanded ? 'ย่อ/ซ่อนกล่องประกาศ' : 'คลิกเปิดกล่องประกาศ'}</span>
                 </button>
+                <div className={`p-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 transition-transform duration-300 ${isBroadcastExpanded ? 'rotate-180' : ''}`}>
+                  <ChevronDown className="w-4 h-4" />
+                </div>
               </div>
             </div>
 
-            <p className="text-xs text-stone-500">
-              พิมพ์ข้อความเพื่อประกาศข่าวสารหรือระเบียบต่าง ๆ ไปยังแถบแบนเนอร์ด้านบนสุดหน้าเว็บของผู้ใช้ทุกคนในระบบแบบเรียลไทม์
-            </p>
+            {/* Expandable Slide-out Form */}
+            {isBroadcastExpanded && (
+              <div className="p-5 sm:p-6 pt-2 border-t border-stone-100 dark:border-stone-800 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <p className="text-xs text-stone-500">
+                    พิมพ์ข้อความเพื่อประกาศข่าวสารหรือระเบียบต่าง ๆ ไปยังแถบแบนเนอร์ด้านบนสุดหน้าเว็บของผู้ใช้ทุกคนในระบบแบบเรียลไทม์
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleToggleBroadcastActive}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer self-start sm:self-auto ${
+                      isBroadcastActive
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
+                        : 'bg-stone-200 text-stone-600 dark:bg-stone-800 dark:text-stone-400'
+                    }`}
+                  >
+                    {isBroadcastActive ? '● เปิดแสดงผล (คลิกเพื่อปิด)' : '○ ปิดการแสดงผล (คลิกเพื่อเปิด)'}
+                  </button>
+                </div>
 
-            <form onSubmit={handleBroadcastSubmit} className="space-y-3">
-              <div className="relative">
-                <textarea
-                  rows={2}
-                  value={broadcastText}
-                  onChange={(e) => setBroadcastText(e.target.value)}
-                  placeholder="พิมพ์ข้อความประกาศ เช่น '📢 แจ้งเตือน: อัปเดตระเบียบกระทรวงการคลังว่าด้วยการจัดซื้อจัดจ้างฯ พ.ศ. 2569 พร้อมเปิดให้ดาวน์โหลดแบบฟอร์มตรวจสอบพัสดุใหม่แล้ว!'"
-                  className="w-full text-xs sm:text-sm p-3.5 rounded-2xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-900 dark:text-stone-100 leading-relaxed"
-                />
-              </div>
+                <form onSubmit={handleBroadcastSubmit} className="space-y-3">
+                  <div className="relative">
+                    <textarea
+                      rows={2}
+                      value={broadcastText}
+                      onChange={(e) => setBroadcastText(e.target.value)}
+                      placeholder="พิมพ์ข้อความประกาศ เช่น '📢 แจ้งเตือน: อัปเดตระเบียบกระทรวงการคลังว่าด้วยการจัดซื้อจัดจ้างฯ พ.ศ. 2569 พร้อมเปิดให้ดาวน์โหลดแบบฟอร์มตรวจสอบพัสดุใหม่แล้ว!'"
+                      className="w-full text-xs sm:text-sm p-3.5 rounded-2xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-900 dark:text-stone-100 leading-relaxed"
+                    />
+                  </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="text-[11px] text-stone-400">
-                  {isBroadcastActive ? '✨ แถบประกาศจะแสดงอยู่ด้านบนสุดของหน้าตรวจของสมาชิกทุกคนทันที' : '⏸️ ประกาศนี้ถูกปิดซ่อนไว้ชั่วคราว'}
-                </span>
-                <button
-                  type="submit"
-                  className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-md shadow-amber-600/30 flex items-center space-x-1.5 cursor-pointer"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>กดส่งประกาศ 🚀</span>
-                </button>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-[11px] text-stone-400">
+                      {isBroadcastActive ? '✨ แถบประกาศจะแสดงอยู่ด้านบนสุดของหน้าตรวจของสมาชิกทุกคนทันที' : '⏸️ ประกาศนี้ถูกปิดซ่อนไว้ชั่วคราว'}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsBroadcastExpanded(false)}
+                        className="px-3.5 py-2 rounded-xl text-xs font-semibold text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+                      >
+                        ย่อเก็บ
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-md shadow-amber-600/30 flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>กดส่งประกาศ 🚀</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
               </div>
-            </form>
+            )}
           </div>
 
           {/* Members Table Card matching user's Image 2 */}
@@ -885,7 +974,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                   </span>
                 </div>
                 <p className="text-xs text-stone-500 mt-0.5">
-                  ทะเบียนสมาชิกผู้ตรวจสอบภายใน อปท. (ไม่รวมผู้ดูแลระบบ) สามารถปรับระดับ ต่ออายุ ล็อกบัญชี หรือลบได้โดยตรง
+                  ทะเบียนสมาชิกผู้ตรวจสอบภายใน อปท. (ไม่รวมผู้ดูแลระบบ ADMIN ที่ปักหมุดถาวร) สามารถปรับระดับ ต่ออายุ ล็อกบัญชี หรือลบได้โดยตรง
                 </p>
               </div>
 
@@ -932,35 +1021,52 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
-                  {filteredMembers.map((u) => {
-                    const isPinned = pinnedUsernames.includes(u.username);
+                  {displayedUsers.map((u) => {
+                    const isAdmin = u.role === 'admin' || u.username?.toLowerCase() === 'admin';
+                    const isPinned = isAdmin || pinnedUsernames.includes(u.username);
                     const isSuspended = u.status === 'suspended';
                     const isMenuOpen = openActionUsername === u.username;
 
                     return (
                       <tr
                         key={u.username}
-                        className={`hover:bg-amber-50/30 dark:hover:bg-stone-800/40 transition-colors ${
-                          isPinned ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''
+                        className={`transition-colors ${
+                          isAdmin
+                            ? 'bg-amber-500/10 dark:bg-amber-950/30 border-b border-amber-300/40 dark:border-amber-800/40 font-medium'
+                            : isPinned
+                            ? 'bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/60 dark:hover:bg-stone-800/50'
+                            : 'hover:bg-amber-50/30 dark:hover:bg-stone-800/40'
                         }`}
                       >
                         <td className="py-3 px-3">
                           <div className="flex items-center space-x-2">
                             {isPinned && (
-                              <span className="text-amber-500 text-xs shrink-0" title="ปักหมุดแล้ว">📌</span>
+                              <span
+                                className="text-amber-500 text-xs shrink-0"
+                                title={isAdmin ? 'ปักหมุดบัญชีผู้ดูแลระบบสูงสุดไว้บนสุดถาวร' : 'ปักหมุดแล้ว'}
+                              >
+                                📌
+                              </span>
                             )}
                             <div>
-                              <div className="font-mono font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-1">
-                                <span>@{u.username}</span>
+                              <div className="font-mono font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-1.5">
+                                {isAdmin ? (
+                                  <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 px-2 py-0.5 rounded-md text-xs font-black shadow-xs">
+                                    ADMIN
+                                  </span>
+                                ) : null}
+                                <span className={isAdmin ? 'text-amber-900 dark:text-amber-200 font-black' : ''}>
+                                  @{u.username}
+                                </span>
                                 {u.passwordText && (
                                   <span className="text-[10px] text-stone-400 font-mono">(รหัส: {u.passwordText})</span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold">
+                              <div className={`text-[11px] font-semibold ${isAdmin ? 'text-amber-900 dark:text-amber-300 font-bold' : 'text-amber-800 dark:text-amber-400'}`}>
                                 {u.displayName}
                               </div>
                               <div className="text-[10px] text-stone-400">
-                                {u.position || 'นักวิชาการตรวจสอบภายใน'}
+                                {u.position || (isAdmin ? 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)' : 'นักวิชาการตรวจสอบภายใน')}
                               </div>
                             </div>
                           </div>
@@ -978,11 +1084,11 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         </td>
 
                         <td className="py-3 px-3">
-                          <div className="font-semibold text-stone-800 dark:text-stone-200">
-                            {u.organization || 'อบต.ต้นแบบ'}
+                          <div className={`font-semibold ${isAdmin ? 'text-amber-900 dark:text-amber-200 font-bold' : 'text-stone-800 dark:text-stone-200'}`}>
+                            {u.organization || (isAdmin ? 'ศูนย์ควบคุมแพลตฟอร์มส่วนกลาง (Audit-OS Cloud)' : 'อปท.ต้นแบบ')}
                           </div>
                           <div className="text-[10px] text-stone-400">
-                            {u.province ? `จ.${u.province}` : 'ไม่ระบุจังหวัด'}
+                            {u.province ? `จ.${u.province}` : (isAdmin ? 'ส่วนกลาง' : 'ไม่ระบุจังหวัด')}
                           </div>
                         </td>
 
@@ -1033,83 +1139,118 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                                 ref={actionMenuRef}
                                 className="absolute right-0 top-10 z-50 w-56 bg-stone-900 text-stone-100 rounded-2xl shadow-2xl border border-stone-700 p-1.5 space-y-1 text-left animate-in fade-in slide-in-from-top-2"
                               >
-                                <button
-                                  type="button"
-                                  onClick={() => handleTogglePin(u.username)}
-                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-amber-200 cursor-pointer"
-                                >
-                                  <Pin className="w-3.5 h-3.5 text-amber-400" />
-                                  <span>{isPinned ? 'ยกเลิกปักหมุด' : 'ปักหมุดสมาชิก (Pin)'}</span>
-                                </button>
+                                {isAdmin ? (
+                                  <>
+                                    <div className="px-3 py-1.5 text-[10px] font-bold text-amber-400 border-b border-stone-800 flex items-center space-x-1">
+                                      <span>👑 สิทธิ์ผู้ดูแลระบบสูงสุด (ADMIN)</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingMember(u);
+                                        setShowEditMemberModal(true);
+                                        setOpenActionUsername(null);
+                                      }}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-amber-200 cursor-pointer"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                                      <span>แก้ไขข้อมูล / รหัสผ่าน Admin</span>
+                                    </button>
+                                    {onSwitchToWorkbench && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenActionUsername(null);
+                                          onSwitchToWorkbench();
+                                        }}
+                                        className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-emerald-200 cursor-pointer"
+                                      >
+                                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                                        <span>เข้าสู่หน้าตรวจ (Workbench)</span>
+                                      </button>
+                                    )}
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTogglePin(u.username)}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-amber-200 cursor-pointer"
+                                    >
+                                      <Pin className="w-3.5 h-3.5 text-amber-400" />
+                                      <span>{isPinned ? 'ยกเลิกปักหมุด' : 'ปักหมุดสมาชิก (Pin)'}</span>
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenChangeTier(u)}
-                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-blue-200 cursor-pointer"
-                                >
-                                  <Award className="w-3.5 h-3.5 text-blue-400" />
-                                  <span>ปรับระดับสมาชิก (Tier)</span>
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenChangeTier(u)}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-blue-200 cursor-pointer"
+                                    >
+                                      <Award className="w-3.5 h-3.5 text-blue-400" />
+                                      <span>ปรับระดับสมาชิก (Tier)</span>
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleQuickExtend(u.username, 30, 'monthly')}
-                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-emerald-200 cursor-pointer"
-                                >
-                                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                                  <span>ต่ออายุ +30 วัน (VIP)</span>
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuickExtend(u.username, 30, 'monthly')}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-emerald-200 cursor-pointer"
+                                    >
+                                      <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                                      <span>ต่ออายุ +30 วัน (VIP)</span>
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleQuickExtend(u.username, 365, 'annual')}
-                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-yellow-200 cursor-pointer"
-                                >
-                                  <Crown className="w-3.5 h-3.5 text-yellow-400" />
-                                  <span>ต่ออายุ +1 ปี (PREMIUM)</span>
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuickExtend(u.username, 365, 'annual')}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-yellow-200 cursor-pointer"
+                                    >
+                                      <Crown className="w-3.5 h-3.5 text-yellow-400" />
+                                      <span>ต่ออายุ +1 ปี (PREMIUM)</span>
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleToggleSuspend(u)}
-                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-stone-300 cursor-pointer"
-                                >
-                                  {isSuspended ? <Unlock className="w-3.5 h-3.5 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
-                                  <span>{isSuspended ? 'ปลดล็อกบัญชี' : 'ล็อกบัญชี (Lock)'}</span>
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleSuspend(u)}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-stone-300 cursor-pointer"
+                                    >
+                                      {isSuspended ? <Unlock className="w-3.5 h-3.5 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
+                                      <span>{isSuspended ? 'ปลดล็อกบัญชี' : 'ล็อกบัญชี (Lock)'}</span>
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleExpireNow(u)}
-                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-rose-300 cursor-pointer"
-                                >
-                                  <Clock className="w-3.5 h-3.5 text-rose-400" />
-                                  <span>สิ้นสุด Trial ทันที (Expire Now)</span>
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleExpireNow(u)}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-rose-300 cursor-pointer"
+                                    >
+                                      <Clock className="w-3.5 h-3.5 text-rose-400" />
+                                      <span>สิ้นสุด Trial ทันที (Expire Now)</span>
+                                    </button>
 
-                                <div className="border-t border-stone-800 my-1" />
+                                    <div className="border-t border-stone-800 my-1" />
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingMember(u);
-                                    setShowEditMemberModal(true);
-                                    setOpenActionUsername(null);
-                                  }}
-                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-stone-200 cursor-pointer"
-                                >
-                                  <Edit3 className="w-3.5 h-3.5 text-stone-400" />
-                                  <span>แก้ไขข้อมูล / รหัสผ่าน</span>
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingMember(u);
+                                        setShowEditMemberModal(true);
+                                        setOpenActionUsername(null);
+                                      }}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-stone-200 cursor-pointer"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5 text-stone-400" />
+                                      <span>แก้ไขข้อมูล / รหัสผ่าน</span>
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteUser(u)}
-                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-rose-950/60 flex items-center space-x-2 text-rose-400 cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                                  <span>ลบบัญชีถาวร</span>
-                                </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteUser(u)}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-rose-950/60 flex items-center space-x-2 text-rose-400 cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                                      <span>ลบบัญชีถาวร</span>
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             )}
                           </div>

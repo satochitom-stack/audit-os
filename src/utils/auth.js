@@ -350,35 +350,19 @@ export const DEFAULT_INITIAL_USERS = [
   {
     username: 'admin',
     displayName: 'ผู้ดูแลระบบส่วนกลาง (Super Admin)',
-    position: 'ผู้ดูแลระบบระบบตรวจสอบภายใน',
-    department: 'หน่วยตรวจสอบกลาง',
-    organization: 'Audit-OS แพลตฟอร์มกลาง',
+    position: 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)',
+    department: 'ศูนย์ควบคุมระบบส่วนกลาง',
+    organization: 'ศูนย์ควบคุมแพลตฟอร์มส่วนกลาง (Audit-OS Cloud)',
     province: 'ส่วนกลาง',
+    email: 'admin@audit-os.local',
     phone: '081-234-5678',
     role: 'admin',
-    passwordText: 'admin',
+    passwordText: 'admin1234',
     permissions: ALL_MENU_IDS.map((m) => m.id),
     canManageUsers: true,
-    plan: 'lifetime',
+    plan: 'admin',
     status: 'active',
-    createdAt: Date.now()
-  },
-  {
-    username: 'auditor',
-    displayName: 'ผู้ตรวจสอบภายใน (ตัวอย่าง)',
-    position: 'นักวิชาการตรวจสอบภายในชำนาญการ',
-    department: 'หน่วยตรวจสอบภายใน',
-    organization: 'องค์การบริหารส่วนตำบลต้นแบบ',
-    province: 'อุบลราชธานี',
-    phone: '089-876-5432',
-    role: 'auditor',
-    passwordText: '1234',
-    permissions: ALL_MENU_IDS.map((m) => m.id).filter((id) => id !== 'backoffice'),
-    canManageUsers: false,
-    plan: 'annual',
-    status: 'active',
-    expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: Date.now()
+    createdAt: 1700000000000
   }
 ];
 
@@ -413,6 +397,9 @@ export function autoRepairDataLinkages() {
     const obsoleteUsernames = ['mayor', 'palat', 'office', 'finance', 'engineering', 'education', 'welfare', 'cdc_charoen', 'cdc_fangthoeng', 'health', 'guest'];
     users = users.filter((u) => !obsoleteUsernames.includes(u.username?.toLowerCase()));
 
+    // Purge obsolete demo auditor so it doesn't linger as a phantom member from อบต.ต้นแบบ
+    users = users.filter((u) => !(u.username === 'auditor' && (u.organization === 'องค์การบริหารส่วนตำบลต้นแบบ' || u.organization === 'อบต.ต้นแบบ')));
+
     // Ensure Super Admin exists
     let admin = users.find((u) => u.username === 'admin');
     if (!admin) {
@@ -421,25 +408,16 @@ export function autoRepairDataLinkages() {
     } else {
       admin.role = 'admin';
       admin.displayName = 'ผู้ดูแลระบบส่วนกลาง (Super Admin)';
-      admin.organization = 'Audit-OS แพลตฟอร์มกลาง';
-      admin.position = 'ผู้ดูแลระบบสูงสุด (Super Administrator)';
+      admin.organization = 'ศูนย์ควบคุมแพลตฟอร์มส่วนกลาง (Audit-OS Cloud)';
+      admin.position = 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)';
       admin.department = 'ศูนย์ควบคุมระบบส่วนกลาง';
       admin.province = 'ส่วนกลาง';
       admin.canManageUsers = true;
-      admin.plan = 'lifetime';
+      admin.plan = 'admin';
       admin.status = 'active';
       admin.permissions = ALL_MENU_IDS.map((m) => m.id);
-      if (!admin.passwordText) admin.passwordText = 'admin';
-    }
-
-    // Ensure Demo Auditor exists
-    let demoAuditor = users.find((u) => u.username === 'auditor');
-    if (!demoAuditor) {
-      demoAuditor = { ...DEFAULT_INITIAL_USERS[1] };
-      users.push(demoAuditor);
-    } else {
-      demoAuditor.role = 'auditor';
-      demoAuditor.permissions = ALL_MENU_IDS.map((m) => m.id).filter((id) => id !== 'backoffice');
+      if (!admin.passwordText) admin.passwordText = 'admin1234';
+      if (!admin.email) admin.email = 'admin@audit-os.local';
     }
 
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
@@ -450,15 +428,11 @@ export function autoRepairDataLinkages() {
       if (sess.username === 'admin') {
         sess.role = 'admin';
         sess.displayName = 'ผู้ดูแลระบบส่วนกลาง (Super Admin)';
-        sess.organization = 'Audit-OS แพลตฟอร์มกลาง';
-        sess.position = 'ผู้ดูแลระบบสูงสุด (Super Administrator)';
+        sess.organization = 'ศูนย์ควบคุมแพลตฟอร์มส่วนกลาง (Audit-OS Cloud)';
+        sess.position = 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)';
         sess.department = 'ศูนย์ควบคุมระบบส่วนกลาง';
         sess.permissions = ALL_MENU_IDS.map((m) => m.id);
-        sess.plan = 'lifetime';
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
-      } else if (sess.username === 'auditor') {
-        sess.role = 'auditor';
-        sess.permissions = ALL_MENU_IDS.map((m) => m.id).filter((id) => id !== 'backoffice');
+        sess.plan = 'admin';
         localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
       }
     }
