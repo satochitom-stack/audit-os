@@ -320,15 +320,17 @@ export default function App() {
     return () => window.removeEventListener('ia-org-profile-changed', handleOrgChanged);
   }, []);
 
-  // When session has a specific organization, ensure active orgProfile adopts it
+  // When session has organization, district, or province, ensure active orgProfile adopts it
   useEffect(() => {
-    if (session?.organization && session.organization !== orgProfile?.name) {
+    if (session?.organization) {
       setOrgProfile((prev) => ({
         ...prev,
-        name: session.organization
+        name: session.organization || prev.name,
+        district: session.district !== undefined && session.district !== '' ? session.district : prev.district,
+        province: session.province !== undefined && session.province !== '' ? session.province : prev.province
       }));
     }
-  }, [session?.organization]);
+  }, [session?.organization, session?.district, session?.province]);
 
   // Persistent States isolated by fiscal year
   const [annualPlansByYear, setAnnualPlansByYear] = useState(() => {
@@ -1030,6 +1032,33 @@ export default function App() {
   // Actions
   const handleSaveProfile = (newProfile) => {
     setOrgProfile(newProfile);
+    if (session) {
+      saveTenantData('ia_org_profile', newProfile, session);
+      const updatedSession = {
+        ...session,
+        organization: newProfile.name || session.organization,
+        district: newProfile.district !== undefined ? newProfile.district : session.district,
+        province: newProfile.province !== undefined ? newProfile.province : session.province
+      };
+      setSession(updatedSession);
+      try {
+        localStorage.setItem('ia_session', JSON.stringify(updatedSession));
+      } catch (_) {}
+    }
+    localStorage.setItem('ia_org_profile', JSON.stringify(newProfile));
+
+    if (session?.username) {
+      const users = getUsers();
+      const idx = users.findIndex((u) => (u.username || '').toLowerCase() === session.username.toLowerCase());
+      if (idx !== -1) {
+        users[idx].organization = newProfile.name || users[idx].organization;
+        users[idx].district = newProfile.district !== undefined ? newProfile.district : users[idx].district;
+        users[idx].province = newProfile.province !== undefined ? newProfile.province : users[idx].province;
+        saveUsers(users);
+      }
+    }
+
+    window.dispatchEvent(new CustomEvent('ia-org-profile-changed', { detail: newProfile }));
   };
 
   const handleCompleteOnboarding = async (newProfile) => {

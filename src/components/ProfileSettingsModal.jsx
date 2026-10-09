@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Building2,
@@ -32,6 +32,18 @@ export default function ProfileSettingsModal({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (orgProfile) {
+      setProfileForm((prev) => ({
+        ...prev,
+        ...orgProfile,
+        name: orgProfile.name || prev.name || '',
+        district: orgProfile.district || prev.district || '',
+        province: orgProfile.province || prev.province || ''
+      }));
+    }
+  }, [orgProfile]);
+
   // Reusable Elegant Confirm Modal State
   const [confirmModalConfig, setConfirmModalConfig] = useState({
     isOpen: false,
@@ -63,12 +75,15 @@ export default function ProfileSettingsModal({
 
   const handleProfileSubmit = (e) => {
     e.preventDefault();
-    if (!profileForm.auditorName.trim()) {
-      setError('กรุณาระบุชื่อ-นามสกุล ผู้ตรวจสอบภายใน');
-      return;
-    }
-    onSaveProfile(profileForm);
-    setMessage('บันทึกข้อมูลผู้ตรวจสอบและหน่วยงานเรียบร้อยแล้ว');
+    const finalForm = {
+      ...profileForm,
+      auditorName: profileForm.auditorName?.trim() || 'ผู้ตรวจสอบภายใน',
+      name: profileForm.name?.trim() || 'องค์การบริหารส่วนตำบลต้นแบบ',
+      district: profileForm.district?.trim() || '',
+      province: profileForm.province?.trim() || ''
+    };
+    onSaveProfile(finalForm);
+    setMessage('บันทึกข้อมูลหน่วยงาน อปท. และผู้ตรวจสอบเรียบร้อยแล้ว');
     setTimeout(() => setMessage(''), 2500);
   };
 
@@ -181,10 +196,10 @@ export default function ProfileSettingsModal({
         <div className="p-5 overflow-y-auto flex-1">
           {activeTab === 'profile' && (
             <form onSubmit={handleProfileSubmit} className="space-y-4 text-xs">
-              <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-xl p-3 text-slate-700 dark:text-slate-300">
-                <span className="font-bold text-blue-900 dark:text-blue-300">💡 ข้อมูลนี้จะแสดงในทุกหน้าจอและใช้ในเอกสาร:</span>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                  เช่น ในหัวกระดาษทำการ, รายงานผลการตรวจสอบ, และการลงนามในบันทึกข้อความ
+              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3 text-stone-700 dark:text-stone-300">
+                <span className="font-bold text-amber-900 dark:text-amber-300">💡 แก้ไขชื่อ อปท., อำเภอ, จังหวัด และผู้ตรวจสอบได้ที่นี่:</span>
+                <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-0.5 leading-relaxed">
+                  เมื่อบันทึกแล้ว ข้อมูลจะถูกอัปเดตไปที่หัวแถบระบบด้านบน, กระดาษทำการทุกขั้นตอน, รายงานผลการตรวจสอบ และระบบเชื่อมโยงข้อมูลโดยอัตโนมัติ
                 </p>
               </div>
 

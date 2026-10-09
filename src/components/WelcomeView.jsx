@@ -73,6 +73,8 @@ export default function WelcomeView({
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regOrganization, setRegOrganization] = useState(() => orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ');
+  const [regDistrict, setRegDistrict] = useState(() => orgProfile?.district || '');
+  const [regProvince, setRegProvince] = useState(() => orgProfile?.province || '');
   const [regDepartment, setRegDepartment] = useState('หน่วยตรวจสอบภายใน');
   const [regPosition, setRegPosition] = useState('นักวิชาการตรวจสอบภายใน');
   const [regRole, setRegRole] = useState('auditor');
@@ -284,6 +286,8 @@ export default function WelcomeView({
         username: regUsername.trim(),
         password: regPassword,
         organization: regOrganization.trim(),
+        district: regDistrict.trim(),
+        province: regProvince.trim(),
         department: regDepartment.trim() || 'หน่วยตรวจสอบภายใน',
         position: regPosition.trim() || 'นักวิชาการตรวจสอบภายใน',
         role: 'auditor',
@@ -800,6 +804,32 @@ export default function WelcomeView({
                     <p className="text-[11px] text-amber-800 mt-1">
                       💡 ชื่อหน่วยงานนี้จะถูกเชื่อมโยงเป็นชื่อ อปท. หลักของระบบ และสามารถเข้าใช้งานเครื่องมือตรวจสอบได้ทันที 30 วัน
                     </p>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-stone-700 mb-1">
+                      อำเภอ:
+                    </label>
+                    <input
+                      type="text"
+                      value={regDistrict}
+                      onChange={(e) => setRegDistrict(e.target.value)}
+                      placeholder="เช่น อำเภอสิรินธร / อำเภอเมือง"
+                      className="w-full px-3 py-2 bg-[#faf8f4] border border-stone-300 rounded-xl text-stone-900 font-medium focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500/30 focus:border-amber-600 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-stone-700 mb-1">
+                      จังหวัด:
+                    </label>
+                    <input
+                      type="text"
+                      value={regProvince}
+                      onChange={(e) => setRegProvince(e.target.value)}
+                      placeholder="เช่น จังหวัดอุบลราชธานี"
+                      className="w-full px-3 py-2 bg-[#faf8f4] border border-stone-300 rounded-xl text-stone-900 font-medium focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500/30 focus:border-amber-600 transition-colors"
+                    />
                   </div>
 
                   <div>

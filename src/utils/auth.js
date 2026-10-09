@@ -589,7 +589,7 @@ export async function pullPendingUsersFromCloud() {
   return getPendingUsers();
 }
 
-export async function registerUser({ username, displayName, organization, province, position, department, phone, email, plan = 'trial', password }) {
+export async function registerUser({ username, displayName, organization, district, province, position, department, phone, email, plan = 'trial', password }) {
   const cleanUsername = username.trim().toLowerCase();
   const cleanOrg = organization ? organization.trim() : '';
   const cleanDisplayName = displayName.trim();
@@ -615,6 +615,7 @@ export async function registerUser({ username, displayName, organization, provin
     username: cleanUsername,
     displayName: cleanDisplayName,
     organization: cleanOrg,
+    district: district?.trim() || '',
     province: province?.trim() || '',
     position: position?.trim() || 'นักวิชาการตรวจสอบภายใน',
     department: department?.trim() || 'หน่วยตรวจสอบภายใน',
@@ -782,6 +783,8 @@ export function startSession(user, remember = true, isImpersonating = false) {
     username: user.username,
     displayName: user.displayName,
     organization: orgName,
+    district: user.district || '',
+    province: user.province || '',
     department: user.department || 'หน่วยตรวจสอบภายใน',
     position: user.position || 'นักวิชาการตรวจสอบภายใน',
     role: user.role || 'auditor',
@@ -796,16 +799,20 @@ export function startSession(user, remember = true, isImpersonating = false) {
 
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 
-  // Sync org name to profile
-  if (orgName) {
-    try {
-      const rawOrg = localStorage.getItem('ia_org_profile');
-      const parsedOrg = rawOrg ? JSON.parse(rawOrg) : {};
-      const updatedOrg = { ...parsedOrg, name: orgName };
-      localStorage.setItem('ia_org_profile', JSON.stringify(updatedOrg));
-      window.dispatchEvent(new CustomEvent('ia-org-profile-changed', { detail: updatedOrg }));
-    } catch (_) {}
-  }
+  // Sync org name, district, province to profile & isolated tenant data
+  try {
+    const rawOrg = localStorage.getItem('ia_org_profile');
+    const parsedOrg = rawOrg ? JSON.parse(rawOrg) : {};
+    const updatedOrg = {
+      ...parsedOrg,
+      name: orgName || parsedOrg.name,
+      district: (user.district && user.district.trim()) ? user.district.trim() : (parsedOrg.district || ''),
+      province: (user.province && user.province.trim()) ? user.province.trim() : (parsedOrg.province || '')
+    };
+    saveTenantData('ia_org_profile', updatedOrg, user);
+    localStorage.setItem('ia_org_profile', JSON.stringify(updatedOrg));
+    window.dispatchEvent(new CustomEvent('ia-org-profile-changed', { detail: updatedOrg }));
+  } catch (_) {}
 
   return session;
 }
@@ -825,6 +832,8 @@ export function getSession() {
       session.role = currentUser.role;
       session.displayName = currentUser.displayName;
       session.organization = currentUser.organization;
+      session.district = currentUser.district || '';
+      session.province = currentUser.province || '';
       session.position = currentUser.position;
       session.department = currentUser.department;
       session.permissions = currentUser.permissions || [];

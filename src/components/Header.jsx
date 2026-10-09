@@ -17,7 +17,8 @@ import {
   LogIn,
   Cloud,
   CloudOff,
-  RefreshCw
+  RefreshCw,
+  Edit3
 } from 'lucide-react';
 import { cloudSyncService } from '../services/cloudSyncService';
 
@@ -121,12 +122,16 @@ export default function Header({
               ) : (
                 <button
                   onClick={onOpenSettings}
-                  className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 flex items-center mt-0.5 transition-colors text-left truncate cursor-pointer hover:text-amber-700 dark:hover:text-amber-300"
-                  title="คลิกเพื่อแก้ไขข้อมูลหน่วยงานและผู้ตรวจสอบ"
+                  className="group inline-flex items-center gap-1.5 px-2.5 py-1 -ml-1 mt-0.5 rounded-lg text-[11px] sm:text-xs font-medium text-stone-700 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-300 bg-stone-100/80 dark:bg-stone-850/90 hover:bg-amber-50/80 dark:hover:bg-amber-950/40 border border-stone-200/90 dark:border-stone-700/80 hover:border-amber-400/80 transition-all cursor-pointer shadow-2xs max-w-full"
+                  title="คลิกเพื่อแก้ไขชื่อ อปท. / อำเภอ / จังหวัด / ข้อมูลผู้ตรวจสอบ"
                 >
-                  <Building2 className="w-3.5 h-3.5 mr-1 text-amber-700 dark:text-amber-400 shrink-0" />
-                  <span className="truncate max-w-[220px] sm:max-w-md font-medium">
-                    {orgProfile.name} • {orgProfile.district} {orgProfile.province}
+                  <Building2 className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 shrink-0" />
+                  <span className="truncate max-w-[190px] sm:max-w-md">
+                    {orgProfile.name || 'ยังไม่ระบุชื่อ อปท.'} • {orgProfile.district || 'อำเภอ...'} {orgProfile.province || 'จังหวัด...'}
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-900/50 px-1.5 py-0.5 rounded border border-amber-300/80 dark:border-amber-700/80 group-hover:bg-amber-200 dark:group-hover:bg-amber-800 transition-colors shrink-0">
+                    <Edit3 className="w-2.5 h-2.5" />
+                    <span>แก้ไข</span>
                   </span>
                 </button>
               )}
@@ -315,18 +320,16 @@ export default function Header({
                     <span>🏛️ คลังคู่มือ & แม่แบบ สถ. 63 หน้า</span>
                   </button>
 
-                  {isAdmin && (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onOpenSettings();
-                      }}
-                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium"
-                    >
-                      <Settings className="w-3.5 h-3.5" />
-                      <span>ตั้งค่าข้อมูล อปท. และผู้ตรวจ</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onOpenSettings && onOpenSettings();
+                    }}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium border-b border-stone-100 dark:border-stone-800/60"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>🏛️ แก้ไขข้อมูล อปท. และผู้ตรวจสอบ</span>
+                  </button>
 
                   <button
                     onClick={() => {
