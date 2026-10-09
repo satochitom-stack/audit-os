@@ -642,7 +642,7 @@ export default function UserManagementView({ currentSession, onSwitchSession, on
               </span>
               <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
                 <Users className="w-3.5 h-3.5 text-stone-500" />
-                <span>ผู้ใช้งานในระบบ {users.length} บัญชี</span>
+                <span>ผู้ใช้งานทั่วไป: {users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin').length} บัญชี (ไม่รวม Admin)</span>
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
@@ -674,9 +674,9 @@ export default function UserManagementView({ currentSession, onSwitchSession, on
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-stone-900 p-4 rounded-xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-stone-500 font-medium">ผู้ใช้งานในระบบทั้งหมด</div>
+            <div className="text-xs text-stone-500 font-medium">ผู้ใช้งานทั่วไป (ไม่รวม Admin)</div>
             <div className="text-2xl font-bold text-stone-900 dark:text-stone-100 mt-1">
-              {users.length} <span className="text-xs font-normal text-stone-400">บัญชี</span>
+              {users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin').length} <span className="text-xs font-normal text-stone-400">บัญชี</span>
             </div>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-700 dark:text-amber-400">
@@ -686,9 +686,9 @@ export default function UserManagementView({ currentSession, onSwitchSession, on
 
         <div className="bg-white dark:bg-stone-900 p-4 rounded-xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-stone-500 font-medium">ผู้ดูแลระบบ (ADMIN)</div>
+            <div className="text-xs text-stone-500 font-medium">ผู้ดูแลระบบ (Admin - แยกต่างหาก)</div>
             <div className="text-2xl font-bold text-amber-800 dark:text-amber-400 mt-1">
-              {users.filter((u) => u.role === 'admin').length}{' '}
+              {users.filter((u) => u.role === 'admin' || u.username?.toLowerCase() === 'admin').length}{' '}
               <span className="text-xs font-normal text-stone-400">บัญชี</span>
             </div>
           </div>

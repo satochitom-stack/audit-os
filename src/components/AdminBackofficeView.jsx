@@ -47,7 +47,8 @@ import {
   updateUser
 } from '../utils/auth';
 
-export default function AdminBackofficeView({ currentSession, onSwitchToWorkbench, onRefreshUser }) {
+export default function AdminBackofficeView({ currentSession, session, onSwitchToWorkbench, onRefreshUser }) {
+  const activeSession = session || currentSession;
   const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'members', 'billing', 'settings'
   const [users, setUsers] = useState(() => getUsers());
   const [pendingUsers, setPendingUsers] = useState(() => getPendingUsers());
@@ -90,17 +91,18 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
     setSettings(getSystemSettings());
   };
 
-  // Metrics
+  // Metrics: User Admin is strictly excluded from general users / members count
   const metrics = useMemo(() => {
-    const auditorUsers = users.filter((u) => u.role === 'auditor');
+    const regularAuditors = users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin');
+    const adminAccounts = users.filter((u) => u.role === 'admin' || u.username?.toLowerCase() === 'admin');
     const now = Date.now();
-    const activeAuditors = auditorUsers.filter((u) => {
+    const activeAuditors = regularAuditors.filter((u) => {
       if (u.status === 'suspended') return false;
       if (!u.expiresAt) return true;
       return new Date(u.expiresAt).getTime() > now;
     });
 
-    const expiringSoon = auditorUsers.filter((u) => {
+    const expiringSoon = regularAuditors.filter((u) => {
       if (u.status === 'suspended') return false;
       if (!u.expiresAt) return false;
       const diff = new Date(u.expiresAt).getTime() - now;
@@ -110,8 +112,9 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
     const totalRevenue = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
     return {
-      totalAuditors: auditorUsers.length,
+      totalAuditors: regularAuditors.length,
       activeAuditors: activeAuditors.length,
+      adminCount: adminAccounts.length,
       pendingCount: pendingUsers.length,
       expiringSoonCount: expiringSoon.length,
       totalRevenue
@@ -276,7 +279,7 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
               </span>
               <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
                 <Building className="w-3.5 h-3.5 text-stone-500" />
-                <span>ผู้ดูแล: {session?.displayName || 'Admin'}</span>
+                <span>ผู้ดูแล: {activeSession?.displayName || 'Super Admin'}</span>
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
@@ -313,9 +316,11 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">สมาชิกตรวจสอบภายในทั้งหมด</div>
+            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">สมาชิกตรวจสอบภายใน (ไม่รวม Admin)</div>
             <div className="text-2xl font-black text-stone-800 dark:text-stone-100">{metrics.totalAuditors} <span className="text-xs font-normal text-stone-500">ท่าน</span></div>
-            <div className="text-[11px] text-emerald-600 font-medium">ใช้งานอยู่ {metrics.activeAuditors} ท่าน</div>
+            <div className="text-[11px] text-emerald-600 font-medium">
+              ใช้งานอยู่ {metrics.activeAuditors} ท่าน <span className="text-stone-400 font-normal">• ผู้ดูแล Admin {metrics.adminCount} บัญชี</span>
+            </div>
           </div>
         </div>
 
@@ -386,7 +391,7 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>ทะเบียนสมาชิก & การต่ออายุ ({users.filter((u) => u.role !== 'admin').length})</span>
+          <span>ทะเบียนสมาชิก & การต่ออายุ ({users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin').length})</span>
         </button>
 
         <button

@@ -178,8 +178,12 @@ export default function Header({
                     : 'bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 shadow-amber-950/20'
                 }`}
               >
-                <Settings className="w-3.5 h-3.5 text-amber-300" />
-                <span>{currentTab === 'backoffice' ? '🛡️ สลับไปหน้าตรวจ' : '⚙️ หลังบ้าน Admin'}</span>
+                {currentTab === 'backoffice' ? (
+                  <Shield className="w-3.5 h-3.5 text-amber-300" />
+                ) : (
+                  <Settings className="w-3.5 h-3.5 text-amber-300" />
+                )}
+                <span>{currentTab === 'backoffice' ? 'สลับไปหน้าตรวจ' : 'หลังบ้าน Admin'}</span>
                 {pendingCount > 0 && currentTab !== 'backoffice' && (
                   <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
                     {pendingCount}
