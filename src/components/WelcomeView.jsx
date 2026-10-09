@@ -286,7 +286,7 @@ export default function WelcomeView({
         organization: regOrganization.trim(),
         department: regDepartment.trim() || 'หน่วยตรวจสอบภายใน',
         position: regPosition.trim() || 'นักวิชาการตรวจสอบภายใน',
-        role: regRole,
+        role: 'auditor',
         email: regEmail.trim()
       });
 
@@ -830,22 +830,20 @@ export default function WelcomeView({
 
                   <div className="sm:col-span-2">
                     <label className="block font-semibold text-stone-700 mb-1">
-                      บทบาทที่ขอเปิดสิทธิ์ใช้งาน:
+                      บทบาทการใช้งานระบบ:
                     </label>
-                    <select
-                      value={regRole}
-                      onChange={(e) => setRegRole(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#faf8f4] border border-stone-300 rounded-xl text-stone-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500/30 focus:border-amber-600 font-medium cursor-pointer transition-colors"
-                    >
-                      {ENTERPRISE_ROLES.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.label}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-[11px] text-stone-400 mt-1">
-                      {ENTERPRISE_ROLES.find((r) => r.id === regRole)?.desc}
-                    </p>
+                    <div className="p-3 bg-[#faf8f4] border border-stone-300 rounded-xl flex items-center justify-between text-xs">
+                      <div className="flex items-center space-x-2.5">
+                        <span className="text-lg">🛡️</span>
+                        <div>
+                          <div className="font-bold text-stone-900">ผู้ตรวจสอบภายใน อปท. (Internal Auditor)</div>
+                          <div className="text-[11px] text-stone-500">สิทธิ์เข้าใช้งานเครื่องมือปฏิบัติงานตรวจสอบภายใน 12 ขั้นตอนครบวงจร</div>
+                        </div>
+                      </div>
+                      <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-300 shrink-0">
+                        เปิดใช้งานทันที ฟรี 30 วัน
+                      </span>
+                    </div>
                   </div>
                 </div>
 
