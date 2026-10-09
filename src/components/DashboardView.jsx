@@ -82,22 +82,22 @@ export default function DashboardView({
       )}
 
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-2xl p-5 sm:p-6 text-stone-100 shadow-sm border border-stone-800 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-2xl p-5 sm:p-6 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
         <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded-full px-3 py-1 text-xs font-bold mb-2 shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 rounded-full px-3 py-1 text-xs font-bold mb-2 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-100">
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
               ระบบงานตรวจสอบภายใน {orgDisplayName}
             </h2>
-            <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
               {hasAuditorName ? (
-                <>ผู้ตรวจสอบภายใน: <strong className="text-amber-200 font-bold">{orgProfile.auditorName}</strong> ({orgProfile.auditorPosition})</>
+                <>ผู้ตรวจสอบภายใน: <strong className="text-amber-800 dark:text-amber-300 font-bold">{orgProfile.auditorName}</strong> ({orgProfile.auditorPosition})</>
               ) : (
-                <span className="text-amber-400 font-medium">
+                <span className="text-amber-700 dark:text-amber-400 font-medium">
                   ⚠️ ยังไม่ได้ตั้งชื่อผู้ตรวจสอบภายใน กรุณากดปุ่มตั้งค่าเพื่อระบุชื่อของท่าน
                 </span>
               )}
@@ -107,7 +107,7 @@ export default function DashboardView({
             {!hasAuditorName && (
               <button
                 onClick={onOpenSettings}
-                className="bg-amber-500 hover:bg-amber-400 text-stone-950 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                className="bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
               >
                 <Settings className="w-4 h-4" />
                 <span>ตั้งชื่อผู้ตรวจสอบ</span>
@@ -122,9 +122,9 @@ export default function DashboardView({
             </button>
             <button
               onClick={() => setCurrentTab('reporting')}
-              className="bg-stone-800 hover:bg-stone-750 border border-stone-700 text-amber-200 px-4 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
+              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 border border-stone-200/80 dark:border-stone-700 text-stone-800 dark:text-stone-200 px-4 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
             >
-              <FileText className="w-4 h-4 text-amber-400" />
+              <FileText className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               <span>สรุปรายงานผล</span>
             </button>
           </div>
@@ -405,7 +405,7 @@ export default function DashboardView({
                 </span>
                 <button
                   onClick={() => setCurrentTab('audit-toolkits')}
-                  className="bg-stone-850 hover:bg-stone-800 text-amber-200 border border-amber-600/30 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center space-x-1"
+                  className="bg-amber-600 hover:bg-amber-700 text-white border border-amber-500/30 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center space-x-1"
                 >
                   <span>เปิดเครื่องมือ</span>
                   <ChevronRight className="w-3.5 h-3.5" />

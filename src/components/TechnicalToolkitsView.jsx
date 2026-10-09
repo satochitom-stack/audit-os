@@ -109,20 +109,20 @@ export default function TechnicalToolkitsView({
   return (
     <div className="space-y-6">
       {/* Pillar Hero Banner */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-2xl p-6 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-2xl p-6 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
         <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded-full px-3 py-1 text-xs font-semibold mb-2">
-              <Wrench className="w-3.5 h-3.5 text-amber-400" />
+            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 rounded-full px-3 py-1 text-xs font-semibold mb-2">
+              <Wrench className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>เสาหลักที่ 2: ปฏิบัติการตรวจสอบ & เครื่องมือเฉพาะทาง</span>
               <span>•</span>
-              <span className="text-amber-200 font-bold">ปีงบประมาณ พ.ศ. {selectedYear}</span>
+              <span className="text-amber-900 dark:text-amber-200 font-bold">ปีงบประมาณ พ.ศ. {selectedYear}</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
               ชุดเครื่องมือช่วยตรวจสอบเชิงเทคนิค (Technical Audit Toolkits)
             </h2>
-            <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-3xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 mt-1 max-w-3xl leading-relaxed">
               เครื่องมืออำนวยความสะดวกสำหรับผู้ตรวจสอบภายใน ช่วยคำนวณและสอบทานความถูกต้องตามระเบียบ กฎหมาย หนังสือสั่งการ
               ใน 4 ประเด็นหลัก: ราคากลาง, จัดซื้อจัดจ้าง, โครงการตามข้อบัญญัติ และการขออนุญาตก่อสร้าง
             </p>
@@ -131,7 +131,7 @@ export default function TechnicalToolkitsView({
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               onClick={() => handleOpenWorkingPaper(currentTopic.wpId)}
-              className="bg-amber-700 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center space-x-2 cursor-pointer border border-amber-600/30"
+              className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center space-x-2 cursor-pointer border border-amber-500/30"
             >
               <ClipboardList className="w-4 h-4 text-amber-100" />
               <span>เปิดกระดาษทำการ ({currentTopic.wpId})</span>
@@ -152,7 +152,7 @@ export default function TechnicalToolkitsView({
               onClick={() => setActiveTool(topic.id)}
               className={`p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
                 isSelected
-                  ? 'bg-stone-850 text-amber-200 border-stone-700/80 shadow-md ring-2 ring-amber-500/20'
+                  ? 'bg-amber-500/10 text-amber-950 dark:text-amber-200 border-amber-500/30 shadow-xs ring-2 ring-amber-500/20'
                   : 'bg-white dark:bg-stone-900 border-stone-200/80 dark:border-stone-800 hover:border-amber-400 dark:hover:border-stone-700 shadow-2xs hover:shadow-xs'
               }`}
             >
@@ -170,7 +170,7 @@ export default function TechnicalToolkitsView({
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                       isSelected
-                        ? 'bg-amber-950/60 text-amber-300 border-amber-700/80'
+                        ? 'bg-amber-500/20 text-amber-900 dark:text-amber-200 border-amber-500/30'
                         : 'bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700'
                     }`}
                   >
@@ -179,20 +179,20 @@ export default function TechnicalToolkitsView({
                 </div>
 
                 <div>
-                  <h4 className={`text-xs font-bold leading-snug ${isSelected ? 'text-white' : 'text-stone-900 dark:text-stone-100'}`}>
+                  <h4 className={`text-xs font-bold leading-snug ${isSelected ? 'text-stone-900 dark:text-stone-100' : 'text-stone-900 dark:text-stone-100'}`}>
                     {topic.title}
                   </h4>
-                  <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${isSelected ? 'text-stone-300' : 'text-stone-500 dark:text-stone-400'}`}>
+                  <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${isSelected ? 'text-stone-600 dark:text-stone-400' : 'text-stone-500 dark:text-stone-400'}`}>
                     {topic.description}
                   </p>
                 </div>
               </div>
 
-              <div className={`mt-3 pt-2.5 border-t flex items-center justify-between text-[10px] ${isSelected ? 'border-stone-700 text-amber-300' : 'border-stone-100 dark:border-stone-800'}`}>
+              <div className={`mt-3 pt-2.5 border-t flex items-center justify-between text-[10px] ${isSelected ? 'border-amber-500/20 text-amber-900 dark:text-amber-300' : 'border-stone-100 dark:border-stone-800'}`}>
                 <span className="font-mono font-semibold">
                   {topic.wpId}
                 </span>
-                <span className={`font-bold flex items-center space-x-1 ${isSelected ? 'text-amber-300' : 'text-stone-500'}`}>
+                <span className={`font-bold flex items-center space-x-1 ${isSelected ? 'text-amber-800 dark:text-amber-300' : 'text-stone-500'}`}>
                   <span>{isSelected ? 'กำลังใช้งาน' : 'เลือกใช้งาน'}</span>
                   <ChevronRight className="w-3 h-3" />
                 </span>

@@ -352,7 +352,7 @@ export default function ExecutionView({
           className="p-4 bg-stone-50 dark:bg-stone-850/80 border-b border-stone-200/80 dark:border-stone-800 flex items-center justify-between cursor-pointer select-none"
         >
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-stone-800 text-amber-200 flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs">
               <Wrench className="w-4 h-4" />
             </div>
             <div>

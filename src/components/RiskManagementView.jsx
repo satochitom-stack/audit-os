@@ -2668,26 +2668,26 @@ export default function RiskManagementView({
               <button
                 type="button"
                 onClick={() => setShowFormSelectorMenu(!showFormSelectorMenu)}
-                className="flex items-center space-x-3 bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 hover:from-stone-850 hover:to-stone-800 text-stone-100 px-3.5 py-2 rounded-xl shadow-xs hover:shadow-md transition-all font-bold cursor-pointer border border-stone-700/60 group"
+                className="flex items-center space-x-3 bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 hover:from-amber-500/15 hover:to-amber-500/10 text-stone-900 dark:text-stone-100 px-3.5 py-2 rounded-xl shadow-2xs hover:shadow-xs transition-all font-bold cursor-pointer border border-amber-500/30 group"
                 title="คลิกเพื่อเลือกแบบรายงาน บส. 1 - บส. 5"
               >
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400/30 font-black text-sm shadow-inner group-hover:scale-105 transition-transform">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-500/30 font-black text-sm shadow-inner group-hover:scale-105 transition-transform">
                   {currentFormMeta.num}
                 </div>
                 <div className="text-left">
-                  <div className="text-[10px] font-semibold text-amber-300 tracking-wide flex items-center space-x-1.5">
+                  <div className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 tracking-wide flex items-center space-x-1.5">
                     <span>แบบรายงานหลัก</span>
-                    <span className="w-1 h-1 rounded-full bg-amber-400"></span>
+                    <span className="w-1 h-1 rounded-full bg-amber-500"></span>
                     <span>ขั้นตอนที่ {currentFormMeta.step}/5</span>
                   </div>
-                  <div className="text-xs sm:text-sm font-black flex items-center space-x-2 text-white">
+                  <div className="text-xs sm:text-sm font-black flex items-center space-x-2 text-stone-900 dark:text-stone-100">
                     <span>{currentFormMeta.code} {currentFormMeta.title}</span>
-                    <span className="bg-amber-500/20 text-amber-200 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                    <span className="bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
                       {currentFormMeta.count}
                     </span>
                   </div>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ml-1 group-hover:text-amber-300 ${showFormSelectorMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-stone-500 dark:text-stone-400 transition-transform ml-1 group-hover:text-amber-700 dark:group-hover:text-amber-300 ${showFormSelectorMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showFormSelectorMenu && (

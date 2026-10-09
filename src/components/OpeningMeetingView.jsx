@@ -81,17 +81,17 @@ export default function OpeningMeetingView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden print:hidden">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
               <Calendar className="w-3.5 h-3.5" />
               <span>ขั้นตอนที่ 5 ของกระบวนการตรวจสอบภายใน อปท.</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
               การประชุมเปิดการตรวจสอบ (Opening Meeting)
             </h1>
-            <p className="text-stone-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+            <p className="text-stone-600 dark:text-stone-400 text-xs sm:text-sm max-w-2xl leading-relaxed">
               การชี้แจงวัตถุประสงค์ ขอบเขต และข้อตกลงในการปฏิบัติงานร่วมกับหน่วยรับตรวจตามคู่มือ สถ. พร้อมจัดทำหนังสือแจ้งเข้าตรวจล่วงหน้าและบันทึกรายงานการประชุม
             </p>
           </div>
@@ -99,9 +99,9 @@ export default function OpeningMeetingView({
           <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
             <button
               onClick={handlePrint}
-              className="bg-stone-800 hover:bg-stone-750 text-stone-200 border border-stone-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
+              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
             >
-              <Printer className="w-4 h-4 text-stone-300" />
+              <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
               <span>พิมพ์เอกสารราชการ</span>
             </button>
           </div>
@@ -135,8 +135,8 @@ export default function OpeningMeetingView({
             onClick={() => setActiveSubTab('minutes')}
             className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'minutes'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-                : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 hover:bg-stone-200/80 border border-transparent'
             }`}
           >
             รายงานการประชุมเปิดตรวจ (Minutes)
@@ -145,8 +145,8 @@ export default function OpeningMeetingView({
             onClick={() => setActiveSubTab('notice')}
             className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubTab === 'notice'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-                : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 hover:bg-stone-200/80 border border-transparent'
             }`}
           >
             หนังสือแจ้งเข้าตรวจล่วงหน้า (Notice Letter)

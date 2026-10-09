@@ -584,11 +584,11 @@ export default function PublicOverviewView({
           onClick={() => setActiveTab('divisions')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === 'divisions'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60 font-black'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs font-black'
               : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent'
           }`}
         >
-          <Building2 className={`w-4 h-4 ${activeTab === 'divisions' ? 'text-amber-400' : 'text-stone-500'}`} />
+          <Building2 className={`w-4 h-4 ${activeTab === 'divisions' ? 'text-amber-600 dark:text-amber-400' : 'text-stone-500'}`} />
           <span>โครงสร้าง 5 ส่วนราชการ (รายละเอียด)</span>
         </button>
 
@@ -596,11 +596,11 @@ export default function PublicOverviewView({
           onClick={() => setActiveTab('timelines')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === 'timelines'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60 font-black'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs font-black'
               : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent'
           }`}
         >
-          <Calendar className={`w-4 h-4 ${activeTab === 'timelines' ? 'text-amber-400' : 'text-stone-500'}`} />
+          <Calendar className={`w-4 h-4 ${activeTab === 'timelines' ? 'text-amber-600 dark:text-amber-400' : 'text-stone-500'}`} />
           <span>ปฏิทินรอบเวลาให้บริการประชาชน</span>
         </button>
 
@@ -608,11 +608,11 @@ export default function PublicOverviewView({
           onClick={() => setActiveTab('forms')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === 'forms'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60 font-black'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs font-black'
               : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent'
           }`}
         >
-          <Download className={`w-4 h-4 ${activeTab === 'forms' ? 'text-amber-400' : 'text-stone-500'}`} />
+          <Download className={`w-4 h-4 ${activeTab === 'forms' ? 'text-amber-600 dark:text-amber-400' : 'text-stone-500'}`} />
           <span>แบบฟอร์มคำขอสำหรับประชาชน</span>
         </button>
 
@@ -620,11 +620,11 @@ export default function PublicOverviewView({
           onClick={() => setActiveTab('ita')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === 'ita'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60 font-black'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs font-black'
               : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 border border-transparent'
           }`}
         >
-          <ShieldCheck className={`w-4 h-4 ${activeTab === 'ita' ? 'text-amber-400' : 'text-stone-500'}`} />
+          <ShieldCheck className={`w-4 h-4 ${activeTab === 'ita' ? 'text-amber-600 dark:text-amber-400' : 'text-stone-500'}`} />
           <span>ความโปร่งใส & ศูนย์ข้อมูลข่าวสาร</span>
         </button>
       </div>

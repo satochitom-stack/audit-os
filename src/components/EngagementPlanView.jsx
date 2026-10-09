@@ -166,16 +166,16 @@ export default function EngagementPlanView({
   return (
     <div className="space-y-6">
       {/* 1. Header Banner */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 print:hidden">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 print:hidden backdrop-blur-xs">
         <div className="space-y-2">
-          <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>มาตรฐานหนังสือกรมบัญชีกลาง ว 614 & AI Co-Auditor</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
             แผนปฏิบัติงานตรวจสอบ (Audit Engagement Plan)
           </h1>
-          <p className="text-stone-300 text-sm max-w-2xl leading-relaxed">
+          <p className="text-stone-600 dark:text-stone-400 text-sm max-w-2xl leading-relaxed">
             วางแผนและออกแบบแนวการตรวจสอบรายกิจกรรม (Audit Program) สเต็ปต่อสเต็ป พร้อมเชื่อมโยงเกณฑ์ระเบียบกฎหมาย
             และเปลี่ยนภาพลักษณ์ผู้ตรวจสอบจาก "คนจับผิด" สู่ "เพื่อนคู่คิด (Consulting Mindset)" ประจำปีงบประมาณ {selectedYear}
           </p>
@@ -184,16 +184,16 @@ export default function EngagementPlanView({
         <div className="flex flex-wrap gap-3 shrink-0">
           <button
             onClick={() => setActiveTab('ai-copilot')}
-            className="flex items-center space-x-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer transform hover:-translate-y-0.5"
+            className="flex items-center space-x-2 bg-amber-700 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all cursor-pointer transform hover:-translate-y-0.5"
           >
             <Sparkles className="w-4 h-4 text-amber-200" />
             <span>+ AI สร้างแผนตาม ว 614</span>
           </button>
           <button
             onClick={handlePrint}
-            className="flex items-center space-x-2 bg-stone-800 hover:bg-stone-750 text-stone-200 border border-stone-700 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-xs transition-all cursor-pointer"
+            className="flex items-center space-x-2 bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-2xs transition-all cursor-pointer"
           >
-            <Printer className="w-4 h-4 text-stone-300" />
+            <Printer className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             <span>พิมพ์แผน (A4)</span>
           </button>
         </div>
@@ -349,7 +349,7 @@ export default function EngagementPlanView({
                     onClick={() => setDimensionFilter(dim.id)}
                     className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer flex items-center space-x-1 text-xs ${
                       isActive
-                        ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                        ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
                         : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-750'
                     }`}
                   >

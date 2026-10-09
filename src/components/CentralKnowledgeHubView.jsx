@@ -174,20 +174,20 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
       )}
 
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
         <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
               <BookOpen className="w-3.5 h-3.5" />
               <span>CENTRAL KNOWLEDGE & DOCUMENT REPOSITORY</span>
-              <span className="text-amber-400">●</span>
+              <span className="text-amber-600 dark:text-amber-400">●</span>
               <span>แชร์ใช้งานร่วมกันทุก อปท.</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
               คลังเอกสารกลาง & ฐานความรู้ผู้ตรวจสอบภายใน อปท.
             </h1>
-            <p className="text-stone-300 text-sm max-w-3xl">
+            <p className="text-stone-600 dark:text-stone-400 text-sm max-w-3xl leading-relaxed">
               รวบรวมระเบียบ กฎหมาย หนังสือสั่งการ ว. กรมบัญชีกลาง/มท., สไลด์หลักสูตรทอง 2569, รวม 30 ข้อทักท้วง สตง., และต้นแบบกระดาษทำการ 6 ภารกิจหลัก พร้อมคัดลอกลงในพื้นที่ทำงานของท่านได้ในคลิกเดียว
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
           {isAdmin && (
             <button
               onClick={() => setShowAddDocModal(true)}
-              className="bg-amber-700 hover:bg-amber-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md flex items-center space-x-2 cursor-pointer self-start md:self-auto shrink-0 border border-amber-600/30"
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-2 cursor-pointer self-start md:self-auto shrink-0 border border-amber-500/30"
             >
               <Plus className="w-4 h-4" />
               <span>+ เพิ่มเอกสารในคลังกลาง (ADMIN)</span>
@@ -225,15 +225,15 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   }}
                   className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                     isSelected
-                      ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                      ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                      : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200/80 border border-transparent'
                   }`}
                 >
                   <span>{cat.label}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                       isSelected
-                        ? 'bg-stone-700 text-amber-300'
+                        ? 'bg-amber-500/20 text-amber-900 dark:text-amber-200'
                         : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300'
                     }`}
                   >

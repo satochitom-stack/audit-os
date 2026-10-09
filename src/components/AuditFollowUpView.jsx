@@ -99,17 +99,17 @@ export default function AuditFollowUpView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 border border-stone-800 shadow-xl relative overflow-hidden print:hidden">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
               <Clock className="w-3.5 h-3.5" />
               <span>ขั้นตอนที่ 9 ของกระบวนการตรวจสอบภายใน อปท.</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
               ทะเบียนคุม & การติดตามผลข้อเสนอแนะ 30 วัน (Audit Follow-up)
             </h1>
-            <p className="text-stone-300 text-xs sm:text-sm max-w-2xl">
+            <p className="text-stone-600 dark:text-stone-400 text-xs sm:text-sm max-w-2xl leading-relaxed">
               ติดตามการปฏิบัติตามข้อเสนอแนะตามระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในของ อปท. พ.ศ. 2545 ข้อ 21 พร้อมจัดทำหนังสือติดตามผลเมื่อครบกำหนด 30 วัน
             </p>
           </div>
@@ -117,9 +117,9 @@ export default function AuditFollowUpView({
           <div className="flex items-center space-x-2 self-start sm:self-auto">
             <button
               onClick={() => window.print()}
-              className="bg-stone-800/80 hover:bg-stone-700 text-stone-200 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-700 shadow-xs"
+              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
             >
-              <Printer className="w-4 h-4 text-amber-400" />
+              <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
               <span>พิมพ์ทะเบียนคุม / หนังสือ</span>
             </button>
           </div>
@@ -132,8 +132,8 @@ export default function AuditFollowUpView({
           onClick={() => setActiveTab('register')}
           className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
             activeTab === 'register'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
           }`}
         >
           <FileSpreadsheet className="w-4 h-4" />
@@ -144,8 +144,8 @@ export default function AuditFollowUpView({
           onClick={() => setActiveTab('memo')}
           className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
             activeTab === 'memo'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
           }`}
         >
           <Send className="w-4 h-4" />

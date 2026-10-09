@@ -391,11 +391,11 @@ export default function PlanningView({
             onClick={() => setActiveTab('annual')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'annual'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
                 : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
+            <FileText className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>แผนปฏิบัติการประจำปี ({annualPlans.length})</span>
           </button>
 
@@ -403,11 +403,11 @@ export default function PlanningView({
             onClick={() => setActiveTab('strategic')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'strategic'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
                 : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
+            <Layers className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>แผนระยะยาว 3-5 ปี ({strategicPlan.length})</span>
           </button>
 
@@ -415,11 +415,11 @@ export default function PlanningView({
             onClick={() => setActiveTab('risk')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'risk'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
                 : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
-            <AlertTriangle className="w-3.5 h-3.5" />
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>ประเมินความเสี่ยง (5x5 Matrix)</span>
           </button>
 
@@ -427,11 +427,11 @@ export default function PlanningView({
             onClick={() => setActiveTab('charter')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'charter'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border-l-2 border-amber-500'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
                 : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
-            <ShieldCheck className="w-3.5 h-3.5" />
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>กฎบัตรการตรวจสอบภายใน</span>
           </button>
         </div>
@@ -507,38 +507,38 @@ export default function PlanningView({
       {activeTab === 'annual' && (
         <div className="space-y-5">
           {/* Header Info Banner */}
-          <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-stone-100 rounded-2xl p-5 sm:p-6 shadow-md border border-stone-800 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-2xl p-5 sm:p-6 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <span className="bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide">
+                  <span className="bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide">
                     ปีงบประมาณ พ.ศ. {selectedYear}
                   </span>
-                  <span className="text-stone-300 text-xs">
+                  <span className="text-stone-600 dark:text-stone-400 text-xs">
                     {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} {orgProfile?.district || ''} {orgProfile?.province || ''}
                   </span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
                   แผนการปฏิบัติงานตรวจสอบภายในประจำปี (Annual Audit Plan)
                 </h2>
-                <p className="text-stone-300 text-xs max-w-2xl leading-relaxed">
+                <p className="text-stone-600 dark:text-stone-400 text-xs max-w-2xl leading-relaxed">
                   จัดทำขึ้นจากการประเมินความเสี่ยงครอบคลุมทุกมิติงานตรวจ (การเงิน กฎระเบียบ ประสิทธิภาพ ไอที และงานสืบสวน) ได้รับความเห็นชอบจากปลัด อปท. และอนุมัติโดยนายก อปท. ตามระเบียบ มท. ตรวจสอบภายใน อปท. 2545
                 </p>
               </div>
 
               {/* Quick Summary Badges */}
-              <div className="grid grid-cols-3 gap-2 text-center shrink-0 bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10">
+              <div className="grid grid-cols-3 gap-2 text-center shrink-0 bg-white/80 dark:bg-stone-850/60 backdrop-blur-md p-3 rounded-xl border border-stone-200/80 dark:border-stone-700 shadow-2xs">
                 <div className="px-2">
-                  <div className="text-xl font-black text-white">{annualPlans.length}</div>
-                  <div className="text-[10px] text-stone-400">โครงการทั้งหมด</div>
+                  <div className="text-xl font-black text-stone-900 dark:text-stone-100">{annualPlans.length}</div>
+                  <div className="text-[10px] text-stone-500 dark:text-stone-400">โครงการทั้งหมด</div>
                 </div>
-                <div className="px-2 border-x border-white/20">
-                  <div className="text-xl font-black text-amber-300">{highRiskCount}</div>
-                  <div className="text-[10px] text-stone-400">ความเสี่ยงสูง</div>
+                <div className="px-2 border-x border-stone-200 dark:border-stone-700">
+                  <div className="text-xl font-black text-amber-800 dark:text-amber-400">{highRiskCount}</div>
+                  <div className="text-[10px] text-stone-500 dark:text-stone-400">ความเสี่ยงสูง</div>
                 </div>
                 <div className="px-2">
-                  <div className="text-xl font-black text-emerald-300">{avgProgress}%</div>
-                  <div className="text-[10px] text-stone-400">ความก้าวหน้าเฉลี่ย</div>
+                  <div className="text-xl font-black text-emerald-700 dark:text-emerald-400">{avgProgress}%</div>
+                  <div className="text-[10px] text-stone-500 dark:text-stone-400">ความก้าวหน้าเฉลี่ย</div>
                 </div>
               </div>
             </div>
@@ -593,7 +593,7 @@ export default function PlanningView({
                     onClick={() => setSelectedDimension(dim.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
                       isActive
-                        ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
+                        ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
                         : 'bg-stone-100 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                     }`}
                   >

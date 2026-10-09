@@ -109,7 +109,7 @@ export default function AnnualAuditReportView({
           <button
             type="button"
             onClick={() => window.print()}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-stone-900 hover:bg-stone-800 dark:bg-amber-700 dark:hover:bg-amber-600 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors border border-amber-500/30"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>พิมพ์รายงาน / บันทึกเป็น PDF</span>

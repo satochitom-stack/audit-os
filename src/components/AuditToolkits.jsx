@@ -223,14 +223,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               onClick={() => setActiveTool('factor-f')}
               className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
                 activeTool === 'factor-f'
-                  ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 border-stone-700/60 shadow-xs'
+                  ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border-amber-500/30 shadow-xs'
                   : 'bg-stone-50 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100'
               }`}
             >
-              <Calculator className="w-4 h-4 shrink-0 text-amber-400" />
+              <Calculator className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <div className="truncate">
                 <div>ตรวจราคากลาง & Factor F</div>
-                <div className={`text-[10px] font-normal ${activeTool === 'factor-f' ? 'text-amber-300' : 'text-stone-400'}`}>แบบ ปร.4, 5, 6</div>
+                <div className={`text-[10px] font-normal ${activeTool === 'factor-f' ? 'text-amber-800 dark:text-amber-300' : 'text-stone-400'}`}>แบบ ปร.4, 5, 6</div>
               </div>
             </button>
 
@@ -238,14 +238,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               onClick={() => setActiveTool('penalty')}
               className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
                 activeTool === 'penalty'
-                  ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 border-stone-700/60 shadow-xs'
+                  ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border-amber-500/30 shadow-xs'
                   : 'bg-stone-50 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100'
               }`}
             >
-              <Clock className="w-4 h-4 shrink-0 text-amber-400" />
+              <Clock className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <div className="truncate">
                 <div>คำนวณค่าปรับส่งมอบล่าช้า</div>
-                <div className={`text-[10px] font-normal ${activeTool === 'penalty' ? 'text-amber-300' : 'text-stone-400'}`}>0.1% - 0.2% ต่อวัน</div>
+                <div className={`text-[10px] font-normal ${activeTool === 'penalty' ? 'text-amber-800 dark:text-amber-300' : 'text-stone-400'}`}>0.1% - 0.2% ต่อวัน</div>
               </div>
             </button>
 
@@ -253,14 +253,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               onClick={() => setActiveTool('permit')}
               className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
                 activeTool === 'permit'
-                  ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 border-stone-700/60 shadow-xs'
+                  ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border-amber-500/30 shadow-xs'
                   : 'bg-stone-50 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100'
               }`}
             >
-              <Building2 className="w-4 h-4 shrink-0 text-amber-400" />
+              <Building2 className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <div className="truncate">
                 <div>ตรวจค่าธรรมเนียมใบอนุญาต</div>
-                <div className={`text-[10px] font-normal ${activeTool === 'permit' ? 'text-amber-300' : 'text-stone-400'}`}>พ.ร.บ. ควบคุมอาคาร 2522</div>
+                <div className={`text-[10px] font-normal ${activeTool === 'permit' ? 'text-amber-800 dark:text-amber-300' : 'text-stone-400'}`}>พ.ร.บ. ควบคุมอาคาร 2522</div>
               </div>
             </button>
 
@@ -268,14 +268,14 @@ export default function AuditToolkits({ onAddSampleFromTool, currentWpId = '' })
               onClick={() => setActiveTool('ordinance')}
               className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
                 activeTool === 'ordinance'
-                  ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 border-stone-700/60 shadow-xs'
+                  ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border-amber-500/30 shadow-xs'
                   : 'bg-stone-50 dark:bg-stone-800/60 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100'
               }`}
             >
-              <HardHat className="w-4 h-4 shrink-0 text-amber-400" />
+              <HardHat className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <div className="truncate">
                 <div>ตรวจงานก่อสร้างข้อบัญญัติ</div>
-                <div className={`text-[10px] font-normal ${activeTool === 'ordinance' ? 'text-amber-300' : 'text-stone-400'}`}>กันเงินเหลื่อมปี / คุมงาน</div>
+                <div className={`text-[10px] font-normal ${activeTool === 'ordinance' ? 'text-amber-800 dark:text-amber-300' : 'text-stone-400'}`}>กันเงินเหลื่อมปี / คุมงาน</div>
               </div>
             </button>
           </div>

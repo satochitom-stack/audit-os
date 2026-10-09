@@ -285,8 +285,8 @@ export default function ReportingView({
             onClick={() => setActiveTab('annual-report')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'annual-report'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'bg-white/80 dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -297,8 +297,8 @@ export default function ReportingView({
             onClick={() => setActiveTab('report')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'report'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'bg-white/80 dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -309,8 +309,8 @@ export default function ReportingView({
             onClick={() => setActiveTab('exit')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'exit'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'bg-white/80 dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
@@ -321,8 +321,8 @@ export default function ReportingView({
             onClick={() => setActiveTab('capa')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'capa'
-                ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-                : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'bg-white/80 dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
@@ -400,9 +400,9 @@ export default function ReportingView({
 
           <button
             onClick={() => window.print()}
-            className="no-print bg-stone-850 hover:bg-stone-800 text-stone-100 text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer border border-stone-700/60"
+            className="no-print bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 text-xs font-bold px-3.5 py-2 rounded-xl shadow-2xs flex items-center space-x-1.5 cursor-pointer"
           >
-            <Printer className="w-3.5 h-3.5" />
+            <Printer className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400" />
             <span>พิมพ์</span>
           </button>
         </div>
@@ -575,20 +575,20 @@ export default function ReportingView({
       {activeTab === 'capa' && (
         <div className="space-y-6">
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
+          <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-2xl p-6 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
             <div className="relative z-10 space-y-2">
               <div className="flex items-center space-x-2">
-                <span className="bg-indigo-500/30 border border-indigo-400/40 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide">
+                <span className="bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide">
                   Corrective & Preventive Action Suite
                 </span>
-                <span className="text-slate-300 text-xs">
+                <span className="text-stone-500 dark:text-stone-400 text-xs">
                   พ.ร.บ. วินัยการเงินการคลัง พ.ศ. 2561 มาตรา 74 & ระเบียบ มท. ตรวจสอบภายใน อปท. 2545 ข้อ 25-26
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
                 ระบบบริหารและติดตามข้อทักท้วงและข้อสังเกต (CAPA Tracking Suite)
               </h2>
-              <p className="text-slate-300 text-xs max-w-3xl leading-relaxed">
+              <p className="text-stone-600 dark:text-stone-400 text-xs max-w-3xl leading-relaxed">
                 ศูนย์กลางบันทึกและติดตามผลการปรับปรุงแก้ไขข้อบกพร่องทั้งการแก้ไขเฉพาะหน้า (Corrective Action) และมาตรการป้องกันเชิงระบบ (Preventive Action) พร้อมระบบนับถอยหลัง 60 วันตามระเบียบกฎหมายท้องถิ่น
               </p>
             </div>

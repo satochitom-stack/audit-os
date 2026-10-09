@@ -262,20 +262,20 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
       )}
 
       {/* Top Header & Role Indicator */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 rounded-3xl p-6 sm:p-8 text-stone-100 shadow-xl border border-stone-800 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
         <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
               <ShieldAlert className="w-3.5 h-3.5" />
               <span>SUPER ADMIN CONSOLE</span>
-              <span className="text-amber-400">●</span>
+              <span className="text-amber-600 dark:text-amber-400">●</span>
               <span>ระบบหลังบ้านควบคุมส่วนกลาง</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
               ระบบหลังบ้านจัดการสมาชิก & ค่าบริการ (Audit-OS)
             </h1>
-            <p className="text-stone-300 text-sm max-w-2xl">
+            <p className="text-stone-600 dark:text-stone-400 text-sm max-w-2xl leading-relaxed">
               ควบคุมดูแลสมาชิกผู้ตรวจสอบภายใน อปท. ทั่วประเทศ อนุมัติการเข้าใช้งาน ตรวจสอบการชำระค่าสมาชิกรายเดือน/รายปี และกำหนดทิศทางระบบกลาง
             </p>
           </div>
@@ -284,18 +284,18 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
             {onSwitchToWorkbench && (
               <button
                 onClick={onSwitchToWorkbench}
-                className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center space-x-2 cursor-pointer border border-amber-600/30"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-xs flex items-center space-x-2 cursor-pointer border border-amber-500/30"
               >
-                <Sparkles className="w-4 h-4 text-amber-300" />
+                <Sparkles className="w-4 h-4 text-amber-200" />
                 <span>เข้าสู่พื้นที่ทำงานตรวจสอบ (Workbench)</span>
               </button>
             )}
             <button
               onClick={reloadData}
-              className="bg-stone-800 hover:bg-stone-700 text-stone-200 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-700"
+              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
               title="รีเฟรชข้อมูล"
             >
-              <RefreshCw className="w-4 h-4 text-amber-400" />
+              <RefreshCw className="w-4 h-4 text-stone-500 dark:text-stone-400" />
               <span>รีเฟรช</span>
             </button>
           </div>
@@ -362,8 +362,8 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
           onClick={() => setActiveTab('pending')}
           className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'pending'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
           }`}
         >
           <Clock className="w-4 h-4" />
@@ -377,8 +377,8 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
           onClick={() => setActiveTab('members')}
           className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'members'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -389,8 +389,8 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
           onClick={() => setActiveTab('billing')}
           className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'billing'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
           }`}
         >
           <CreditCard className="w-4 h-4" />
@@ -401,8 +401,8 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
           onClick={() => setActiveTab('settings')}
           className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'settings'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
           }`}
         >
           <Settings className="w-4 h-4" />

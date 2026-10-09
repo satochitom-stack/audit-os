@@ -246,19 +246,19 @@ export default function ExecutiveDashboardView({
   return (
     <div className="space-y-6">
       {/* Executive Header Banner */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-stone-100 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden border border-stone-800">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
         <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>แดชบอร์ดและรายงานภาพรวมสำหรับผู้บริหาร (Executive Governance Cockpit)</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900 dark:text-stone-100">
               แดชบอร์ดผู้บริหาร {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h1>
-            <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-2xl leading-relaxed">
               ติดตามสถานะความเสี่ยงองค์กร 5 สำนัก/กอง, วินัยการเงินการคลัง, กรอบเวลากฎหมายสำคัญ 
               และระบบสั่งการมอบหมายงานผู้บริหาร (Executive Directives)
             </p>
@@ -268,7 +268,7 @@ export default function ExecutiveDashboardView({
             <button
               type="button"
               onClick={() => setShowCreateDirectiveModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer border border-amber-500/30"
             >
               <Plus className="w-4 h-4" />
               <span>บันทึกข้อสั่งการผู้บริหาร</span>
@@ -276,72 +276,72 @@ export default function ExecutiveDashboardView({
             <button
               type="button"
               onClick={() => setCurrentTab && setCurrentTab('reporting')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold border border-stone-700 transition-all cursor-pointer shadow-xs"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 text-xs font-bold border border-stone-200/80 dark:border-stone-700 transition-all cursor-pointer shadow-2xs"
             >
-              <FileText className="w-4 h-4 text-amber-400" />
+              <FileText className="w-4 h-4 text-stone-500 dark:text-stone-400" />
               <span>รายงานสรุปประจำปี</span>
             </button>
           </div>
         </div>
 
         {/* 4 Financial & Governance KPI Highlights (ตารางสรุป 4 มิติสำคัญ) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-stone-800">
-          <div className="bg-stone-850/80 rounded-2xl p-4 border border-stone-700/60 shadow-xs">
-            <div className="text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-stone-200/60 dark:border-stone-800">
+          <div className="bg-white/80 dark:bg-stone-800/80 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-700/60 shadow-2xs">
+            <div className="text-stone-600 dark:text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
+              <DollarSign className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>งบประมาณรวมทั้งสิ้น</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-white">
+            <div className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100">
               {totalBudget > 0 ? (
                 <>
-                  {(totalBudget / 1000000).toFixed(2)} <span className="text-xs font-normal text-stone-400">ลบ.</span>
+                  {(totalBudget / 1000000).toFixed(2)} <span className="text-xs font-normal text-stone-500 dark:text-stone-400">ลบ.</span>
                 </>
               ) : (
                 <>
-                  0.00 <span className="text-xs font-normal text-stone-400">บาท</span>
+                  0.00 <span className="text-xs font-normal text-stone-500 dark:text-stone-400">บาท</span>
                 </>
               )}
             </div>
-            <div className="text-[11px] text-stone-400 mt-1">
+            <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1">
               {totalBudget > 0 ? 'ปีงบประมาณ พ.ศ. 2569' : 'รอการบันทึกงบประมาณ'}
             </div>
           </div>
 
-          <div className="bg-stone-850/80 rounded-2xl p-4 border border-stone-700/60 shadow-xs">
-            <div className="text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
-              <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+          <div className="bg-white/80 dark:bg-stone-800/80 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-700/60 shadow-2xs">
+            <div className="text-stone-600 dark:text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>การเบิกจ่ายงบประมาณ</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-amber-400">
+            <div className="text-xl sm:text-2xl font-bold text-amber-800 dark:text-amber-300">
               {spentPercent}%
             </div>
-            <div className="text-[11px] text-stone-400 mt-1">
+            <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1">
               {totalSpent > 0 ? `เบิกจ่าย ${(totalSpent / 1000000).toFixed(2)} ลบ.` : 'เบิกจ่าย 0.00 บาท'}
             </div>
           </div>
 
-          <div className="bg-stone-850/80 rounded-2xl p-4 border border-stone-700/60 shadow-xs">
-            <div className="text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+          <div className="bg-white/80 dark:bg-stone-800/80 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-700/60 shadow-2xs">
+            <div className="text-stone-600 dark:text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>ข้อทักท้วงคงค้าง (CAPA)</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-amber-400">
-              {capaFindings.filter((c) => c.status !== 'verified_closed').length} <span className="text-xs font-normal text-stone-400">ข้อ</span>
+            <div className="text-xl sm:text-2xl font-bold text-amber-800 dark:text-amber-300">
+              {capaFindings.filter((c) => c.status !== 'verified_closed').length} <span className="text-xs font-normal text-stone-500 dark:text-stone-400">ข้อ</span>
             </div>
-            <div className="text-[11px] text-stone-400 mt-1">
+            <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1">
               {capaFindings.filter((c) => c.status !== 'verified_closed').length > 0 ? 'อยู่ในกรอบ 60 วัน' : 'ไม่มีข้อทักท้วงคงค้าง'}
             </div>
           </div>
 
-          <div className="bg-stone-850/80 rounded-2xl p-4 border border-stone-700/60 shadow-xs">
-            <div className="text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
-              <Send className="w-3.5 h-3.5 text-amber-400" />
+          <div className="bg-white/80 dark:bg-stone-800/80 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-700/60 shadow-2xs">
+            <div className="text-stone-600 dark:text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
+              <Send className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>ข้อสั่งการผู้บริหาร</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-white">
-              {directives.filter((d) => d.status === 'in_progress').length} <span className="text-xs font-normal text-stone-400">เรื่องรอดำเนินการ</span>
+            <div className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100">
+              {directives.filter((d) => d.status === 'in_progress').length} <span className="text-xs font-normal text-stone-500 dark:text-stone-400">เรื่องรอดำเนินการ</span>
             </div>
-            <div className="text-[11px] text-emerald-400 mt-1 font-medium">
+            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
               {directives.length > 0 ? `เสร็จสิ้น ${directives.filter((d) => d.status === 'completed').length} เรื่อง` : 'ไม่มีข้อสั่งการคงค้าง'}
             </div>
           </div>
@@ -462,8 +462,8 @@ export default function ExecutiveDashboardView({
           onClick={() => setActiveTab('overview')}
           className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
             activeTab === 'overview'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-              : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+              : 'bg-stone-100/80 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -475,8 +475,8 @@ export default function ExecutiveDashboardView({
           onClick={() => setActiveTab('directives')}
           className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
             activeTab === 'directives'
-              ? 'bg-stone-850 text-amber-200 dark:bg-stone-800 dark:text-amber-300 shadow-xs border border-stone-700/60'
-              : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
+              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+              : 'bg-stone-100/80 dark:bg-stone-850 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 border border-stone-200/80 dark:border-stone-800'
           }`}
         >
           <Send className="w-4 h-4" />
@@ -502,7 +502,7 @@ export default function ExecutiveDashboardView({
                   onClick={() => setScorecardViewMode('table')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     scorecardViewMode === 'table'
-                      ? 'bg-stone-850 text-amber-200 dark:bg-stone-700 dark:text-amber-300 shadow-2xs'
+                      ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 shadow-2xs border border-amber-500/30'
                       : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
                   }`}
                 >
@@ -514,7 +514,7 @@ export default function ExecutiveDashboardView({
                   onClick={() => setScorecardViewMode('cards')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     scorecardViewMode === 'cards'
-                      ? 'bg-stone-850 text-amber-200 dark:bg-stone-700 dark:text-amber-300 shadow-2xs'
+                      ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 shadow-2xs border border-amber-500/30'
                       : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
                   }`}
                 >

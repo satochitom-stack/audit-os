@@ -180,17 +180,17 @@ export default function FormsView({
       )}
 
       {/* Header & Search Bar */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-stone-100 rounded-3xl p-6 sm:p-7 border border-stone-800 shadow-sm space-y-4">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-semibold mb-2">
-              <FileSpreadsheet className="w-4 h-4 text-amber-400" />
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold mb-2">
+              <FileSpreadsheet className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>คลังแบบฟอร์มมาตรฐาน (Forms Library)</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
               คลังเอกสารและแบบฟอร์มมาตรฐาน อปท.
             </h2>
-            <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
               รวบรวมแบบฟอร์มทางการ แบบรายงาน และเอกสารแม่แบบสำหรับองค์กรปกครองส่วนท้องถิ่น สามารถเปิดอ่านเอกสารตัวจริงได้ทันทีในระบบโดยไม่ต้องดาวน์โหลด
             </p>
           </div>
@@ -201,7 +201,7 @@ export default function FormsView({
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-amber-500/30"
               >
                 <Plus className="w-4 h-4" />
                 <span>เพิ่มแบบฟอร์ม / อัปโหลดไฟล์</span>
@@ -211,18 +211,18 @@ export default function FormsView({
         </div>
 
         {/* Stats Badges */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-stone-800">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-800 text-amber-300 border border-stone-700 text-xs font-semibold">
-            <Layers className="w-3.5 h-3.5 text-amber-400" />
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-stone-200/60 dark:border-stone-800">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/80 dark:bg-stone-800 text-amber-900 dark:text-amber-300 border border-stone-200/80 dark:border-stone-700 text-xs font-semibold shadow-2xs">
+            <Layers className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>ทั้งหมด {formsBase.length} ฉบับ</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 text-xs font-semibold">
-            <Eye className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-900 dark:text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
+            <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>พร้อมเปิดอ่านและดาวน์โหลดทุกรายการ</span>
           </span>
           {searchTerm && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/60 text-amber-300 border border-amber-800 text-xs font-semibold">
-              <Filter className="w-3.5 h-3.5 text-amber-400" />
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold">
+              <Filter className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>พบ {filteredItems.length} รายการจากการค้นหา</span>
             </span>
           )}
@@ -237,7 +237,7 @@ export default function FormsView({
               placeholder="พิมพ์คำค้นหา เช่น ว 3482, บส. 1, การบริหารความเสี่ยง, ปค. 4, จัดซื้อจัดจ้าง..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-700 focus:ring-2 focus:ring-amber-500 outline-none text-xs bg-stone-900/90 text-stone-100 placeholder-stone-400"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 focus:ring-2 focus:ring-amber-500 outline-none text-xs bg-white/90 dark:bg-stone-900/90 text-stone-900 dark:text-stone-100 placeholder-stone-400 shadow-2xs"
             />
           </div>
 
@@ -248,8 +248,8 @@ export default function FormsView({
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
                   selectedCategory === cat.id
-                    ? 'bg-amber-700 text-white shadow-xs'
-                    : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                    ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                    : 'bg-white/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-200/60 dark:border-stone-700'
                 }`}
               >
                 {cat.label}
