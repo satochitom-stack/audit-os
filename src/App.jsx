@@ -56,7 +56,8 @@ import {
   getPendingUsers,
   pullPendingUsersFromCloud,
   loadTenantData,
-  saveTenantData
+  saveTenantData,
+  getSystemSettings
 } from './utils/auth';
 import { cloudSyncService, mergeRiskManagement } from './services/cloudSyncService';
 import { isSupabaseConfigured, getSupabaseClient } from './services/supabaseClient';
@@ -97,6 +98,18 @@ export default function App() {
   const [showDlaTemplates, setShowDlaTemplates] = useState(false);
   const [cloudToast, setCloudToast] = useState(null);
   const [pendingCount, setPendingCount] = useState(() => getPendingUsers().length);
+  const [systemSettings, setSystemSettings] = useState(() => getSystemSettings());
+  const [dismissedAnnouncement, setDismissedAnnouncement] = useState(false);
+
+  // Listen to system settings & broadcast announcements
+  useEffect(() => {
+    const handleSettingsChanged = (e) => {
+      setSystemSettings(e.detail || getSystemSettings());
+      setDismissedAnnouncement(false);
+    };
+    window.addEventListener('ia-settings-changed', handleSettingsChanged);
+    return () => window.removeEventListener('ia-settings-changed', handleSettingsChanged);
+  }, []);
 
   // Listen to local pending users list changes
   useEffect(() => {
@@ -1321,6 +1334,28 @@ export default function App() {
         currentTab={currentTab}
         setCurrentTab={handleSelectTab}
       />
+
+      {/* Real-time Broadcast Announcement Banner จาก Super Admin */}
+      {systemSettings?.broadcastActive && systemSettings?.announcement && !dismissedAnnouncement && (
+        <div className="bg-gradient-to-r from-stone-900 via-amber-950/90 to-stone-900 text-amber-100 px-4 py-2.5 text-xs border-b border-amber-500/40 flex items-center justify-between shadow-md z-30 shrink-0 backdrop-blur-xs animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center space-x-2.5 overflow-hidden">
+            <span className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide shrink-0 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-950 animate-ping inline-block" />
+              <span>📢 ประกาศระบบส่วนกลาง</span>
+            </span>
+            <span className="truncate text-amber-100 font-medium tracking-wide">
+              {systemSettings.announcement}
+            </span>
+          </div>
+          <button
+            onClick={() => setDismissedAnnouncement(true)}
+            className="text-amber-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer shrink-0 ml-2"
+            title="ซ่อนประกาศนี้"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Impersonate / Department Preview Banner (แสดงเฉพาะเมื่อ ADMIN กำลังกดทดสอบมุมมองเท่านั้น) */}
       {session?.isImpersonating && (

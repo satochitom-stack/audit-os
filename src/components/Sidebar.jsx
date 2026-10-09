@@ -108,12 +108,20 @@ export default function Sidebar({
               <Lock className="w-2.5 h-2.5" /> หมดอายุ (ล็อค)
             </span>
           ) : subStatus.isTrial ? (
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300">
-              ทดลองใช้ ({subStatus.daysRemaining} วัน)
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 shadow-2xs inline-flex items-center space-x-1">
+              <span>🌱 ฟรี 30 วัน</span> <span>({subStatus.daysRemaining} วัน)</span>
+            </span>
+          ) : subStatus.tier === 'VIP' ? (
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border border-blue-400/50 shadow-sm inline-flex items-center space-x-1">
+              <span>⭐ VIP</span> <span>({subStatus.daysRemaining} วัน)</span>
+            </span>
+          ) : subStatus.tier === 'PREMIUM' ? (
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border border-amber-200 shadow-md inline-flex items-center space-x-1">
+              <span>👑 PREMIUM</span> <span>({subStatus.daysRemaining} วัน)</span>
             </span>
           ) : (
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${planInfo.badgeColor}`}>
-              {planInfo.name.split(' ')[0]} {subStatus.lifetime ? '(ตลอดชีพ)' : `(${subStatus.daysRemaining} วัน)`}
+            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${planInfo.badgeColor}`}>
+              {planInfo.name.split(' ')[0]} {subStatus.isLifetime ? '(ตลอดชีพ)' : `(${subStatus.daysRemaining} วัน)`}
             </span>
           )}
         </div>

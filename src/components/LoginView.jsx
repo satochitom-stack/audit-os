@@ -412,39 +412,57 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                   <label className="block font-semibold text-stone-300">
                     เลือกแพ็กเกจสมาชิกที่ต้องการสมัคร
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {Object.values(MEMBERSHIP_PLANS).map((p) => (
-                      <button
-                        type="button"
-                        key={p.id}
-                        onClick={() => setRegPlan(p.id)}
-                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                          regPlan === p.id
-                            ? 'bg-amber-600/25 border-amber-500 text-white ring-1 ring-amber-500'
-                            : 'bg-[#2b3545]/70 border-stone-600/80 text-stone-400 hover:border-stone-500'
-                        }`}
-                      >
-                        <div className="font-bold text-[11px] text-stone-100">{p.name}</div>
-                        <div className="text-xs font-black text-amber-400">{p.priceLabel}</div>
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {Object.values(MEMBERSHIP_PLANS)
+                      .filter((p) => p.id !== 'lifetime')
+                      .map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          onClick={() => setRegPlan(p.id)}
+                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                            regPlan === p.id
+                              ? 'bg-amber-600/25 border-amber-500 text-white ring-2 ring-amber-500/50 shadow-md'
+                              : 'bg-[#2b3545]/70 border-stone-600/80 text-stone-400 hover:border-stone-500'
+                          }`}
+                        >
+                          <div className="font-bold text-xs text-stone-100 flex items-center space-x-1">
+                            <span>{p.id === 'trial' ? '🌱' : p.id === 'monthly' ? '⭐' : '👑'}</span>
+                            <span>{p.name}</span>
+                          </div>
+                          <div className="text-xs font-black text-amber-400 mt-1">{p.priceLabel}</div>
+                          <div className="text-[10px] text-stone-400 mt-0.5 line-clamp-1">{p.description}</div>
+                        </button>
+                      ))}
                   </div>
                 </div>
 
-                {/* Banking info for paid plans */}
+                {/* Banking info & PromptPay QR for paid plans */}
                 {regPlan !== 'trial' && (
-                  <div className="bg-[#242c38] p-3 rounded-xl border border-stone-700/80 text-[11px] text-stone-300 space-y-1">
-                    <div className="font-bold text-amber-400 flex items-center space-x-1">
-                      <CreditCard className="w-3.5 h-3.5" />
-                      <span>ข้อมูลการชำระเงินค่าสมาชิก:</span>
+                  <div className="bg-[#242c38] p-4 rounded-2xl border border-stone-700/80 text-xs text-stone-300 space-y-3">
+                    <div className="font-bold text-amber-400 flex items-center space-x-1.5">
+                      <CreditCard className="w-4 h-4 text-amber-400" />
+                      <span>ข้อมูลช่องทางการชำระเงินค่าสมาชิก:</span>
                     </div>
-                    <div>ธนาคาร: {settings.bankName || 'ธนาคารกรุงไทย'}</div>
-                    <div className="font-mono font-bold text-amber-100">
-                      เลขบัญชี: {settings.bankAccountNo || '123-4-56789-0'} ({settings.bankAccountName || 'Audit-OS'})
-                    </div>
-                    {settings.promptPayNo && <div>พร้อมเพย์: {settings.promptPayNo}</div>}
-                    <div className="text-[10px] text-stone-400 pt-1">
-                      * หลังโอนเงิน ท่านสามารถแจ้งสลิปผ่านทาง LINE หรือรอให้แอดมินอนุมัติสิทธิ์ภายใน 24 ชม.
+
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {settings.qrCodeImage && (
+                        <div className="w-28 h-28 bg-white p-1 rounded-xl shrink-0 shadow-md">
+                          <img
+                            src={settings.qrCodeImage}
+                            alt="PromptPay QR Code"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                      <div className="space-y-1 flex-1 text-[11px]">
+                        <div>พร้อมเพย์ (PromptPay): <strong className="font-mono text-amber-200 font-bold text-xs">{settings.promptPayNo || '0619614953'}</strong></div>
+                        <div>ชื่อบัญชี: <strong className="text-white">{settings.bankAccountName || 'นายทุมมงคล ธรรมพิทักษ์'}</strong></div>
+                        <div className="text-stone-400">ธนาคาร: {settings.bankName || 'ธนาคารกสิกรไทย / กรุงไทย'}</div>
+                        <div className="text-[10px] text-amber-300/80 pt-1">
+                          * สามารถสแกนชำระเงินผ่าน Mobile Banking ทุกธนาคาร แล้วส่งสลิปเพื่อเปิดแพ็กเกจทันที
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

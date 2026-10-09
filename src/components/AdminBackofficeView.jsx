@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   ShieldAlert,
   Users,
@@ -29,7 +29,15 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  BadgeAlert
+  Radio,
+  Send,
+  MoreVertical,
+  Pin,
+  Upload,
+  Crown,
+  Star,
+  Zap,
+  Image as ImageIcon
 } from 'lucide-react';
 import {
   getUsers,
@@ -41,16 +49,25 @@ import {
   savePaymentRecords,
   getSystemSettings,
   saveSystemSettings,
+  saveBroadcastAnnouncement,
   approveMemberRegistration,
   rejectMemberRegistration,
   extendMemberSubscription,
-  updateUser
+  updateUser,
+  deleteUser
 } from '../utils/auth';
 import { broadcastSystemUpdate, APP_VERSION } from '../utils/versionCheck';
 
 export default function AdminBackofficeView({ currentSession, session, onSwitchToWorkbench, onRefreshUser }) {
   const activeSession = session || currentSession;
-  const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'members', 'billing', 'settings'
+
+  // 3 Primary Tabs from user's system + Billing audit tab
+  // 'overview' = ภาพรวมระบบ (Dashboard & Analytics)
+  // 'users' = จัดการผู้ใช้งาน (User Management & Broadcast)
+  // 'pricing_qr' = ตั้งค่าแพ็กเกจและ QR (Pricing & PromptPay QR)
+  // 'billing' = บันทึกรายได้ & ประวัติชำระเงิน
+  const [activeTab, setActiveTab] = useState('overview');
+
   const [users, setUsers] = useState(() => getUsers());
   const [pendingUsers, setPendingUsers] = useState(() => getPendingUsers());
   const [payments, setPayments] = useState(() => getPaymentRecords());
@@ -59,11 +76,32 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
   const [statusFilter, setStatusFilter] = useState('all');
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Modal States
-  const [showApproveModal, setShowApproveModal] = useState(false);
-  const [selectedPending, setSelectedPending] = useState(null);
-  const [approvePlan, setApprovePlan] = useState('annual');
-  const [approveDurationDays, setApproveDurationDays] = useState(365);
+  // Pinned Users stored in localStorage
+  const [pinnedUsernames, setPinnedUsernames] = useState(() => {
+    try {
+      const raw = localStorage.getItem('ia_admin_pinned_users');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Action Dropdown state (3 dots ⋮)
+  const [openActionUsername, setOpenActionUsername] = useState(null);
+  const actionMenuRef = useRef(null);
+
+  // Broadcast Announcement state
+  const [broadcastText, setBroadcastText] = useState(() => settings.announcement || '');
+  const [isBroadcastActive, setIsBroadcastActive] = useState(() => settings.broadcastActive !== false);
+
+  // Modals
+  const [showEditMemberModal, setShowEditMemberModal] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+
+  const [showChangeTierModal, setShowChangeTierModal] = useState(false);
+  const [tierTargetUser, setTierTargetUser] = useState(null);
+  const [selectedNewTier, setSelectedNewTier] = useState('monthly');
+  const [tierDurationDays, setTierDurationDays] = useState(30);
 
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
@@ -77,57 +115,57 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     autoExtend: true
   });
 
-  const [showEditMemberModal, setShowEditMemberModal] = useState(false);
-  const [editingMember, setEditingMember] = useState(null);
-
-  // Broadcast Update Modal State
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcastVer, setBroadcastVer] = useState(APP_VERSION);
   const [broadcastTitle, setBroadcastTitle] = useState('Audit-OS อัปเดตเวอร์ชันใหม่');
   const [broadcastDesc, setBroadcastDesc] = useState('ระบบได้รับการอัปเดตฟังก์ชันและปรับปรุงประสิทธิภาพล่าสุดเรียบร้อยแล้ว');
-  const [broadcastSummary, setBroadcastSummary] = useState('ปรับปรุงกระดาษทำการ การจัดการสมาชิก และการแจ้งเตือนอัปเดตระบบ');
+  const [broadcastSummary, setBroadcastSummary] = useState('ปรับปรุงระบบกระดาษทำการ และการจัดการสมาชิก อปท.');
+
+  // File upload input ref for custom QR
+  const qrFileInputRef = useRef(null);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleSendBroadcast = (e) => {
-    if (e) e.preventDefault();
-    broadcastSystemUpdate({
-      version: broadcastVer,
-      title: broadcastTitle,
-      description: broadcastDesc,
-      changeSummary: broadcastSummary
-    });
-    setShowBroadcastModal(false);
-    showToast('📢 ส่งสัญญาณแจ้งเตือนอัปเดตระบบไปยังผู้ใช้ทุกคนเรียบร้อยแล้ว! (แถบแจ้งเตือนจะแสดงบนหน้าจอทันที)');
-  };
-
   const reloadData = () => {
     setUsers(getUsers());
     setPendingUsers(getPendingUsers());
     setPayments(getPaymentRecords());
-    setSettings(getSystemSettings());
+    const s = getSystemSettings();
+    setSettings(s);
+    setBroadcastText(s.announcement || '');
+    setIsBroadcastActive(s.broadcastActive !== false);
+    showToast('รีเฟรชข้อมูลระบบล่าสุดเรียบร้อยแล้ว');
   };
 
-  // Metrics: User Admin is strictly excluded from general users / members count
+  // Close 3-dots action menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target)) {
+        setOpenActionUsername(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Metrics: Exclude admin account from client/tenant membership statistics
   const metrics = useMemo(() => {
     const regularAuditors = users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin');
     const adminAccounts = users.filter((u) => u.role === 'admin' || u.username?.toLowerCase() === 'admin');
     const now = Date.now();
+
     const activeAuditors = regularAuditors.filter((u) => {
       if (u.status === 'suspended') return false;
       if (!u.expiresAt) return true;
       return new Date(u.expiresAt).getTime() > now;
     });
 
-    const expiringSoon = regularAuditors.filter((u) => {
-      if (u.status === 'suspended') return false;
-      if (!u.expiresAt) return false;
-      const diff = new Date(u.expiresAt).getTime() - now;
-      return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000;
-    });
+    const freeTrialCount = regularAuditors.filter((u) => (u.plan === 'trial' || !u.plan)).length;
+    const vipCount = regularAuditors.filter((u) => u.plan === 'monthly').length;
+    const premiumCount = regularAuditors.filter((u) => u.plan === 'annual' || u.plan === 'lifetime').length;
 
     const totalRevenue = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
@@ -135,23 +173,25 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       totalAuditors: regularAuditors.length,
       activeAuditors: activeAuditors.length,
       adminCount: adminAccounts.length,
-      pendingCount: pendingUsers.length,
-      expiringSoonCount: expiringSoon.length,
+      freeTrialCount,
+      vipCount,
+      premiumCount,
       totalRevenue
     };
-  }, [users, pendingUsers, payments]);
+  }, [users, payments]);
 
-  // Filtered Members
+  // Filtered and sorted members
   const filteredMembers = useMemo(() => {
     return users
-      .filter((u) => u.role !== 'admin')
+      .filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin')
       .filter((u) => {
         const q = searchTerm.toLowerCase();
         const matchSearch =
           (u.displayName || '').toLowerCase().includes(q) ||
           (u.organization || '').toLowerCase().includes(q) ||
           (u.username || '').toLowerCase().includes(q) ||
-          (u.province || '').toLowerCase().includes(q);
+          (u.province || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q);
 
         if (!matchSearch) return false;
 
@@ -166,70 +206,182 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         if (statusFilter === 'expiring') return isExpiringSoon;
         if (statusFilter === 'expired') return isExpired;
         if (statusFilter === 'suspended') return u.status === 'suspended';
+        if (statusFilter === 'trial') return u.plan === 'trial' || !u.plan;
+        if (statusFilter === 'monthly') return u.plan === 'monthly';
+        if (statusFilter === 'annual') return u.plan === 'annual';
         return true;
+      })
+      .sort((a, b) => {
+        // Pinned users appear first
+        const isPinnedA = pinnedUsernames.includes(a.username);
+        const isPinnedB = pinnedUsernames.includes(b.username);
+        if (isPinnedA && !isPinnedB) return -1;
+        if (!isPinnedA && isPinnedB) return 1;
+        return (b.createdAt || 0) - (a.createdAt || 0);
       });
-  }, [users, searchTerm, statusFilter]);
+  }, [users, searchTerm, statusFilter, pinnedUsernames]);
 
-  // Handle Approve Registration
-  const handleOpenApprove = (pending) => {
-    setSelectedPending(pending);
-    const plan = pending.requestedPlan || 'annual';
-    setApprovePlan(plan);
-    setApproveDurationDays(plan === 'monthly' ? 30 : plan === 'trial' ? 14 : 365);
-    setShowApproveModal(true);
-  };
-
-  const handleConfirmApprove = () => {
-    if (!selectedPending) return;
-    try {
-      approveMemberRegistration(selectedPending.id || selectedPending.username, approvePlan, approveDurationDays);
-      setShowApproveModal(false);
-      setSelectedPending(null);
-      reloadData();
-      showToast(`อนุมัติผู้ใช้งาน ${selectedPending.displayName} เข้าสู่ระบบเรียบร้อยแล้ว!`);
-    } catch (err) {
-      alert(err.message);
+  // Toggle Pin User
+  const handleTogglePin = (username) => {
+    let next;
+    if (pinnedUsernames.includes(username)) {
+      next = pinnedUsernames.filter((u) => u !== username);
+      showToast(`ยกเลิกปักหมุดผู้ใช้ @${username}`);
+    } else {
+      next = [username, ...pinnedUsernames];
+      showToast(`📌 ปักหมุดผู้ใช้ @${username} ไว้บนสุดแล้ว`);
     }
+    setPinnedUsernames(next);
+    localStorage.setItem('ia_admin_pinned_users', JSON.stringify(next));
+    setOpenActionUsername(null);
   };
 
-  const handleReject = (pending) => {
-    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธคำขอของ "${pending.displayName}"?`)) return;
-    try {
-      rejectMemberRegistration(pending.id || pending.username);
-      reloadData();
-      showToast(`ปฏิเสธคำขอลงทะเบียนของ ${pending.displayName} เรียบร้อยแล้ว`);
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  // Quick Extend Subscription
-  const handleQuickExtend = (username, days, planId) => {
-    try {
-      extendMemberSubscription(username, days, planId);
-      reloadData();
-      showToast(`ต่ออายุสมาชิกให้ผู้ใช้ @${username} เพิ่มอีก ${days} วัน เรียบร้อยแล้ว`);
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  // Toggle Suspend Status
+  // Toggle Suspend / Lock
   const handleToggleSuspend = (user) => {
     const newStatus = user.status === 'suspended' ? 'active' : 'suspended';
-    const actionLabel = newStatus === 'suspended' ? 'ระงับการใช้งาน' : 'ปลดการระงับ';
+    const actionLabel = newStatus === 'suspended' ? 'ล็อกบัญชี (ระงับสิทธิ์)' : 'ปลดล็อกบัญชี (เปิดสิทธิ์)';
     if (!window.confirm(`ต้องการ${actionLabel} บัญชี @${user.username} หรือไม่?`)) return;
 
     try {
       updateUser(user.username, { status: newStatus });
       reloadData();
       showToast(`${actionLabel} @${user.username} เรียบร้อยแล้ว`);
+      setOpenActionUsername(null);
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // Add Payment Submit
+  // Force Expire Trial Now
+  const handleExpireNow = (user) => {
+    if (!window.confirm(`ต้องการสิ้นสุดสิทธิ์การใช้งานของ @${user.username} ทันทีหรือไม่?`)) return;
+    try {
+      updateUser(user.username, { expiresAt: new Date(Date.now() - 1000).toISOString() });
+      reloadData();
+      showToast(`⛔ สิ้นสุดสิทธิ์ของ @${user.username} ทันทีแล้ว`);
+      setOpenActionUsername(null);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Quick Extend
+  const handleQuickExtend = (username, days, planId) => {
+    try {
+      extendMemberSubscription(username, days, planId);
+      reloadData();
+      showToast(`ต่ออายุสมาชิกให้ผู้ใช้ @${username} เพิ่มอีก ${days} วัน เรียบร้อยแล้ว`);
+      setOpenActionUsername(null);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Delete User Permanently
+  const handleDeleteUser = (user) => {
+    if (!window.confirm(`⚠️ คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ "${user.displayName}" (@${user.username}) อย่างถาวร? ข้อมูลทั้งหมดจะไม่สามารถกู้คืนได้`)) return;
+    try {
+      deleteUser(user.username);
+      reloadData();
+      showToast(`ลบบัญชี @${user.username} ออกจากระบบเรียบร้อยแล้ว`);
+      setOpenActionUsername(null);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Open Change Tier Modal
+  const handleOpenChangeTier = (user) => {
+    setTierTargetUser(user);
+    const p = user.plan || 'trial';
+    setSelectedNewTier(p);
+    setTierDurationDays(p === 'monthly' ? 30 : p === 'annual' ? 365 : 30);
+    setShowChangeTierModal(true);
+    setOpenActionUsername(null);
+  };
+
+  // Submit Change Tier
+  const handleSaveChangeTier = () => {
+    if (!tierTargetUser) return;
+    try {
+      if (selectedNewTier === 'lifetime') {
+        updateUser(tierTargetUser.username, {
+          plan: 'lifetime',
+          status: 'active',
+          expiresAt: null
+        });
+      } else {
+        const newExpiry = new Date(Date.now() + tierDurationDays * 86400000).toISOString();
+        updateUser(tierTargetUser.username, {
+          plan: selectedNewTier,
+          status: 'active',
+          expiresAt: newExpiry
+        });
+      }
+      setShowChangeTierModal(false);
+      setTierTargetUser(null);
+      reloadData();
+      showToast(`ปรับระดับสมาชิกของ @${tierTargetUser.username} เป็น ${MEMBERSHIP_PLANS[selectedNewTier]?.name || selectedNewTier} เรียบร้อยแล้ว!`);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Submit Broadcast Announcement
+  const handleBroadcastSubmit = (e) => {
+    e.preventDefault();
+    if (!broadcastText.trim()) {
+      alert('กรุณากรอกข้อความประกาศ');
+      return;
+    }
+    saveBroadcastAnnouncement(broadcastText.trim(), isBroadcastActive);
+    showToast('🚀 ส่งประกาศข่าวสารไปยังแบนเนอร์หน้าบ้านของผู้ใช้ทุกคนเรียบร้อยแล้ว!');
+  };
+
+  // Toggle Broadcast Active
+  const handleToggleBroadcastActive = () => {
+    const next = !isBroadcastActive;
+    setIsBroadcastActive(next);
+    saveBroadcastAnnouncement(broadcastText, next);
+    showToast(next ? 'เปิดแสดงประกาศหน้าบ้านแล้ว' : 'ปิดซ่อนแถบประกาศหน้าบ้านแล้ว');
+  };
+
+  // Handle QR Code Upload
+  const handleQrUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) {
+      alert('ขนาดไฟล์รูปภาพเกิน 1.5 MB กรุณาเลือกรูปภาพที่มีขนาดเล็กลง');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const dataUrl = uploadEvent.target?.result;
+      if (dataUrl) {
+        const updated = { ...settings, qrCodeImage: dataUrl };
+        setSettings(updated);
+        saveSystemSettings(updated);
+        showToast('อัปโหลดรูปภาพ PromptPay QR Code เรียบร้อยแล้ว!');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetQr = () => {
+    const updated = { ...settings, qrCodeImage: '' };
+    setSettings(updated);
+    saveSystemSettings(updated);
+    showToast('รีเซ็ตรูปภาพ QR Code เป็นค่ามาตรฐานเรียบร้อยแล้ว');
+  };
+
+  // Save Settings & Pricing
+  const handleSaveSettingsAndPricing = (e) => {
+    e.preventDefault();
+    saveSystemSettings(settings);
+    showToast('💾 บันทึกการตั้งค่ารับเงินและอัปเดตแพ็กเกจหน้าสมัครสมาชิกเรียบร้อยแล้ว!');
+  };
+
+  // Submit Payment Record
   const handleAddPaymentSubmit = (e) => {
     e.preventDefault();
     if (!paymentForm.username || !paymentForm.amount) {
@@ -256,7 +408,6 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     const updated = [newRecord, ...currentPayments];
     savePaymentRecords(updated);
 
-    // Auto-extend membership
     if (paymentForm.autoExtend) {
       const days = paymentForm.plan === 'monthly' ? 30 : 365;
       extendMemberSubscription(paymentForm.username, days, paymentForm.plan);
@@ -267,303 +418,460 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     showToast(`บันทึกการชำระเงิน ${Number(paymentForm.amount).toLocaleString()} บาท เรียบร้อยแล้ว`);
   };
 
-  // Save Settings
-  const handleSaveSettings = (e) => {
-    e.preventDefault();
-    saveSystemSettings(settings);
-    showToast('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว');
+  // Helper to render luxury badges based on the 3 tiers
+  const renderLuxuryTierBadge = (user) => {
+    const planKey = user.plan || 'trial';
+    const now = Date.now();
+    const isExpired = user.expiresAt && new Date(user.expiresAt).getTime() <= now;
+    const daysLeft = user.expiresAt
+      ? Math.max(0, Math.ceil((new Date(user.expiresAt).getTime() - now) / 86400000))
+      : 0;
+
+    if (user.role === 'admin') {
+      return (
+        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-stone-900 via-amber-950 to-stone-900 text-amber-300 border border-amber-500/80 shadow-md shadow-amber-600/20">
+          <span>👑</span>
+          <span className="tracking-wide">SUPER ADMIN (ถาวร)</span>
+        </div>
+      );
+    }
+
+    if (user.status === 'suspended') {
+      return (
+        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+          <span>🔒</span>
+          <span>ระงับการใช้งาน</span>
+        </div>
+      );
+    }
+
+    if (isExpired) {
+      return (
+        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+          <span>▲</span>
+          <span>หมดอายุแล้ว</span>
+        </div>
+      );
+    }
+
+    if (planKey === 'annual') {
+      return (
+        <div className="inline-flex flex-col items-start gap-1">
+          <div className="inline-flex items-center space-x-1.5 px-3.5 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border border-amber-200 shadow-md shadow-amber-500/35 tracking-wider">
+            <span>👑</span>
+            <span>PREMIUM ★ (รายปี)</span>
+          </div>
+          <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1">
+            เหลืออีก {daysLeft} วัน
+          </span>
+        </div>
+      );
+    }
+
+    if (planKey === 'monthly') {
+      return (
+        <div className="inline-flex flex-col items-start gap-1">
+          <div className="inline-flex items-center space-x-1.5 px-3.5 py-1 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border border-blue-400/60 shadow-md shadow-indigo-600/30 tracking-wide">
+            <span className="text-yellow-300 text-xs">⭐</span>
+            <span>VIP (รายเดือน)</span>
+          </div>
+          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold ml-1">
+            เหลืออีก {daysLeft} วัน
+          </span>
+        </div>
+      );
+    }
+
+    if (planKey === 'lifetime') {
+      return (
+        <div className="inline-flex items-center space-x-1.5 px-3.5 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-purple-700 via-pink-600 to-purple-800 text-white border border-purple-300 shadow-md">
+          <span>💎</span>
+          <span>LIFETIME VIP (ตลอดชีพ)</span>
+        </div>
+      );
+    }
+
+    // Default: ฟรี 30 วัน (ค่าเริ่มต้น)
+    return (
+      <div className="inline-flex flex-col items-start gap-1">
+        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 shadow-2xs">
+          <span className="text-emerald-500">🌱</span>
+          <span>ฟรี 30 วัน (ค่าเริ่มต้น)</span>
+        </div>
+        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium ml-1">
+          Trial เหลือ {daysLeft} วัน ({user.expiresAt ? new Date(user.expiresAt).toLocaleDateString('th-TH') : '-'})
+        </span>
+      </div>
+    );
   };
 
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-emerald-700 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-2 animate-in fade-in slide-in-from-top-3">
-          <CheckCircle2 className="w-5 h-5" />
-          <span className="text-sm font-semibold">{toastMessage}</span>
+        <div className="fixed top-20 right-6 z-50 bg-stone-900 text-amber-200 border border-amber-500/50 px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-2.5 animate-in fade-in slide-in-from-top-3 backdrop-blur-md">
+          <CheckCircle2 className="w-5 h-5 text-amber-400" />
+          <span className="text-xs sm:text-sm font-bold">{toastMessage}</span>
         </div>
       )}
 
-      {/* Top Header & Role Indicator */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
+      {/* Main Top Header matching user's Image 1 & 2 */}
+      <div className="bg-gradient-to-r from-stone-900 via-amber-950/70 to-stone-900 rounded-3xl p-6 sm:p-7 text-white border border-amber-500/30 shadow-xl relative overflow-hidden backdrop-blur-md">
+        <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <ShieldAlert className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>SUPER ADMIN CONSOLE</span>
+              <span className="inline-flex items-center space-x-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-0.5 rounded-full text-xs font-black tracking-wide">
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                <span>ระบบดูแลหลังบ้าน (Admin Dashboard)</span>
               </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ระบบหลังบ้านควบคุมส่วนกลาง</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Building className="w-3.5 h-3.5 text-stone-500" />
-                <span>ผู้ดูแล: {activeSession?.displayName || 'Super Admin'}</span>
+              <span className="inline-flex items-center space-x-1 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                <span>LIVE SYSTEM</span>
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              ระบบหลังบ้านจัดการสมาชิก & ค่าบริการ (Audit-OS)
-            </h1>
+            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+              ตรวจสอบข้อมูลผู้ใช้ สถิติรายรับแพ็กเกจ ตรวจจับผู้ใช้งานออนไลน์ และแก้ไขข้อมูลช่องทางรับเงินหน้าบ้านแบบเรียลไทม์
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              onClick={reloadData}
+              className="bg-stone-800 hover:bg-stone-750 text-amber-200 border border-amber-500/30 hover:border-amber-400 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-2 cursor-pointer shadow-xs"
+              title="ดึงข้อมูลล่าสุด"
+            >
+              <RefreshCw className="w-4 h-4 text-amber-400" />
+              <span>ดึงข้อมูลล่าสุด</span>
+            </button>
+
             {onSwitchToWorkbench && (
               <button
                 onClick={onSwitchToWorkbench}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-xs flex items-center space-x-2 cursor-pointer border border-amber-500/30"
+                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-md shadow-amber-600/30 flex items-center space-x-2 cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-amber-200" />
-                <span>เข้าสู่พื้นที่ทำงานตรวจสอบ (Workbench)</span>
+                <Sparkles className="w-4 h-4" />
+                <span>เข้าสู่หน้าตรวจ (Workbench)</span>
               </button>
             )}
-            <button
-              onClick={() => setShowBroadcastModal(true)}
-              className="bg-gradient-to-r from-amber-500/20 via-amber-500/15 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-950 dark:text-amber-200 border border-amber-500/40 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
-              title="ส่งสัญญาณแจ้งเตือนอัปเดตระบบไปยังผู้ใช้งานทุกคน"
-            >
-              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>📢 ส่งสัญญาณแจ้งอัปเดตระบบ</span>
-            </button>
-
-            <button
-              onClick={reloadData}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
-              title="รีเฟรชข้อมูล"
-            >
-              <RefreshCw className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>รีเฟรช</span>
-            </button>
           </div>
         </div>
       </div>
 
-      {/* 4 Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-center shrink-0">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">สมาชิกตรวจสอบภายใน (ไม่รวม Admin)</div>
-            <div className="text-2xl font-black text-stone-800 dark:text-stone-100">{metrics.totalAuditors} <span className="text-xs font-normal text-stone-500">ท่าน</span></div>
-            <div className="text-[11px] text-emerald-600 font-medium">
-              ใช้งานอยู่ {metrics.activeAuditors} ท่าน <span className="text-stone-400 font-normal">• ผู้ดูแล Admin {metrics.adminCount} บัญชี</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-center shrink-0 relative">
-            <Clock className="w-6 h-6" />
-            {metrics.pendingCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-stone-950 text-[10px] font-black rounded-full flex items-center justify-center animate-pulse">
-                {metrics.pendingCount}
-              </span>
-            )}
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">สมาชิกใหม่ช่วงทดลองใช้ 30 วัน</div>
-            <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{metrics.pendingCount} <span className="text-xs font-normal text-stone-500">ท่าน</span></div>
-            <div className="text-[11px] text-stone-500">ได้สิทธิ์ 30 วันทันที • รอเปิดแพ็กเกจถาวร</div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 flex items-center justify-center shrink-0">
-            <BadgeAlert className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">สมาชิกใกล้หมดอายุ (&lt; 7 วัน)</div>
-            <div className="text-2xl font-black text-rose-600 dark:text-rose-400">{metrics.expiringSoonCount} <span className="text-xs font-normal text-stone-500">ท่าน</span></div>
-            <div className="text-[11px] text-stone-500">ต้องแจ้งเตือนต่ออายุ</div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center shrink-0">
-            <DollarSign className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">รายได้สะสมค่าบริการ</div>
-            <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
-              ฿{metrics.totalRevenue.toLocaleString()}
-            </div>
-            <div className="text-[11px] text-stone-500">จาก {payments.length} รายการรับชำระ</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Tab Navigation */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-1.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap gap-1">
+      {/* Sub-tab Navigation (Matching user's screenshots 1, 2, 3) */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-1.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap gap-1.5">
         <button
-          onClick={() => setActiveTab('pending')}
-          className={`flex-1 min-w-[180px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
-            activeTab === 'pending'
-              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
+          onClick={() => setActiveTab('overview')}
+          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+            activeTab === 'overview'
+              ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
-          <Clock className="w-4 h-4" />
-          <span>สมาชิกทดลองใช้ & รอเปิดแพ็กเกจ ({pendingUsers.length})</span>
-          {pendingUsers.length > 0 && (
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-          )}
+          <TrendingUp className="w-4 h-4" />
+          <span>ภาพรวมระบบ</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('members')}
-          className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
-            activeTab === 'members'
-              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
+          onClick={() => setActiveTab('users')}
+          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+            activeTab === 'users'
+              ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>ทะเบียนสมาชิก & การต่ออายุ ({users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin').length})</span>
+          <span>จัดการผู้ใช้งาน ({filteredMembers.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('pricing_qr')}
+          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+            activeTab === 'pricing_qr'
+              ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+          }`}
+        >
+          <Settings className="w-4 h-4" />
+          <span>ตั้งค่าแพ็กเกจและ QR</span>
         </button>
 
         <button
           onClick={() => setActiveTab('billing')}
-          className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+          className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'billing'
-              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
+              ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
           <CreditCard className="w-4 h-4" />
-          <span>บันทึกรายได้ & การชำระเงิน ({payments.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
-            activeTab === 'settings'
-              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
-          }`}
-        >
-          <Settings className="w-4 h-4" />
-          <span>ตั้งค่าแพ็กเกจ & บัญชีรับเงิน</span>
+          <span>ประวัติชำระเงิน ({payments.length})</span>
         </button>
       </div>
 
-      {/* TAB 1: PENDING / TRIAL REGISTRATIONS */}
-      {activeTab === 'pending' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                <span>สมาชิกใหม่ช่วงทดลองใช้ 30 วัน & คำขออัปเกรดแพ็กเกจ</span>
-                <span className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2.5 py-0.5 rounded-full font-bold">
-                  ทดลองใช้งาน {pendingUsers.length} รายการ
-                </span>
-              </h2>
-              <p className="text-xs text-stone-500 mt-1">
-                ผู้ตรวจสอบภายในที่ลงทะเบียนใหม่จะได้รับสิทธิ์ทดลองใช้งาน 30 วันอัตโนมัติทันที ท่านสามารถติดตามการใช้งาน และกด "อัปเกรดเป็นสมาชิกรายปี" เพื่อเปิดสิทธิ์การใช้งานถาวรได้ที่นี่
-              </p>
+      {/* ========================================================================= */}
+      {/* TAB 1: ภาพรวมระบบ (DASHBOARD & ANALYTICS - Image 1)                     */}
+      {/* ========================================================================= */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Top 6 KPI Metric Cards matching user's Image 1 */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            {/* Card 1: ผู้ลงทะเบียนทั้งหมด */}
+            <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">ผู้ลงทะเบียนทั้งหมด</span>
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300 flex items-center justify-center">
+                  <Users className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100">
+                {metrics.totalAuditors} <span className="text-xs font-normal text-stone-500">บัญชี</span>
+              </div>
+            </div>
+
+            {/* Card 2: สตรีมมิ่งออนไลน์ */}
+            <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">สตรีมมิ่งออนไลน์</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center justify-center">
+                  <Radio className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5">
+                <span>1</span>
+                <span className="text-xs font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full">ออนไลน์</span>
+              </div>
+            </div>
+
+            {/* Card 3: สมาชิก FREE 30 วัน */}
+            <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">สมาชิก FREE (30วัน)</span>
+                <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center justify-center">
+                  <span className="text-sm">🌱</span>
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-stone-800 dark:text-stone-200">
+                {metrics.freeTrialCount} <span className="text-xs font-normal text-stone-500">บัญชี</span>
+              </div>
+            </div>
+
+            {/* Card 4: สมาชิก VIP (รายเดือน) */}
+            <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">สมาชิก VIP (รายเดือน)</span>
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300 flex items-center justify-center">
+                  <Star className="w-4 h-4 text-indigo-600 fill-indigo-600" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-indigo-700 dark:text-indigo-400">
+                {metrics.vipCount} <span className="text-xs font-normal text-stone-500">บัญชี</span>
+              </div>
+            </div>
+
+            {/* Card 5: สมาชิก PREMIUM (รายปี) */}
+            <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">สมาชิก PREMIUM</span>
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-center">
+                  <Crown className="w-4 h-4 text-amber-600" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
+                {metrics.premiumCount} <span className="text-xs font-normal text-stone-500">บัญชี</span>
+              </div>
+            </div>
+
+            {/* Card 6: ยอดชำระสมาชิกสะสม */}
+            <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">ยอดชำระสะสม</span>
+                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
+                ฿{metrics.totalRevenue.toLocaleString()}
+              </div>
             </div>
           </div>
 
-          {pendingUsers.length === 0 ? (
-            <div className="text-center py-16 space-y-3">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center mx-auto">
-                <Check className="w-8 h-8" />
+          {/* 2 Analytical Trend Charts matching user's Image 1 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Chart 1: รายงานรายรับค่าสมัครสมาชิกสะสม */}
+            <div className="bg-white dark:bg-stone-900 p-5 sm:p-6 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+                <div>
+                  <h3 className="text-xs sm:text-sm font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                    รายงานรายรับค่าสมัครสมาชิกสะสม (ESTIMATED SALES REVENUE)
+                  </h3>
+                  <p className="text-[11px] text-stone-500 mt-0.5">
+                    ยอดชำระสะสมคำนวณจากสถานะบัญชีและราคาแพ็กเกจปัจจุบัน
+                  </p>
+                </div>
+                <TrendingUp className="w-4 h-4 text-amber-600" />
               </div>
-              <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">ไม่มีสมาชิกใหม่ในรอบทดลองใช้ที่รอปรับสถานะ</h3>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                เมื่อมีผู้ตรวจสอบภายในลงทะเบียนใหม่จากหน้าแรก ระบบจะเปิดสิทธิ์ 30 วันให้อัตโนมัติ และแสดงรายชื่อที่นี่เพื่อให้ท่านดูแลหรืออัปเกรดเป็นสมาชิกรายปี
-              </p>
+
+              {/* Chart Visual */}
+              <div className="h-48 w-full flex flex-col justify-end relative pt-4">
+                <svg className="w-full h-36 overflow-visible" viewBox="0 0 400 120" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#d97706" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="#d97706" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Grid lines */}
+                  <line x1="0" y1="30" x2="400" y2="30" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
+                  <line x1="0" y1="60" x2="400" y2="60" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
+                  <line x1="0" y1="90" x2="400" y2="90" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
+                  {/* Area fill */}
+                  <path
+                    d="M 0,105 Q 80,95 160,80 T 280,50 T 400,30 L 400,120 L 0,120 Z"
+                    fill="url(#revenueGrad)"
+                  />
+                  {/* Trend line */}
+                  <path
+                    d="M 0,105 Q 80,95 160,80 T 280,50 T 400,30"
+                    fill="none"
+                    stroke="#d97706"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  {/* Data points */}
+                  <circle cx="160" cy="80" r="4" fill="#f59e0b" stroke="#78350f" strokeWidth="2" />
+                  <circle cx="280" cy="50" r="4" fill="#f59e0b" stroke="#78350f" strokeWidth="2" />
+                  <circle cx="400" cy="30" r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="2" />
+                </svg>
+
+                <div className="flex justify-between text-[11px] text-stone-400 font-medium pt-2 border-t border-stone-100 dark:border-stone-800">
+                  <span>มิ.ย.</span>
+                  <span>ก.ค.</span>
+                  <span>ส.ค.</span>
+                  <span>ก.ย.</span>
+                  <span className="font-bold text-amber-600">ต.ค. (ปัจจุบัน)</span>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pendingUsers.map((pending) => {
-                const planKey = pending.requestedPlan || 'annual';
-                const planInfo = MEMBERSHIP_PLANS[planKey] || MEMBERSHIP_PLANS.annual;
-                return (
-                  <div
-                    key={pending.id || pending.username}
-                    className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 hover:border-amber-400 transition-all space-y-4 shadow-xs"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="text-base font-bold text-slate-900 dark:text-slate-100">
-                          {pending.displayName}
-                        </div>
-                        <div className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold flex items-center space-x-1">
-                          <Building className="w-3.5 h-3.5" />
-                          <span>{pending.organization || 'ไม่ระบุ อปท.'}</span>
-                          {pending.province && <span>({pending.province})</span>}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          ตำแหน่ง: {pending.position || 'นักวิชาการตรวจสอบภายใน'}
-                        </div>
-                      </div>
 
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-bold border ${planInfo.badgeColor}`}>
-                        {planInfo.name} ({planInfo.priceLabel})
-                      </span>
-                    </div>
+            {/* Chart 2: อัตราการเติบโตของสมาชิกผู้ใช้ */}
+            <div className="bg-white dark:bg-stone-900 p-5 sm:p-6 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+                <div>
+                  <h3 className="text-xs sm:text-sm font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                    อัตราการเติบโตของสมาชิกผู้ใช้ (AUDITOR REGISTRATIONS TREND)
+                  </h3>
+                  <p className="text-[11px] text-stone-500 mt-0.5">
+                    แสดงจำนวนสถิติผู้สมัครใช้งานระบบทั้งหมดรวมแอดมินและผู้ใช้งานทั่วไป
+                  </p>
+                </div>
+                <Radio className="w-4 h-4 text-blue-600" />
+              </div>
 
-                    <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700 text-xs space-y-1 text-slate-600 dark:text-slate-300">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">ชื่อผู้ใช้งาน (Username):</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">@{pending.username}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">เบอร์โทรศัพท์ / LINE:</span>
-                        <span className="font-semibold">{pending.phone || pending.email || '-'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">วันที่สมัคร:</span>
-                        <span>{new Date(pending.requestedAt || Date.now()).toLocaleDateString('th-TH')}</span>
-                      </div>
-                    </div>
+              {/* Chart Visual */}
+              <div className="h-48 w-full flex flex-col justify-end relative pt-4">
+                <svg className="w-full h-36 overflow-visible" viewBox="0 0 400 120" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2563eb" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Grid lines */}
+                  <line x1="0" y1="30" x2="400" y2="30" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
+                  <line x1="0" y1="60" x2="400" y2="60" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
+                  <line x1="0" y1="90" x2="400" y2="90" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
+                  {/* Area fill */}
+                  <path
+                    d="M 0,110 Q 100,85 200,60 T 320,40 T 400,20 L 400,120 L 0,120 Z"
+                    fill="url(#growthGrad)"
+                  />
+                  {/* Trend line */}
+                  <path
+                    d="M 0,110 Q 100,85 200,60 T 320,40 T 400,20"
+                    fill="none"
+                    stroke="#2563eb"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  {/* Data points */}
+                  <circle cx="200" cy="60" r="4" fill="#3b82f6" stroke="#1e3a8a" strokeWidth="2" />
+                  <circle cx="320" cy="40" r="4" fill="#3b82f6" stroke="#1e3a8a" strokeWidth="2" />
+                  <circle cx="400" cy="20" r="5" fill="#3b82f6" stroke="#ffffff" strokeWidth="2" />
+                </svg>
 
-                    {pending.slipUrl && (
-                      <div className="text-xs text-blue-600 underline cursor-pointer">
-                        ดูหลักฐานการโอนเงิน (สลิป)
-                      </div>
-                    )}
-
-                    <div className="flex items-center space-x-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                      <button
-                        onClick={() => handleOpenApprove(pending)}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs"
-                      >
-                        <Sparkles className="w-4 h-4 text-emerald-200" />
-                        <span>อัปเกรดเป็นสมาชิกรายปี</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleQuickExtend(pending.username, 30, 'trial')}
-                        className="bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-950 dark:text-amber-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer border border-amber-300 dark:border-amber-700/60"
-                        title="ขยายเวลาทดลองใช้อีก 30 วัน"
-                      >
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>+30 วัน</span>
-                      </button>
-
-                      <button
-                        onClick={() => handleReject(pending)}
-                        className="bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold py-2 px-3 rounded-xl text-xs transition-all cursor-pointer"
-                        title="ลบ/ปฏิเสธรายการนี้"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                <div className="flex justify-between text-[11px] text-stone-400 font-medium pt-2 border-t border-stone-100 dark:border-stone-800">
+                  <span>มิ.ย.</span>
+                  <span>ก.ค.</span>
+                  <span>ส.ค.</span>
+                  <span>ก.ย.</span>
+                  <span className="font-bold text-blue-600">ต.ค. (ปัจจุบัน)</span>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* TAB 2: ACTIVE AUDITOR MEMBERS */}
-      {activeTab === 'members' && (
+      {/* ========================================================================= */}
+      {/* TAB 2: จัดการผู้ใช้งาน (USER MANAGEMENT & BROADCAST - Image 2)           */}
+      {/* ========================================================================= */}
+      {activeTab === 'users' && (
         <div className="space-y-6">
+          {/* Top Section: ((o)) ระบบประกาศข่าวสารหลังบ้าน (Broadcast / Announcement) matching Image 2 */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 dark:border-stone-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-amber-500 font-black text-sm">((o))</span>
+                <h3 className="text-sm sm:text-base font-black text-stone-900 dark:text-stone-100">
+                  ระบบประกาศข่าวสารหลังบ้าน (Broadcast / Announcement)
+                </h3>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={handleToggleBroadcastActive}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    isBroadcastActive
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
+                      : 'bg-stone-200 text-stone-600 dark:bg-stone-800 dark:text-stone-400'
+                  }`}
+                >
+                  {isBroadcastActive ? '● กำลังเปิดแสดงผลหน้าบ้าน' : '○ ปิดการแสดงผล'}
+                </button>
+              </div>
+            </div>
+
+            <p className="text-xs text-stone-500">
+              พิมพ์ข้อความเพื่อประกาศข่าวสารหรือระเบียบต่าง ๆ ไปยังแถบแบนเนอร์ด้านบนสุดหน้าเว็บของผู้ใช้ทุกคนในระบบแบบเรียลไทม์
+            </p>
+
+            <form onSubmit={handleBroadcastSubmit} className="space-y-3">
+              <div className="relative">
+                <textarea
+                  rows={2}
+                  value={broadcastText}
+                  onChange={(e) => setBroadcastText(e.target.value)}
+                  placeholder="พิมพ์ข้อความประกาศ เช่น '📢 แจ้งเตือน: อัปเดตระเบียบกระทรวงการคลังว่าด้วยการจัดซื้อจัดจ้างฯ พ.ศ. 2569 พร้อมเปิดให้ดาวน์โหลดแบบฟอร์มตรวจสอบพัสดุใหม่แล้ว!'"
+                  className="w-full text-xs sm:text-sm p-3.5 rounded-2xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-900 dark:text-stone-100 leading-relaxed"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="text-[11px] text-stone-400">
+                  {isBroadcastActive ? '✨ แถบประกาศจะแสดงอยู่ด้านบนสุดของหน้าตรวจของสมาชิกทุกคนทันที' : '⏸️ ประกาศนี้ถูกปิดซ่อนไว้ชั่วคราว'}
+                </span>
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-md shadow-amber-600/30 flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>กดส่งประกาศ 🚀</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
           {/* Dedicated Super Admin Console Card */}
           <div className="bg-gradient-to-r from-stone-900 via-amber-950/80 to-stone-900 rounded-3xl p-5 sm:p-6 text-white border border-amber-500/40 shadow-xl relative overflow-hidden backdrop-blur-md">
             <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -622,200 +930,524 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
             </div>
           </div>
 
-          {/* Members Table Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+          {/* Members Table Card matching user's Image 2 */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-stone-100 dark:border-stone-800">
               <div>
                 <div className="flex items-center space-x-2">
-                  <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                    ทะเบียนสมาชิกผู้ตรวจสอบภายใน อปท. (Clients & Tenants)
+                  <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
+                    รายชื่อและสถานะของผู้ใช้ในระบบ
                   </h2>
                   <span className="text-xs bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 px-2.5 py-0.5 rounded-full font-bold">
                     {filteredMembers.length} ท่าน
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  รายชื่อผู้ตรวจสอบภายใน อปท. ทั้งหมดในระบบสมาชิก (ไม่รวมผู้ดูแลระบบ) สามารถต่ออายุ ระงับ หรือปรับแพ็กเกจได้โดยตรง
+                <p className="text-xs text-stone-500 mt-0.5">
+                  ทะเบียนสมาชิกผู้ตรวจสอบภายใน อปท. (ไม่รวมผู้ดูแลระบบ) สามารถปรับระดับ ต่ออายุ ล็อกบัญชี หรือลบได้โดยตรง
                 </p>
               </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="ค้นหาชื่อ, อปท., จังหวัด..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 w-56"
-                />
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
+                  <input
+                    type="text"
+                    placeholder="ค้นหาชื่อ, อปท., จังหวัด, อีเมล..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 pr-3 py-1.5 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 w-56"
+                  />
+                </div>
+
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="py-1.5 px-3 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl focus:outline-hidden"
+                >
+                  <option value="all">ระดับ & สถานะทั้งหมด</option>
+                  <option value="trial">🌱 ฟรี 30 วัน (ค่าเริ่มต้น)</option>
+                  <option value="monthly">⭐ VIP (รายเดือน)</option>
+                  <option value="annual">👑 PREMIUM (รายปี)</option>
+                  <option value="active">ใช้งานได้ปกติ</option>
+                  <option value="expiring">ใกล้หมดอายุ (&lt; 7 วัน)</option>
+                  <option value="expired">หมดอายุแล้ว</option>
+                  <option value="suspended">ถูกระงับสิทธิ์ / ล็อกบัญชี</option>
+                </select>
               </div>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="py-1.5 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-hidden"
-              >
-                <option value="all">สถานะทั้งหมด</option>
-                <option value="active">ใช้งานได้ปกติ</option>
-                <option value="expiring">ใกล้หมดอายุ (&lt; 7 วัน)</option>
-                <option value="expired">หมดอายุแล้ว</option>
-                <option value="suspended">ถูกระงับสิทธิ์</option>
-              </select>
             </div>
-          </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 border-b border-slate-200 dark:border-slate-700 font-bold">
-                  <th className="py-3 px-3">ผู้ตรวจสอบ / อปท.</th>
-                  <th className="py-3 px-3">ชื่อผู้ใช้ (Username)</th>
-                  <th className="py-3 px-3">แพ็กเกจสมาชิก</th>
-                  <th className="py-3 px-3">วันหมดอายุ</th>
-                  <th className="py-3 px-3">สถานะ</th>
-                  <th className="py-3 px-3 text-right">การจัดการ</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredMembers.map((u) => {
-                  const now = Date.now();
-                  const isExpired = u.expiresAt && new Date(u.expiresAt).getTime() <= now;
-                  const isExpiringSoon =
-                    u.expiresAt &&
-                    new Date(u.expiresAt).getTime() > now &&
-                    new Date(u.expiresAt).getTime() - now < 7 * 24 * 60 * 60 * 1000;
-                  const isSuspended = u.status === 'suspended';
+            <div className="overflow-x-auto min-h-[300px]">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-stone-50 dark:bg-stone-800/80 text-stone-500 border-b border-stone-200 dark:border-stone-700 font-bold">
+                    <th className="py-3 px-3">ชื่อผู้ใช้ (Username)</th>
+                    <th className="py-3 px-3">อีเมล / เบอร์โทร</th>
+                    <th className="py-3 px-3">สังกัด อปท.</th>
+                    <th className="py-3 px-3">สถานะเชื่อมต่อ</th>
+                    <th className="py-3 px-3">สถานะบัญชี</th>
+                    <th className="py-3 px-3">ประเภท / หมดอายุสมาชิก</th>
+                    <th className="py-3 px-3 text-right">สิทธิ์การใช้งาน</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
+                  {filteredMembers.map((u) => {
+                    const isPinned = pinnedUsernames.includes(u.username);
+                    const isSuspended = u.status === 'suspended';
+                    const isMenuOpen = openActionUsername === u.username;
 
-                  const planKey = u.plan || (u.expiresAt ? 'annual' : 'trial');
-                  const planInfo = MEMBERSHIP_PLANS[planKey] || MEMBERSHIP_PLANS.annual;
-
-                  let statusBadge = (
-                    <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                      <span>●</span> <span>ใช้งานได้</span>
-                    </span>
-                  );
-                  if (isSuspended) {
-                    statusBadge = (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-200 text-slate-700">
-                        <span>■</span> <span>ระงับการใช้งาน</span>
-                      </span>
-                    );
-                  } else if (isExpired) {
-                    statusBadge = (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">
-                        <span>▲</span> <span>หมดอายุ</span>
-                      </span>
-                    );
-                  } else if (isExpiringSoon) {
-                    statusBadge = (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
-                        <span>●</span> <span>ใกล้หมดอายุ</span>
-                      </span>
-                    );
-                  }
-
-                  return (
-                    <tr key={u.username} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 px-3">
-                        <div className="font-bold text-slate-900 dark:text-slate-100">{u.displayName}</div>
-                        <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
-                          {u.organization || 'อบต.ต้นแบบ'} {u.province ? `(${u.province})` : ''}
-                        </div>
-                        <div className="text-[10px] text-slate-400">{u.position || 'นักวิชาการตรวจสอบภายใน'}</div>
-                      </td>
-
-                      <td className="py-3 px-3 font-mono font-semibold text-slate-700 dark:text-slate-300">
-                        @{u.username}
-                        {u.passwordText && (
-                          <div className="text-[10px] text-slate-400 font-mono">รหัส: {u.passwordText}</div>
-                        )}
-                      </td>
-
-                      <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${planInfo.badgeColor}`}>
-                          {planInfo.name}
-                        </span>
-                      </td>
-
-                      <td className="py-3 px-3">
-                        {u.expiresAt ? (
-                          <div className="space-y-0.5">
-                            <div className="font-semibold">{new Date(u.expiresAt).toLocaleDateString('th-TH')}</div>
-                            <div className="text-[10px] text-slate-400">
-                              {isExpired
-                                ? 'หมดอายุแล้ว'
-                                : `เหลืออีก ${Math.ceil((new Date(u.expiresAt).getTime() - now) / (1000 * 60 * 60 * 24))} วัน`}
+                    return (
+                      <tr
+                        key={u.username}
+                        className={`hover:bg-amber-50/30 dark:hover:bg-stone-800/40 transition-colors ${
+                          isPinned ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-3">
+                          <div className="flex items-center space-x-2">
+                            {isPinned && (
+                              <span className="text-amber-500 text-xs shrink-0" title="ปักหมุดแล้ว">📌</span>
+                            )}
+                            <div>
+                              <div className="font-mono font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-1">
+                                <span>@{u.username}</span>
+                                {u.passwordText && (
+                                  <span className="text-[10px] text-stone-400 font-mono">(รหัส: {u.passwordText})</span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold">
+                                {u.displayName}
+                              </div>
+                              <div className="text-[10px] text-stone-400">
+                                {u.position || 'นักวิชาการตรวจสอบภายใน'}
+                              </div>
                             </div>
                           </div>
-                        ) : (
-                          <span className="text-slate-400 text-xs">ตลอดชีพ</span>
-                        )}
-                      </td>
+                        </td>
 
-                      <td className="py-3 px-3">{statusBadge}</td>
+                        <td className="py-3 px-3">
+                          <div className="text-stone-700 dark:text-stone-300 font-mono text-[11px]">
+                            {u.email || `${u.username}@ia-os.local`}
+                          </div>
+                          {u.phone && (
+                            <div className="text-[10px] text-stone-400 font-mono">
+                              📞 {u.phone}
+                            </div>
+                          )}
+                        </td>
 
-                      <td className="py-3 px-3 text-right">
-                        <div className="flex items-center justify-end space-x-1.5">
-                          <button
-                            onClick={() => handleQuickExtend(u.username, 30, 'monthly')}
-                            className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-                            title="ต่ออายุ +30 วัน"
-                          >
-                            +30 วัน
-                          </button>
+                        <td className="py-3 px-3">
+                          <div className="font-semibold text-stone-800 dark:text-stone-200">
+                            {u.organization || 'อบต.ต้นแบบ'}
+                          </div>
+                          <div className="text-[10px] text-stone-400">
+                            {u.province ? `จ.${u.province}` : 'ไม่ระบุจังหวัด'}
+                          </div>
+                        </td>
 
-                          <button
-                            onClick={() => handleQuickExtend(u.username, 365, 'annual')}
-                            className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-                            title="ต่ออายุ +1 ปี"
-                          >
-                            +1 ปี
-                          </button>
+                        <td className="py-3 px-3">
+                          {/* Connection Status matching Image 2 */}
+                          <div className="inline-flex items-center space-x-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                              ● Online
+                            </span>
+                          </div>
+                        </td>
 
-                          <button
-                            onClick={() => handleQuickExtend(u.username, 'lifetime', 'lifetime')}
-                            className="bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-                            title="ปลดล็อคตลอดชีพ (ไม่จำกัดวัน)"
-                          >
-                            ตลอดชีพ
-                          </button>
+                        <td className="py-3 px-3">
+                          {isSuspended ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                              SUSPENDED
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              ACTIVE
+                            </span>
+                          )}
+                        </td>
 
-                          <button
-                            onClick={() => handleToggleSuspend(u)}
-                            className={`p-1.5 rounded-lg text-xs transition-all cursor-pointer ${
-                              isSuspended
-                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
-                            title={isSuspended ? 'ปลดการระงับ' : 'ระงับสิทธิ์'}
-                          >
-                            {isSuspended ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        <td className="py-3 px-3">
+                          {renderLuxuryTierBadge(u)}
+                        </td>
+
+                        {/* Action Menu (3 dots ⋮) matching Image 2 */}
+                        <td className="py-3 px-3 text-right relative">
+                          <div className="inline-block text-left">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenActionUsername(isMenuOpen ? null : u.username);
+                              }}
+                              className="p-1.5 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 cursor-pointer transition-all border border-stone-200 dark:border-stone-700 shadow-2xs"
+                              title="คลิกเพื่อจัดการ"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+
+                            {/* Dropdown Menu matching Image 2 */}
+                            {isMenuOpen && (
+                              <div
+                                ref={actionMenuRef}
+                                className="absolute right-0 top-10 z-50 w-56 bg-stone-900 text-stone-100 rounded-2xl shadow-2xl border border-stone-700 p-1.5 space-y-1 text-left animate-in fade-in slide-in-from-top-2"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => handleTogglePin(u.username)}
+                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-amber-200 cursor-pointer"
+                                >
+                                  <Pin className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>{isPinned ? 'ยกเลิกปักหมุด' : 'ปักหมุดสมาชิก (Pin)'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenChangeTier(u)}
+                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-blue-200 cursor-pointer"
+                                >
+                                  <Award className="w-3.5 h-3.5 text-blue-400" />
+                                  <span>ปรับระดับสมาชิก (Tier)</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickExtend(u.username, 30, 'monthly')}
+                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-emerald-200 cursor-pointer"
+                                >
+                                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span>ต่ออายุ +30 วัน (VIP)</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickExtend(u.username, 365, 'annual')}
+                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-yellow-200 cursor-pointer"
+                                >
+                                  <Crown className="w-3.5 h-3.5 text-yellow-400" />
+                                  <span>ต่ออายุ +1 ปี (PREMIUM)</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleSuspend(u)}
+                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-stone-300 cursor-pointer"
+                                >
+                                  {isSuspended ? <Unlock className="w-3.5 h-3.5 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
+                                  <span>{isSuspended ? 'ปลดล็อกบัญชี' : 'ล็อกบัญชี (Lock)'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleExpireNow(u)}
+                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-rose-300 cursor-pointer"
+                                >
+                                  <Clock className="w-3.5 h-3.5 text-rose-400" />
+                                  <span>สิ้นสุด Trial ทันที (Expire Now)</span>
+                                </button>
+
+                                <div className="border-t border-stone-800 my-1" />
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingMember(u);
+                                    setShowEditMemberModal(true);
+                                    setOpenActionUsername(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-stone-200 cursor-pointer"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5 text-stone-400" />
+                                  <span>แก้ไขข้อมูล / รหัสผ่าน</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteUser(u)}
+                                  className="w-full px-3 py-2 text-xs rounded-xl hover:bg-rose-950/60 flex items-center space-x-2 text-rose-400 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                                  <span>ลบบัญชีถาวร</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-      {/* TAB 3: BILLING & PAYMENT LOGS */}
+      {/* ========================================================================= */}
+      {/* TAB 3: ตั้งค่าแพ็กเกจและ QR (PACKAGES & QR SETTINGS - Image 3)            */}
+      {/* ========================================================================= */}
+      {activeTab === 'pricing_qr' && (
+        <form onSubmit={handleSaveSettingsAndPricing} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column: ตั้งค่า PromptPay และ QR Code matching Image 3 */}
+            <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-5">
+              <div className="flex items-center space-x-2 border-b border-stone-100 dark:border-stone-800 pb-3">
+                <CreditCard className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-base font-black text-stone-900 dark:text-stone-100">
+                  ตั้งค่า PromptPay และ QR Code
+                </h3>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <div>
+                  <label className="block font-bold text-stone-700 dark:text-stone-300 mb-1">
+                    หมายเลขพร้อมเพย์ (PROMPTPAY ID)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.promptPayNo || '0619614953'}
+                    onChange={(e) => setSettings({ ...settings, promptPayNo: e.target.value })}
+                    placeholder="เช่น 0619614953"
+                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-black text-stone-900 dark:text-stone-100"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-stone-700 dark:text-stone-300 mb-1">
+                    ชื่อผู้รับเงิน / บัญชี (RECEIVER ACCOUNT NAME)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.bankAccountName || 'นายทุมมงคล ธรรมพิทักษ์'}
+                    onChange={(e) => setSettings({ ...settings, bankAccountName: e.target.value })}
+                    placeholder="เช่น นายทุมมงคล ธรรมพิทักษ์"
+                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold text-stone-900 dark:text-stone-100"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-stone-700 dark:text-stone-300 mb-1">
+                    รูปภาพคิวอาร์โค้ดใหม่ (CUSTOM QR CODE IMAGE)
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="file"
+                      ref={qrFileInputRef}
+                      onChange={handleQrUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => qrFileInputRef.current?.click()}
+                      className="flex-1 bg-stone-800 hover:bg-stone-750 text-amber-200 border border-amber-500/30 px-3 py-2 rounded-xl font-bold flex items-center justify-center space-x-1.5 cursor-pointer transition-all shadow-xs"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{settings.qrCodeImage ? 'เปลี่ยนรูปภาพ QR Code' : 'เลือกรูปภาพ QR Code'}</span>
+                    </button>
+                    {settings.qrCodeImage && (
+                      <button
+                        type="button"
+                        onClick={handleResetQr}
+                        className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl font-bold cursor-pointer transition-all"
+                      >
+                        รีเซ็ต
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    * แนะนำขนาดไม่เกิน 800 KB ระบบจะทำการแปลงเป็นรูปภาพฝังในระบบให้ทันที หากยังไม่มีรูปภาพ ระบบจะจำลองกราฟิกพร้อมเพย์ทางการให้อัตโนมัติ
+                  </p>
+                </div>
+
+                {/* Live PromptPay Preview Card matching user's Image 3 */}
+                <div className="pt-2">
+                  <div className="text-center font-bold text-stone-500 text-[11px] mb-2">
+                    ตัวอย่าง QR CODE และใบชำระเงินจริง
+                  </div>
+
+                  <div className="max-w-xs mx-auto bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden text-stone-900">
+                    {/* PromptPay Official Header Bar */}
+                    <div className="bg-[#003b70] text-white p-3 text-center space-y-0.5">
+                      <div className="text-xs font-black tracking-widest uppercase">PROMPTPAY</div>
+                      <div className="text-[10px] opacity-80">พร้อมเพย์ • ชำระเงินสะดวก ทันที</div>
+                    </div>
+
+                    <div className="p-4 text-center space-y-3">
+                      <div className="w-40 h-40 mx-auto bg-stone-50 border-2 border-stone-900 rounded-xl p-2 flex items-center justify-center shadow-inner">
+                        {settings.qrCodeImage ? (
+                          <img
+                            src={settings.qrCodeImage}
+                            alt="PromptPay QR Code"
+                            className="w-full h-full object-contain rounded-lg"
+                          />
+                        ) : (
+                          <div className="text-center space-y-1">
+                            <div className="text-3xl">📱</div>
+                            <div className="font-mono text-xs font-black text-stone-800 tracking-wider">
+                              {settings.promptPayNo || '0619614953'}
+                            </div>
+                            <div className="text-[9px] text-stone-400">สแกนผ่านแอปธนาคารทุกแห่ง</div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-0.5 pt-1 border-t border-stone-100">
+                        <div className="font-mono font-black text-sm text-stone-900 tracking-wider">
+                          {settings.promptPayNo || '0619614953'}
+                        </div>
+                        <div className="text-xs font-bold text-stone-700">
+                          {settings.bankAccountName || 'นายทุมมงคล ธรรมพิทักษ์'}
+                        </div>
+                        <div className="text-[10px] text-stone-400">
+                          สแกน QR เพื่อโอนชำระเงินค่าบริการ Audit-OS
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: ระบบจัดการข้อมูลแพ็กเกจราคาหน้าบ้าน matching Image 3 */}
+            <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-5">
+              <div className="flex items-center space-x-2 border-b border-stone-100 dark:border-stone-800 pb-3">
+                <Award className="w-5 h-5 text-amber-600" />
+                <h3 className="text-base font-black text-stone-900 dark:text-stone-100">
+                  ระบบจัดการข้อมูลแพ็กเกจราคาหน้าบ้าน
+                </h3>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                {/* 1. สมาชิกฟรี 30 วัน */}
+                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                      <span>🌱</span> <span>ฟรี 30 วัน (ค่าเริ่มต้น)</span>
+                    </span>
+                    <span className="text-xs font-black text-emerald-600">ฟรี 30 วัน</span>
+                  </div>
+                  <p className="text-[11px] text-stone-500">
+                    ผู้ตรวจสอบภายในทุกคนที่ลงทะเบียนใหม่จะได้รับสิทธิ์ทดลองใช้งาน 30 วันนี้อัตโนมัติ โดยไม่ต้องรอการอนุมัติ
+                  </p>
+                </div>
+
+                {/* 2. แพ็กเกจรายเดือน (MONTHLY VIP) */}
+                <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-xs">
+                      <span>⭐</span> <span>แพ็กเกจรายเดือน (MONTHLY VIP)</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจ</label>
+                      <input
+                        type="text"
+                        value="Monthly VIP"
+                        disabled
+                        className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ราคา (บาท)</label>
+                      <input
+                        type="number"
+                        value={settings.monthlyPrice || 299}
+                        onChange={(e) => setSettings({ ...settings, monthlyPrice: parseFloat(e.target.value) || 299 })}
+                        className="w-full p-2 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-stone-800 font-bold text-blue-600"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
+                      รายละเอียดสิทธิประโยชน์ (หนึ่งรายการต่อหนึ่งบรรทัด)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={settings.vipBenefits || ''}
+                      onChange={(e) => setSettings({ ...settings, vipBenefits: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. แพ็กเกจรายปี (ANNUAL PREMIUM) */}
+                <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 shadow-xs">
+                      <span>👑</span> <span>แพ็กเกจรายปี (ANNUAL PREMIUM)</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจ</label>
+                      <input
+                        type="text"
+                        value="Annual Premium"
+                        disabled
+                        className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ราคา (บาท)</label>
+                      <input
+                        type="number"
+                        value={settings.annualPrice || 2990}
+                        onChange={(e) => setSettings({ ...settings, annualPrice: parseFloat(e.target.value) || 2990 })}
+                        className="w-full p-2 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-black text-amber-600"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
+                      รายละเอียดสิทธิประโยชน์ (หนึ่งรายการต่อหนึ่งบรรทัด)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={settings.premiumBenefits || ''}
+                      onChange={(e) => setSettings({ ...settings, premiumBenefits: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black py-3 px-6 rounded-2xl text-xs sm:text-sm transition-all shadow-md shadow-amber-600/30 flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>บันทึกตั้งค่ารับเงินและอัปเดตแพ็กเกจหน้าสมัครสมาชิก 💾</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: ประวัติชำระเงิน (BILLING & TRANSACTIONS)                           */}
+      {/* ========================================================================= */}
       {activeTab === 'billing' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100 dark:border-stone-800">
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
                 <span>บันทึกรายได้ & ประวัติการชำระเงิน</span>
-                <span className="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold">
+                <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full font-bold">
                   รวม ฿{metrics.totalRevenue.toLocaleString()}
                 </span>
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-stone-500">
                 บันทึกการรับชำระค่าสมาชิกรายเดือนและรายปี พร้อมต่ออายุอัตโนมัติ
               </p>
             </div>
@@ -834,52 +1466,54 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                 });
                 setShowAddPaymentModal(true);
               }}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-sm self-start sm:self-auto"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-sm cursor-pointer flex items-center space-x-1.5 self-start sm:self-auto"
             >
               <Plus className="w-4 h-4" />
-              <span>+ บันทึกการรับชำระเงินใหม่</span>
+              <span>+ บันทึกการรับชำระเงิน</span>
             </button>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 border-b border-slate-200 dark:border-slate-700 font-bold">
-                  <th className="py-3 px-3">รหัสรายการ</th>
-                  <th className="py-3 px-3">สมาชิก / อปท.</th>
+                <tr className="bg-stone-50 dark:bg-stone-800/80 text-stone-500 border-b border-stone-200 dark:border-stone-700 font-bold">
+                  <th className="py-3 px-3">เลขที่ใบเสร็จ</th>
+                  <th className="py-3 px-3">สมาชิกผู้ตรวจสอบ</th>
                   <th className="py-3 px-3">แพ็กเกจ</th>
-                  <th className="py-3 px-3">จำนวนเงิน</th>
-                  <th className="py-3 px-3">ช่องทาง</th>
-                  <th className="py-3 px-3">วันที่ชำระ</th>
+                  <th className="py-3 px-3 text-right">จำนวนเงิน</th>
+                  <th className="py-3 px-3">ช่องทางชำระ</th>
+                  <th className="py-3 px-3">วันที่</th>
                   <th className="py-3 px-3">บันทึกช่วยจำ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-slate-400">
-                      ยังไม่มีรายการรับชำระเงิน กด "+ บันทึกการรับชำระเงินใหม่" เพื่อเริ่มต้น
+                    <td colSpan={7} className="text-center py-10 text-stone-400">
+                      ยังไม่มีประวัติการชำระเงินในระบบ
                     </td>
                   </tr>
                 ) : (
                   payments.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 px-3 font-mono font-bold text-slate-700 dark:text-slate-300">
+                    <tr key={p.id} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/40">
+                      <td className="py-3 px-3 font-mono font-bold text-stone-700 dark:text-stone-300">
                         {p.id}
                       </td>
                       <td className="py-3 px-3">
-                        <div className="font-bold text-slate-900 dark:text-slate-100">{p.memberName}</div>
-                        <div className="text-[11px] text-indigo-600 dark:text-indigo-400">{p.organization}</div>
+                        <div className="font-bold text-stone-900 dark:text-stone-100">{p.memberName || p.username}</div>
+                        <div className="text-[10px] text-stone-400">@{p.username} • {p.organization}</div>
                       </td>
-                      <td className="py-3 px-3 font-semibold">
-                        {p.plan === 'monthly' ? 'รายเดือน' : p.plan === 'annual' ? 'รายปี' : p.plan}
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                          {p.plan === 'monthly' ? 'VIP รายเดือน' : 'PREMIUM รายปี'}
+                        </span>
                       </td>
-                      <td className="py-3 px-3 font-black text-emerald-700 dark:text-emerald-400 text-sm">
+                      <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600 text-sm">
                         ฿{Number(p.amount).toLocaleString()}
                       </td>
-                      <td className="py-3 px-3 text-slate-600 dark:text-slate-300">{p.method}</td>
-                      <td className="py-3 px-3 text-slate-500">{p.paidAt}</td>
-                      <td className="py-3 px-3 text-slate-500 max-w-xs truncate">{p.note || '-'}</td>
+                      <td className="py-3 px-3 text-stone-600 dark:text-stone-300">{p.method}</td>
+                      <td className="py-3 px-3 text-stone-500">{p.paidAt}</td>
+                      <td className="py-3 px-3 text-stone-500 max-w-xs truncate">{p.note || '-'}</td>
                     </tr>
                   ))
                 )}
@@ -889,328 +1523,261 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         </div>
       )}
 
-      {/* TAB 4: SYSTEM SETTINGS & PRICING */}
-      {activeTab === 'settings' && (
-        <form onSubmit={handleSaveSettings} className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 max-w-3xl">
-          <div className="space-y-1 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-              <Settings className="w-5 h-5 text-indigo-600" />
-              <span>ตั้งค่าแพ็กเกจราคา & บัญชีรับโอนเงินของ Super Admin</span>
-            </h2>
-            <p className="text-xs text-slate-500">
-              ข้อมูลที่ระบุในส่วนนี้จะถูกแสดงในหน้าลงทะเบียนและหน้าต่ออายุของสมาชิกผู้ตรวจสอบภายใน
-            </p>
-          </div>
-
-          {/* Pricing settings */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-indigo-700 dark:text-indigo-400 flex items-center space-x-1.5">
-              <Award className="w-4 h-4" />
-              <span>1. กำหนดอัตราค่าสมาชิก</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  ทดลองใช้งานฟรี (วัน)
-                </label>
-                <input
-                  type="number"
-                  value={settings.trialDays || 14}
-                  onChange={(e) => setSettings({ ...settings, trialDays: parseInt(e.target.value) || 14 })}
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
-                />
+      {/* ========================================================================= */}
+      {/* MODAL: CHANGE TIER (ปรับระดับสมาชิก 3 ระดับ)                               */}
+      {/* ========================================================================= */}
+      {showChangeTierModal && tierTargetUser && (
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-md w-full p-6 space-y-5 border border-stone-200 dark:border-stone-800 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <Award className="w-5 h-5 text-amber-500" />
+                <h3 className="text-base font-black text-stone-900 dark:text-stone-100">
+                  ปรับระดับสมาชิก: @{tierTargetUser.username}
+                </h3>
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  ค่าสมาชิกรายเดือน (บาท)
-                </label>
-                <input
-                  type="number"
-                  value={settings.monthlyPrice || 299}
-                  onChange={(e) => setSettings({ ...settings, monthlyPrice: parseFloat(e.target.value) || 299 })}
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  ค่าสมาชิกรายปี (บาท)
-                </label>
-                <input
-                  type="number"
-                  value={settings.annualPrice || 2990}
-                  onChange={(e) => setSettings({ ...settings, annualPrice: parseFloat(e.target.value) || 2990 })}
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-amber-600"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Banking settings */}
-          <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <h3 className="text-sm font-bold text-indigo-700 dark:text-indigo-400 flex items-center space-x-1.5">
-              <CreditCard className="w-4 h-4" />
-              <span>2. บัญชีธนาคารสำหรับรับโอนเงินค่าสมาชิก</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  ชื่อธนาคาร
-                </label>
-                <input
-                  type="text"
-                  value={settings.bankName || 'ธนาคารกรุงไทย'}
-                  onChange={(e) => setSettings({ ...settings, bankName: e.target.value })}
-                  placeholder="เช่น ธนาคารกรุงไทย / กสิกรไทย"
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  เลขที่บัญชี
-                </label>
-                <input
-                  type="text"
-                  value={settings.bankAccountNo || '123-4-56789-0'}
-                  onChange={(e) => setSettings({ ...settings, bankAccountNo: e.target.value })}
-                  placeholder="เลขที่บัญชีรับเงิน"
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  ชื่อบัญชี
-                </label>
-                <input
-                  type="text"
-                  value={settings.bankAccountName || 'ผู้ดูแลระบบ Audit-OS'}
-                  onChange={(e) => setSettings({ ...settings, bankAccountName: e.target.value })}
-                  placeholder="ชื่อบัญชีรับโอน"
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  เบอร์พร้อมเพย์ (PromptPay)
-                </label>
-                <input
-                  type="text"
-                  value={settings.promptPayNo || ''}
-                  onChange={(e) => setSettings({ ...settings, promptPayNo: e.target.value })}
-                  placeholder="เช่น เบอร์โทรศัพท์ หรือเลขบัตรประชาชน"
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* System Announcement */}
-          <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <h3 className="text-sm font-bold text-indigo-700 dark:text-indigo-400 flex items-center space-x-1.5">
-              <Sparkles className="w-4 h-4" />
-              <span>3. ประกาศระบบแจ้งเตือนสมาชิก (System Announcement)</span>
-            </h3>
-            <textarea
-              rows={3}
-              value={settings.announcement || ''}
-              onChange={(e) => setSettings({ ...settings, announcement: e.target.value })}
-              placeholder="ข้อความประกาศที่จะแสดงให้ผู้ตรวจสอบภายในทุกคนเห็น เช่น อัปเดตระเบียบใหม่ หรือแจ้งเตือนต่ออายุสมาชิก..."
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-            />
-          </div>
-
-          <div className="pt-4">
-            <button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center space-x-2"
-            >
-              <Check className="w-4 h-4" />
-              <span>บันทึกการตั้งค่าระบบ</span>
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* MODAL: APPROVE REGISTRATION */}
-      {showApproveModal && selectedPending && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 space-y-5 border border-slate-200 dark:border-slate-800 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <span>อัปเกรดสถานะสมาชิกทางการ: {selectedPending.displayName}</span>
-              </h3>
               <button
-                onClick={() => setShowApproveModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                type="button"
+                onClick={() => setShowChangeTierModal(false)}
+                className="text-stone-400 hover:text-stone-600 p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl space-y-1">
-                <div><strong>สังกัด อปท.:</strong> {selectedPending.organization}</div>
-                <div><strong>ตำแหน่ง:</strong> {selectedPending.position}</div>
-                <div><strong>Username:</strong> @{selectedPending.username}</div>
+            <div className="space-y-4 text-xs">
+              <div className="bg-stone-50 dark:bg-stone-800/60 p-3 rounded-2xl space-y-1">
+                <div><strong>ชื่อผู้ตรวจ:</strong> {tierTargetUser.displayName}</div>
+                <div><strong>สังกัด:</strong> {tierTargetUser.organization}</div>
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">เลือกแพ็กเกจสมาชิก</label>
-                <select
-                  value={approvePlan}
-                  onChange={(e) => {
-                    const p = e.target.value;
-                    setApprovePlan(p);
-                    setApproveDurationDays(p === 'monthly' ? 30 : p === 'trial' ? 30 : 365);
-                  }}
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
-                >
-                  <option value="annual">สมาชิกรายปี (365 วัน - ฿2,990)</option>
-                  <option value="monthly">สมาชิกรายเดือน (30 วัน - ฿299)</option>
-                  <option value="trial">ขยายเวลาทดลองใช้งาน (+30 วัน)</option>
-                </select>
+                <label className="block font-bold mb-1.5 text-stone-700 dark:text-stone-300">
+                  เลือกระดับสมาชิกใหม่
+                </label>
+                <div className="space-y-2">
+                  <label className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+                    selectedNewTier === 'trial'
+                      ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30'
+                      : 'border-stone-200 dark:border-stone-700'
+                  }`}>
+                    <div className="flex items-center space-x-2.5">
+                      <input
+                        type="radio"
+                        name="tier"
+                        value="trial"
+                        checked={selectedNewTier === 'trial'}
+                        onChange={() => {
+                          setSelectedNewTier('trial');
+                          setTierDurationDays(30);
+                        }}
+                      />
+                      <div>
+                        <div className="font-bold text-stone-900 dark:text-stone-100">🌱 ฟรี 30 วัน (ค่าเริ่มต้น)</div>
+                        <div className="text-[11px] text-stone-500">ทดลองใช้งานฟรี 30 วัน</div>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+                    selectedNewTier === 'monthly'
+                      ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30'
+                      : 'border-stone-200 dark:border-stone-700'
+                  }`}>
+                    <div className="flex items-center space-x-2.5">
+                      <input
+                        type="radio"
+                        name="tier"
+                        value="monthly"
+                        checked={selectedNewTier === 'monthly'}
+                        onChange={() => {
+                          setSelectedNewTier('monthly');
+                          setTierDurationDays(30);
+                        }}
+                      />
+                      <div>
+                        <div className="font-bold text-indigo-700 dark:text-indigo-400">⭐ VIP (รายเดือน)</div>
+                        <div className="text-[11px] text-stone-500">ปลดล็อกทุกกระดาษทำการ (30 วัน)</div>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+                    selectedNewTier === 'annual'
+                      ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/30'
+                      : 'border-stone-200 dark:border-stone-700'
+                  }`}>
+                    <div className="flex items-center space-x-2.5">
+                      <input
+                        type="radio"
+                        name="tier"
+                        value="annual"
+                        checked={selectedNewTier === 'annual'}
+                        onChange={() => {
+                          setSelectedNewTier('annual');
+                          setTierDurationDays(365);
+                        }}
+                      />
+                      <div>
+                        <div className="font-bold text-amber-600 dark:text-amber-400">👑 PREMIUM (รายปี)</div>
+                        <div className="text-[11px] text-stone-500">ระดับสูงสุด พร้อมคลังระเบียบทอง 2569 (365 วัน)</div>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+                    selectedNewTier === 'lifetime'
+                      ? 'border-purple-500 bg-purple-50/40 dark:bg-purple-950/30'
+                      : 'border-stone-200 dark:border-stone-700'
+                  }`}>
+                    <div className="flex items-center space-x-2.5">
+                      <input
+                        type="radio"
+                        name="tier"
+                        value="lifetime"
+                        checked={selectedNewTier === 'lifetime'}
+                        onChange={() => {
+                          setSelectedNewTier('lifetime');
+                          setTierDurationDays(9999);
+                        }}
+                      />
+                      <div>
+                        <div className="font-bold text-purple-700 dark:text-purple-400">💎 LIFETIME VIP (ตลอดชีพ)</div>
+                        <div className="text-[11px] text-stone-500">ไม่จำกัดวันหมดอายุ (ถาวร)</div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
               </div>
 
-              <div>
-                <label className="block font-semibold mb-1">จำนวนวันอายุการใช้งาน (วัน)</label>
-                <input
-                  type="number"
-                  value={approveDurationDays}
-                  onChange={(e) => setApproveDurationDays(parseInt(e.target.value) || 30)}
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold"
-                />
-                <span className="text-[11px] text-slate-400">
-                  หมดอายุประมาณ: {new Date(Date.now() + approveDurationDays * 86400000).toLocaleDateString('th-TH')}
-                </span>
-              </div>
+              {selectedNewTier !== 'lifetime' && (
+                <div>
+                  <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                    จำนวนวันอายุการใช้งานนับจากวันนี้ (วัน)
+                  </label>
+                  <input
+                    type="number"
+                    value={tierDurationDays}
+                    onChange={(e) => setTierDurationDays(parseInt(e.target.value) || 30)}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-bold"
+                  />
+                  <span className="text-[11px] text-stone-400 mt-1 block">
+                    หมดอายุประมาณ: {new Date(Date.now() + tierDurationDays * 86400000).toLocaleDateString('th-TH')}
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-100 dark:border-stone-800">
               <button
-                onClick={() => setShowApproveModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                type="button"
+                onClick={() => setShowChangeTierModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-400 cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button
-                onClick={handleConfirmApprove}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center space-x-1"
+                type="button"
+                onClick={handleSaveChangeTier}
+                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer"
               >
-                <Check className="w-4 h-4" />
-                <span>บันทึกและเปิดใช้งานแพ็กเกจ</span>
+                บันทึกการปรับระดับ
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: BROADCAST SYSTEM UPDATE */}
-      {showBroadcastModal && (
+      {/* ========================================================================= */}
+      {/* MODAL: EDIT MEMBER / PASSWORD                                            */}
+      {/* ========================================================================= */}
+      {showEditMemberModal && editingMember && (
         <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-lg w-full p-6 space-y-5 border border-stone-200 dark:border-stone-800 shadow-2xl">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-md w-full p-6 space-y-4 border border-stone-200 dark:border-stone-800 shadow-2xl">
             <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
-                    ส่งสัญญาณแจ้งเตือนอัปเดตระบบ (Broadcast Update)
-                  </h3>
-                  <p className="text-xs text-stone-500">
-                    แจ้งเตือนไปยังผู้ใช้งานทุกคนที่กำลังเปิดเว็บอยู่แบบ Real-time
-                  </p>
-                </div>
-              </div>
+              <h3 className="text-base font-black text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                <Edit3 className="w-4 h-4 text-amber-500" />
+                <span>แก้ไขข้อมูล: @{editingMember.username}</span>
+              </h3>
               <button
-                onClick={() => setShowBroadcastModal(false)}
-                className="text-stone-400 hover:text-stone-600 p-1.5 rounded-lg cursor-pointer"
+                type="button"
+                onClick={() => setShowEditMemberModal(false)}
+                className="text-stone-400 hover:text-stone-600 p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSendBroadcast} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">เวอร์ชันระบบ (Version)</label>
-                  <input
-                    type="text"
-                    value={broadcastVer}
-                    onChange={(e) => setBroadcastVer(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-bold text-amber-600"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">วันที่อัปเดต</label>
-                  <input
-                    type="text"
-                    defaultValue={new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    disabled
-                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 text-stone-500"
-                  />
-                </div>
-              </div>
-
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                try {
+                  updateUser(editingMember.username, editingMember);
+                  setShowEditMemberModal(false);
+                  reloadData();
+                  showToast(`อัปเดตข้อมูล @${editingMember.username} เรียบร้อยแล้ว`);
+                } catch (err) {
+                  alert(err.message);
+                }
+              }}
+              className="space-y-3 text-xs"
+            >
               <div>
-                <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">หัวข้อการแจ้งเตือน</label>
+                <label className="block font-bold mb-1">ชื่อ-นามสกุล</label>
                 <input
                   type="text"
-                  value={broadcastTitle}
-                  onChange={(e) => setBroadcastTitle(e.target.value)}
+                  value={editingMember.displayName || ''}
+                  onChange={(e) => setEditingMember({ ...editingMember, displayName: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">รายละเอียดการอัปเดต</label>
-                <textarea
-                  rows={2}
-                  value={broadcastDesc}
-                  onChange={(e) => setBroadcastDesc(e.target.value)}
+                <label className="block font-bold mb-1">สังกัด อปท.</label>
+                <input
+                  type="text"
+                  value={editingMember.organization || ''}
+                  onChange={(e) => setEditingMember({ ...editingMember, organization: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">สรุปจุดเด่น / การเปลี่ยนแปลง (Change Summary)</label>
+                <label className="block font-bold mb-1">ตำแหน่ง</label>
                 <input
                   type="text"
-                  value={broadcastSummary}
-                  onChange={(e) => setBroadcastSummary(e.target.value)}
+                  value={editingMember.position || ''}
+                  onChange={(e) => setEditingMember({ ...editingMember, position: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
-                  placeholder="เช่น ปรับปรุงกระดาษทำการ และแก้ไขการจัดการผู้ใช้"
                 />
               </div>
 
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-xl text-amber-900 dark:text-amber-200 text-[11px] leading-relaxed">
-                ℹ️ เมื่อส่งสัญญาณแล้ว ผู้ใช้งานที่กำลังเปิดระบบอยู่จะเห็นแถบแจ้งเตือนสีอำพันเรียบหรูเด้งขึ้นมาทันที พร้อมปุ่ม <strong>"รีเฟรชเพื่ออัปเดตทันที"</strong> เพื่อให้โหลดเวอร์ชันใหม่
+              <div>
+                <label className="block font-bold mb-1">รหัสผ่านใหม่ (ระบุเมื่อต้องการเปลี่ยน)</label>
+                <input
+                  type="text"
+                  value={editingMember.newPassword || ''}
+                  onChange={(e) => setEditingMember({ ...editingMember, newPassword: e.target.value })}
+                  placeholder="เว้นว่างไว้หากไม่ต้องการเปลี่ยน"
+                  className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono"
+                />
               </div>
 
               <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-100 dark:border-stone-800">
                 <button
                   type="button"
-                  onClick={() => setShowBroadcastModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800 cursor-pointer"
+                  onClick={() => setShowEditMemberModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-black px-5 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-amber-900/20 cursor-pointer flex items-center space-x-1.5"
+                  className="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-200" />
-                  <span>📢 ส่งสัญญาณแจ้งเตือนเดี๋ยวนี้</span>
+                  บันทึกข้อมูล
                 </button>
               </div>
             </form>
@@ -1218,18 +1785,21 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         </div>
       )}
 
-      {/* MODAL: ADD PAYMENT */}
+      {/* ========================================================================= */}
+      {/* MODAL: ADD PAYMENT                                                        */}
+      {/* ========================================================================= */}
       {showAddPaymentModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 space-y-5 border border-slate-200 dark:border-slate-800 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-lg w-full p-6 space-y-5 border border-stone-200 dark:border-stone-800 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+              <h3 className="text-base font-bold text-stone-800 dark:text-stone-100 flex items-center space-x-2">
                 <DollarSign className="w-5 h-5 text-emerald-600" />
                 <span>บันทึกการรับชำระเงินใหม่</span>
               </h3>
               <button
+                type="button"
                 onClick={() => setShowAddPaymentModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="text-stone-400 hover:text-stone-600 p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1241,7 +1811,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                 <select
                   value={paymentForm.username}
                   onChange={(e) => setPaymentForm({ ...paymentForm, username: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
                   required
                 >
                   <option value="">-- เลือกสมาชิก --</option>
@@ -1265,13 +1835,13 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                       setPaymentForm({
                         ...paymentForm,
                         plan: p,
-                        amount: p === 'monthly' ? '299' : '2990'
+                        amount: p === 'monthly' ? (settings.monthlyPrice || 299).toString() : (settings.annualPrice || 2990).toString()
                       });
                     }}
-                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                   >
-                    <option value="annual">รายปี (฿2,990)</option>
-                    <option value="monthly">รายเดือน (฿299)</option>
+                    <option value="annual">PREMIUM รายปี (฿{settings.annualPrice || 2990})</option>
+                    <option value="monthly">VIP รายเดือน (฿{settings.monthlyPrice || 299})</option>
                   </select>
                 </div>
 
@@ -1281,7 +1851,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                     type="number"
                     value={paymentForm.amount}
                     onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
-                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-black text-emerald-600"
+                    className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-black text-emerald-600"
                     required
                   />
                 </div>
@@ -1294,7 +1864,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                     type="text"
                     value={paymentForm.method}
                     onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value })}
-                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                   />
                 </div>
 
@@ -1304,7 +1874,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                     type="date"
                     value={paymentForm.date}
                     onChange={(e) => setPaymentForm({ ...paymentForm, date: e.target.value })}
-                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
+                    className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
                   />
                 </div>
               </div>
@@ -1316,7 +1886,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                   value={paymentForm.note}
                   onChange={(e) => setPaymentForm({ ...paymentForm, note: e.target.value })}
                   placeholder="เช่น สลิปโอนเงิน กสิกรไทย 14:30 น."
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                 />
               </div>
 
@@ -1328,17 +1898,17 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                     onChange={(e) => setPaymentForm({ ...paymentForm, autoExtend: e.target.checked })}
                     className="rounded text-emerald-600 focus:ring-emerald-500"
                   />
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="font-semibold text-stone-700 dark:text-stone-300">
                     ต่ออายุสมาชิกโดยอัตโนมัติ (+{paymentForm.plan === 'monthly' ? '30 วัน' : '1 ปี'})
                   </span>
                 </label>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-100 dark:border-stone-800">
                 <button
                   type="button"
                   onClick={() => setShowAddPaymentModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 cursor-pointer"
                 >
                   ยกเลิก
                 </button>

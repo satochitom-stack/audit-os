@@ -20,27 +20,43 @@ export const ENTERPRISE_ROLES = [
 export const MEMBERSHIP_PLANS = {
   trial: {
     id: 'trial',
-    name: 'ทดลองใช้งานฟรี (Free Trial 30 วัน)',
+    name: 'ฟรี 30 วัน (ค่าเริ่มต้น)',
+    tier: 'FREE',
     price: 0,
     priceLabel: 'ฟรี 30 วัน',
     durationDays: 30,
-    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+    badgeColor: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+    description: 'ทดลองใช้งานเครื่องมือตรวจสอบภายใน อปท. ครบทุกฟังก์ชันฟรี 30 วัน'
   },
   monthly: {
     id: 'monthly',
-    name: 'สมาชิกรายเดือน (Monthly)',
+    name: 'VIP (รายเดือน)',
+    tier: 'VIP',
     price: 299,
     priceLabel: '฿299 / เดือน',
     durationDays: 30,
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
+    badgeColor: 'bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border-blue-400/60 shadow-md shadow-indigo-600/30',
+    description: 'สมาชิก VIP สำหรับปฏิบัติงานตรวจสอบภายใน อปท. ต่อเนื่อง ปลดล็อกทุกกระดาษทำการ'
   },
   annual: {
     id: 'annual',
-    name: 'สมาชิกรายปี (Annual - แนะนำ)',
+    name: 'PREMIUM (รายปี)',
+    tier: 'PREMIUM',
     price: 2990,
     priceLabel: '฿2,990 / ปี',
     durationDays: 365,
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
+    badgeColor: 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border-amber-200 shadow-lg shadow-amber-500/35 font-black',
+    description: 'สมาชิก PREMIUM สูงสุด ประหยัด คุ้มค่าที่สุด พร้อมคลังเอกสารและระเบียบทอง 2569 ตลอดปี'
+  },
+  lifetime: {
+    id: 'lifetime',
+    name: 'LIFETIME VIP (ตลอดชีพ)',
+    tier: 'LIFETIME',
+    price: 9900,
+    priceLabel: 'ตลอดชีพ',
+    durationDays: 9999,
+    badgeColor: 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-900 text-white border-purple-300 shadow-md font-black',
+    description: 'สมาชิกตลอดชีพ ปลดล็อกถาวร'
   }
 };
 
@@ -53,16 +69,36 @@ export function getSystemSettings() {
     trialDays: 30,
     monthlyPrice: 299,
     annualPrice: 2990,
-    bankName: 'ธนาคารกรุงไทย',
-    bankAccountNo: '123-4-56789-0',
-    bankAccountName: 'ผู้ดูแลระบบ Audit-OS',
-    promptPayNo: '081-234-5678',
-    announcement: 'ยินดีต้อนรับสู่ Audit-OS ระบบบริหารงานตรวจสอบภายใน อปท. ประจำปีงบประมาณ พ.ศ. 2569'
+    bankName: 'ธนาคารกสิกรไทย / กรุงไทย',
+    bankAccountNo: '061-9-61495-3',
+    bankAccountName: 'นายทุมมงคล ธรรมพิทักษ์',
+    promptPayNo: '0619614953',
+    qrCodeImage: '',
+    vipBenefits: 'บันทึกกระดาษทำการ 6 ภารกิจ & ช่างไม่จำกัด\nเข้าถึงเครื่องมือคำนวณงานช่างและสุ่มตัวอย่างพัสดุ\nออกรายงานสรุปผลการตรวจสอบภายในและหนังสือราชการอัตโนมัติ\nสำรองข้อมูลบนคลาวด์ปลอดภัย แยกฐานข้อมูล อปท. เป็นเอกเทศ',
+    premiumBenefits: 'สิทธิ์ใช้งานระบบครบวงจร 12 ขั้นตอนตลอดปี\nคลังระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 ครบชุด\nกระดาษทำการ 6 ภารกิจ & ช่างมาตรฐาน ว 614 สมบูรณ์แบบ\nระบบทะเบียนคุมและติดตามผล CAPA ข้อทักท้วง 30 วัน\nอัปเดตระบบและเกณฑ์มาตรฐานกระทรวงการคลังฟรีตลอดปี',
+    announcement: 'ยินดีต้อนรับสู่ Audit-OS แพลตฟอร์มบริหารงานตรวจสอบภายใน อปท. ประจำปีงบประมาณ พ.ศ. 2569',
+    broadcastActive: true,
+    broadcastDate: new Date().toISOString()
   };
 }
 
 export function saveSystemSettings(settings) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  try {
+    window.dispatchEvent(new CustomEvent('ia-settings-changed', { detail: settings }));
+  } catch (_) {}
+}
+
+export function saveBroadcastAnnouncement(text, isActive = true) {
+  const current = getSystemSettings();
+  const updated = {
+    ...current,
+    announcement: text,
+    broadcastActive: isActive,
+    broadcastDate: new Date().toISOString()
+  };
+  saveSystemSettings(updated);
+  return updated;
 }
 
 export function getPaymentRecords() {
@@ -448,30 +484,43 @@ export function deleteUser(username) {
 // Subscription & Member Management Functions
 // -------------------------------------------------------------
 export function checkUserSubscription(user) {
-  if (!user) return { expired: false, daysRemaining: 0, isTrial: false, planName: 'ทั่วไป' };
+  if (!user) return { expired: false, daysRemaining: 0, isTrial: false, planName: 'ทั่วไป', tier: 'FREE' };
   if (user.role === 'admin' || user.username === 'admin') {
-    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'Super Admin' };
+    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'Super Admin', tier: 'ROOT' };
   }
   if (user.plan === 'lifetime') {
-    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'ตลอดชีพ (Lifetime)' };
+    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'LIFETIME VIP (ตลอดชีพ)', tier: 'LIFETIME' };
   }
   if (user.status === 'suspended') {
-    return { expired: true, daysRemaining: 0, isSuspended: true, reason: 'บัญชีถูกระงับสิทธิ์การใช้งาน', planName: 'ระงับสิทธิ์' };
+    return { expired: true, daysRemaining: 0, isSuspended: true, reason: 'บัญชีถูกระงับสิทธิ์การใช้งาน', planName: 'ระงับสิทธิ์', tier: 'SUSPENDED' };
   }
   if (!user.expiresAt) {
-    return { expired: false, daysRemaining: 30, isTrial: user.plan === 'trial', planName: 'สมาชิก' };
+    return { expired: false, daysRemaining: 30, isTrial: user.plan === 'trial', planName: 'ฟรี 30 วัน (ค่าเริ่มต้น)', tier: 'FREE' };
   }
   const expiryTime = new Date(user.expiresAt).getTime();
   const now = Date.now();
   const diffMs = expiryTime - now;
   const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   const isExpired = diffMs <= 0;
+  
+  const planKey = user.plan || 'trial';
+  const planName = planKey === 'annual'
+    ? 'PREMIUM (รายปี)'
+    : planKey === 'monthly'
+    ? 'VIP (รายเดือน)'
+    : planKey === 'lifetime'
+    ? 'LIFETIME VIP'
+    : 'ฟรี 30 วัน (ค่าเริ่มต้น)';
+    
+  const tier = planKey === 'annual' ? 'PREMIUM' : planKey === 'monthly' ? 'VIP' : planKey === 'lifetime' ? 'LIFETIME' : 'FREE';
+
   return {
     expired: isExpired,
     daysRemaining,
     expiresAt: user.expiresAt,
-    isTrial: user.plan === 'trial',
-    planName: user.plan === 'trial' ? 'ทดลองใช้ฟรี 30 วัน' : user.plan === 'annual' ? 'สมาชิกรายปี' : 'สมาชิกรายเดือน'
+    isTrial: planKey === 'trial',
+    planName,
+    tier
   };
 }
 
