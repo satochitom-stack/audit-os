@@ -135,7 +135,13 @@ export default function PlanningView({
   // Detect high risk items from auditUniverse that are not yet in annualPlans
   const eligibleHighRiskCandidates = useMemo(() => {
     return auditUniverse.filter((item) => {
-      const alreadyInPlan = annualPlans.some((p) => p.title === item.activity || p.id === item.id);
+      const alreadyInPlan = annualPlans.some((p) => {
+        if (p.sourceRiskId && p.sourceRiskId === item.id) return true;
+        const titleMatch = (p.title === item.activity || p.topic === item.activity || p.projectName === item.activity);
+        if (!titleMatch) return false;
+        if (p.department && item.department) return p.department.trim() === item.department.trim();
+        return true;
+      });
       if (alreadyInPlan) return false;
       const score = item.score || ((item.sScore || 1) * 0.2 + (item.oScore || 1) * 0.25 + (item.fScore || 1) * 0.15 + (item.cScore || 1) * 0.2 + (item.kScore || 1) * 0.2);
       const isHigh = item.level === 'สูงมาก' || item.level === 'สูง' || score >= 2.3 || item.activity.includes('บัญชี') || item.activity.includes('พัสดุ') || item.activity.includes('เงิน');
@@ -322,6 +328,7 @@ export default function PlanningView({
 
       return {
         id: planId,
+        sourceRiskId: item.id,
         title: item.activity,
         dimension: dim,
         department: item.department || 'กองคลัง',
@@ -383,7 +390,17 @@ export default function PlanningView({
       confirmText: 'ลบโครงการ',
       type: 'danger',
       onConfirm: () => {
+        const deletedPlan = annualPlans.find((p) => p.id === planId);
         setAnnualPlans(annualPlans.filter((p) => p.id !== planId));
+        if (deletedPlan && setAuditUniverse && auditUniverse.length > 0) {
+          const updatedUniverse = auditUniverse.map((u) => {
+            const isMatch = (deletedPlan.sourceRiskId && deletedPlan.sourceRiskId === u.id) ||
+              ((deletedPlan.title === u.activity || deletedPlan.topic === u.activity) &&
+               (!deletedPlan.department || !u.department || deletedPlan.department.trim() === u.department.trim()));
+            return isMatch ? { ...u, includedInPlan: false } : u;
+          });
+          setAuditUniverse(updatedUniverse);
+        }
         showToast('ลบโครงการออกจากแผนเรียบร้อยแล้ว');
       }
     });

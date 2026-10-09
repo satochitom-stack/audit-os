@@ -20,7 +20,8 @@ import {
   Send,
   MessageSquareQuote,
   CheckSquare,
-  AlertCircle
+  AlertCircle,
+  ClipboardCheck
 } from 'lucide-react';
 import {
   AUDIT_DIMENSIONS,
