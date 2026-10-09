@@ -38,7 +38,8 @@ export default function EngagementPlanView({
   auditUniverse = [],
   annualPlans = [],
   engagementPlans = INITIAL_ENGAGEMENT_PLANS,
-  setEngagementPlans
+  setEngagementPlans,
+  onNavigateToExecution
 }) {
   const [activeTab, setActiveTab] = useState('list'); // 'list', 'ai-copilot', 'detail', 'communication'
   const [selectedPlanId, setSelectedPlanId] = useState(engagementPlans[0]?.id || 'ENG-FIN-01');
@@ -495,20 +496,30 @@ export default function EngagementPlanView({
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center space-x-2">
+                        <div className="flex items-center justify-center space-x-1.5">
+                          {onNavigateToExecution && (
+                            <button
+                              onClick={() => onNavigateToExecution(plan.id)}
+                              className="px-2.5 py-1 text-amber-900 dark:text-amber-200 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-amber-300 dark:border-amber-700/60 flex items-center space-x-1"
+                              title="เปิดกระดาษทำการตรวจสอบของโครงการนี้ (ขั้นที่ 6)"
+                            >
+                              <ClipboardCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                              <span>กระดาษทำการ</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setSelectedPlanId(plan.id);
                               setActiveTab('detail');
                             }}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors"
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                             title="ดูแนวการตรวจ"
                           >
                             <ChevronRight className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeletePlan(plan.id)}
-                            className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                             title="ลบแผน"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -871,6 +882,17 @@ export default function EngagementPlanView({
                   </option>
                 ))}
               </select>
+              {onNavigateToExecution && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateToExecution(selectedPlan.id)}
+                  className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700/60 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 cursor-pointer transition-colors shadow-xs"
+                  title="เปิดพื้นที่กระดาษทำการของโครงการนี้ (ขั้นที่ 6)"
+                >
+                  <ClipboardCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                  <span>เปิดกระดาษทำการ</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowAddStepModal(true)}
                 className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center space-x-1 cursor-pointer transition-colors shadow-xs"

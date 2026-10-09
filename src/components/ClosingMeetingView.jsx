@@ -12,7 +12,9 @@ import {
   AlertTriangle,
   MessageSquare,
   Sparkles,
-  Check
+  Check,
+  ClipboardCheck,
+  ArrowRight
 } from 'lucide-react';
 import { DLA_CLOSING_MEETING_DATA } from '../data/dlaStandardTemplates';
 
@@ -20,7 +22,8 @@ export default function ClosingMeetingView({
   selectedYear = '2569',
   orgProfile = {},
   annualPlans = [],
-  workingPapers = []
+  workingPapers = [],
+  onNavigateToTab
 }) {
   const [selectedPlanId, setSelectedPlanId] = useState(() => annualPlans[0]?.id || '');
   const currentPlan = annualPlans.find((p) => p.id === selectedPlanId) || annualPlans[0] || {
@@ -104,6 +107,31 @@ export default function ClosingMeetingView({
     );
   };
 
+  const handlePullFindingsFromWorkingPapers = () => {
+    const pulled = [];
+    workingPapers.forEach((wp) => {
+      if (wp.finding?.condition) {
+        pulled.push({
+          id: `FIND-${wp.id}`,
+          topic: wp.topic,
+          condition: wp.finding.condition,
+          criteria: Array.isArray(wp.criteria) ? wp.criteria.join(', ') : (wp.criteria || ''),
+          auditeeFeedback: 'หน่วยรับตรวจรับทราบข้อสังเกตและชี้แจงข้อเท็จจริงตามสภาพงาน',
+          agreement: wp.finding.recommendation || 'หน่วยรับตรวจตกลงดำเนินการปรับปรุงแก้ไขตามข้อเสนอแนะภายใน 30 วัน',
+          status: 'เห็นชอบร่วมกัน'
+        });
+      }
+    });
+
+    if (pulled.length === 0) {
+      alert('ยังไม่พบข้อตรวจพบที่บันทึกไว้ในกระดาษทำการ (ขั้นที่ 6) กรุณาบันทึกข้อตรวจพบในกระดาษทำการก่อน หรือกดโหลดตัวอย่าง สถ.');
+      return;
+    }
+
+    setFindings(pulled);
+    alert(`ดึงข้อตรวจพบจากกระดาษทำการจำนวน ${pulled.length} โครงการ เรียบร้อยแล้ว`);
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -126,10 +154,18 @@ export default function ClosingMeetingView({
             </p>
           </div>
 
-          <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+            <button
+              onClick={handlePullFindingsFromWorkingPapers}
+              className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
+              title="ดึงข้อตรวจพบจากกระดาษทำการ (ขั้นที่ 6) เข้าสู่วาระการประชุมปิดตรวจ"
+            >
+              <ClipboardCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+              <span>📥 ดึงข้อตรวจพบจากกระดาษทำการ (ขั้น 6)</span>
+            </button>
             <button
               onClick={handleLoadDlaClosingMeeting}
-              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
+              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
               title="โหลดตัวอย่างรายงานการประชุมปิดการตรวจสอบตามคู่มือ สถ. หน้า 52"
             >
               <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
@@ -137,10 +173,10 @@ export default function ClosingMeetingView({
             </button>
             <button
               onClick={handlePrint}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
             >
               <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>พิมพ์รายงานการประชุมปิด</span>
+              <span>พิมพ์</span>
             </button>
           </div>
         </div>
@@ -322,6 +358,19 @@ export default function ClosingMeetingView({
             <div>(........................................................)<br />ผู้อำนวยการ{currentPlan.department || 'หน่วยรับตรวจ'}</div>
           </div>
         </div>
+
+        {/* Workflow Navigation */}
+        {onNavigateToTab && (
+          <div className="pt-6 border-t border-stone-200/60 dark:border-stone-800 flex justify-end print:hidden">
+            <button
+              onClick={() => onNavigateToTab('reporting')}
+              className="bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-md transition-all flex items-center space-x-2 cursor-pointer"
+            >
+              <span>นำข้อสรุปไปจัดทำรายงานผลการตรวจสอบ (ขั้นที่ 8)</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

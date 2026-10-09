@@ -17,12 +17,12 @@ import {
   Lightbulb,
   Sparkles,
   CheckCircle2,
-  Wrench,
+  RefreshCw,
+  ArrowRight,
   Info
 } from 'lucide-react';
 import { exportWorkingPaperToExcel } from '../utils/exportExcel';
 import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
-import AuditToolkits from './AuditToolkits';
 
 export default function ExecutionView({
   workingPapers = [],
@@ -30,7 +30,9 @@ export default function ExecutionView({
   selectedWp,
   setSelectedWp,
   orgProfile,
-  selectedYear = '2569'
+  selectedYear = '2569',
+  engagementPlans = [],
+  onNavigateToTab
 }) {
   const currentWp = workingPapers.find((w) => w.id === selectedWp) || workingPapers[0] || {
     id: 'WP-EMPTY',
@@ -55,7 +57,6 @@ export default function ExecutionView({
 
   const [showAddSample, setShowAddSample] = useState(false);
   const [expandedGuidance, setExpandedGuidance] = useState({});
-  const [showToolkits, setShowToolkits] = useState(true);
   const [autoFindingToast, setAutoFindingToast] = useState('');
 
   const [newSample, setNewSample] = useState({
@@ -87,25 +88,107 @@ export default function ExecutionView({
     }
   };
 
-  // Add sample pushed from toolkits
-  const handleAddSampleFromTool = (sampleData) => {
-    const updated = workingPapers.map((wp) => {
-      if (wp.id === currentWp.id) {
-        const samples = wp.samples || [];
+  // Select or Auto-Instantiate Working Paper from Engagement Plan
+  const handleSelectOrGenerateWp = (targetId) => {
+    const existing = workingPapers.find((w) => w.id === targetId || w.engagementId === targetId);
+    if (existing) {
+      setSelectedWp(existing.id);
+      return;
+    }
+
+    const matchingEng = engagementPlans.find(
+      (ep) => ep.id === targetId || `WP-${ep.id}` === targetId
+    );
+
+    if (matchingEng) {
+      const criteriaList = Array.isArray(matchingEng.criteria)
+        ? matchingEng.criteria
+        : (matchingEng.criteria ? [matchingEng.criteria] : ['ระเบียบกระทรวงมหาดไทยที่เกี่ยวข้อง']);
+
+      const newWp = {
+        id: targetId.startsWith('WP-') ? targetId : `WP-${targetId}`,
+        engagementId: matchingEng.id,
+        topic: matchingEng.title || matchingEng.activityName || 'โครงการตรวจสอบ',
+        department: matchingEng.targetAuditee || matchingEng.department || 'หน่วยรับตรวจ',
+        auditPeriod: matchingEng.auditPeriod || `ปีงบประมาณ พ.ศ. ${selectedYear}`,
+        auditor: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+        criteria: criteriaList,
+        checklist: (matchingEng.auditProgram || []).map((step, idx) => ({
+          id: `CHK-${idx + 1}`,
+          question: step.title || step.step || step.procedure || (typeof step === 'string' ? step : `ขั้นตอนการตรวจที่ ${idx + 1}`),
+          standard: step.standard || criteriaList[0] || '',
+          guidance: step.details || step.procedure || step.evidence || '',
+          result: 'pending',
+          note: ''
+        })),
+        samples: [],
+        finding: {
+          condition: '',
+          criteria: criteriaList.join('\n'),
+          cause: '',
+          effect: '',
+          recommendation: ''
+        }
+      };
+
+      setWorkingPapers([newWp, ...workingPapers]);
+      setSelectedWp(newWp.id);
+      setAutoFindingToast(`✓ สร้างกระดาษทำการเชื่อมโยงกับ "${matchingEng.title}" สำเร็จ`);
+      setTimeout(() => setAutoFindingToast(''), 3500);
+      return;
+    }
+
+    setSelectedWp(targetId);
+  };
+
+  // Sync Checklist and Criteria from linked Engagement Plan
+  const handleSyncFromEngagementPlan = () => {
+    const matchingEng = engagementPlans.find(
+      (ep) =>
+        ep.id === currentWp.engagementId ||
+        ep.id === currentWp.id ||
+        `WP-${ep.id}` === currentWp.id ||
+        ep.title === currentWp.topic
+    );
+
+    if (!matchingEng) {
+      setAutoFindingToast('⚠️ ไม่พบแผนปฏิบัติงานที่ตรงกับกระดาษทำการนี้');
+      setTimeout(() => setAutoFindingToast(''), 3500);
+      return;
+    }
+
+    const criteriaList = Array.isArray(matchingEng.criteria)
+      ? matchingEng.criteria
+      : (matchingEng.criteria ? [matchingEng.criteria] : currentWp.criteria || []);
+
+    const existingCheckMap = new Map((currentWp.checklist || []).map((c) => [c.question, c]));
+    const updatedChecklist = (matchingEng.auditProgram || []).map((step, idx) => {
+      const q = step.title || step.step || step.procedure || (typeof step === 'string' ? step : `ขั้นตอนที่ ${idx + 1}`);
+      const oldItem = existingCheckMap.get(q);
+      return {
+        id: oldItem?.id || `CHK-${idx + 1}`,
+        question: q,
+        standard: step.standard || oldItem?.standard || criteriaList[0] || '',
+        guidance: step.details || step.procedure || step.evidence || oldItem?.guidance || '',
+        result: oldItem?.result || 'pending',
+        note: oldItem?.note || ''
+      };
+    });
+
+    const updated = workingPapers.map((w) => {
+      if (w.id === currentWp.id) {
         return {
-          ...wp,
-          samples: [
-            ...samples,
-            {
-              ...sampleData,
-              id: `SMP-${Date.now().toString().slice(-4)}`
-            }
-          ]
+          ...w,
+          criteria: criteriaList,
+          checklist: updatedChecklist.length > 0 ? updatedChecklist : w.checklist
         };
       }
-      return wp;
+      return w;
     });
+
     setWorkingPapers(updated);
+    setAutoFindingToast(`✓ ซิงค์แนวการตรวจจากแผนปฏิบัติงาน (${matchingEng.title}) เรียบร้อยแล้ว`);
+    setTimeout(() => setAutoFindingToast(''), 3500);
   };
 
   // Toggle checklist item result
@@ -360,45 +443,75 @@ export default function ExecutionView({
           </div>
         </div>
 
-        <div className="flex items-center space-x-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          {/* Project Selector linked with Engagement Plans & Working Papers */}
           <div className="relative">
             <select
               value={currentWp.id}
-              onChange={(e) => setSelectedWp(e.target.value)}
-              className="appearance-none bg-stone-100 dark:bg-stone-800 hover:bg-stone-200/80 text-stone-800 dark:text-stone-200 text-xs font-bold py-2.5 pl-3 pr-8 rounded-xl border border-stone-300 dark:border-stone-600 outline-none cursor-pointer"
+              onChange={(e) => handleSelectOrGenerateWp(e.target.value)}
+              className="appearance-none bg-stone-100 dark:bg-stone-800 hover:bg-stone-200/80 text-stone-800 dark:text-stone-200 text-xs font-bold py-2.5 pl-3 pr-8 rounded-xl border border-stone-300 dark:border-stone-600 outline-none cursor-pointer max-w-xs sm:max-w-md truncate"
             >
-              {workingPapers.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.id}: {w.topic.slice(0, 30)}...
-                </option>
-              ))}
+              {engagementPlans.length > 0 && (
+                <optgroup label="📋 โครงการตามแผนปฏิบัติงาน (Engagement Plans ว 614)">
+                  {engagementPlans.map((ep) => {
+                    const wpId = ep.id.startsWith('WP-') ? ep.id : `WP-${ep.id}`;
+                    return (
+                      <option key={ep.id} value={wpId}>
+                        {ep.id}: {ep.title || ep.activityName} ({ep.department || ep.targetAuditee})
+                      </option>
+                    );
+                  })}
+                </optgroup>
+              )}
+
+              <optgroup label="📁 กระดาษทำการทั้งหมดในระบบ">
+                {workingPapers.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.id}: {w.topic} ({w.department})
+                  </option>
+                ))}
+              </optgroup>
             </select>
             <ChevronDown className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 absolute right-2.5 top-3.5 pointer-events-none" />
           </div>
 
+          {/* Sync Button from Engagement Plan */}
           <button
+            type="button"
+            onClick={handleSyncFromEngagementPlan}
+            className="no-print bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-stone-700 text-xs font-bold px-3 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            title="ซิงค์ขั้นตอนการตรวจและเกณฑ์จากแผนการปฏิบัติงาน (Step 4)"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span className="hidden sm:inline">ซิงค์จากแผนงาน</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleLoadDlaWorkingPapers}
-            className="no-print bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            className="no-print bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-bold px-3 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
             title="โหลดกระดาษทำการ 6 ภารกิจหลักมาตรฐาน อปท. จากคู่มือ สถ."
           >
-            <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>📥 โหลด 6 ภารกิจ (คู่มือ สถ.)</span>
           </button>
 
           <button
+            type="button"
             onClick={() => exportWorkingPaperToExcel(currentWp, orgProfile)}
-            className="no-print bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            className="no-print bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Export Excel</span>
           </button>
 
           <button
+            type="button"
             onClick={() => window.print()}
-            className="no-print bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            className="no-print bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
           >
-            <Printer className="w-4 h-4" />
-            <span>พิมพ์กระดาษทำการ</span>
+            <Printer className="w-3.5 h-3.5" />
+            <span>พิมพ์</span>
           </button>
         </div>
       </div>
@@ -414,48 +527,6 @@ export default function ExecutionView({
             <li key={i}>{c}</li>
           ))}
         </ul>
-      </div>
-
-      {/* Interactive Audit Toolkits for Technical Audits (Year 2570 & General) */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs overflow-hidden">
-        <div
-          onClick={() => setShowToolkits(!showToolkits)}
-          className="p-4 bg-stone-50 dark:bg-stone-850/80 border-b border-stone-200/80 dark:border-stone-800 flex items-center justify-between cursor-pointer select-none"
-        >
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs">
-              <Wrench className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                  เครื่องมือช่วยตรวจสอบเชิงเทคนิค (Audit Toolkits & Calculators)
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/40">
-                  ปี 2570 & ทั่วไป
-                </span>
-              </div>
-              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                คำนวณราคากลาง Factor F, ตรวจสอบค่าปรับส่งมอบงานล่าช้า, ค่าธรรมเนียมใบอนุญาตก่อสร้าง, และสอบทานข้อบัญญัติ
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700"
-          >
-            {showToolkits ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {showToolkits && (
-          <div className="p-4 bg-slate-50/40 dark:bg-slate-900/60">
-            <AuditToolkits
-              currentWpId={currentWp.id}
-              onAddSampleFromTool={handleAddSampleFromTool}
-            />
-          </div>
-        )}
       </div>
 
       {/* Section 1: Audit Program Checklist */}
@@ -715,20 +786,45 @@ export default function ExecutionView({
           </div>
         </div>
 
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <span className="text-[11px] text-slate-400 dark:text-slate-500">
-            * ข้อมูลข้อตรวจพบนี้จะถูกดึงไปจัดทำรายงานผลการตรวจสอบอัตโนมัติในโมดูลถัดไป
+            * ข้อมูลข้อตรวจพบนี้จะถูกเชื่อมโยงไปยังการประชุมปิดตรวจ (ขั้นที่ 7) และรายงานผล (ขั้นที่ 8)
           </span>
-          <button
-            type="button"
-            onClick={() => {
-              setAutoFindingToast('✓ บันทึกข้อมูลกระดาษทำการเรียบร้อยแล้ว');
-              setTimeout(() => setAutoFindingToast(''), 3000);
-            }}
-            className="no-print bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer transition-colors shadow-xs"
-          >
-            บันทึกกระดาษทำการ
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAutoFindingToast('✓ บันทึกข้อมูลกระดาษทำการเรียบร้อยแล้ว');
+                setTimeout(() => setAutoFindingToast(''), 3000);
+              }}
+              className="no-print bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer transition-colors shadow-xs"
+            >
+              💾 บันทึกกระดาษทำการ
+            </button>
+
+            {onNavigateToTab && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onNavigateToTab('closing-meeting')}
+                  className="no-print bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-stone-700 font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer transition-colors shadow-xs flex items-center space-x-1"
+                  title="ส่งผลตรวจนี้ไปยังการประชุมปิดการตรวจสอบ"
+                >
+                  <span>ประชุมปิดตรวจ (ขั้น 7)</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigateToTab('reporting')}
+                  className="no-print bg-stone-800 hover:bg-stone-900 text-amber-200 font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer transition-colors shadow-xs flex items-center space-x-1"
+                  title="ส่งผลตรวจนี้ไปยังรายงานผลการตรวจสอบ 5 องค์ประกอบ"
+                >
+                  <span>ออกรายงานผล (ขั้น 8)</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

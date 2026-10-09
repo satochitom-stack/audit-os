@@ -30,6 +30,7 @@ import {
 import ConfirmModal from './ConfirmModal';
 import AnnualAuditReportView from './AnnualAuditReportView';
 import ReportExportHubModal from './ReportExportHubModal';
+import OfficialThaiMemo from './OfficialThaiMemo';
 import { initialCapaFindings } from '../data/initialData';
 import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
 
@@ -42,13 +43,34 @@ export default function ReportingView({
   setCapaFindings = () => {},
   auditUniverse = [],
   engagementPlans = [],
-  session = null
+  session = null,
+  onNavigateToTab = null
 }) {
   const [activeTab, setActiveTab] = useState('annual-report'); // 'annual-report', 'report', 'exit', 'capa'
   const [showExportHubModal, setShowExportHubModal] = useState(false);
   const [selectedWpId, setSelectedWpId] = useState(() => workingPapers[0]?.id || '');
   const [customReport, setCustomReport] = useState(null);
   const [isEditingReport, setIsEditingReport] = useState(false);
+
+  const handleSelectWpForReport = (wpId) => {
+    setSelectedWpId(wpId);
+    const targetWp = workingPapers.find((w) => w.id === wpId);
+    if (targetWp) {
+      const related = annualPlans.find((p) => p.id === targetWp.auditPlanId);
+      setCustomReport({
+        title: targetWp.topic || 'รายงานผลการตรวจสอบภายใน',
+        department: targetWp.department || 'หน่วยรับตรวจ',
+        objective: related?.objective || `เพื่อตรวจสอบความถูกต้อง ครบถ้วน และการปฏิบัติตามกฎหมาย ระเบียบ ข้อบังคับของ ${targetWp.department || 'หน่วยรับตรวจ'}`,
+        condition: targetWp?.finding?.condition || 'ไม่พบข้อบกพร่องที่มีนัยสำคัญ / จากการตรวจสอบเอกสารและสุ่มตรวจเป็นไปตามเกณฑ์',
+        criteria: targetWp?.criteria || targetWp?.finding?.criteria || 'ระเบียบกระทรวงมหาดไทยว่าด้วยการรับเงิน การเบิกจ่ายเงิน การฝากเงิน การเก็บรักษาเงิน และการตรวจเงินของ อปท. พ.ศ. 2547 และที่แก้ไขเพิ่มเติม',
+        cause: targetWp?.finding?.cause || 'เจ้าหน้าที่ผู้ปฏิบัติงานยังขาดความระมัดระวังรอบคอบในการตรวจสอบเอกสาร',
+        effect: targetWp?.finding?.effect || 'อาจทำให้การควบคุมภายในขาดความรัดกุมและเสี่ยงต่อข้อทักท้วงของหน่วยงานตรวจสอบภายนอก',
+        recommendation: targetWp?.finding?.recommendation || 'เห็นควรกำชับให้เจ้าหน้าที่ผู้รับผิดชอบถือปฏิบัติตามระเบียบโดยเคร่งครัด'
+      });
+      setIsEditingReport(false);
+      showToast(`ดึงข้อมูลจากกระดาษทำการ "${targetWp.topic}" เรียบร้อยแล้ว`);
+    }
+  };
 
   const handleSelectDlaMission = (idx) => {
     const wf = DLA_CORE_WORKFLOWS_6[idx];
@@ -458,25 +480,59 @@ export default function ReportingView({
         <div className="space-y-4 max-w-4xl mx-auto">
           {/* Top Preset & Edit Control Bar */}
           <div className="bg-stone-100/90 dark:bg-stone-850/80 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3 no-print">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-stone-600 dark:text-stone-300">
-                📥 โหลดตัวอย่าง 6 ภารกิจ (คู่มือ สถ.):
-              </span>
-              <select
-                onChange={(e) => {
-                  if (e.target.value !== '') {
-                    handleSelectDlaMission(Number(e.target.value));
-                  }
-                }}
-                className="bg-white dark:bg-stone-900 border border-amber-300 dark:border-amber-700 text-stone-800 dark:text-stone-200 text-xs font-bold rounded-xl px-3 py-1.5 outline-none cursor-pointer focus:ring-2 focus:ring-amber-500"
-              >
-                <option value="">-- เลือกภารกิจมาตรฐาน (5 องค์ประกอบ) --</option>
-                {DLA_CORE_WORKFLOWS_6.map((wf, idx) => (
-                  <option key={wf.code} value={idx}>
-                    {idx + 1}. {wf.activityName} ({wf.department})
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Working Paper Linkage Selector */}
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold text-stone-600 dark:text-stone-300 shrink-0">
+                  📋 เชื่อมโยงกระดาษทำการ (ขั้น 6):
+                </span>
+                <select
+                  value={selectedWpId}
+                  onChange={(e) => handleSelectWpForReport(e.target.value)}
+                  className="bg-white dark:bg-stone-900 border border-amber-300 dark:border-amber-700 text-stone-800 dark:text-stone-200 text-xs font-bold rounded-xl px-3 py-1.5 outline-none cursor-pointer focus:ring-2 focus:ring-amber-500 max-w-xs truncate"
+                >
+                  {workingPapers.map((wp) => (
+                    <option key={wp.id} value={wp.id}>
+                      {wp.id}: {wp.topic || 'กระดาษทำการ'} ({wp.department || 'หน่วยรับตรวจ'})
+                    </option>
+                  ))}
+                  {workingPapers.length === 0 && (
+                    <option value="">(ยังไม่มีกระดาษทำการที่บันทึก)</option>
+                  )}
+                </select>
+                {selectedWpId && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectWpForReport(selectedWpId)}
+                    className="text-xs font-bold px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 cursor-pointer transition-colors"
+                    title="ดึงข้อตรวจพบ 5 องค์ประกอบจากกระดาษทำการนี้"
+                  >
+                    📥 ดึงข้อตรวจพบจากกระดาษทำการนี้
+                  </button>
+                )}
+              </div>
+
+              {/* Standard DLA Mission Presets */}
+              <div className="flex items-center space-x-1.5 pl-2 border-l border-stone-300 dark:border-stone-700">
+                <span className="text-xs font-bold text-stone-600 dark:text-stone-300 shrink-0">
+                  หรือตัวอย่าง สถ.:
+                </span>
+                <select
+                  onChange={(e) => {
+                    if (e.target.value !== '') {
+                      handleSelectDlaMission(Number(e.target.value));
+                    }
+                  }}
+                  className="bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs font-bold rounded-xl px-2.5 py-1.5 outline-none cursor-pointer focus:ring-2 focus:ring-amber-500"
+                >
+                  <option value="">-- แม่แบบ สถ. 5 องค์ประกอบ --</option>
+                  {DLA_CORE_WORKFLOWS_6.map((wf, idx) => (
+                    <option key={wf.code} value={idx}>
+                      {idx + 1}. {wf.activityName} ({wf.department})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {customReport && (
                 <button
@@ -503,222 +559,208 @@ export default function ReportingView({
                     : 'bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-200 border-stone-300 dark:border-stone-700'
                 }`}
               >
-                <span>{isEditingReport ? '💾 ดูตัวอย่างบันทึกข้อความ' : '✏️ แก้ไขเนื้อหารายงาน (5 องค์ประกอบ)'}</span>
+                <span>{isEditingReport ? '💾 ดูตัวอย่างบันทึกข้อความ (ระเบียบสารบรรณ)' : '✏️ แก้ไขเนื้อหารายงาน (5 องค์ประกอบ)'}</span>
               </button>
             </div>
           </div>
 
-          {/* Report Paper */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 sm:p-12 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 text-slate-800 dark:text-slate-200 text-xs sm:text-sm leading-relaxed">
-            {/* Header */}
-            <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-6 text-center space-y-2">
-              <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 font-serif">บันทึกข้อความ</div>
-              <div className="flex justify-between items-baseline text-xs font-bold text-slate-700 dark:text-slate-300 pt-3">
-                <div className="text-left">
-                  <span>ส่วนราชการ: </span>
-                  <span className="font-normal">{orgProfile.agencyName || 'หน่วยตรวจสอบภายใน'} {orgProfile.name}</span>
-                </div>
-                <div className="text-right">
-                  <span>ที่: </span>
-                  <span className="font-normal font-mono">อบ 78408/.............</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-baseline text-xs font-bold text-slate-700 dark:text-slate-300">
-                <div className="text-left">
-                  <span>วันที่: </span>
-                  <span className="font-normal">...... เดือน ...................... พ.ศ. {selectedYear}</span>
-                </div>
-                <div className="text-left">
-                  <span>เรื่อง: </span>
-                  <span className="font-bold">รายงานผลการตรวจสอบภายใน {reportTitle}</span>
-                </div>
-              </div>
-            </div>
-
-            {isEditingReport ? (
-              /* Editable Mode Form */
-              <div className="space-y-4 pt-2">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">เรื่อง / ภารกิจที่ตรวจสอบ:</label>
-                    <input
-                      type="text"
-                      value={activeReport.title}
-                      onChange={(e) => setCustomReport({ ...activeReport, title: e.target.value })}
-                      className="w-full p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">หน่วยรับตรวจ:</label>
-                    <input
-                      type="text"
-                      value={activeReport.department}
-                      onChange={(e) => setCustomReport({ ...activeReport, department: e.target.value })}
-                      className="w-full p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold"
-                    />
-                  </div>
-                </div>
-
+          {isEditingReport ? (
+            /* Editable Mode Form */
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">1. วัตถุประสงค์และขอบเขตการตรวจสอบ:</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">เรื่อง / ภารกิจที่ตรวจสอบ:</label>
+                  <input
+                    type="text"
+                    value={activeReport.title}
+                    onChange={(e) => setCustomReport({ ...activeReport, title: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">หน่วยรับตรวจ:</label>
+                  <input
+                    type="text"
+                    value={activeReport.department}
+                    onChange={(e) => setCustomReport({ ...activeReport, department: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">1. วัตถุประสงค์และขอบเขตการตรวจสอบ:</label>
+                <textarea
+                  rows="3"
+                  value={activeReport.objective}
+                  onChange={(e) => setCustomReport({ ...activeReport, objective: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs"
+                />
+              </div>
+
+              <div className="space-y-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750">
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">2. องค์ประกอบรายงานผลการตรวจสอบ 5 ด้าน (ตามคู่มือ สถ.):</h4>
+                
+                <div>
+                  <label className="font-bold text-blue-700 dark:text-blue-400 block mb-1 text-xs">2.1 สภาพการณ์ / ข้อเท็จจริงที่ตรวจพบ (Condition):</label>
                   <textarea
                     rows="3"
-                    value={activeReport.objective}
-                    onChange={(e) => setCustomReport({ ...activeReport, objective: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                    value={activeReport.condition}
+                    onChange={(e) => setCustomReport({ ...activeReport, condition: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
                   />
                 </div>
 
-                <div className="space-y-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-750">
-                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">2. องค์ประกอบรายงานผลการตรวจสอบ 5 ด้าน (ตามคู่มือ สถ.):</h4>
-                  
-                  <div>
-                    <label className="font-bold text-blue-700 dark:text-blue-400 block mb-1">2.1 สภาพการณ์ / ข้อเท็จจริงที่ตรวจพบ (Condition):</label>
-                    <textarea
-                      rows="3"
-                      value={activeReport.condition}
-                      onChange={(e) => setCustomReport({ ...activeReport, condition: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-purple-700 dark:text-purple-400 block mb-1">2.2 เกณฑ์มาตรฐาน / ระเบียบกฎหมายที่เกี่ยวข้อง (Criteria):</label>
-                    <textarea
-                      rows="3"
-                      value={activeReport.criteria}
-                      onChange={(e) => setCustomReport({ ...activeReport, criteria: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-amber-700 dark:text-amber-400 block mb-1">2.3 สาเหตุ (Cause):</label>
-                    <textarea
-                      rows="2"
-                      value={activeReport.cause}
-                      onChange={(e) => setCustomReport({ ...activeReport, cause: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-rose-700 dark:text-rose-400 block mb-1">2.4 ผลกระทบ (Effect):</label>
-                    <textarea
-                      rows="2"
-                      value={activeReport.effect}
-                      onChange={(e) => setCustomReport({ ...activeReport, effect: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-emerald-700 dark:text-emerald-400 block mb-1">2.5 ข้อเสนอแนะของผู้ตรวจสอบภายใน (Recommendation):</label>
-                    <textarea
-                      rows="3"
-                      value={activeReport.recommendation}
-                      onChange={(e) => setCustomReport({ ...activeReport, recommendation: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditingReport(false);
-                      showToast('บันทึกเนื้อหารายงานเรียบร้อยแล้ว');
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-xs cursor-pointer"
-                  >
-                    💾 บันทึกเนื้อหารายงานและดูตัวอย่าง
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* View Mode Official Memorandum */
-              <div className="space-y-4">
                 <div>
-                  <strong>เรียน:</strong> {approverPosition} (ผ่าน {palatPosition})
+                  <label className="font-bold text-purple-700 dark:text-purple-400 block mb-1 text-xs">2.2 เกณฑ์มาตรฐาน / ระเบียบกฎหมายที่เกี่ยวข้อง (Criteria):</label>
+                  <textarea
+                    rows="3"
+                    value={activeReport.criteria}
+                    onChange={(e) => setCustomReport({ ...activeReport, criteria: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                  />
                 </div>
 
-                <p className="indent-8 text-justify leading-relaxed">
-                  ตามที่หน่วยตรวจสอบภายใน {orgProfile.name} ได้ดำเนินการเข้าปฏิบัติงานตรวจสอบ{' '}
-                  <strong>{reportTitle}</strong> ของ <strong>{reportDept}</strong>{' '}
-                  ตามแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. {selectedYear} บัดนี้ การปฏิบัติงานตรวจสอบได้เสร็จสิ้นแล้ว จึงขอรายงานผลการตรวจสอบดังต่อไปนี้
+                <div>
+                  <label className="font-bold text-amber-700 dark:text-amber-400 block mb-1 text-xs">2.3 สาเหตุ (Cause):</label>
+                  <textarea
+                    rows="2"
+                    value={activeReport.cause}
+                    onChange={(e) => setCustomReport({ ...activeReport, cause: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-rose-700 dark:text-rose-400 block mb-1 text-xs">2.4 ผลกระทบ (Effect):</label>
+                  <textarea
+                    rows="2"
+                    value={activeReport.effect}
+                    onChange={(e) => setCustomReport({ ...activeReport, effect: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-emerald-700 dark:text-emerald-400 block mb-1 text-xs">2.5 ข้อเสนอแนะของผู้ตรวจสอบภายใน (Recommendation):</label>
+                  <textarea
+                    rows="3"
+                    value={activeReport.recommendation}
+                    onChange={(e) => setCustomReport({ ...activeReport, recommendation: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingReport(false);
+                    showToast('บันทึกเนื้อหารายงานเรียบร้อยแล้ว');
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-xs cursor-pointer"
+                >
+                  💾 บันทึกเนื้อหารายงานและดูตัวอย่าง
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* View Mode Official Memorandum (ตามระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖) */
+            <OfficialThaiMemo
+              agency={`${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`}
+              phone={orgProfile?.phone || ''}
+              docNumber={orgProfile?.docCode ? `${orgProfile.docCode}/พิเศษ` : 'อบ ๗๘๔๐๘/พิเศษ'}
+              date={`...... เดือน ...................... พ.ศ. ${selectedYear}`}
+              subject={`รายงานผลการตรวจสอบภายใน ${reportTitle}`}
+              to={`${approverPosition} (ผ่าน ${palatPosition})`}
+              signatory={{
+                name: auditorName,
+                position: auditorPosition,
+                role: 'ผู้รายงาน'
+              }}
+              palatReview={{
+                name: palatName,
+                position: palatPosition
+              }}
+              executiveOrder={{
+                name: approverName,
+                position: approverPosition
+              }}
+            >
+              <p className="indent-10 text-justify leading-relaxed">
+                ตามที่หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้ดำเนินการเข้าปฏิบัติงานตรวจสอบ{' '}
+                <strong>{reportTitle}</strong> ของ <strong>{reportDept}</strong>{' '}
+                ตามแผนการปฏิบัติงานตรวจสอบประจำปีงบประมาณ พ.ศ. {selectedYear} บัดนี้ การปฏิบัติงานตรวจสอบได้เสร็จสิ้นแล้ว จึงขอรายงานผลการตรวจสอบดังต่อไปนี้
+              </p>
+
+              <div className="space-y-1.5 pt-2">
+                <div className="font-bold text-black text-[15px]">๑. วัตถุประสงค์และขอบเขตการตรวจสอบ</div>
+                <p className="indent-10 text-justify text-stone-900 leading-relaxed whitespace-pre-line">
+                  {activeReport.objective}
                 </p>
+              </div>
 
-                <div className="space-y-2 pt-2">
-                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">1. วัตถุประสงค์และขอบเขตการตรวจสอบ</h4>
-                  <p className="text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs leading-relaxed whitespace-pre-line">
-                    {activeReport.objective}
-                  </p>
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">2. ข้อตรวจพบและข้อเสนอแนะ (ตามคู่มือ สถ.)</h4>
-                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-950/40 space-y-3.5 text-xs">
-                    <div className="space-y-1">
-                      <div className="font-bold text-blue-700 dark:text-blue-400">2.1 สภาพการณ์ที่ตรวจพบ (Condition):</div>
-                      <div className="text-slate-800 dark:text-slate-200 pl-4 border-l-2 border-blue-500/40 leading-relaxed whitespace-pre-line">
-                        {activeReport.condition}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="font-bold text-purple-700 dark:text-purple-400">2.2 เกณฑ์มาตรฐาน / ระเบียบกฎหมายที่เกี่ยวข้อง (Criteria):</div>
-                      <div className="text-slate-800 dark:text-slate-200 pl-4 border-l-2 border-purple-500/40 leading-relaxed whitespace-pre-line">
-                        {activeReport.criteria}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="font-bold text-amber-700 dark:text-amber-400">2.3 สาเหตุ (Cause):</div>
-                      <div className="text-slate-800 dark:text-slate-200 pl-4 border-l-2 border-amber-500/40 leading-relaxed whitespace-pre-line">
-                        {activeReport.cause}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="font-bold text-rose-700 dark:text-rose-400">2.4 ผลกระทบ (Effect):</div>
-                      <div className="text-slate-800 dark:text-slate-200 pl-4 border-l-2 border-rose-500/40 leading-relaxed whitespace-pre-line">
-                        {activeReport.effect}
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-emerald-50/80 dark:bg-emerald-950/40 rounded-lg border border-emerald-200 dark:border-emerald-900 space-y-1">
-                      <div className="font-bold text-emerald-950 dark:text-emerald-300">2.5 ข้อเสนอแนะของผู้ตรวจสอบภายใน (Recommendation):</div>
-                      <div className="text-emerald-900 dark:text-emerald-200 leading-relaxed whitespace-pre-line">
-                        {activeReport.recommendation}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Official Signatures */}
-                <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs">
-                  <div className="space-y-8">
-                    <div>(ลงชื่อ)........................................................</div>
-                    <div>
-                      <div className="font-bold">({auditorName})</div>
-                      <div className="text-slate-500">{auditorPosition}</div>
-                      <div className="text-[11px] text-slate-400">ผู้รายงาน</div>
-                    </div>
+              <div className="space-y-2 pt-2">
+                <div className="font-bold text-black text-[15px]">๒. ข้อตรวจพบและข้อเสนอแนะ (๕ องค์ประกอบตามมาตรฐาน สถ.)</div>
+                <div className="space-y-3 pl-4 text-justify">
+                  <div>
+                    <span className="font-bold text-black">๒.๑ สภาพการณ์ / ข้อเท็จจริงที่ตรวจพบ (Condition): </span>
+                    <span className="text-stone-900 leading-relaxed whitespace-pre-line">{activeReport.condition}</span>
                   </div>
 
-                  <div className="space-y-8">
-                    <div>(ลงชื่อ)........................................................</div>
-                    <div>
-                      <div className="font-bold">({approverName})</div>
-                      <div className="text-slate-500">{approverPosition}</div>
-                      <div className="text-[11px] text-slate-400">ผู้อนุมัติ / สั่งการ</div>
-                    </div>
+                  <div>
+                    <span className="font-bold text-black">๒.๒ เกณฑ์มาตรฐาน / ระเบียบกฎหมายที่เกี่ยวข้อง (Criteria): </span>
+                    <span className="text-stone-900 leading-relaxed whitespace-pre-line">{activeReport.criteria}</span>
+                  </div>
+
+                  <div>
+                    <span className="font-bold text-black">๒.๓ สาเหตุ (Cause): </span>
+                    <span className="text-stone-900 leading-relaxed whitespace-pre-line">{activeReport.cause}</span>
+                  </div>
+
+                  <div>
+                    <span className="font-bold text-black">๒.๔ ผลกระทบ (Effect): </span>
+                    <span className="text-stone-900 leading-relaxed whitespace-pre-line">{activeReport.effect}</span>
+                  </div>
+
+                  <div className="p-3.5 bg-stone-50 border border-stone-300 rounded-none">
+                    <span className="font-bold text-black">๒.๕ ข้อเสนอแนะของผู้ตรวจสอบภายใน (Recommendation): </span>
+                    <span className="text-stone-900 font-medium leading-relaxed whitespace-pre-line">{activeReport.recommendation}</span>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+
+              <div className="space-y-1.5 pt-2">
+                <div className="font-bold text-black text-[15px]">๓. ข้อพิจารณาและข้อเสนอเชิงนโยบาย</div>
+                <p className="indent-10 text-justify text-stone-900 leading-relaxed">
+                  เพื่อให้การปฏิบัติราชการของ {reportDept} เป็นไปตามระเบียบของทางราชการ เกิดประสิทธิภาพ และป้องกันความเสียหายที่อาจเกิดขึ้นแก่ทางราชการ เห็นควรโปรดพิจารณา:
+                </p>
+                <p className="indent-14 text-justify text-stone-900 leading-relaxed">
+                  ๑. สั่งการให้หัวหน้าหน่วยรับตรวจ ({reportDept}) ดำเนินการปรับปรุงแก้ไขและปฏิบัติตามข้อเสนอแนะตามข้อ ๒.๕ โดยเคร่งครัด
+                </p>
+                <p className="indent-14 text-justify text-stone-900 leading-relaxed">
+                  ๒. ให้หน่วยรับตรวจรายงานผลการปรับปรุงแก้ไขให้หน่วยตรวจสอบภายในทราบภายใน ๓๐ วัน นับแต่วันที่ได้รับแจ้ง
+                </p>
+                <p className="indent-10 text-justify text-stone-900 leading-relaxed pt-2">
+                  จึงเรียนมาเพื่อโปรดพิจารณาและสั่งการ
+                </p>
+              </div>
+            </OfficialThaiMemo>
+          )}
+
+          {/* Workflow Navigation */}
+          {onNavigateToTab && (
+            <div className="pt-4 flex justify-end print:hidden">
+              <button
+                onClick={() => onNavigateToTab('follow-up')}
+                className="bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-md transition-all flex items-center space-x-2 cursor-pointer"
+              >
+                <span>นำผลรายงานไปติดตามการปรับปรุงแก้ไข (ขั้นที่ 9: ติดตามผล)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1372,67 +1414,59 @@ export default function ReportingView({
             </div>
 
             {/* Official Follow-Up Memo Body */}
-            <div className="flex-1 overflow-y-auto p-8 sm:p-10 space-y-6 text-slate-800 dark:text-slate-200 text-xs sm:text-sm leading-relaxed bg-white dark:bg-slate-900">
-              <div className="border-b-2 border-slate-900 dark:border-slate-600 pb-4 text-center space-y-2">
-                <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">บันทึกข้อความ</div>
-                <div className="flex justify-between items-baseline text-xs font-bold text-slate-700 dark:text-slate-300 pt-2">
-                  <div className="text-left">
-                    <span>ส่วนราชการ: </span>
-                    <span className="font-normal">{orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-                  </div>
-                  <div className="text-right">
-                    <span>ที่: </span>
-                    <span className="font-normal font-mono">อบ 78408/.............</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-baseline text-xs font-bold text-slate-700 dark:text-slate-300">
-                  <div className="text-left">
-                    <span>วันที่: </span>
-                    <span className="font-normal">...... เดือน ...................... พ.ศ. {selectedYear}</span>
-                  </div>
-                  <div className="text-left">
-                    <span>เรื่อง: </span>
-                    <span className="font-bold">รายงานผลการติดตามการปฏิบัติตามข้อทักท้วงและข้อสังเกต ประจำปีงบประมาณ พ.ศ. {selectedYear}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <strong>เรียน:</strong> นายก{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})
-                </div>
-
-                <div className="space-y-3 text-justify indent-8">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-stone-100 dark:bg-stone-950">
+              <OfficialThaiMemo
+                agency={`${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`}
+                phone={orgProfile?.phone || ''}
+                docNumber={orgProfile?.docCode ? `${orgProfile.docCode}/ติดตาม` : 'อบ ๗๘๔๐๘/ติดตาม'}
+                date={`...... เดือน ...................... พ.ศ. ${selectedYear}`}
+                subject={`รายงานผลการติดตามการปฏิบัติตามข้อทักท้วงและข้อสังเกต ประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
+                to={`นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`}
+                signatory={{
+                  name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+                  position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+                  role: 'ผู้รายงาน'
+                }}
+                palatReview={{
+                  name: orgProfile?.palatName || 'ปลัด อปท.',
+                  position: orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'
+                }}
+                executiveOrder={{
+                  name: orgProfile?.approverName || 'นายก อปท.',
+                  position: orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'
+                }}
+              >
+                <div className="space-y-3 text-justify indent-10">
                   <p>
                     ตามที่ สำนักงานการตรวจเงินแผ่นดิน (สตง.) ผู้ตรวจราชการกรมส่งเสริมการปกครองท้องถิ่น และหน่วยตรวจสอบภายใน ได้มีข้อทักท้วงและข้อสังเกตเกี่ยวกับการปฏิบัติงานทางการเงิน การพัสดุ และการบริหารงานของส่วนราชการในสังกัด {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} นั้น
                   </p>
                   <p>
-                    หน่วยตรวจสอบภายใน ได้ดำเนินการติดตามผลการปรับปรุงแก้ไขข้อบกพร่องตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. 2545 ข้อ 25 และข้อ 26 ครบถ้วนตามกรอบระยะเวลา 60 วันแล้ว จึงขอสรุปผลการติดตามการปฏิบัติตามข้อทักท้วงและข้อสังเกต รวมทั้งสิ้น <strong>{findingsList.length} เรื่อง</strong> โดยดำเนินการแล้วเสร็จและยุติข้อสังเกตได้ <strong>{closedCount} เรื่อง</strong> อยู่ระหว่างดำเนินการ <strong>{findingsList.length - closedCount} เรื่อง</strong> ดังมีรายละเอียดต่อไปนี้:
+                    หน่วยตรวจสอบภายใน ได้ดำเนินการติดตามผลการปรับปรุงแก้ไขข้อบกพร่องตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๕ และข้อ ๒๖ ครบถ้วนตามกรอบระยะเวลา ๖๐ วันแล้ว จึงขอสรุปผลการติดตามการปฏิบัติตามข้อทักท้วงและข้อสังเกต รวมทั้งสิ้น <strong>{findingsList.length} เรื่อง</strong> โดยดำเนินการแล้วเสร็จและยุติข้อสังเกตได้ <strong>{closedCount} เรื่อง</strong> อยู่ระหว่างดำเนินการ <strong>{findingsList.length - closedCount} เรื่อง</strong> ดังมีรายละเอียดต่อไปนี้:
                   </p>
                 </div>
 
                 {/* Table Summary */}
-                <div className="border border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden my-3">
-                  <table className="w-full text-left text-[11px]">
-                    <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-300 dark:border-slate-700">
+                <div className="border border-stone-400 rounded-none overflow-hidden my-3">
+                  <table className="w-full text-left text-[12px] border-collapse">
+                    <thead className="bg-stone-100 text-black font-bold border-b border-stone-400">
                       <tr>
-                        <th className="p-2 text-center w-10">ลำดับ</th>
-                        <th className="p-2">แหล่งที่มา</th>
-                        <th className="p-2">ประเด็นข้อทักท้วง / ข้อสังเกต</th>
-                        <th className="p-2">หน่วยงานรับผิดชอบ</th>
+                        <th className="p-2 text-center w-10 border-r border-stone-300">ลำดับ</th>
+                        <th className="p-2 border-r border-stone-300">แหล่งที่มา</th>
+                        <th className="p-2 border-r border-stone-300">ประเด็นข้อทักท้วง / ข้อสังเกต</th>
+                        <th className="p-2 border-r border-stone-300">หน่วยงานรับผิดชอบ</th>
                         <th className="p-2 text-center">สถานะการแก้ไข</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                    <tbody className="divide-y divide-stone-300">
                       {findingsList.map((item, idx) => (
                         <tr key={item.id}>
-                          <td className="p-2 text-center">{idx + 1}</td>
-                          <td className="p-2 font-bold">{item.sourceName?.split('(')[0] || item.source}</td>
-                          <td className="p-2 font-semibold">{item.title}</td>
-                          <td className="p-2">{item.department}</td>
+                          <td className="p-2 text-center border-r border-stone-300">{idx + 1}</td>
+                          <td className="p-2 font-bold border-r border-stone-300">{item.sourceName?.split('(')[0] || item.source}</td>
+                          <td className="p-2 border-r border-stone-300">{item.title}</td>
+                          <td className="p-2 border-r border-stone-300">{item.department}</td>
                           <td className="p-2 text-center">
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                                 item.status === 'verified_closed'
                                   ? 'bg-emerald-100 text-emerald-800'
                                   : 'bg-amber-100 text-amber-800'
@@ -1447,51 +1481,18 @@ export default function ReportingView({
                   </table>
                 </div>
 
-                <div className="space-y-2 indent-8">
+                <div className="space-y-2 indent-10">
                   <p>
                     จึงเรียนมาเพื่อโปรดทราบและโปรดพิจารณาสั่งการ:
                   </p>
-                  <p className="indent-12">
-                    1. เร่งรัดให้หน่วยงานที่ยังอยู่ระหว่างดำเนินการ ดำเนินการให้แล้วเสร็จตามกำหนดเวลา
+                  <p className="indent-14">
+                    ๑. เร่งรัดให้หน่วยงานที่ยังอยู่ระหว่างดำเนินการ ดำเนินการปรับปรุงแก้ไขให้แล้วเสร็จตามกำหนดเวลา
                   </p>
-                  <p className="indent-12">
-                    2. ส่งรายงานผลการปฏิบัติตามข้อทักท้วงไปยังนายอำเภอสิรินธรและสำนักงานการตรวจเงินแผ่นดินภูมิภาคตามระเบียบต่อไป
+                  <p className="indent-14">
+                    ๒. แจ้งหน่วยงานที่เกี่ยวข้องและส่งรายงานผลการปฏิบัติตามข้อทักท้วงไปยังหน่วยงานกำกับดูแลตามระเบียบต่อไป
                   </p>
                 </div>
-
-                {/* Signatures */}
-                <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs">
-                  <div className="space-y-6">
-                    <div>(ลงชื่อ)........................................................</div>
-                    <div>
-                      <div className="font-bold">({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</div>
-                      <div className="text-slate-500">{orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ'}</div>
-                      <div className="text-[11px] text-slate-400">ผู้รายงาน</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div>(ลงชื่อ)........................................................</div>
-                    <div>
-                      <div className="font-bold">({orgProfile?.palatName || 'ปลัด อปท.'})</div>
-                      <div className="text-slate-500">{orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
-                      <div className="text-[11px] text-slate-400">ผู้ตรวจสอบและเสนอความเห็น</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-8 text-center text-xs space-y-6">
-                  <div>
-                    <div className="font-bold mb-4">คำสั่ง / ข้อสั่งการนายก อปท.: ทราบ และให้ดำเนินการตามเสนอ</div>
-                    <div>(ลงชื่อ)........................................................</div>
-                  </div>
-                  <div>
-                    <div className="font-bold">({orgProfile?.approverName || 'นายก อปท.'})</div>
-                    <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
-                    <div className="text-[11px] text-slate-400">นายก{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</div>
-                  </div>
-                </div>
-              </div>
+              </OfficialThaiMemo>
             </div>
           </div>
         </div>

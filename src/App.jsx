@@ -1291,6 +1291,12 @@ export default function App() {
     handleSelectTab('execution');
   };
 
+  const handleNavigateToExecution = (planId) => {
+    const wpId = planId?.startsWith('WP-') ? planId : `WP-${planId}`;
+    setSelectedWp(wpId);
+    handleSelectTab('execution');
+  };
+
   return (
     <div className="h-screen w-full bg-slate-100 dark:bg-slate-800 flex flex-col font-sans overflow-hidden print:h-auto print:overflow-visible print:bg-white">
       <Header
@@ -1508,6 +1514,7 @@ export default function App() {
                 annualPlans={annualPlans}
                 engagementPlans={engagementPlans}
                 setEngagementPlans={setEngagementPlans}
+                onNavigateToExecution={handleNavigateToExecution}
               />
             )}
 
@@ -1529,6 +1536,8 @@ export default function App() {
                 selectedWp={selectedWp}
                 setSelectedWp={setSelectedWp}
                 orgProfile={orgProfile}
+                engagementPlans={engagementPlans}
+                onNavigateToTab={handleSelectTab}
               />
             )}
 
@@ -1539,6 +1548,7 @@ export default function App() {
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
                 workingPapers={workingPapers}
+                onNavigateToTab={handleSelectTab}
               />
             )}
 
@@ -1593,6 +1603,7 @@ export default function App() {
                 auditUniverse={auditUniverse}
                 engagementPlans={engagementPlans}
                 session={session}
+                onNavigateToTab={handleSelectTab}
               />
             )}
 

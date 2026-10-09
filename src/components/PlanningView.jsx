@@ -30,6 +30,7 @@ import {
   Edit3
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import OfficialThaiMemo from './OfficialThaiMemo';
 import { AUDIT_DIMENSIONS, generateEngagementPlanWithAI } from '../data/engagementPlanTemplates';
 import { DLA_ANNUAL_AUDIT_PLAN_DATA, DLA_STRATEGIC_PLAN_3YEARS } from '../data/dlaStandardTemplates';
 
@@ -1454,39 +1455,81 @@ export default function PlanningView({
             </div>
 
             {/* Formal Government Memo Body */}
-            <div className="flex-1 overflow-y-auto p-8 sm:p-10 space-y-6 text-slate-800 dark:text-slate-200 text-xs sm:text-sm leading-relaxed bg-white dark:bg-slate-900">
-              <div className="border-b-2 border-slate-900 dark:border-slate-600 pb-4 text-center space-y-2">
-                <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">บันทึกข้อความ</div>
-                <div className="flex justify-between items-baseline text-xs font-bold text-slate-700 dark:text-slate-300 pt-2">
-                  <div className="text-left">
-                    <span>ส่วนราชการ: </span>
-                    <span className="font-normal">{orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} โทร. {orgProfile?.phone || '-'}</span>
-                  </div>
-                  <div className="text-right">
-                    <span>ที่: </span>
-                    <span className="font-normal font-mono">อบ 78408/.............</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-baseline text-xs font-bold text-slate-700 dark:text-slate-300">
-                  <div className="text-left">
-                    <span>วันที่: </span>
-                    <span className="font-normal">...... เดือน ...................... พ.ศ. {selectedYear}</span>
-                  </div>
-                  <div className="text-left">
-                    <span>เรื่อง: </span>
-                    <span className="font-bold">ขออนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}</span>
-                  </div>
-                </div>
-              </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-stone-100 dark:bg-stone-950">
+              <OfficialThaiMemo
+                agency={`${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`}
+                phone={orgProfile?.phone || ''}
+                docNumber={orgProfile?.docCode ? `${orgProfile.docCode}/แผน` : 'อบ ๗๘๔๐๘/แผน'}
+                date={`...... เดือน ...................... พ.ศ. ${selectedYear}`}
+                subject={`ขออนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
+                to={`นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`}
+                signatory={{
+                  name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+                  position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+                  role: 'ผู้จัดทำแผน'
+                }}
+                customReviewBoxes={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[13px] text-black">
+                    {/* ปลัด อปท. */}
+                    <div className="border border-stone-400 p-3.5 space-y-2.5 bg-white">
+                      <div className="font-bold underline text-[14px]">
+                        ความเห็นของปลัดองค์กรปกครองส่วนท้องถิ่น
+                      </div>
+                      <div className="text-xs">เรียน นายกองค์กรปกครองส่วนท้องถิ่น</div>
+                      <div className="space-y-1 text-xs">
+                        <label className="flex items-start space-x-2">
+                          <span className="font-bold text-sm">[  ]</span>
+                          <span>เห็นชอบแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear} ตามเสนอ</span>
+                        </label>
+                        <label className="flex items-start space-x-2">
+                          <span className="font-bold text-sm">[  ]</span>
+                          <span>เห็นควรนำเสนอเพื่อโปรดพิจารณาอนุมัติ</span>
+                        </label>
+                        <label className="flex items-start space-x-2">
+                          <span className="font-bold text-sm">[  ]</span>
+                          <span>อื่นๆ ............................................................................</span>
+                        </label>
+                      </div>
+                      <div className="pt-6 text-center space-y-1">
+                        <div>(ลงชื่อ)........................................................</div>
+                        <div className="font-bold">({orgProfile?.palatName || '........................................................'})</div>
+                        <div className="text-xs text-stone-600">{orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
+                        <div className="text-[11px] text-stone-500">วันที่ ...... / ...... / ......</div>
+                      </div>
+                    </div>
 
-              <div className="space-y-4">
-                <div>
-                  <strong>เรียน:</strong> นายก{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})
-                </div>
-
-                <div className="space-y-3 text-justify indent-8">
+                    {/* นายก อปท. */}
+                    <div className="border border-stone-400 p-3.5 space-y-2.5 bg-white">
+                      <div className="font-bold underline text-[14px]">
+                        คำสั่งการของนายกองค์กรปกครองส่วนท้องถิ่น
+                      </div>
+                      <div className="space-y-1 text-xs pt-3">
+                        <label className="flex items-start space-x-2">
+                          <span className="font-bold text-sm">[  ]</span>
+                          <span className="font-bold">อนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}</span>
+                        </label>
+                        <label className="flex items-start space-x-2">
+                          <span className="font-bold text-sm">[  ]</span>
+                          <span>แจ้งให้ทุกสำนัก/กอง/หน่วยรับตรวจ ทราบและอำนวยความสะดวกในการเข้าตรวจ</span>
+                        </label>
+                        <label className="flex items-start space-x-2">
+                          <span className="font-bold text-sm">[  ]</span>
+                          <span>ไม่อนุมัติ เนื่องจาก ....................................................</span>
+                        </label>
+                      </div>
+                      <div className="pt-6 text-center space-y-1">
+                        <div>(ลงชื่อ)........................................................</div>
+                        <div className="font-bold">({orgProfile?.approverName || '........................................................'})</div>
+                        <div className="text-xs text-stone-600">{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
+                        <div className="text-[11px] text-stone-500">วันที่ ...... / ...... / ......</div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              >
+                <div className="space-y-3 text-justify indent-10">
                   <p>
-                    ด้วยหน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้ดำเนินการจัดทำแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear} เสร็จเรียบร้อยแล้ว โดยอาศัยอำนาจตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. 2545 และที่แก้ไขเพิ่มเติม (ฉบับที่ 2) พ.ศ. 2558 ข้อ 18 ข้อ 19 และข้อ 20 ประกอบพระราชบัญญัติวินัยการเงินการคลังของรัฐ พ.ศ. 2561 มาตรา 79
+                    ด้วยหน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้ดำเนินการจัดทำแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear} เสร็จเรียบร้อยแล้ว โดยอาศัยอำนาจตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๒) พ.ศ. ๒๕๕๘ ข้อ ๑๘ ข้อ ๑๙ และข้อ ๒๐ ประกอบพระราชบัญญัติวินัยการเงินการคลังของรัฐ พ.ศ. ๒๕๖๑ มาตรา ๗๙
                   </p>
                   <p>
                     ในการนี้ หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงตามเกณฑ์มาตรฐานของกระทรวงการคลัง และจัดลำดับความสำคัญของกิจกรรมครอบคลุมทุกส่วนราชการ โดยบรรจุโครงการตรวจสอบในแผนปฏิบัติการประจำปีงบประมาณ พ.ศ. {selectedYear} รวมทั้งสิ้น <strong>{annualPlans.length} โครงการ</strong> วงเงินงบประมาณรวม <strong>{totalBudget.toLocaleString()} บาท</strong> โดยมีรายละเอียดดังต่อไปนี้:
@@ -1494,24 +1537,24 @@ export default function PlanningView({
                 </div>
 
                 {/* Table Summary in Memo */}
-                <div className="border border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden my-3">
-                  <table className="w-full text-left text-[11px]">
-                    <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-300 dark:border-slate-700">
+                <div className="border border-stone-400 rounded-none overflow-hidden my-3">
+                  <table className="w-full text-left text-[12px] border-collapse">
+                    <thead className="bg-stone-100 text-black font-bold border-b border-stone-400">
                       <tr>
-                        <th className="p-2 text-center w-10">ลำดับ</th>
-                        <th className="p-2">โครงการ / กิจกรรมที่ตรวจสอบ</th>
-                        <th className="p-2">หน่วยรับตรวจ</th>
-                        <th className="p-2 text-center">ระดับความเสี่ยง</th>
+                        <th className="p-2 text-center w-10 border-r border-stone-300">ลำดับ</th>
+                        <th className="p-2 border-r border-stone-300">โครงการ / กิจกรรมที่ตรวจสอบ</th>
+                        <th className="p-2 border-r border-stone-300">หน่วยรับตรวจ</th>
+                        <th className="p-2 text-center border-r border-stone-300">ระดับความเสี่ยง</th>
                         <th className="p-2">ระยะเวลาดำเนินการ</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                    <tbody className="divide-y divide-stone-300">
                       {annualPlans.map((p, idx) => (
                         <tr key={p.id}>
-                          <td className="p-2 text-center">{idx + 1}</td>
-                          <td className="p-2 font-semibold">{p.title}</td>
-                          <td className="p-2">{p.department}</td>
-                          <td className="p-2 text-center">{p.riskLevel}</td>
+                          <td className="p-2 text-center border-r border-stone-300">{idx + 1}</td>
+                          <td className="p-2 font-bold border-r border-stone-300">{p.title}</td>
+                          <td className="p-2 border-r border-stone-300">{p.department}</td>
+                          <td className="p-2 text-center border-r border-stone-300 font-bold">{p.riskLevel}</td>
                           <td className="p-2">{p.quarter}</td>
                         </tr>
                       ))}
@@ -1519,51 +1562,18 @@ export default function PlanningView({
                   </table>
                 </div>
 
-                <div className="space-y-2 indent-8">
+                <div className="space-y-2 indent-10">
                   <p>
-                    จึงเรียนมาเพื่อโปรดพิจารณา
+                    จึงเรียนมาเพื่อโปรดพิจารณา:
                   </p>
-                  <p className="indent-12">
-                    1. ให้ความเห็นชอบและอนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}
+                  <p className="indent-14">
+                    ๑. ให้ความเห็นชอบและอนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}
                   </p>
-                  <p className="indent-12">
-                    2. แจ้งให้ทุกสำนัก/กอง/หน่วยรับตรวจ ทราบและอำนวยความสะดวกในการเข้าปฏิบัติงานตรวจสอบต่อไป
+                  <p className="indent-14">
+                    ๒. แจ้งให้ทุกสำนัก/กอง/หน่วยรับตรวจ ทราบและอำนวยความสะดวกในการเข้าปฏิบัติงานตรวจสอบต่อไป
                   </p>
                 </div>
-
-                {/* 3-Tier Sign-off */}
-                <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs">
-                  <div className="space-y-6">
-                    <div>(ลงชื่อ)........................................................</div>
-                    <div>
-                      <div className="font-bold">({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</div>
-                      <div className="text-slate-500">{orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ'}</div>
-                      <div className="text-[11px] text-slate-400">ผู้จัดทำแผน</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div>(ลงชื่อ)........................................................</div>
-                    <div>
-                      <div className="font-bold">({orgProfile?.palatName || 'ปลัด อปท.'})</div>
-                      <div className="text-slate-500">{orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
-                      <div className="text-[11px] text-slate-400">ผู้เห็นชอบ</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-8 text-center text-xs space-y-6">
-                  <div>
-                    <div className="font-bold mb-4">คำสั่ง / ข้อสั่งการ: [ / ] อนุมัติแผน [ ] ไม่อนุมัติ</div>
-                    <div>(ลงชื่อ)........................................................</div>
-                  </div>
-                  <div>
-                    <div className="font-bold">({orgProfile?.approverName || 'นายก อปท.'})</div>
-                    <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
-                    <div className="text-[11px] text-slate-400">ผู้อนุมัติแผน</div>
-                  </div>
-                </div>
-              </div>
+              </OfficialThaiMemo>
             </div>
           </div>
         </div>

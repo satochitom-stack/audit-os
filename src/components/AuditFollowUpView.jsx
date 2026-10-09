@@ -21,6 +21,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { DLA_FOLLOWUP_REGISTER_6, DLA_FOLLOWUP_MEMO_TEMPLATE } from '../data/dlaStandardTemplates';
+import OfficialThaiMemo from './OfficialThaiMemo';
 
 export default function AuditFollowUpView({
   selectedYear = '2569',
@@ -548,52 +549,35 @@ export default function AuditFollowUpView({
       {/* VIEW: MEMO */}
       {/* ==================================================== */}
       {activeTab === 'memo' && (
-        <div className="bg-white dark:bg-stone-900 rounded-3xl p-8 sm:p-12 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-6 max-w-3xl mx-auto print:border-none print:shadow-none print:p-0">
-          <div className="text-center font-bold text-base text-stone-900 dark:text-stone-100 border-b pb-3 border-stone-200 dark:border-stone-700">
-            บันทึกข้อความ (ติดตามผลการปฏิบัติตามข้อเสนอแนะครบกำหนด {isCgdRegime ? '60 วัน' : '30 วัน'})
-          </div>
-
-          <div className="text-xs space-y-2 text-stone-800 dark:text-stone-200">
-            <div className="flex justify-between">
-              <div><strong>ส่วนราชการ:</strong> หน่วยตรวจสอบภายใน {orgProfile?.name || 'อปท.'}</div>
-              <div><strong>โทร:</strong> {orgProfile?.phone || '-'}</div>
-            </div>
-            <div className="flex justify-between">
-              <div><strong>ที่:</strong> มท 0808/{selectedYear}/ว...</div>
-              <div><strong>วันที่:</strong> {new Date().toLocaleDateString('th-TH')}</div>
-            </div>
-            <div>
-              <strong>เรื่อง:</strong> ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด {isCgdRegime ? '60 วัน' : '30 วัน'}
-            </div>
-            <div className="pt-2">
-              <strong>เรียน:</strong> ผู้อำนวยการ{currentMemoItem.department || 'หน่วยรับตรวจ'}
-            </div>
-          </div>
-
-          <div className="text-xs space-y-3 leading-relaxed text-stone-700 dark:text-stone-300 text-justify">
-            <p className="indent-8">
-              ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {selectedYear} ในภารกิจ "{currentMemoItem.title}" และ นายก{orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ {currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด {isCgdRegime ? '60 วัน' : '30 วัน'} นั้น
+        <div className="max-w-3xl mx-auto space-y-4">
+          <OfficialThaiMemo
+            agency={`${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgProfile?.name || 'อปท.'}`}
+            phone={orgProfile?.phone || ''}
+            docNumber={`มท ๐๘๐๘/${selectedYear}/ว...`}
+            date={new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+            subject={`ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'}`}
+            to={`ผู้อำนวยการ${currentMemoItem.department || 'หน่วยรับตรวจ'}`}
+            signatory={{
+              name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+              position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน',
+              role: `หน่วยตรวจสอบภายใน ${orgProfile?.name || 'อปท.'}`
+            }}
+            showReviewBoxes={false}
+          >
+            <p className="indent-10 text-justify leading-relaxed">
+              ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {selectedYear} ในภารกิจ "{currentMemoItem.title}" และ นายก{orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ {currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด {isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} นั้น
             </p>
-            <p className="indent-8">
-              บัดนี้ ได้ครบกำหนดระยะเวลา {isCgdRegime ? '60 วัน' : '30 วัน'} แล้ว (ครบกำหนดวันที่ {currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม {isCgdRegime ? 'หลักเกณฑ์ปฏิบัติการตรวจสอบภายในสำหรับหน่วยงานของรัฐ พ.ศ. ๒๕๖๑ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๔) พ.ศ. ๒๕๖๖' : 'ระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๑'} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว
+            <p className="indent-10 text-justify leading-relaxed">
+              บัดนี้ ได้ครบกำหนดระยะเวลา {isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} แล้ว (ครบกำหนดวันที่ {currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม {isCgdRegime ? 'หลักเกณฑ์ปฏิบัติการตรวจสอบภายในสำหรับหน่วยงานของรัฐ พ.ศ. ๒๕๖๑ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๔) พ.ศ. ๒๕๖๖' : 'ระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๑'} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว
             </p>
-            <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 space-y-1">
-              <div className="font-bold text-amber-900 dark:text-amber-200">ข้อเสนอแนะที่ต้องติดตาม:</div>
-              <div className="text-stone-800 dark:text-stone-200">{currentMemoItem.recommendation}</div>
+            <div className="p-3.5 bg-stone-50 border border-stone-300 rounded-none space-y-1">
+              <div className="font-bold text-black">ข้อเสนอแนะที่ต้องติดตาม:</div>
+              <div className="text-stone-900 whitespace-pre-line leading-relaxed">{currentMemoItem.recommendation}</div>
             </div>
-            <p className="indent-8">
-              จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน 7 วันทำการ เพื่อรวบรวมรายงานต่อนายก{orgProfile?.name || 'อปท.'} ต่อไป
+            <p className="indent-10 text-justify leading-relaxed pt-2">
+              จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก{orgProfile?.name || 'อปท.'} ต่อไป
             </p>
-          </div>
-
-          <div className="pt-10 text-center text-xs space-y-12 ml-auto w-64">
-            <div>(ลงชื่อ)........................................................</div>
-            <div>
-              ({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})<br />
-              {orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}<br />
-              หน่วยตรวจสอบภายใน {orgProfile?.name || 'อปท.'}
-            </div>
-          </div>
+          </OfficialThaiMemo>
         </div>
       )}
 
