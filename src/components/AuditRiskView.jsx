@@ -1116,24 +1116,24 @@ export default function AuditRiskView({
       {/* Top Banner */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 sm:p-6 border border-stone-200/80 dark:border-stone-800 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-0.5 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
                 <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>การประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
               </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-2.5 py-0.5 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3 h-3 text-amber-700 dark:text-amber-400" />
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                 <span>ผู้ประเมิน: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
               การประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}
             </h2>
-            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-3xl leading-relaxed">
-              วิเคราะห์กิจกรรมในจักรวาลการตรวจสอบ (Audit Universe) ตามกรอบปัจจัยเสี่ยง 5 มิติ (SOFCK) ตามระเบียบและคู่มือกรมส่งเสริมการปกครองท้องถิ่น (สถ.)
-              เพื่อจัดลำดับและคัดเลือกกิจกรรมความเสี่ยงสูงบรรจุเข้าสู่แผนการตรวจสอบประจำปี
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -1241,19 +1241,19 @@ export default function AuditRiskView({
       </div>
 
       {/* Streamlined 3-Tab Selector */}
-      <div className="bg-stone-100/90 dark:bg-stone-900/90 p-1.5 rounded-xl border border-stone-200/90 dark:border-stone-800 flex space-x-1.5 overflow-x-auto text-xs font-bold scrollbar-none no-print print:hidden">
+      <div className="bg-stone-200/80 dark:bg-stone-800/80 p-1.5 rounded-xl border border-stone-300/80 dark:border-stone-700 flex space-x-1.5 overflow-x-auto text-xs font-bold scrollbar-none no-print print:hidden">
         {[
-          { id: 'matrix', label: '1. ตารางประเมินความเสี่ยง (SOFCK Matrix)', desc: 'ประเมิน 5 มิติแยกตามสำนัก/กอง' },
-          { id: 'ranking', label: '2. จัดลำดับความเสี่ยง & คัดเลือกเข้าแผนประจำปี (Prioritization & Selection)', desc: 'เรียงลำดับ 1..N และเชื่อมโยงเข้าแผน' },
-          { id: 'report', label: '3. สรุปรายงานผล & แบบพิมพ์ทางการ (Official Report & Memo)', desc: 'แบบรายงาน สถ. และบันทึกข้อความ' }
+          { id: 'matrix', label: '1. ตารางประเมินความเสี่ยง (SOFCK Matrix)' },
+          { id: 'ranking', label: '2. จัดลำดับความเสี่ยง & คัดเลือกเข้าแผนประจำปี (Prioritization & Selection)' },
+          { id: 'report', label: '3. สรุปรายงานผล & แบบพิมพ์ทางการ (Official Report & Memo)' }
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveSubTab(tab.id)}
             className={`px-4 py-2.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center space-x-2 ${
               activeSubTab === tab.id
-                ? 'bg-stone-850 text-amber-100 dark:bg-stone-800 dark:text-amber-200 shadow-xs font-bold border-l-2 border-amber-500'
-                : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800/50'
+                ? 'bg-amber-800 text-white dark:bg-amber-700 dark:text-white shadow-sm font-bold'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-300/50 dark:hover:bg-stone-700/50 font-medium'
             }`}
           >
             <span>{tab.label}</span>
@@ -1356,16 +1356,24 @@ export default function AuditRiskView({
 
                     return (
                       <React.Fragment key={dept}>
-                        {/* Department Header Row */}
-                        <tr className="bg-stone-100/70 dark:bg-stone-850/80 font-bold text-stone-800 dark:text-stone-200">
-                          <td colSpan="11" className="px-4 py-2 border-y border-stone-200 dark:border-stone-800 text-xs flex items-center justify-between">
-                            <span className="flex items-center space-x-1.5">
-                              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                              <span>{dept}</span>
-                            </span>
-                            <span className="text-[11px] font-normal text-stone-500">
-                              {deptItems.length} กิจกรรม (ความเสี่ยงสูง {deptItems.filter((i) => i.level === 'สูง').length} รายการ)
-                            </span>
+                        {/* Department Header Row - Horizontal Wide Band */}
+                        <tr className="bg-stone-100 dark:bg-stone-800/90 border-y-2 border-stone-300 dark:border-stone-700">
+                          <td colSpan="11" className="px-4 py-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 w-full">
+                              <div className="flex items-center space-x-2 text-stone-900 dark:text-stone-100 font-bold text-sm">
+                                <Building className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
+                                <span>สำนัก/กอง: {dept}</span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-stone-600 dark:text-stone-300">
+                                <span>จำนวนกิจกรรมทั้งหมด: <strong className="text-stone-900 dark:text-stone-100">{deptItems.length}</strong> รายการ</span>
+                                <span className="hidden sm:inline text-stone-300 dark:text-stone-600">•</span>
+                                <span className="text-rose-600 dark:text-rose-400 font-semibold">ความเสี่ยงสูง: {deptItems.filter((i) => i.level === 'สูง').length}</span>
+                                <span className="hidden sm:inline text-stone-300 dark:text-stone-600">•</span>
+                                <span className="text-amber-600 dark:text-amber-400 font-semibold">ปานกลาง: {deptItems.filter((i) => i.level === 'ปานกลาง').length}</span>
+                                <span className="hidden sm:inline text-stone-300 dark:text-stone-600">•</span>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">ต่ำ: {deptItems.filter((i) => i.level === 'ต่ำ').length}</span>
+                              </div>
+                            </div>
                           </td>
                         </tr>
 
