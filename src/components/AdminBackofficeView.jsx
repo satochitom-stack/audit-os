@@ -872,64 +872,6 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
             </form>
           </div>
 
-          {/* Dedicated Super Admin Console Card */}
-          <div className="bg-gradient-to-r from-stone-900 via-amber-950/80 to-stone-900 rounded-3xl p-5 sm:p-6 text-white border border-amber-500/40 shadow-xl relative overflow-hidden backdrop-blur-md">
-            <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-stone-950 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30 font-black text-xl">
-                  👑
-                </div>
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center space-x-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full text-[11px] font-black tracking-wide">
-                      👑 PLATFORM SUPER ADMIN
-                    </span>
-                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                      ● สถานะ: ใช้งานตลอดชีพ (Lifetime Root)
-                    </span>
-                    <span className="text-stone-400 text-[11px]">
-                      (แยกต่างหากจากสมาชิก • ไม่คิดค่าบริการ)
-                    </span>
-                  </div>
-                  <h3 className="text-base sm:text-lg font-black text-amber-50 tracking-tight">
-                    บัญชีผู้ดูแลระบบส่วนกลาง: @{users.find((u) => u.role === 'admin')?.username || 'admin'}
-                  </h3>
-                  <p className="text-xs text-stone-300">
-                    ชื่อผู้ดูแล: <strong className="text-amber-200">{users.find((u) => u.role === 'admin')?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)'}</strong> • 
-                    สังกัด: <span className="text-stone-300">ศูนย์ควบคุมแพลตฟอร์มส่วนกลาง (Audit-OS Cloud)</span> • 
-                    สิทธิ์: <span className="text-emerald-300 font-semibold">เข้าถึงทุกฟังก์ชัน & ควบคุมระบบ อปท. ทั้งหมด</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-stone-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const adminUser = users.find((u) => u.role === 'admin') || { username: 'admin' };
-                    setEditingMember(adminUser);
-                    setShowEditMemberModal(true);
-                  }}
-                  className="bg-stone-800 hover:bg-stone-750 text-amber-200 border border-amber-500/30 hover:border-amber-400 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
-                >
-                  <Lock className="w-3.5 h-3.5 text-amber-400" />
-                  <span>เปลี่ยนรหัสผ่าน Admin</span>
-                </button>
-                {onSwitchToWorkbench && (
-                  <button
-                    type="button"
-                    onClick={onSwitchToWorkbench}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 cursor-pointer shadow-md shadow-amber-600/30"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>เข้าสู่หน้าตรวจ (Workbench)</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Members Table Card matching user's Image 2 */}
           <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-stone-100 dark:border-stone-800">
