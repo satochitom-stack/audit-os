@@ -41,6 +41,7 @@ import OpeningMeetingView from './components/OpeningMeetingView';
 import ClosingMeetingView from './components/ClosingMeetingView';
 import AuditFollowUpView from './components/AuditFollowUpView';
 import AuditCommitteeView from './components/AuditCommitteeView';
+import SystemUpdateNotification from './components/SystemUpdateNotification';
 import { INITIAL_ENGAGEMENT_PLANS } from './data/engagementPlanTemplates';
 import {
   getSession,
@@ -1299,6 +1300,7 @@ export default function App() {
 
   return (
     <div className="h-screen w-full bg-slate-100 dark:bg-slate-800 flex flex-col font-sans overflow-hidden print:h-auto print:overflow-visible print:bg-white">
+      <SystemUpdateNotification />
       <Header
         orgProfile={orgProfile}
         selectedYear={selectedYear}

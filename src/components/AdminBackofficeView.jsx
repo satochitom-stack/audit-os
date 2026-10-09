@@ -46,6 +46,7 @@ import {
   extendMemberSubscription,
   updateUser
 } from '../utils/auth';
+import { broadcastSystemUpdate, APP_VERSION } from '../utils/versionCheck';
 
 export default function AdminBackofficeView({ currentSession, session, onSwitchToWorkbench, onRefreshUser }) {
   const activeSession = session || currentSession;
@@ -79,9 +80,28 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
   const [showEditMemberModal, setShowEditMemberModal] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
 
+  // Broadcast Update Modal State
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [broadcastVer, setBroadcastVer] = useState(APP_VERSION);
+  const [broadcastTitle, setBroadcastTitle] = useState('Audit-OS อัปเดตเวอร์ชันใหม่');
+  const [broadcastDesc, setBroadcastDesc] = useState('ระบบได้รับการอัปเดตฟังก์ชันและปรับปรุงประสิทธิภาพล่าสุดเรียบร้อยแล้ว');
+  const [broadcastSummary, setBroadcastSummary] = useState('ปรับปรุงกระดาษทำการ การจัดการสมาชิก และการแจ้งเตือนอัปเดตระบบ');
+
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleSendBroadcast = (e) => {
+    if (e) e.preventDefault();
+    broadcastSystemUpdate({
+      version: broadcastVer,
+      title: broadcastTitle,
+      description: broadcastDesc,
+      changeSummary: broadcastSummary
+    });
+    setShowBroadcastModal(false);
+    showToast('📢 ส่งสัญญาณแจ้งเตือนอัปเดตระบบไปยังผู้ใช้ทุกคนเรียบร้อยแล้ว! (แถบแจ้งเตือนจะแสดงบนหน้าจอทันที)');
   };
 
   const reloadData = () => {
@@ -298,6 +318,15 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
               </button>
             )}
             <button
+              onClick={() => setShowBroadcastModal(true)}
+              className="bg-gradient-to-r from-amber-500/20 via-amber-500/15 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-950 dark:text-amber-200 border border-amber-500/40 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
+              title="ส่งสัญญาณแจ้งเตือนอัปเดตระบบไปยังผู้ใช้งานทุกคน"
+            >
+              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <span>📢 ส่งสัญญาณแจ้งอัปเดตระบบ</span>
+            </button>
+
+            <button
               onClick={reloadData}
               className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
               title="รีเฟรชข้อมูล"
@@ -328,15 +357,15 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
           <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-center shrink-0 relative">
             <Clock className="w-6 h-6" />
             {metrics.pendingCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-stone-950 text-[10px] font-black rounded-full flex items-center justify-center animate-pulse">
                 {metrics.pendingCount}
               </span>
             )}
           </div>
           <div>
-            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">คำขอสมัครสมาชิกรออนุมัติ</div>
-            <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{metrics.pendingCount} <span className="text-xs font-normal text-stone-500">รายการ</span></div>
-            <div className="text-[11px] text-stone-500">รอเปิดสิทธิ์การใช้งาน</div>
+            <div className="text-xs font-semibold text-stone-500 dark:text-stone-400">สมาชิกใหม่ช่วงทดลองใช้ 30 วัน</div>
+            <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{metrics.pendingCount} <span className="text-xs font-normal text-stone-500">ท่าน</span></div>
+            <div className="text-[11px] text-stone-500">ได้สิทธิ์ 30 วันทันที • รอเปิดแพ็กเกจถาวร</div>
           </div>
         </div>
 
@@ -369,16 +398,16 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-1.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap gap-1">
         <button
           onClick={() => setActiveTab('pending')}
-          className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+          className={`flex-1 min-w-[180px] py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'pending'
               ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
               : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>คำขอสมัครใหม่ ({pendingUsers.length})</span>
+          <span>สมาชิกทดลองใช้ & รอเปิดแพ็กเกจ ({pendingUsers.length})</span>
           {pendingUsers.length > 0 && (
-            <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
           )}
         </button>
 
@@ -419,19 +448,19 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         </button>
       </div>
 
-      {/* TAB 1: PENDING REGISTRATIONS */}
+      {/* TAB 1: PENDING / TRIAL REGISTRATIONS */}
       {activeTab === 'pending' && (
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
               <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                <span>คำขอสมัครสมาชิกจากผู้ตรวจสอบภายใน อปท.</span>
+                <span>สมาชิกใหม่ช่วงทดลองใช้ 30 วัน & คำขออัปเกรดแพ็กเกจ</span>
                 <span className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2.5 py-0.5 rounded-full font-bold">
-                  รออนุมัติ {pendingUsers.length} รายการ
+                  ทดลองใช้งาน {pendingUsers.length} รายการ
                 </span>
               </h2>
-              <p className="text-xs text-slate-500">
-                เมื่อท่านกด "อนุมัติ" สมาชิกจะสามารถล็อกอินเข้าใช้งานระบบและเริ่มจัดทำกระดาษทำการของ อปท. ตนเองได้ทันที
+              <p className="text-xs text-stone-500 mt-1">
+                ผู้ตรวจสอบภายในที่ลงทะเบียนใหม่จะได้รับสิทธิ์ทดลองใช้งาน 30 วันอัตโนมัติทันที ท่านสามารถติดตามการใช้งาน และกด "อัปเกรดเป็นสมาชิกรายปี" เพื่อเปิดสิทธิ์การใช้งานถาวรได้ที่นี่
               </p>
             </div>
           </div>
@@ -441,9 +470,9 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
               <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center mx-auto">
                 <Check className="w-8 h-8" />
               </div>
-              <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">ไม่มีคำขอสมาชิกรอการอนุมัติในขณะนี้</h3>
+              <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">ไม่มีสมาชิกใหม่ในรอบทดลองใช้ที่รอปรับสถานะ</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                เมื่อมีผู้ตรวจสอบภายในกดลงทะเบียนจากหน้าเข้าสู่ระบบ รายชื่อจะปรากฏในหน้านี้เพื่อให้ท่านอนุมัติ
+                เมื่อมีผู้ตรวจสอบภายในลงทะเบียนใหม่จากหน้าแรก ระบบจะเปิดสิทธิ์ 30 วันให้อัตโนมัติ และแสดงรายชื่อที่นี่เพื่อให้ท่านดูแลหรืออัปเกรดเป็นสมาชิกรายปี
               </p>
             </div>
           ) : (
@@ -502,16 +531,26 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         onClick={() => handleOpenApprove(pending)}
                         className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs"
                       >
-                        <Check className="w-4 h-4" />
-                        <span>อนุมัติ & กำหนดวันหมดอายุ</span>
+                        <Sparkles className="w-4 h-4 text-emerald-200" />
+                        <span>อัปเกรดเป็นสมาชิกรายปี</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleQuickExtend(pending.username, 30, 'trial')}
+                        className="bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-950 dark:text-amber-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer border border-amber-300 dark:border-amber-700/60"
+                        title="ขยายเวลาทดลองใช้อีก 30 วัน"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>+30 วัน</span>
                       </button>
 
                       <button
                         onClick={() => handleReject(pending)}
                         className="bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950 dark:text-rose-300 font-bold py-2 px-3 rounded-xl text-xs transition-all cursor-pointer"
+                        title="ลบ/ปฏิเสธรายการนี้"
                       >
                         <X className="w-4 h-4" />
-                        <span>ปฏิเสธ</span>
                       </button>
                     </div>
                   </div>
@@ -939,7 +978,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <span>อนุมัติสมาชิก: {selectedPending.displayName}</span>
+                <span>อัปเกรดสถานะสมาชิกทางการ: {selectedPending.displayName}</span>
               </h3>
               <button
                 onClick={() => setShowApproveModal(false)}
@@ -963,13 +1002,13 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                   onChange={(e) => {
                     const p = e.target.value;
                     setApprovePlan(p);
-                    setApproveDurationDays(p === 'monthly' ? 30 : p === 'trial' ? 14 : 365);
+                    setApproveDurationDays(p === 'monthly' ? 30 : p === 'trial' ? 30 : 365);
                   }}
                   className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
                 >
                   <option value="annual">สมาชิกรายปี (365 วัน - ฿2,990)</option>
                   <option value="monthly">สมาชิกรายเดือน (30 วัน - ฿299)</option>
-                  <option value="trial">ทดลองใช้งานฟรี (14 วัน)</option>
+                  <option value="trial">ขยายเวลาทดลองใช้งาน (+30 วัน)</option>
                 </select>
               </div>
 
@@ -999,9 +1038,116 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                 className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center space-x-1"
               >
                 <Check className="w-4 h-4" />
-                <span>ยืนยันอนุมัติ & เปิดใช้งานทันที</span>
+                <span>บันทึกและเปิดใช้งานแพ็กเกจ</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BROADCAST SYSTEM UPDATE */}
+      {showBroadcastModal && (
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-lg w-full p-6 space-y-5 border border-stone-200 dark:border-stone-800 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
+                    ส่งสัญญาณแจ้งเตือนอัปเดตระบบ (Broadcast Update)
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    แจ้งเตือนไปยังผู้ใช้งานทุกคนที่กำลังเปิดเว็บอยู่แบบ Real-time
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBroadcastModal(false)}
+                className="text-stone-400 hover:text-stone-600 p-1.5 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendBroadcast} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">เวอร์ชันระบบ (Version)</label>
+                  <input
+                    type="text"
+                    value={broadcastVer}
+                    onChange={(e) => setBroadcastVer(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-bold text-amber-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">วันที่อัปเดต</label>
+                  <input
+                    type="text"
+                    defaultValue={new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    disabled
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 text-stone-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">หัวข้อการแจ้งเตือน</label>
+                <input
+                  type="text"
+                  value={broadcastTitle}
+                  onChange={(e) => setBroadcastTitle(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">รายละเอียดการอัปเดต</label>
+                <textarea
+                  rows={2}
+                  value={broadcastDesc}
+                  onChange={(e) => setBroadcastDesc(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">สรุปจุดเด่น / การเปลี่ยนแปลง (Change Summary)</label>
+                <input
+                  type="text"
+                  value={broadcastSummary}
+                  onChange={(e) => setBroadcastSummary(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
+                  placeholder="เช่น ปรับปรุงกระดาษทำการ และแก้ไขการจัดการผู้ใช้"
+                />
+              </div>
+
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-xl text-amber-900 dark:text-amber-200 text-[11px] leading-relaxed">
+                ℹ️ เมื่อส่งสัญญาณแล้ว ผู้ใช้งานที่กำลังเปิดระบบอยู่จะเห็นแถบแจ้งเตือนสีอำพันเรียบหรูเด้งขึ้นมาทันที พร้อมปุ่ม <strong>"รีเฟรชเพื่ออัปเดตทันที"</strong> เพื่อให้โหลดเวอร์ชันใหม่
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-100 dark:border-stone-800">
+                <button
+                  type="button"
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800 cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-black px-5 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-amber-900/20 cursor-pointer flex items-center space-x-1.5"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-200" />
+                  <span>📢 ส่งสัญญาณแจ้งเตือนเดี๋ยวนี้</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
