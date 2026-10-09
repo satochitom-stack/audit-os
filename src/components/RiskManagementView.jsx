@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
   AlertTriangle,
+  Award,
   CheckCircle2,
   TrendingDown,
   Printer,
@@ -1898,34 +1899,40 @@ export default function RiskManagementView({
   return (
     <div className="space-y-6">
       {/* 1. Clean & Streamlined Header Card */}
-      <div className="bg-white dark:bg-stone-900 px-5 py-4 rounded-xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 tracking-tight">
-              การบริหารจัดการความเสี่ยงองค์กร (บส.1 - บส.5)
-            </h2>
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60">
-              ปีงบฯ {selectedYear}
-            </span>
-            {/* Compliance pill button */}
-            <button
-              type="button"
-              onClick={() => setShowAuditModal(true)}
-              className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border flex items-center space-x-1 cursor-pointer transition-colors ${
-                complianceAudit.isCompliant
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-                  : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-              }`}
-              title="คลิกเพื่อดูผลตรวจความสอดคล้องตาม ว 3482 และเกณฑ์กระทรวงการคลัง"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>ความสอดคล้อง ว 3482 ({complianceAudit.score}%)</span>
-            </button>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs no-print">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>มท 0805.2/ว 3482 • {isAdmin ? 'หน่วยตรวจสอบภายใน' : `ส่วนราชการ: ${userDept}`}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowAuditModal(true)}
+                className={`text-xs font-semibold px-3 py-1 rounded-full border flex items-center space-x-1.5 cursor-pointer transition-colors ${
+                  complianceAudit.isCompliant
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                    : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                }`}
+                title="คลิกเพื่อดูผลตรวจความสอดคล้องตาม ว 3482 และเกณฑ์กระทรวงการคลัง"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>สอดคล้อง ว 3482 ({complianceAudit.score}%)</span>
+              </button>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+              การบริหารจัดการความเสี่ยงองค์กร (แบบ บส.1 - บส.5)
+            </h1>
           </div>
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            มาตรฐาน มท 0805.2/ว 3482 และกระทรวงการคลัง พ.ศ. 2562 • {isAdmin ? 'มุมมองหน่วยตรวจสอบภายใน' : `ส่วนราชการ: ${userDept}`}
-          </p>
-        </div>
 
         {/* Action Buttons: Streamlined Dropdowns & Gemini AI */}
         <div className="flex flex-wrap items-center gap-2 shrink-0 no-print">
@@ -2105,6 +2112,7 @@ export default function RiskManagementView({
           </div>
         </div>
       </div>
+    </div>
 
       {/* Cascade / Action Toast Notification */}
       {cascadeSuccessMsg && (

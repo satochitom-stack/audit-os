@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import {
+  Building,
+  Award,
   Wrench,
   Calculator,
   HardHat,
@@ -22,6 +24,7 @@ import AuditToolkits from './AuditToolkits';
 
 export default function TechnicalToolkitsView({
   selectedYear = '2570',
+  orgProfile = {},
   workingPapers = [],
   setWorkingPapers,
   setSelectedWp,
@@ -109,23 +112,26 @@ export default function TechnicalToolkitsView({
   return (
     <div className="space-y-6">
       {/* Pillar Hero Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-2xl p-6 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 rounded-full px-3 py-1 text-xs font-semibold mb-2">
-              <Wrench className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>เสาหลักที่ 2: ปฏิบัติการตรวจสอบ & เครื่องมือเฉพาะทาง</span>
-              <span>•</span>
-              <span className="text-amber-900 dark:text-amber-200 font-bold">ปีงบประมาณ พ.ศ. {selectedYear}</span>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>เสาหลักที่ 2: ปฏิบัติการตรวจสอบเชิงเทคนิค</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+              </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
-              ชุดเครื่องมือช่วยตรวจสอบเชิงเทคนิค (Technical Audit Toolkits)
-            </h2>
-            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 mt-1 max-w-3xl leading-relaxed">
-              เครื่องมืออำนวยความสะดวกสำหรับผู้ตรวจสอบภายใน ช่วยคำนวณและสอบทานความถูกต้องตามระเบียบ กฎหมาย หนังสือสั่งการ
-              ใน 4 ประเด็นหลัก: ราคากลาง, จัดซื้อจัดจ้าง, โครงการตามข้อบัญญัติ และการขออนุญาตก่อสร้าง
-            </p>
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+              ชุดเครื่องมือช่วยคำนวณและตรวจสอบงานช่าง (Technical Audit Toolkits)
+            </h1>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">

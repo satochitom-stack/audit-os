@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
+  Building,
+  Award,
   BookOpen,
   Search,
   FileText,
@@ -170,22 +172,26 @@ export default function KnowledgeView({
       )}
 
       {/* Header & Search Bar */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold mb-2">
-              <BookOpen className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>คลังระเบียบ กฎหมาย และหนังสือสั่งการ (Knowledge Base)</span>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>คลังระเบียบ กฎหมาย และหนังสือสั่งการ</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <BookOpen className="w-3.5 h-3.5 text-stone-500" />
+                <span>เอกสารในระบบ {knowledgeBase.length} ฉบับ</span>
+              </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
               สืบค้นข้อระเบียบและแนวทางปฏิบัติงานตรวจสอบภายใน
-            </h2>
-            <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 flex items-center gap-1.5 flex-wrap">
-              <span>เชื่อมโยงไฟล์ตรงจากคลังเอกสาร</span>
-              <code className="bg-white/80 dark:bg-stone-800 px-2 py-0.5 rounded text-amber-900 dark:text-amber-300 font-mono text-[11px] border border-amber-500/30">
-                D:\งานตรวจสอบภายใน\เอกสารความรู้-เอกสารตัวอย่าง
-              </code>
-            </p>
+            </h1>
           </div>
 
           <div className="flex items-center gap-2 self-start md:self-auto shrink-0">

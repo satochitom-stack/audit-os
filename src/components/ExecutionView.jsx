@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   RefreshCw,
   ArrowRight,
-  Info
+  Info,
+  Award
 } from 'lucide-react';
 import { exportWorkingPaperToExcel } from '../utils/exportExcel';
 import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
@@ -416,31 +417,25 @@ export default function ExecutionView({
   return (
     <div className="space-y-6">
       {/* Top Header & Topic Selector */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">
-            <ClipboardCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-            <span>กระดาษทำการตรวจสอบ (Working Paper)</span>
-          </div>
-          <h2 className="text-lg font-black text-stone-900 dark:text-stone-100 leading-tight">
-            {currentWp.topic}
-          </h2>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 dark:text-stone-400 mt-2">
-            <span className="flex items-center">
-              <Building className="w-3.5 h-3.5 mr-1 text-stone-400 dark:text-stone-500" />
-              หน่วยรับตรวจ: <strong className="ml-1 text-stone-700 dark:text-stone-300">{currentWp.department}</strong>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6 backdrop-blur-xs">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ({currentWp.department})</span>
             </span>
-            <span>•</span>
-            <span className="flex items-center">
-              <Calendar className="w-3.5 h-3.5 mr-1 text-stone-400 dark:text-stone-500" />
-              งวดตรวจสอบ: <strong className="ml-1 text-stone-700 dark:text-stone-300">{currentWp.auditPeriod || `ปีงบประมาณ พ.ศ. ${selectedYear}`}</strong>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || currentWp.auditor || 'หน่วยตรวจสอบภายใน'}</span>
             </span>
-            <span>•</span>
-            <span className="flex items-center">
-              <UserCheck className="w-3.5 h-3.5 mr-1 text-stone-400 dark:text-stone-500" />
-              ผู้ตรวจสอบ: <strong className="ml-1 text-stone-700 dark:text-stone-300">{orgProfile.auditorName || currentWp.auditor || 'ผู้ตรวจสอบภายใน'}</strong>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>{currentWp.auditPeriod || `ปีงบประมาณ พ.ศ. ${selectedYear}`}</span>
             </span>
           </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            กระดาษทำการตรวจสอบ: {currentWp.topic}
+          </h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">

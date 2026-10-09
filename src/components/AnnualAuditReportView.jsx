@@ -14,7 +14,8 @@ import {
   BadgeAlert,
   Sparkles,
   BookOpen,
-  ArrowRight
+  ArrowRight,
+  Award
 } from 'lucide-react';
 import { exportAnnualAuditReportExcel } from '../services/reportExportService';
 
@@ -78,42 +79,48 @@ export default function AnnualAuditReportView({
         </div>
       )}
 
-      {/* Action Bar (no-print) */}
-      <div className="no-print bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-2 py-0.5 rounded-md">
-              Sprint 4: Enterprise Report Engine
-            </span>
-            <span className="text-xs text-stone-500 dark:text-stone-400">• ปีงบประมาณ พ.ศ. {selectedYear}</span>
+      {/* Top Banner (no-print) */}
+      <div className="no-print bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+              รายงานผลการตรวจสอบภายในประจำปีงบประมาณ (Annual Audit Report)
+            </h1>
           </div>
-          <h2 className="text-base font-bold text-stone-800 dark:text-stone-100 mt-1 flex items-center space-x-2">
-            <FileText className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-            <span>รายงานผลการตรวจสอบภายในประจำปีงบประมาณ (Annual Audit Report)</span>
-          </h2>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-            เอกสารสรุปผลการตรวจสอบครบวงจรตามแบบฟอร์มมาตรฐานราชการ พร้อมพิมพ์หนังสือนำส่งและส่งออก Excel
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={handleExportExcel}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>ส่งออก Excel (.xlsx)</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>ส่งออก Excel (.xlsx)</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors border border-amber-500/30"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>พิมพ์รายงาน / บันทึกเป็น PDF</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-700 hover:bg-amber-600 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors border border-amber-600/30"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>พิมพ์รายงาน / บันทึกเป็น PDF</span>
+            </button>
+          </div>
         </div>
       </div>
 

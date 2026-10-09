@@ -263,28 +263,32 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
 
       {/* Top Header & Role Indicator */}
       <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>SUPER ADMIN CONSOLE</span>
-              <span className="text-amber-600 dark:text-amber-400">●</span>
-              <span>ระบบหลังบ้านควบคุมส่วนกลาง</span>
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <ShieldAlert className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>SUPER ADMIN CONSOLE</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>ระบบหลังบ้านควบคุมส่วนกลาง</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Building className="w-3.5 h-3.5 text-stone-500" />
+                <span>ผู้ดูแล: {session?.displayName || 'Admin'}</span>
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
               ระบบหลังบ้านจัดการสมาชิก & ค่าบริการ (Audit-OS)
             </h1>
-            <p className="text-stone-600 dark:text-stone-400 text-sm max-w-2xl leading-relaxed">
-              ควบคุมดูแลสมาชิกผู้ตรวจสอบภายใน อปท. ทั่วประเทศ อนุมัติการเข้าใช้งาน ตรวจสอบการชำระค่าสมาชิกรายเดือน/รายปี และกำหนดทิศทางระบบกลาง
-            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             {onSwitchToWorkbench && (
               <button
                 onClick={onSwitchToWorkbench}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-xs flex items-center space-x-2 cursor-pointer border border-amber-500/30"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-xs flex items-center space-x-2 cursor-pointer border border-amber-500/30"
               >
                 <Sparkles className="w-4 h-4 text-amber-200" />
                 <span>เข้าสู่พื้นที่ทำงานตรวจสอบ (Workbench)</span>
@@ -292,7 +296,7 @@ export default function AdminBackofficeView({ currentSession, onSwitchToWorkbenc
             )}
             <button
               onClick={reloadData}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
+              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
               title="รีเฟรชข้อมูล"
             >
               <RefreshCw className="w-4 h-4 text-stone-500 dark:text-stone-400" />

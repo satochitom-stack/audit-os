@@ -5,6 +5,7 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
+  Building,
   Building2,
   FileText,
   DollarSign,
@@ -250,18 +251,24 @@ export default function ExecutiveDashboardView({
         <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>แดชบอร์ดและรายงานภาพรวมสำหรับผู้บริหาร (Executive Governance Cockpit)</span>
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>Executive Governance Cockpit</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                <span>ปีงบประมาณ พ.ศ. 2569</span>
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900 dark:text-stone-100">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
               แดชบอร์ดผู้บริหาร {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
             </h1>
-            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 max-w-2xl leading-relaxed">
-              ติดตามสถานะความเสี่ยงองค์กร 5 สำนัก/กอง, วินัยการเงินการคลัง, กรอบเวลากฎหมายสำคัญ 
-              และระบบสั่งการมอบหมายงานผู้บริหาร (Executive Directives)
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Building,
+  Award,
+  Calendar,
   Printer,
   ChevronRight,
   Plus,
@@ -106,29 +108,38 @@ export default function InternalControlView({
   return (
     <div className="space-y-6">
       {/* Header & Description */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-2xl p-5 sm:p-6 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 rounded-full px-3 py-1 font-bold text-xs uppercase tracking-wider mb-2">
-            <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span>หลักเกณฑ์กระทรวงการคลัง พ.ศ. 2561</span>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>หลักเกณฑ์กระทรวงการคลัง พ.ศ. 2561</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+              ระบบการควบคุมภายใน (Internal Control - แบบ ปค.1, ปค.4, ปค.5)
+            </h1>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100">
-            ระบบการควบคุมภายใน (Internal Control)
-          </h2>
-          <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
-            การประเมินและรายงานการควบคุมภายในระดับส่วนราชการและระดับองค์กร (แบบ ปค.1, ปค.4, ปค.5) ประจำปีงบประมาณ พ.ศ. {selectedYear}
-          </p>
-        </div>
 
-        <div className="flex items-center space-x-2 self-start md:self-auto">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="no-print bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xs flex items-center space-x-2 transition-all cursor-pointer"
-          >
-            <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-            <span>พิมพ์รายงาน ปค.</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="no-print bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xs flex items-center space-x-2 transition-all cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
+              <span>พิมพ์รายงาน ปค.</span>
+            </button>
+          </div>
         </div>
       </div>
 

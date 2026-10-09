@@ -18,7 +18,8 @@ import {
   BellRing,
   AlertTriangle,
   Scale,
-  Sparkles
+  Sparkles,
+  Award
 } from 'lucide-react';
 import { DLA_FOLLOWUP_REGISTER_6, DLA_FOLLOWUP_MEMO_TEMPLATE } from '../data/dlaStandardTemplates';
 import OfficialThaiMemo from './OfficialThaiMemo';
@@ -270,24 +271,31 @@ export default function AuditFollowUpView({
     <div className="space-y-6">
       {/* Top Banner */}
       <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
-              <Clock className="w-3.5 h-3.5" />
-              <span>ขั้นตอนที่ 9 • ผสานกรอบเวลา 30 วัน (มท.) และ 60 วัน (กค.)</span>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
               ทะเบียนคุม & การติดตามผลข้อเสนอแนะ (Harmonized Audit Follow-up)
             </h1>
-            <p className="text-stone-600 dark:text-stone-400 text-xs sm:text-sm max-w-3xl leading-relaxed">
-              ติดตามการปฏิบัติตามข้อเสนอแนะตาม <strong>ระเบียบ มท. พ.ศ. ๒๕๔๕ ข้อ ๒๑ (๓๐ วัน)</strong> ผสานกับ <strong>หลักเกณฑ์ปฏิบัติการตรวจสอบภายในกระทรวงการคลัง พ.ศ. ๒๕๖๑-๒๕๖๖ (๖๐ วัน)</strong> พร้อมระบบนับถอยหลังและหนังสือแจ้งเตือน
-            </p>
           </div>
 
-          <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               onClick={handleLoadDlaFollowupRegister}
-              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
+              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
               title="โหลดทะเบียนติดตามผล 6 ภารกิจหลักมาตรฐาน อปท. ตามคู่มือ สถ. หน้า 53"
             >
               <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
@@ -295,17 +303,17 @@ export default function AuditFollowUpView({
             </button>
             <button
               onClick={() => setShowAddModal(true)}
-              className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
+              className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>เพิ่มข้อตรวจพบเพื่อติดตาม</span>
             </button>
             <button
               onClick={() => window.print()}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
+              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 font-bold px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
             >
               <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>พิมพ์ทะเบียนคุม / หนังสือ</span>
+              <span>พิมพ์</span>
             </button>
           </div>
         </div>

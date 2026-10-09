@@ -14,7 +14,8 @@ import {
   Sparkles,
   Check,
   ClipboardCheck,
-  ArrowRight
+  ArrowRight,
+  Award
 } from 'lucide-react';
 import { DLA_CLOSING_MEETING_DATA } from '../data/dlaStandardTemplates';
 
@@ -140,18 +141,25 @@ export default function ClosingMeetingView({
     <div className="space-y-6">
       {/* Top Banner */}
       <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>ขั้นตอนที่ 7 ของกระบวนการตรวจสอบภายใน อปท.</span>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
               การประชุมปิดการตรวจสอบ (Closing Meeting)
             </h1>
-            <p className="text-stone-600 dark:text-stone-400 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              การสรุปข้อตรวจพบเบื้องต้น รับฟังข้อเท็จจริงและคำชี้แจงจากหน่วยรับตรวจ และตกลงแนวทางแก้ไขร่วมกันก่อนจัดทำรายงานผลการตรวจสอบฉบับสมบูรณ์เสนอผู้บริหาร
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">

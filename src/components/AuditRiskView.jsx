@@ -1114,7 +1114,7 @@ export default function AuditRiskView({
       )}
 
       {/* Top Banner */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 sm:p-6 border border-stone-200/80 dark:border-stone-800 shadow-xs relative overflow-hidden">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -1195,13 +1195,13 @@ export default function AuditRiskView({
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 no-print print:hidden">
-        <div className="bg-white dark:bg-stone-900 rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
+        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
           <div className="text-[11px] font-bold text-stone-500 dark:text-stone-400">กิจกรรมที่ประเมินทั้งหมด</div>
           <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 mt-0.5">{totalActivities}</div>
           <div className="text-[10px] text-stone-400 mt-0.5">ใน Audit Universe</div>
         </div>
 
-        <div className="bg-white dark:bg-stone-900 rounded-xl p-3.5 border border-rose-200/80 dark:border-rose-900/50 shadow-xs">
+        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-rose-200/80 dark:border-rose-900/50 shadow-xs">
           <div className="text-[11px] font-bold text-rose-700 dark:text-rose-400 flex items-center">
             <span className="w-2 h-2 rounded-full bg-rose-500 mr-1.5 shrink-0"></span>
             ความเสี่ยงสูง (2.4 - 3.0)
@@ -1210,7 +1210,7 @@ export default function AuditRiskView({
           <div className="text-[10px] text-rose-600/80 mt-0.5">ต้องบรรจุในแผนประจำปี</div>
         </div>
 
-        <div className="bg-white dark:bg-stone-900 rounded-xl p-3.5 border border-emerald-200/80 dark:border-emerald-900/50 shadow-xs">
+        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-emerald-200/80 dark:border-emerald-900/50 shadow-xs">
           <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mr-1 shrink-0" />
             บรรจุในแผนประจำปีแล้ว
@@ -1221,7 +1221,7 @@ export default function AuditRiskView({
           <div className="text-[10px] text-emerald-600/80 mt-0.5">เชื่อมโยงกับเมนู 3 แผนประจำปี</div>
         </div>
 
-        <div className="bg-white dark:bg-stone-900 rounded-xl p-3.5 border border-amber-200/80 dark:border-amber-900/50 shadow-xs">
+        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-amber-200/80 dark:border-amber-900/50 shadow-xs">
           <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400 flex items-center">
             <span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5 shrink-0"></span>
             ความเสี่ยงปานกลาง (1.6 - 2.2)
@@ -1230,7 +1230,7 @@ export default function AuditRiskView({
           <div className="text-[10px] text-amber-700/80 mt-0.5">แผนระยะยาว 3 ปี</div>
         </div>
 
-        <div className="bg-white dark:bg-stone-900 rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
+        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
           <div className="text-[11px] font-bold text-stone-600 dark:text-stone-300 flex items-center">
             <span className="w-2 h-2 rounded-full bg-stone-400 mr-1.5 shrink-0"></span>
             ความเสี่ยงต่ำ (1.0 - 1.4)

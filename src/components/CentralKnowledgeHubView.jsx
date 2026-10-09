@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import {
   BookOpen,
+  Award,
+  Calendar,
   Search,
   FileText,
   Copy,
@@ -175,21 +177,25 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>CENTRAL KNOWLEDGE & DOCUMENT REPOSITORY</span>
-              <span className="text-amber-600 dark:text-amber-400">●</span>
-              <span>แชร์ใช้งานร่วมกันทุก อปท.</span>
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>คลังเอกสารและคู่มือมาตรฐาน</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>ระเบียบ • คู่มือ สถ. • มาตรฐานสากล</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <BookOpen className="w-3.5 h-3.5 text-stone-500" />
+                <span>แชร์ใช้งานร่วมกันทุก อปท.</span>
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-100">
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
               คลังเอกสารกลาง & ฐานความรู้ผู้ตรวจสอบภายใน อปท.
             </h1>
-            <p className="text-stone-600 dark:text-stone-400 text-sm max-w-3xl leading-relaxed">
-              รวบรวมระเบียบ กฎหมาย หนังสือสั่งการ ว. กรมบัญชีกลาง/มท., สไลด์หลักสูตรทอง 2569, รวม 30 ข้อทักท้วง สตง., และต้นแบบกระดาษทำการ 6 ภารกิจหลัก พร้อมคัดลอกลงในพื้นที่ทำงานของท่านได้ในคลิกเดียว
-            </p>
           </div>
 
           {isAdmin && (

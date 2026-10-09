@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
+  Building,
+  Award,
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
@@ -152,54 +154,63 @@ export default function CentralCalendarView({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 border border-amber-500/20 dark:border-stone-800 shadow-xs backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold mb-2">
-            <CalendarDays className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>ปฏิทินปฏิบัติงาน & แผนการตรวจสอบส่วนกลาง (Central IA Calendar)</span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100">
-            ปฏิทินกิจกรรมการตรวจสอบและกรอบเวลาราชการ
-          </h2>
-          <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
-            รวมกำหนดการตรวจรับพัสดุ, วันครบกำหนดส่งรายงาน ปค.5 / บส.3, ปิดงบการเงิน และกิจกรรมตรวจสอบทุกส่วนราชการ
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex bg-white/80 dark:bg-stone-800/80 p-1 rounded-xl border border-stone-200/80 dark:border-stone-700/60 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'list'
-                  ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-                  : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
-              }`}
-            >
-              รายการกำหนดการ
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-                  : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
-              }`}
-            >
-              ตารางปฏิทิน
-            </button>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs backdrop-blur-xs relative overflow-hidden">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>ปฏิทินปฏิบัติงาน & แผนการตรวจสอบส่วนกลาง</span>
+              </span>
+              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
+                <span>กำหนดการทั้งหมด {events.length} รายการ</span>
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+              ปฏิทินกิจกรรมการตรวจสอบและกรอบเวลาราชการ
+            </h1>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0 border border-amber-500/30"
-          >
-            <Plus className="w-4 h-4" />
-            <span>เพิ่มกิจกรรม</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="flex bg-white/80 dark:bg-stone-800/80 p-1 rounded-xl border border-stone-200/80 dark:border-stone-700/60 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                    : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+                }`}
+              >
+                รายการกำหนดการ
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                    : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+                }`}
+              >
+                ตารางปฏิทิน
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0 border border-amber-500/30"
+            >
+              <Plus className="w-4 h-4" />
+              <span>เพิ่มกิจกรรม</span>
+            </button>
+          </div>
         </div>
       </div>
 
