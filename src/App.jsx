@@ -39,6 +39,7 @@ import StrategicPlanView from './components/StrategicPlanView';
 import OpeningMeetingView from './components/OpeningMeetingView';
 import ClosingMeetingView from './components/ClosingMeetingView';
 import AuditFollowUpView from './components/AuditFollowUpView';
+import AuditCommitteeView from './components/AuditCommitteeView';
 import { INITIAL_ENGAGEMENT_PLANS } from './data/engagementPlanTemplates';
 import {
   getSession,
@@ -1534,6 +1535,15 @@ export default function App() {
                 orgProfile={orgProfile}
                 capaFindings={capaFindings}
                 setCapaFindings={setCapaFindings}
+              />
+            )}
+
+            {currentTab === 'audit-committee' && (
+              <AuditCommitteeView
+                key={`audit-committee-${selectedYear}`}
+                selectedYear={selectedYear}
+                orgProfile={orgProfile}
+                annualPlans={annualPlans}
               />
             )}
 

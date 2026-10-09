@@ -16,6 +16,7 @@ import {
   UserCheck,
   Wrench
 } from 'lucide-react';
+import AuditLifecycleStepper from './AuditLifecycleStepper';
 
 export default function DashboardView({
   orgProfile,
@@ -130,6 +131,12 @@ export default function DashboardView({
           </div>
         </div>
       </div>
+
+      {/* End-to-End Audit Lifecycle Stepper Navigator */}
+      <AuditLifecycleStepper
+        currentTab="dashboard"
+        setCurrentTab={setCurrentTab}
+      />
 
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -408,6 +415,36 @@ export default function DashboardView({
                   className="bg-amber-600 hover:bg-amber-700 text-white border border-amber-500/30 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center space-x-1"
                 >
                   <span>เปิดเครื่องมือ</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Access to Audit Committee Portal */}
+          <div className="bg-gradient-to-br from-amber-500/10 via-stone-50 to-white dark:from-amber-950/20 dark:via-stone-900 dark:to-stone-900 rounded-2xl p-5 shadow-xs border border-amber-500/30 dark:border-stone-800 hover:border-amber-400 relative overflow-hidden transition-all">
+            <div className="relative z-10 space-y-2">
+              <div className="flex items-center space-x-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+                <div className="w-6 h-6 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                  <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                </div>
+                <span>คณะกรรมการตรวจสอบ (คู่มือ ส.ค. ๒๕๖๘)</span>
+              </div>
+              <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100 leading-tight">
+                ปฏิทิน 4 ไตรมาส, แบบประเมินตนเอง 11 ด้าน & QAIP
+              </h4>
+              <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-relaxed">
+                Checklist การประชุม 40 ข้อ, กฎบัตร, แบบยืนยันความเป็นอิสระ และการประกันคุณภาพงานตรวจสอบ
+              </p>
+              <div className="pt-2 flex items-center justify-between">
+                <span className="text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full font-bold">
+                  เกณฑ์กรมบัญชีกลาง
+                </span>
+                <button
+                  onClick={() => setCurrentTab('audit-committee')}
+                  className="bg-stone-900 hover:bg-stone-800 text-amber-200 text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center space-x-1"
+                >
+                  <span>เข้าสู่ระบบกำกับดูแล</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>

@@ -63,20 +63,21 @@ export default function Sidebar({
       ]
     },
     {
-      groupTitle: 'ขั้นตอนที่ 8 - 9: รายงานผลและติดตาม',
+      groupTitle: 'ขั้นตอนที่ 8 - 10: รายงานผล ติดตาม & คณะกรรมการตรวจสอบ',
       items: [
         { id: 'reporting', stepNum: '8', label: '8. รายงานผลการตรวจสอบ & สรุป', icon: FileSpreadsheet, desc: 'รายงาน 5 องค์ประกอบ และบันทึกเสนอนายก' },
-        { id: 'tracking-register', stepNum: '9', label: '9. ทะเบียนคุม & ติดตามผล 30 วัน', icon: Clock, desc: 'ทะเบียนคุมข้อเสนอแนะ และหนังสือเตือน 30 วัน' }
+        { id: 'tracking-register', stepNum: '9', label: '9. ทะเบียนคุม & ติดตามผล 30/60 วัน', icon: Clock, desc: 'ทะเบียนคุมข้อเสนอแนะ และหนังสือเตือน 30/60 วัน' },
+        { id: 'audit-committee', stepNum: '10', label: '10. คณะกรรมการตรวจสอบ (ส.ค. 68)', icon: Award, desc: 'กฎบัตร ปฏิทิน 4 ไตรมาส ประเมิน 11 ด้าน & QAIP' }
       ]
     },
     {
       groupTitle: 'คลังความรู้ & เครื่องมือช่วยตรวจ',
       items: [
-        { id: 'central-hub', stepNum: '10', label: '10. คลังเอกสารกลาง & ระเบียบ', icon: BookOpen, desc: 'ระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 และตัวอย่าง' },
+        { id: 'central-hub', stepNum: '11', label: '11. คลังเอกสารกลาง & ระเบียบ', icon: BookOpen, desc: 'ระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 และตัวอย่าง' },
         {
           id: 'audit-toolkits',
-          stepNum: '11',
-          label: '11. เครื่องมือช่วยคำนวณเชิงเทคนิค',
+          stepNum: '12',
+          label: '12. เครื่องมือช่วยคำนวณเชิงเทคนิค',
           icon: Wrench,
           hasSubmenu: true,
           subItems: [
@@ -274,7 +275,7 @@ export default function Sidebar({
             >
               <div className="flex items-center space-x-2.5">
                 <Settings className="w-4 h-4 text-amber-700 dark:text-amber-300" />
-                <span>12. ระบบหลังบ้าน Super Admin</span>
+                <span>13. ระบบหลังบ้าน Super Admin</span>
               </div>
               {pendingCount > 0 && (
                 <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
