@@ -36,6 +36,7 @@ export default function Header({
   onOpenWelcome,
   onOpenCloudSync,
   onOpenOnboarding,
+  onOpenDlaTemplates,
   pendingCount = 0,
   currentTab = 'audit-risk',
   setCurrentTab
@@ -155,6 +156,16 @@ export default function Header({
                 </button>
               )}
             </div>
+
+            {/* DLA Templates Handbook Modal Button */}
+            <button
+              onClick={onOpenDlaTemplates}
+              title="เปิดคลังแม่แบบและแนวทางปฏิบัติงาน สถ. (63 หน้า)"
+              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-100/90 hover:bg-amber-200/90 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700/70 transition-all cursor-pointer shadow-2xs shrink-0"
+            >
+              <span className="text-sm">🏛️</span>
+              <span className="hidden sm:inline">คู่มือ สถ.</span>
+            </button>
 
             {/* Quick Super Admin Backoffice / Workbench Switcher */}
             {isAdmin && (
@@ -282,6 +293,16 @@ export default function Header({
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                     <span>📚 คลังเอกสารกลาง & ระเบียบปฏิบัติ</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (onOpenDlaTemplates) onOpenDlaTemplates();
+                    }}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-200 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800"
+                  >
+                    <span>🏛️ คลังคู่มือ & แม่แบบ สถ. 63 หน้า</span>
                   </button>
 
                   {isAdmin && (

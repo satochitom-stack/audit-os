@@ -21,6 +21,7 @@ import {
   Info
 } from 'lucide-react';
 import { exportWorkingPaperToExcel } from '../utils/exportExcel';
+import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
 import AuditToolkits from './AuditToolkits';
 
 export default function ExecutionView({
@@ -126,6 +127,67 @@ export default function ExecutionView({
       return wp;
     });
     setWorkingPapers(updated);
+  };
+
+  // Load DLA 6 Working Papers with Checklists (Pages 12, 19, 27, 33, 40, 47)
+  const handleLoadDlaWorkingPapers = () => {
+    const formatted = DLA_CORE_WORKFLOWS_6.map((wf) => {
+      const template = wf.workingPaperTemplate;
+      const report = wf.auditReport5Elements;
+      return {
+        id: template.wpNo,
+        topic: template.title,
+        department: wf.department,
+        auditPeriod: wf.period,
+        auditor: wf.auditor,
+        criteria: report.criteria,
+        checklist: (template.checkpoints || []).map((cp) => ({
+          id: cp.id,
+          question: cp.item,
+          standard: cp.criteria,
+          guidance: `${cp.criteria} | วิธีการตรวจ: ${cp.method || 'ตรวจสอบเอกสารและสังเกตการณ์'}`,
+          result: cp.status === 'ผ่าน' ? 'passed' : cp.status === 'ไม่ผ่าน' ? 'failed' : 'passed',
+          note: cp.status === 'ไม่ผ่าน' ? 'พบข้อสังเกตตามตัวอย่างคู่มือ สถ.' : ''
+        })),
+        samples: [
+          {
+            id: `SMP-${wf.code}-01`,
+            docNo: wf.code === 'ENG-DLA-01' ? 'ใบเสร็จเล่มที่ 01/69 เลขที่ 45' : wf.code === 'ENG-DLA-05' ? 'ฎีกาเบิกเงิน 102/69' : 'เอกสารตรวจสอบที่ 01',
+            date: '2569-01-15',
+            payee: wf.department,
+            amount: 15000,
+            testResult: 'ปกติ',
+            note: 'สุ่มตรวจความถูกต้องตามระเบียบ'
+          },
+          {
+            id: `SMP-${wf.code}-02`,
+            docNo: wf.code === 'ENG-DLA-01' ? 'ใบเสร็จเล่มที่ 02/69 เลขที่ 50' : wf.code === 'ENG-DLA-05' ? 'ฎีกาเบิกเงิน 145/69' : 'เอกสารตรวจสอบที่ 02',
+            date: '2569-02-10',
+            payee: wf.department,
+            amount: 28500,
+            testResult: 'ปกติ',
+            note: 'ผ่านการลงนามครบถ้วน'
+          }
+        ],
+        finding: {
+          condition: report.condition,
+          criteria: report.criteria,
+          cause: report.cause,
+          effect: report.effect,
+          recommendation: report.recommendation
+        }
+      };
+    });
+
+    const existingIds = new Set(workingPapers.map((w) => w.id));
+    const newToAdd = formatted.filter((w) => !existingIds.has(w.id));
+    if (newToAdd.length === 0) {
+      alert('มีกระดาษทำการตามคู่มือ สถ. ทั้ง 6 ภารกิจอยู่ในระบบแล้ว');
+      return;
+    }
+    const updated = [...newToAdd, ...workingPapers];
+    setWorkingPapers(updated);
+    setSelectedWp(newToAdd[0].id);
   };
 
   // Add new sample row
@@ -313,6 +375,15 @@ export default function ExecutionView({
             </select>
             <ChevronDown className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 absolute right-2.5 top-3.5 pointer-events-none" />
           </div>
+
+          <button
+            onClick={handleLoadDlaWorkingPapers}
+            className="no-print bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            title="โหลดกระดาษทำการ 6 ภารกิจหลักมาตรฐาน อปท. จากคู่มือ สถ."
+          >
+            <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <span>📥 โหลด 6 ภารกิจ (คู่มือ สถ.)</span>
+          </button>
 
           <button
             onClick={() => exportWorkingPaperToExcel(currentWp, orgProfile)}

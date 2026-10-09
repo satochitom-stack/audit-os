@@ -28,6 +28,7 @@ import {
   INITIAL_ENGAGEMENT_PLANS,
   generateEngagementPlanWithAI
 } from '../data/engagementPlanTemplates';
+import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
 import ConfirmModal from './ConfirmModal';
 import { getDepartments } from '../utils/auth';
 
@@ -120,6 +121,62 @@ export default function EngagementPlanView({
     setActiveTab('detail');
   };
 
+  const handleLoadDlaEngagementPlans = () => {
+    const formatted = DLA_CORE_WORKFLOWS_6.map((wf) => {
+      let dim = 'compliance';
+      if (wf.activityName.includes('บัญชี') || wf.activityName.includes('รับเงิน') || wf.activityName.includes('เบิกจ่าย')) dim = 'financial';
+      if (wf.activityName.includes('รถยนต์')) dim = 'special';
+
+      return {
+        id: wf.code,
+        title: `การตรวจสอบ${wf.activityName}`,
+        activityName: wf.activityName,
+        department: wf.department,
+        fiscalYear: selectedYear,
+        serviceType: 'assurance',
+        serviceSubtype: wf.activityName.includes('รถยนต์')
+          ? 'การตรวจสอบการควบคุมการใช้และรักษารถยนต์ส่วนกลาง'
+          : 'การให้ความเชื่อมั่นทางการเงินและการปฏิบัติตามระเบียบ',
+        dimension: dim,
+        riskLevel: 'สูง',
+        auditorName: wf.auditor,
+        auditorPosition: wf.auditorPosition,
+        approverName: wf.approver,
+        approverPosition: wf.approverPosition,
+        auditPlanId: wf.id,
+        period: wf.period,
+        fieldworkPeriod: wf.period,
+        reasons: wf.reasons,
+        objectives: wf.objectives,
+        scope: wf.scope,
+        criteria: wf.criteria,
+        preliminaryRisks: wf.preliminaryRisks,
+        auditStepsSummary: wf.auditStepsSummary,
+        auditProgram: (wf.auditProgram || []).map((ap) => ({
+          step: ap.step,
+          title: ap.title,
+          procedure: ap.procedure,
+          evidence: ap.evidence,
+          samplingMethod: ap.samplingMethod,
+          wpRef: ap.wpRef,
+          auditor: wf.auditor,
+          status: 'pending'
+        }))
+      };
+    });
+
+    const existingIds = new Set(engagementPlans.map((p) => p.id));
+    const newToAdd = formatted.filter((p) => !existingIds.has(p.id));
+    if (newToAdd.length === 0) {
+      alert('มีแผนปฏิบัติงานตรวจสอบตามคู่มือ สถ. ทั้ง 6 ภารกิจอยู่ในระบบแล้ว');
+      return;
+    }
+    const updated = [...newToAdd, ...engagementPlans];
+    setEngagementPlans(updated);
+    setSelectedPlanId(newToAdd[0].id);
+    setActiveTab('detail');
+  };
+
   const handleDeletePlan = (id) => {
     setDeletePlanId(id);
   };
@@ -182,6 +239,14 @@ export default function EngagementPlanView({
         </div>
 
         <div className="flex flex-wrap gap-3 shrink-0">
+          <button
+            onClick={handleLoadDlaEngagementPlans}
+            className="flex items-center space-x-2 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-4 py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all cursor-pointer"
+            title="โหลดแผนปฏิบัติงานและแนวการตรวจสอบ 6 ภารกิจหลักมาตรฐาน อปท. จากคู่มือ สถ."
+          >
+            <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <span>📥 โหลด 6 ภารกิจ (คู่มือ สถ.)</span>
+          </button>
           <button
             onClick={() => setActiveTab('ai-copilot')}
             className="flex items-center space-x-2 bg-amber-700 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all cursor-pointer transform hover:-translate-y-0.5"

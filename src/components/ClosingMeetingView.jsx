@@ -14,6 +14,7 @@ import {
   Sparkles,
   Check
 } from 'lucide-react';
+import { DLA_CLOSING_MEETING_DATA } from '../data/dlaStandardTemplates';
 
 export default function ClosingMeetingView({
   selectedYear = '2569',
@@ -86,6 +87,23 @@ export default function ClosingMeetingView({
     setFindings(findings.filter((f) => f.id !== id));
   };
 
+  const handleLoadDlaClosingMeeting = () => {
+    setMeetingDate('2568-11-29');
+    setMeetingTime(DLA_CLOSING_MEETING_DATA.time || '14.00 น.');
+    setMeetingLocation(DLA_CLOSING_MEETING_DATA.location || 'ห้องประชุมกองคลัง');
+    setFindings(
+      (DLA_CLOSING_MEETING_DATA.findingsSummary || []).map((f, idx) => ({
+        id: `FIND-DLA-${idx + 1}`,
+        topic: f.issue,
+        condition: f.detail,
+        criteria: 'ระเบียบ มท. ว่าด้วยการรับเงินฯ พ.ศ. 2547 และที่แก้ไขเพิ่มเติม ข้อ 12',
+        auditeeFeedback: f.auditeeExplanation,
+        agreement: f.agreedResolution,
+        status: 'เห็นชอบร่วมกัน'
+      }))
+    );
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -109,6 +127,14 @@ export default function ClosingMeetingView({
           </div>
 
           <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+            <button
+              onClick={handleLoadDlaClosingMeeting}
+              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
+              title="โหลดตัวอย่างรายงานการประชุมปิดการตรวจสอบตามคู่มือ สถ. หน้า 52"
+            >
+              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+              <span>📥 โหลดตัวอย่าง สถ. (หน้า 52)</span>
+            </button>
             <button
               onClick={handlePrint}
               className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"

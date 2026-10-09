@@ -20,6 +20,7 @@ import {
   Scale,
   Sparkles
 } from 'lucide-react';
+import { DLA_FOLLOWUP_REGISTER_6, DLA_FOLLOWUP_MEMO_TEMPLATE } from '../data/dlaStandardTemplates';
 
 export default function AuditFollowUpView({
   selectedYear = '2569',
@@ -210,6 +211,24 @@ export default function AuditFollowUpView({
     });
   };
 
+  const handleLoadDlaFollowupRegister = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const formatted = DLA_FOLLOWUP_REGISTER_6.map((dla) => ({
+      id: dla.id,
+      title: dla.finding,
+      department: dla.department,
+      reportedDate: '2569-01-15',
+      orderDate: '2569-01-20',
+      regime: 'moi_30',
+      deadlineDate: addDays('2569-01-20', 30),
+      recommendation: dla.recommendation,
+      status: dla.status === 'ยุติข้อสังเกต' ? 'completed' : 'in_progress',
+      progressNotes: `การดำเนินการ: ${dla.correctiveAction} (เป้าหมาย: ${dla.targetDate})`,
+      updatedAt: today
+    }));
+    saveRegister(formatted);
+  };
+
   // Filtered Items
   const filteredItems = useMemo(() => {
     return registerItems.filter((item) => {
@@ -265,6 +284,14 @@ export default function AuditFollowUpView({
           </div>
 
           <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+            <button
+              onClick={handleLoadDlaFollowupRegister}
+              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
+              title="โหลดทะเบียนติดตามผล 6 ภารกิจหลักมาตรฐาน อปท. ตามคู่มือ สถ. หน้า 53"
+            >
+              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+              <span>📥 โหลดทะเบียน 6 ภารกิจ (คู่มือ สถ.)</span>
+            </button>
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"

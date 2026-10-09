@@ -13,6 +13,7 @@ import {
   TrendingUp,
   ShieldAlert
 } from 'lucide-react';
+import { DLA_STRATEGIC_PLAN_3YEARS } from '../data/dlaStandardTemplates';
 
 export default function StrategicPlanView({
   selectedYear = '2569',
@@ -71,6 +72,33 @@ export default function StrategicPlanView({
     localStorage.setItem('ia_strategic_activities_v2', JSON.stringify(updated));
   };
 
+  const handleLoadDlaStrategicPlan = () => {
+    const dlaActivities = [
+      // ปี 1 (6 กิจกรรม - 200 คน-วัน)
+      { id: 'DLA-ST-01', name: 'การรับเงินและนำส่งเงิน', department: 'กองคลัง', riskLevel: 'สูง', y1: true, y2: false, y3: false, manDays: 30 },
+      { id: 'DLA-ST-02', name: 'การจัดทำบัญชีและรายงานการเงิน', department: 'กองคลัง', riskLevel: 'สูง', y1: true, y2: false, y3: false, manDays: 40 },
+      { id: 'DLA-ST-03', name: 'การตรวจสอบพัสดุประจำปี', department: 'กองคลัง', riskLevel: 'สูง', y1: true, y2: false, y3: false, manDays: 30 },
+      { id: 'DLA-ST-04', name: 'หลักประกันสัญญา', department: 'กองคลัง', riskLevel: 'สูง', y1: true, y2: false, y3: false, manDays: 30 },
+      { id: 'DLA-ST-05', name: 'การเบิกจ่ายเงิน', department: 'กองคลัง', riskLevel: 'สูง', y1: true, y2: false, y3: false, manDays: 40 },
+      { id: 'DLA-ST-06', name: 'การใช้และรักษารถยนต์', department: 'กองช่าง', riskLevel: 'สูง', y1: true, y2: false, y3: false, manDays: 30 },
+      // ปี 2 (5 กิจกรรม - 180 คน-วัน)
+      { id: 'DLA-ST-07', name: 'การใช้และรักษารถยนต์', department: 'สำนักปลัด', riskLevel: 'ปานกลาง', y1: false, y2: true, y3: false, manDays: 35 },
+      { id: 'DLA-ST-08', name: 'การโอนและแก้ไขเปลี่ยนแปลงงบประมาณ', department: 'สำนักปลัด', riskLevel: 'ปานกลาง', y1: false, y2: true, y3: false, manDays: 35 },
+      { id: 'DLA-ST-09', name: 'การจัดทำงบประมาณรายจ่ายประจำปี', department: 'สำนักปลัด', riskLevel: 'ปานกลาง', y1: false, y2: true, y3: false, manDays: 35 },
+      { id: 'DLA-ST-10', name: 'การรับ-จ่ายและเก็บรักษาพัสดุ', department: 'กองคลัง', riskLevel: 'ปานกลาง', y1: false, y2: true, y3: false, manDays: 35 },
+      { id: 'DLA-ST-11', name: 'การขออนุญาตปลูกสร้างอาคาร ดัดแปลง รื้อถอนอาคาร', department: 'กองช่าง', riskLevel: 'ปานกลาง', y1: false, y2: true, y3: false, manDays: 40 },
+      // ปี 3 (5 กิจกรรม - 190 คน-วัน)
+      { id: 'DLA-ST-12', name: 'การปฏิบัติงานสารบรรณและธุรการ', department: 'สำนักปลัด', riskLevel: 'ต่ำ', y1: false, y2: false, y3: true, manDays: 35 },
+      { id: 'DLA-ST-13', name: 'การจัดทำแผนพัฒนาท้องถิ่น', department: 'สำนักปลัด', riskLevel: 'ต่ำ', y1: false, y2: false, y3: true, manDays: 40 },
+      { id: 'DLA-ST-14', name: 'การเก็บรักษาเงิน และการนำเงินฝากบัญชีธนาคาร', department: 'กองคลัง', riskLevel: 'ต่ำ', y1: false, y2: false, y3: true, manDays: 45 },
+      { id: 'DLA-ST-15', name: 'การปฏิบัติงานสารบรรณและธุรการ', department: 'กองคลัง', riskLevel: 'ต่ำ', y1: false, y2: false, y3: true, manDays: 35 },
+      { id: 'DLA-ST-16', name: 'การปฏิบัติงานสารบรรณและธุรการ', department: 'กองช่าง', riskLevel: 'ต่ำ', y1: false, y2: false, y3: true, manDays: 35 }
+    ];
+    setStrategicActivities(dlaActivities);
+    localStorage.setItem('ia_strategic_activities_v2', JSON.stringify(dlaActivities));
+    alert('โหลดแผนการตรวจสอบระยะยาว 3 ปี (16 กิจกรรม 590 คน-วัน ตามคู่มือ สถ.) เรียบร้อยแล้ว');
+  };
+
   // Planned days sum for Year 1
   const y1TotalDays = strategicActivities
     .filter((a) => a.y1)
@@ -94,7 +122,15 @@ export default function StrategicPlanView({
             </p>
           </div>
 
-          <div className="flex items-center space-x-2 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+            <button
+              onClick={handleLoadDlaStrategicPlan}
+              className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
+              title="โหลดชุดข้อมูล 16 กิจกรรม 3 ปี รวม 590 คน-วัน ตามคู่มือ สถ."
+            >
+              <Sparkles className="w-4 h-4 text-amber-200" />
+              <span>โหลดตัวอย่าง 3 ปี & 590 คน-วัน (คู่มือ สถ. หน้า 12-14)</span>
+            </button>
             <button
               onClick={() => window.print()}
               className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"

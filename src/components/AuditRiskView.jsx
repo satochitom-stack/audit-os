@@ -35,6 +35,11 @@ import {
 import ConfirmModal from './ConfirmModal';
 import OrgChartStructure from './OrgChartStructure';
 import { getDepartments } from '../utils/auth';
+import {
+  DLA_RISK_CRITERIA_SOFCK,
+  DLA_RISK_ASSESSMENT_16,
+  DLA_RISK_SCALE
+} from '../data/dlaStandardTemplates';
 
 // =========================================================================
 // 1. ข้อมูลการประเมินความเสี่ยงมาตรฐาน องค์กรปกครองส่วนท้องถิ่น (21 กิจกรรม)
@@ -1036,6 +1041,37 @@ export default function AuditRiskView({
     });
   };
 
+  // โหลดชุดข้อมูล 16 กิจกรรมมาตรฐานตามคู่มือ สถ. กรมส่งเสริมการปกครองท้องถิ่น (หน้า 9)
+  const handleLoadDlaDefaults = () => {
+    openConfirm({
+      title: 'โหลดชุดข้อมูล 16 กิจกรรมมาตรฐาน (คู่มือ สถ. สิงหาคม ๒๕๖๓)',
+      message: 'ท่านต้องการโหลดชุดข้อมูล "การประเมินความเสี่ยง 16 กิจกรรมตามคู่มือ สถ. (สำนักปลัด, กองคลัง, กองช่าง)" มาเป็นชุดข้อมูลประเมินความเสี่ยงใช่หรือไม่? คะแนนและระดับความเสี่ยงจะถูกตั้งค่าตามตัวอย่างจริงในคู่มือ',
+      confirmText: 'โหลดข้อมูลตามคู่มือ สถ.',
+      type: 'info',
+      onConfirm: () => {
+        const mapped = DLA_RISK_ASSESSMENT_16.map((item) => ({
+          id: item.id,
+          department: item.department,
+          activity: item.activity,
+          sScore: item.sScore,
+          oScore: item.oScore,
+          fScore: item.fScore,
+          cScore: item.cScore,
+          kScore: item.kScore,
+          reason: item.desc,
+          riskScope: item.desc,
+          riskOwner: `หัวหน้าฝ่าย / ผู้อำนวยการ${item.department}`,
+          tolerance: 'ปฏิบัติตามกฎหมายและระเบียบที่เกี่ยวข้อง',
+          existingControls: 'มีระบบการควบคุมภายในและการกำกับดูแลตามสายงาน',
+          mitigation: 'สุ่มตรวจสอบตามแผนการตรวจสอบประจำปี',
+          includedInPlan: item.riskLevel === 'สูง'
+        }));
+        setAuditUniverse(mapped);
+        showToast('โหลดข้อมูลการประเมินความเสี่ยง 16 กิจกรรมตามคู่มือ สถ. เรียบร้อยแล้ว');
+      }
+    });
+  };
+
   // นำเข้ากิจกรรมจากคลัง (Activity Catalog)
   const handleImportFromCatalog = (catItem, deptName) => {
     const exists = auditUniverse.some((a) => a.activity === catItem.name && a.department === deptName);
@@ -1204,12 +1240,21 @@ export default function AuditRiskView({
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
+              onClick={handleLoadDlaDefaults}
+              className="bg-amber-700 hover:bg-amber-600 text-white border border-amber-600/30 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all active:scale-95"
+              title="โหลดชุดข้อมูล 16 กิจกรรมมาตรฐานตามคู่มือ สถ. กองตรวจสอบระบบการเงินบัญชีท้องถิ่น (หน้า 9)"
+            >
+              <Sparkles className="w-4 h-4 text-amber-200" />
+              <span>โหลดตัวอย่าง 16 กิจกรรม (คู่มือ สถ. หน้า 9)</span>
+            </button>
+
+            <button
               onClick={handleLoadFangkhamDefaults}
               className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
               title="โหลดชุดข้อมูล 21 กิจกรรมมาตรฐานตามเกณฑ์การตรวจสอบ อปท."
             >
-              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>โหลดข้อมูลตัวอย่าง (21 กิจกรรมมาตรฐาน)</span>
+              <Sparkles className="w-4 h-4 text-stone-500" />
+              <span>ข้อมูล 21 กิจกรรม</span>
             </button>
 
             {setCurrentTab && (

@@ -17,6 +17,7 @@ import ChangePasswordModal from './components/ChangePasswordModal';
 import ProfileSettingsModal from './components/ProfileSettingsModal';
 import CloudSyncModal from './components/CloudSyncModal';
 import OnboardingModal from './components/OnboardingModal';
+import DlaTemplateModal from './components/DlaTemplateModal';
 import { onFirebaseAuthStateChanged, logoutFirebase } from './services/firebaseAuthService';
 import {
   saveTenantOrgProfile,
@@ -92,6 +93,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCloudSyncModal, setShowCloudSyncModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showDlaTemplates, setShowDlaTemplates] = useState(false);
   const [cloudToast, setCloudToast] = useState(null);
   const [pendingCount, setPendingCount] = useState(() => getPendingUsers().length);
 
@@ -1306,6 +1308,7 @@ export default function App() {
         onOpenWelcome={() => handleSelectTab('welcome')}
         onOpenCloudSync={() => setShowCloudSyncModal(true)}
         onOpenOnboarding={() => setShowOnboarding(true)}
+        onOpenDlaTemplates={() => setShowDlaTemplates(true)}
         pendingCount={pendingCount}
         currentTab={currentTab}
         setCurrentTab={handleSelectTab}
@@ -1368,6 +1371,17 @@ export default function App() {
           initialData={orgProfile}
           onComplete={handleCompleteOnboarding}
           onCancel={() => setShowOnboarding(false)}
+        />
+      )}
+
+      {showDlaTemplates && (
+        <DlaTemplateModal
+          isOpen={showDlaTemplates}
+          onClose={() => setShowDlaTemplates(false)}
+          onNavigate={(tab) => {
+            handleSelectTab(tab);
+            setShowDlaTemplates(false);
+          }}
         />
       )}
 

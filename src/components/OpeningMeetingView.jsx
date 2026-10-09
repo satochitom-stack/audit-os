@@ -15,6 +15,7 @@ import {
   Send,
   MessageSquare
 } from 'lucide-react';
+import { DLA_OPENING_MEETING_DATA } from '../data/dlaStandardTemplates';
 
 export default function OpeningMeetingView({
   selectedYear = '2569',
@@ -74,6 +75,21 @@ export default function OpeningMeetingView({
     setAttendees(attendees.filter((_, i) => i !== index));
   };
 
+  const handleLoadDlaOpeningMeeting = () => {
+    setMeetingDate('2568-10-15');
+    setMeetingTime(DLA_OPENING_MEETING_DATA.time || '09.30 น.');
+    setMeetingLocation(DLA_OPENING_MEETING_DATA.location || 'ห้องประชุมกองคลัง');
+    setAttendees(DLA_OPENING_MEETING_DATA.attendees.map(a => ({
+      name: a.name,
+      position: a.position,
+      role: a.role || 'ผู้เข้าร่วมประชุม'
+    })));
+    setAgendas(DLA_OPENING_MEETING_DATA.agendas.map(ag => ({
+      title: `${ag.agenda}: ${ag.title}`,
+      details: ag.details
+    })));
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -97,6 +113,14 @@ export default function OpeningMeetingView({
           </div>
 
           <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+            <button
+              onClick={handleLoadDlaOpeningMeeting}
+              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
+              title="โหลดตัวอย่างรายงานการประชุมเปิดการตรวจสอบตามคู่มือ สถ. หน้า 50"
+            >
+              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+              <span>📥 โหลดตัวอย่าง สถ. (หน้า 50)</span>
+            </button>
             <button
               onClick={handlePrint}
               className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"

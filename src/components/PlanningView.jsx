@@ -26,10 +26,12 @@ import {
   Square,
   Search,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  Edit3
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import { AUDIT_DIMENSIONS, generateEngagementPlanWithAI } from '../data/engagementPlanTemplates';
+import { DLA_ANNUAL_AUDIT_PLAN_DATA, DLA_STRATEGIC_PLAN_3YEARS } from '../data/dlaStandardTemplates';
 
 export default function PlanningView({
   auditCharter,
@@ -57,6 +59,9 @@ export default function PlanningView({
 
   // Modals state
   const [showAddPlan, setShowAddPlan] = useState(false);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [showEditPlanModal, setShowEditPlanModal] = useState(false);
+  const [showDlaPlanFormModal, setShowDlaPlanFormModal] = useState(false);
   const [showImportRiskModal, setShowImportRiskModal] = useState(false);
   const [showApprovalMemoModal, setShowApprovalMemoModal] = useState(false);
   const [showAddStrategicModal, setShowAddStrategicModal] = useState(false);
@@ -192,6 +197,109 @@ export default function PlanningView({
       budget: 5000,
       objective: ''
     });
+  };
+
+  // Load DLA Official Annual Plan (Page 16)
+  const handleLoadDlaAnnualPlan = () => {
+    openConfirmModal({
+      title: 'นำเข้าแผนปฏิบัติการประจำปีตามคู่มือ สถ.',
+      message: `ต้องการนำเข้าโครงการตรวจสอบ 6 ภารกิจหลัก (กองคลัง 5 โครงการ, กองช่าง 1 โครงการ) ตามคู่มือ สถ. หน้า 16 สำหรับปีงบประมาณ ${selectedYear} หรือไม่?`,
+      confirmText: 'นำเข้า 6 โครงการ',
+      type: 'info',
+      onConfirm: () => {
+        const existingTitles = new Set(annualPlans.map((p) => p.title));
+        const formatted = DLA_ANNUAL_AUDIT_PLAN_DATA.map((dla, idx) => {
+          let dim = 'compliance';
+          if (dla.projectName.includes('บัญชี') || dla.projectName.includes('รับเงิน') || dla.projectName.includes('เบิกจ่าย')) dim = 'financial';
+          if (dla.projectName.includes('รถยนต์')) dim = 'special';
+          return {
+            id: `PLAN-${yearSuffix}-DLA0${idx + 1}`,
+            title: dla.projectName,
+            dimension: dim,
+            department: dla.department,
+            quarter: dla.timing,
+            period: dla.timing,
+            riskLevel: dla.riskLevel || 'สูง',
+            budget: dla.budget || 2000,
+            manDays: dla.manDays || 30,
+            auditor: dla.auditor,
+            objective: `เพื่อตรวจสอบการปฏิบัติงานและให้ความเชื่อมั่นกิจกรรม ${dla.projectName} ตามแนวทางปฏิบัติงานตรวจสอบภายใน อปท. (กรมส่งเสริมการปกครองท้องถิ่น)`,
+            status: dla.status || 'pending',
+            progress: dla.status === 'completed' ? 100 : dla.status === 'in_progress' ? 45 : 0
+          };
+        }).filter(item => !existingTitles.has(item.title));
+
+        if (formatted.length === 0) {
+          showToast('มีโครงการตามคู่มือ สถ. ทั้งหมดอยู่ในแผนแล้ว');
+          return;
+        }
+
+        setAnnualPlans([...annualPlans, ...formatted]);
+        showToast(`นำเข้าโครงการตรวจสอบ ${formatted.length} รายการตามคู่มือ สถ. เรียบร้อยแล้ว`);
+      }
+    });
+  };
+
+  // Load DLA Strategic Plan (Pages 12-14)
+  const handleLoadDlaStrategicPlan = () => {
+    openConfirmModal({
+      title: 'นำเข้าแผนการตรวจสอบระยะยาว 3 ปี ตามคู่มือ สถ.',
+      message: 'ต้องการนำเข้าแผนระยะยาว 16 กิจกรรม (กรอบ 590 คน-วัน) ตามคู่มือ สถ. หน้า 12-14 หรือไม่?',
+      confirmText: 'นำเข้าแผนระยะยาว',
+      type: 'info',
+      onConfirm: () => {
+        const y1Items = (DLA_STRATEGIC_PLAN_3YEARS.year1?.breakdown || []).map((b, idx) => ({
+          id: `STRAT-Y1-0${idx + 1}`,
+          department: b.unit,
+          activity: b.activity,
+          riskLevel: b.risk,
+          frequency: 'ทุกปี (Annual)',
+          years: { '2568': false, '2569': true, '2570': false, '2571': false, '2572': false },
+          responsibleAuditor: 'หน่วยตรวจสอบภายใน'
+        }));
+        const y2Items = (DLA_STRATEGIC_PLAN_3YEARS.year2?.breakdown || []).map((b, idx) => ({
+          id: `STRAT-Y2-0${idx + 1}`,
+          department: b.unit,
+          activity: b.activity,
+          riskLevel: b.risk,
+          frequency: 'ทุก 2 ปี (Biennial)',
+          years: { '2568': false, '2569': false, '2570': true, '2571': false, '2572': false },
+          responsibleAuditor: 'หน่วยตรวจสอบภายใน'
+        }));
+        const y3Items = (DLA_STRATEGIC_PLAN_3YEARS.year3?.breakdown || []).map((b, idx) => ({
+          id: `STRAT-Y3-0${idx + 1}`,
+          department: b.unit,
+          activity: b.activity,
+          riskLevel: b.risk,
+          frequency: 'ทุก 3 ปี (Triennial)',
+          years: { '2568': false, '2569': false, '2570': false, '2571': true, '2572': false },
+          responsibleAuditor: 'หน่วยตรวจสอบภายใน'
+        }));
+
+        const combined = [...y1Items, ...y2Items, ...y3Items];
+        setStrategicPlan(combined);
+        showToast(`นำเข้าแผนระยะยาว 16 กิจกรรม (590 คน-วัน) ตามคู่มือ สถ. สำเร็จ`);
+      }
+    });
+  };
+
+  // Save Edited Plan
+  const handleSaveEditPlan = (e) => {
+    e.preventDefault();
+    if (!editingPlan) return;
+    const updated = annualPlans.map((p) =>
+      p.id === editingPlan.id
+        ? {
+            ...editingPlan,
+            budget: Number(editingPlan.budget) || 0,
+            progress: Number(editingPlan.progress) || 0
+          }
+        : p
+    );
+    setAnnualPlans(updated);
+    setShowEditPlanModal(false);
+    setEditingPlan(null);
+    showToast(`บันทึกการแก้ไขโครงการ "${editingPlan.title}" เรียบร้อยแล้ว`);
   };
 
   // Batch Import High-Risk Items Handler
@@ -454,6 +562,24 @@ export default function PlanningView({
               )}
 
               <button
+                onClick={handleLoadDlaAnnualPlan}
+                className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+                title="โหลดโครงการตรวจสอบ 6 ภารกิจหลักมาตรฐาน อปท. จากคู่มือ สถ. หน้า 16"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>📥 โหลดแผน 6 ภารกิจ (คู่มือ สถ.)</span>
+              </button>
+
+              <button
+                onClick={() => setShowDlaPlanFormModal(true)}
+                className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+                title="ดูแบบฟอร์มแผนการตรวจสอบประจำปีทางการตามคู่มือ สถ. หน้า 16"
+              >
+                <FileText className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>📋 แบบฟอร์มแผน สถ.</span>
+              </button>
+
+              <button
                 onClick={() => setShowApprovalMemoModal(true)}
                 className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
               >
@@ -472,13 +598,24 @@ export default function PlanningView({
           )}
 
           {activeTab === 'strategic' && (
-            <button
-              onClick={() => setShowAddStrategicModal(true)}
-              className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>เพิ่มกิจกรรมในแผนระยะยาว</span>
-            </button>
+            <>
+              <button
+                onClick={handleLoadDlaStrategicPlan}
+                className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+                title="โหลดแผนระยะยาว 16 กิจกรรม (590 คน-วัน) จากคู่มือ สถ. หน้า 12-14"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>📥 โหลดแผน 3 ปี 590 วัน (คู่มือ สถ.)</span>
+              </button>
+
+              <button
+                onClick={() => setShowAddStrategicModal(true)}
+                className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>เพิ่มกิจกรรมในแผนระยะยาว</span>
+              </button>
+            </>
           )}
 
           {activeTab === 'risk' && (
@@ -728,6 +865,17 @@ export default function PlanningView({
                               >
                                 <Sparkles className="w-3 h-3" />
                                 <span>{hasEngagement ? 'แผนปฏิบัติการ' : 'จัดทำแผนตรวจ'}</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setEditingPlan(plan);
+                                  setShowEditPlanModal(true);
+                                }}
+                                className="p-1 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                                title="แก้ไขโครงการ"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
                               </button>
 
                               <button
@@ -1776,6 +1924,327 @@ export default function PlanningView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: EDIT ANNUAL PLAN ITEM
+      ========================================================================= */}
+      {showEditPlanModal && editingPlan && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="shrink-0 p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Edit3 className="w-5 h-5 text-amber-600" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  แก้ไขโครงการตรวจสอบ ({editingPlan.id})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditPlanModal(false);
+                  setEditingPlan(null);
+                }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditPlan} className="flex-1 overflow-y-auto p-5 space-y-3.5 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">ชื่อเรื่อง / กิจกรรมที่ตรวจสอบ</label>
+                <input
+                  type="text"
+                  required
+                  value={editingPlan.title || ''}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, title: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">มิติการตรวจสอบ</label>
+                  <select
+                    value={editingPlan.dimension || 'compliance'}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, dimension: e.target.value })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none font-bold"
+                  >
+                    {AUDIT_DIMENSIONS.filter((d) => d.id !== 'all').map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.badge}: {d.label.split('(')[0]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">หน่วยรับตรวจ</label>
+                  <select
+                    value={editingPlan.department || 'กองคลัง'}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, department: e.target.value })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none font-bold"
+                  >
+                    <option value="กองคลัง">กองคลัง</option>
+                    <option value="กองช่าง">กองช่าง</option>
+                    <option value="กองการศึกษา">กองการศึกษา</option>
+                    <option value="กองสวัสดิการสังคม">กองสวัสดิการสังคม</option>
+                    <option value="สำนักปลัด">สำนักปลัด</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">ระดับความเสี่ยง</label>
+                  <select
+                    value={editingPlan.riskLevel || 'สูง'}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, riskLevel: e.target.value })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none font-bold"
+                  >
+                    <option value="สูงมาก">สูงมาก</option>
+                    <option value="สูง">สูง</option>
+                    <option value="ปานกลาง">ปานกลาง</option>
+                    <option value="ต่ำ">ต่ำ</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">งบประมาณดำเนินการ (บาท)</label>
+                  <input
+                    type="number"
+                    value={editingPlan.budget ?? 0}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, budget: e.target.value })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">ไตรมาส / ระยะเวลา</label>
+                  <input
+                    type="text"
+                    value={editingPlan.quarter || ''}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, quarter: e.target.value })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">จำนวนวันตรวจ (คน-วัน)</label>
+                  <input
+                    type="number"
+                    value={editingPlan.manDays ?? 30}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, manDays: Number(e.target.value) || 0 })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">สถานะ</label>
+                  <select
+                    value={editingPlan.status || 'pending'}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, status: e.target.value })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none font-bold"
+                  >
+                    <option value="pending">รอตรวจ (Pending)</option>
+                    <option value="in_progress">กำลังตรวจ (In Progress)</option>
+                    <option value="completed">เสร็จสิ้น (Completed)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">ความก้าวหน้า (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editingPlan.progress ?? 0}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, progress: Number(e.target.value) || 0 })}
+                    className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">ผู้รับผิดชอบการตรวจสอบ</label>
+                <input
+                  type="text"
+                  value={editingPlan.auditor || ''}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, auditor: e.target.value })}
+                  placeholder="เช่น นางสาว ก (นักวิชาการตรวจสอบภายใน)"
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">วัตถุประสงค์การตรวจสอบ</label>
+                <textarea
+                  rows="3"
+                  value={editingPlan.objective || ''}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, objective: e.target.value })}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                ></textarea>
+              </div>
+
+              <div className="shrink-0 pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditPlanModal(false);
+                    setEditingPlan(null);
+                  }}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold cursor-pointer shadow-xs"
+                >
+                  บันทึกการแก้ไข
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: OFFICIAL DLA ANNUAL AUDIT PLAN FORM (สถ. หน้า 16)
+      ========================================================================= */}
+      {showDlaPlanFormModal && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-hidden">
+            <div className="shrink-0 p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between no-print">
+              <div className="flex items-center space-x-2.5">
+                <FileText className="w-5 h-5 text-amber-700" />
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    แบบแผนการปฏิบัติงานตรวจสอบประจำปี (คู่มือ สถ. หน้า 16)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    รูปแบบตารางมาตรฐานทางการสำหรับเสนอขออนุมัติผู้บริหารท้องถิ่น
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => window.print()}
+                  className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>พิมพ์แบบฟอร์ม</span>
+                </button>
+                <button
+                  onClick={() => setShowDlaPlanFormModal(false)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-serif">
+              <div className="text-center space-y-1">
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  แผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}
+                </h2>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
+                </h3>
+              </div>
+
+              <div className="overflow-x-auto border border-slate-300 dark:border-slate-700 rounded-xl">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-100 dark:bg-slate-800 font-bold border-b border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th className="p-2.5 border-r border-slate-300 dark:border-slate-700 text-center w-12">ลำดับ</th>
+                      <th className="p-2.5 border-r border-slate-300 dark:border-slate-700">โครงการ / กิจกรรมที่ตรวจสอบ</th>
+                      <th className="p-2.5 border-r border-slate-300 dark:border-slate-700 w-28 text-center">หน่วยรับตรวจ</th>
+                      <th className="p-2.5 border-r border-slate-300 dark:border-slate-700 w-44">ผู้รับผิดชอบ</th>
+                      <th className="p-2.5 border-r border-slate-300 dark:border-slate-700 w-36 text-center">ระยะเวลา</th>
+                      <th className="p-2.5 border-r border-slate-300 dark:border-slate-700 w-24 text-right">งบประมาณ</th>
+                      <th className="p-2.5 text-center w-20">คน-วัน</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                    {annualPlans.map((plan, idx) => (
+                      <tr key={plan.id}>
+                        <td className="p-2.5 border-r border-slate-200 dark:border-slate-800 text-center font-bold">
+                          {idx + 1}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-200 dark:border-slate-800 font-medium">
+                          {plan.title}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-200 dark:border-slate-800 text-center">
+                          {plan.department}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-200 dark:border-slate-800 text-[11px]">
+                          {plan.auditor || orgProfile?.auditorName || 'นักวิชาการตรวจสอบภายใน'}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-200 dark:border-slate-800 text-center text-[11px]">
+                          {plan.period || plan.quarter}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-200 dark:border-slate-800 text-right font-mono">
+                          {Number(plan.budget || 0).toLocaleString()}
+                        </td>
+                        <td className="p-2.5 text-center font-bold font-mono">
+                          {plan.manDays || 30}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-50 dark:bg-slate-850 font-bold border-t-2 border-slate-300 dark:border-slate-700">
+                      <td colSpan="5" className="p-2.5 border-r border-slate-300 dark:border-slate-700 text-center">
+                        รวมงบประมาณและจำนวนวันทั้งสิ้น
+                      </td>
+                      <td className="p-2.5 border-r border-slate-300 dark:border-slate-700 text-right font-mono">
+                        {annualPlans.reduce((sum, p) => sum + (Number(p.budget) || 0), 0).toLocaleString()} ฿
+                      </td>
+                      <td className="p-2.5 text-center font-mono">
+                        {annualPlans.reduce((sum, p) => sum + (Number(p.manDays) || 30), 0)} วัน
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Signatures 3 Columns */}
+              <div className="pt-8 grid grid-cols-3 gap-6 text-center text-xs">
+                <div className="space-y-6">
+                  <div>(ลงชื่อ)........................................................</div>
+                  <div>
+                    <div className="font-bold">({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</div>
+                    <div className="text-slate-500">{orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</div>
+                    <div className="text-[11px] text-slate-400">ผู้จัดทำแผน</div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>(ลงชื่อ)........................................................</div>
+                  <div>
+                    <div className="font-bold">({orgProfile?.palatName || 'ปลัด อปท.'})</div>
+                    <div className="text-slate-500">{orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
+                    <div className="text-[11px] text-slate-400">ผู้เห็นชอบ</div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>(ลงชื่อ)........................................................</div>
+                  <div>
+                    <div className="font-bold">({orgProfile?.approverName || 'นายก อปท.'})</div>
+                    <div className="text-slate-500">{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
+                    <div className="text-[11px] text-slate-400">ผู้อนุมัติ</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
