@@ -3,6 +3,12 @@
 // รองรับการแยกข้อมูลของแต่ละ User เป็นเอกเทศ (Multi-Tenant Isolation) และคลังเอกสารกลาง
 
 import { getSupabaseClient, isSupabaseConfigured } from '../services/supabaseClient';
+import {
+  DLA_RISK_ASSESSMENT_16,
+  DLA_ANNUAL_AUDIT_PLAN_DATA,
+  DLA_STRATEGIC_PLAN_3YEARS
+} from '../data/dlaStandardTemplates';
+import { INITIAL_ENGAGEMENT_PLANS } from '../data/engagementPlanTemplates';
 
 const USERS_KEY = 'ia_auth_users';
 const SESSION_KEY = 'ia_auth_session';
@@ -134,10 +140,16 @@ export function loadTenantData(baseKey, defaultVal, userOrSession) {
     if (raw !== null) {
       return JSON.parse(raw);
     }
-    // Backward compatibility fallback to unprefixed baseKey
-    const legacy = localStorage.getItem(baseKey);
-    if (legacy !== null) {
-      return JSON.parse(legacy);
+    // Backward compatibility fallback to unprefixed baseKey ONLY for admin
+    const username = typeof userOrSession === 'string'
+      ? userOrSession
+      : userOrSession?.username || (typeof getSession === 'function' ? getSession()?.username : null);
+
+    if (!username || username.toLowerCase() === 'admin') {
+      const legacy = localStorage.getItem(baseKey);
+      if (legacy !== null) {
+        return JSON.parse(legacy);
+      }
     }
   } catch (e) {
     console.warn(`Error loading tenant data for ${baseKey}:`, e);
@@ -151,6 +163,79 @@ export function saveTenantData(baseKey, value, userOrSession) {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
     console.warn(`Error saving tenant data for ${baseKey}:`, e);
+  }
+}
+
+// -------------------------------------------------------------
+// Initialize Fresh Workspace with Official DLA Standard Template
+// -------------------------------------------------------------
+export function initializeUserTenantWorkspace(user) {
+  if (!user || !user.username) return;
+  const username = user.username.toLowerCase();
+  if (username === 'admin') return; // Admin retains administrative workspace
+
+  const auKey = getTenantStorageKey('ia_audit_universe_by_year', username);
+  const existingAuRaw = localStorage.getItem(auKey);
+  let shouldInitAu = !existingAuRaw;
+  if (existingAuRaw) {
+    try {
+      const parsed = JSON.parse(existingAuRaw);
+      // Upgrade from old Fang Kham 21-item demo to DLA 16 official items
+      if (parsed['2569'] && parsed['2569'].length === 21 && parsed['2569'][0]?.id === 'AU-01') {
+        shouldInitAu = true;
+      }
+    } catch (_) {}
+  }
+
+  if (shouldInitAu) {
+    const dlaUniverse = DLA_RISK_ASSESSMENT_16.map((item) => ({
+      id: item.id,
+      department: item.department,
+      activity: item.activity,
+      sScore: item.sScore,
+      oScore: item.oScore,
+      fScore: item.fScore,
+      cScore: item.cScore,
+      kScore: item.kScore,
+      reason: item.desc,
+      riskScope: item.desc,
+      riskOwner: `หัวหน้าฝ่าย / ผู้อำนวยการ${item.department}`,
+      tolerance: 'ปฏิบัติตามกฎหมายและระเบียบที่เกี่ยวข้อง',
+      existingControls: 'มีระบบการควบคุมภายในและการกำกับดูแลตามสายงาน',
+      mitigation: 'สุ่มตรวจสอบตามแผนการตรวจสอบประจำปี',
+      includedInPlan: item.riskLevel === 'สูง'
+    }));
+    saveTenantData('ia_audit_universe_by_year', { '2569': dlaUniverse, '2570': dlaUniverse }, user);
+  }
+
+  const planKey = getTenantStorageKey('ia_annual_plans_by_year', username);
+  const existingPlanRaw = localStorage.getItem(planKey);
+  let shouldInitPlan = !existingPlanRaw;
+  if (existingPlanRaw) {
+    try {
+      const parsed = JSON.parse(existingPlanRaw);
+      if (parsed['2569'] && parsed['2569'].length > 0 && parsed['2569'][0]?.id === 'PLAN-01') {
+        shouldInitPlan = true;
+      }
+    } catch (_) {}
+  }
+
+  if (shouldInitPlan) {
+    const dlaPlans = DLA_ANNUAL_AUDIT_PLAN_DATA.map((plan) => ({
+      ...plan,
+      auditor: `${user.displayName || 'ผู้ตรวจสอบภายใน'} (${user.position || 'นักวิชาการตรวจสอบภายใน'})`
+    }));
+    saveTenantData('ia_annual_plans_by_year', { '2569': dlaPlans, '2570': [] }, user);
+  }
+
+  const stratKey = getTenantStorageKey('ia_strategic_plan', username);
+  if (!localStorage.getItem(stratKey)) {
+    saveTenantData('ia_strategic_plan', DLA_STRATEGIC_PLAN_3YEARS, user);
+  }
+
+  const engKey = getTenantStorageKey('ia_engagement_plans_by_year', username);
+  if (!localStorage.getItem(engKey)) {
+    saveTenantData('ia_engagement_plans_by_year', { '2569': INITIAL_ENGAGEMENT_PLANS, '2570': [] }, user);
   }
 }
 
@@ -656,6 +741,10 @@ export async function registerUser({ username, displayName, organization, distri
   });
   savePendingUsers(pendingList);
 
+  try {
+    initializeUserTenantWorkspace(newUser);
+  } catch (_) {}
+
   return newUser;
 }
 
@@ -814,6 +903,11 @@ export function startSession(user, remember = true, isImpersonating = false) {
     window.dispatchEvent(new CustomEvent('ia-org-profile-changed', { detail: updatedOrg }));
   } catch (_) {}
 
+  // Initialize fresh user workspace with DLA standard templates
+  try {
+    initializeUserTenantWorkspace(user);
+  } catch (_) {}
+
   return session;
 }
 
@@ -839,6 +933,11 @@ export function getSession() {
       session.permissions = currentUser.permissions || [];
       session.plan = currentUser.plan;
       session.expiresAt = currentUser.expiresAt;
+
+      // Ensure tenant workspace is populated with DLA standard template if missing or on old demo
+      try {
+        initializeUserTenantWorkspace(currentUser);
+      } catch (_) {}
     }
 
     return session;

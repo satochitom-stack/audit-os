@@ -31,6 +31,7 @@ import {
   FolderPlus,
   Copy,
   AlertTriangle,
+  RotateCcw,
   X
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
@@ -329,7 +330,27 @@ export const fangkhamRealAuditUniverse = [
   }
 ];
 
-export const defaultAuditUniverse = fangkhamRealAuditUniverse;
+export const generateDlaAuditUniverse = () => {
+  return DLA_RISK_ASSESSMENT_16.map((item) => ({
+    id: item.id,
+    department: item.department,
+    activity: item.activity,
+    sScore: item.sScore,
+    oScore: item.oScore,
+    fScore: item.fScore,
+    cScore: item.cScore,
+    kScore: item.kScore,
+    reason: item.desc,
+    riskScope: item.desc,
+    riskOwner: `หัวหน้าฝ่าย / ผู้อำนวยการ${item.department}`,
+    tolerance: 'ปฏิบัติตามกฎหมายและระเบียบที่เกี่ยวข้อง',
+    existingControls: 'มีระบบการควบคุมภายในและการกำกับดูแลตามสายงาน',
+    mitigation: 'สุ่มตรวจสอบตามแผนการตรวจสอบประจำปี',
+    includedInPlan: item.riskLevel === 'สูง'
+  }));
+};
+
+export const defaultAuditUniverse = generateDlaAuditUniverse();
 
 // =========================================================================
 // 2. คลังโครงสร้างกิจกรรม อปท. แยกตาม สำนัก/กอง/ฝ่าย/งาน
@@ -863,29 +884,27 @@ export default function AuditRiskView({
   const handleLoadDlaDefaults = () => {
     openConfirm({
       title: 'โหลดชุดข้อมูล 16 กิจกรรมมาตรฐาน (คู่มือ สถ. หน้า 9)',
-      message: 'ท่านต้องการโหลดชุดข้อมูล "การประเมินความเสี่ยง 16 กิจกรรมตามคู่มือ สถ." มาเป็นชุดข้อมูลตั้งต้นใช่หรือไม่?',
+      message: 'ท่านต้องการโหลดชุดข้อมูล "การประเมินความเสี่ยง 16 กิจกรรมตามคู่มือ สถ." มาเป็นชุดข้อมูลตั้งต้นใช่หรือไม่? (ระบบจะคัดเลือก 6 กิจกรรมความเสี่ยงสูงเข้าสู่แผนประจำปีโดยอัตโนมัติตามระเบียบ)',
       confirmText: 'โหลดข้อมูลตามคู่มือ สถ.',
       type: 'info',
       onConfirm: () => {
-        const mapped = DLA_RISK_ASSESSMENT_16.map((item) => ({
-          id: item.id,
-          department: item.department,
-          activity: item.activity,
-          sScore: item.sScore,
-          oScore: item.oScore,
-          fScore: item.fScore,
-          cScore: item.cScore,
-          kScore: item.kScore,
-          reason: item.desc,
-          riskScope: item.desc,
-          riskOwner: `หัวหน้าฝ่าย / ผู้อำนวยการ${item.department}`,
-          tolerance: 'ปฏิบัติตามกฎหมายและระเบียบที่เกี่ยวข้อง',
-          existingControls: 'มีระบบการควบคุมภายในและการกำกับดูแลตามสายงาน',
-          mitigation: 'สุ่มตรวจสอบตามแผนการตรวจสอบประจำปี',
-          includedInPlan: false
-        }));
+        const mapped = generateDlaAuditUniverse();
         setAuditUniverse(mapped);
         showToast('โหลดข้อมูลการประเมินความเสี่ยง 16 กิจกรรมตามคู่มือ สถ. เรียบร้อยแล้ว');
+      }
+    });
+  };
+
+  // ล้างข้อมูลกิจกรรมทั้งหมดเพื่อเริ่มทำเองจากตารางว่าง
+  const handleClearAllActivities = () => {
+    openConfirm({
+      title: 'ล้างข้อมูลกิจกรรมประเมินความเสี่ยงทั้งหมด',
+      message: 'ท่านต้องการล้างรายการกิจกรรมทั้งหมด เพื่อเริ่มกำหนดกิจกรรมของ อปท. ตนเองจากตารางว่างใช่หรือไม่? (หากต้องการนำข้อมูล สถ. กลับมา สามารถกดปุ่ม "โหลด 16 กิจกรรม สถ." ได้ตลอดเวลา)',
+      confirmText: 'ล้างตารางทั้งหมด',
+      type: 'danger',
+      onConfirm: () => {
+        setAuditUniverse([]);
+        showToast('ล้างรายการกิจกรรมเรียบร้อยแล้ว ท่านสามารถเพิ่มกิจกรรมใหม่ได้ทันที');
       }
     });
   };
@@ -1157,11 +1176,20 @@ export default function AuditRiskView({
 
             <button
               onClick={handleLoadDlaDefaults}
-              className="bg-amber-700 hover:bg-amber-600 text-white border border-amber-600/30 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all active:scale-95"
+              className="bg-amber-750 hover:bg-amber-700 text-white border border-amber-600/30 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all active:scale-95"
               title="โหลดชุดข้อมูล 16 กิจกรรมมาตรฐานตามคู่มือ สถ."
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-200" />
               <span>โหลด 16 กิจกรรม สถ.</span>
+            </button>
+
+            <button
+              onClick={handleClearAllActivities}
+              className="bg-stone-50 hover:bg-rose-50 dark:bg-stone-800 dark:hover:bg-rose-950/40 text-stone-600 hover:text-rose-600 dark:text-stone-300 dark:hover:text-rose-400 border border-stone-300 dark:border-stone-700 hover:border-rose-300 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all"
+              title="ล้างข้อมูลกิจกรรมทั้งหมดเพื่อเริ่มกำหนดกิจกรรมของ อปท. ตนเองจากศูนย์"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
+              <span>ล้างตาราง (เริ่มใหม่)</span>
             </button>
 
             <button

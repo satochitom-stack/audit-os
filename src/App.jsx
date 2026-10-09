@@ -551,11 +551,6 @@ export default function App() {
         if (!parsed['2569']) {
           parsed['2569'] = parsed['2568'] || defaultAuditUniverse;
         }
-        // Automatically upgrade to real Fang Kham SAO 21 activities
-        if (parsed['2569'] && (parsed['2569'].length < 21 || parsed['2569'][0]?.activity?.includes('การจัดเก็บภาษี'))) {
-          parsed['2569'] = defaultAuditUniverse;
-          localStorage.setItem('ia_audit_universe_by_year', JSON.stringify(parsed));
-        }
         return parsed;
       }
       return { '2569': defaultAuditUniverse, '2570': defaultAuditUniverse };
