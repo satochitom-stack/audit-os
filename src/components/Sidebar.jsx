@@ -97,11 +97,11 @@ export default function Sidebar({
       <div className="p-4 border-b border-stone-200/70 dark:border-stone-800 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-wider uppercase">
-            {isAdmin ? '👑 SUPER ADMIN WORKSPACE' : '🛡️ AUDITOR WORKSPACE'}
+            {isAdmin ? '👑 SUPER ADMIN CONSOLE' : '🛡️ AUDITOR WORKSPACE'}
           </span>
           {isAdmin ? (
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300">
-              ผู้ดูแลระบบ
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 to-amber-600 text-stone-950 border border-amber-300 shadow-2xs">
+              👑 ROOT ADMIN
             </span>
           ) : isExpired ? (
             <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1">
@@ -118,17 +118,36 @@ export default function Sidebar({
           )}
         </div>
 
-        <div className="space-y-0.5">
-          <div className="font-extrabold text-xs sm:text-sm text-stone-900 dark:text-stone-100 truncate">
-            {session?.organization || orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}
+        {isAdmin ? (
+          <div className="space-y-0.5">
+            <div className="font-black text-xs sm:text-sm text-stone-900 dark:text-stone-100 truncate">
+              Audit-OS แพลตฟอร์มกลาง
+            </div>
+            <div className="text-[11px] text-amber-800 dark:text-amber-400 font-bold truncate">
+              ผู้ดูแลระบบส่วนกลาง (Super Admin)
+            </div>
+            <div className="text-[10px] text-stone-500 dark:text-stone-400 truncate">
+              ศูนย์ควบคุมระบบ & บริหารจัดการสิทธิ์
+            </div>
+            <div className="pt-1">
+              <span className="inline-block text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                สิทธิ์ระดับสูงสุด • ใช้งานตลอดชีพ (Lifetime)
+              </span>
+            </div>
           </div>
-          <div className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold truncate">
-            {session?.displayName || 'ผู้ตรวจสอบภายใน'}
+        ) : (
+          <div className="space-y-0.5">
+            <div className="font-extrabold text-xs sm:text-sm text-stone-900 dark:text-stone-100 truncate">
+              {session?.organization || orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}
+            </div>
+            <div className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold truncate">
+              {session?.displayName || 'ผู้ตรวจสอบภายใน'}
+            </div>
+            <div className="text-[10px] text-stone-400 truncate">
+              {session?.position || 'นักวิชาการตรวจสอบภายใน'}
+            </div>
           </div>
-          <div className="text-[10px] text-stone-400 truncate">
-            {session?.position || 'นักวิชาการตรวจสอบภายใน'}
-          </div>
-        </div>
+        )}
 
         {/* Expired warning badge */}
         {isExpired && !isAdmin && (

@@ -299,7 +299,14 @@ export function autoRepairDataLinkages() {
       users.unshift(admin);
     } else {
       admin.role = 'admin';
+      admin.displayName = 'ผู้ดูแลระบบส่วนกลาง (Super Admin)';
+      admin.organization = 'Audit-OS แพลตฟอร์มกลาง';
+      admin.position = 'ผู้ดูแลระบบสูงสุด (Super Administrator)';
+      admin.department = 'ศูนย์ควบคุมระบบส่วนกลาง';
+      admin.province = 'ส่วนกลาง';
       admin.canManageUsers = true;
+      admin.plan = 'lifetime';
+      admin.status = 'active';
       admin.permissions = ALL_MENU_IDS.map((m) => m.id);
       if (!admin.passwordText) admin.passwordText = 'admin';
     }
@@ -321,7 +328,12 @@ export function autoRepairDataLinkages() {
     if (sess) {
       if (sess.username === 'admin') {
         sess.role = 'admin';
+        sess.displayName = 'ผู้ดูแลระบบส่วนกลาง (Super Admin)';
+        sess.organization = 'Audit-OS แพลตฟอร์มกลาง';
+        sess.position = 'ผู้ดูแลระบบสูงสุด (Super Administrator)';
+        sess.department = 'ศูนย์ควบคุมระบบส่วนกลาง';
         sess.permissions = ALL_MENU_IDS.map((m) => m.id);
+        sess.plan = 'lifetime';
         localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
       } else if (sess.username === 'auditor') {
         sess.role = 'auditor';
@@ -762,7 +774,10 @@ export function getSession() {
 
     if (currentUser) {
       session.role = currentUser.role;
+      session.displayName = currentUser.displayName;
       session.organization = currentUser.organization;
+      session.position = currentUser.position;
+      session.department = currentUser.department;
       session.permissions = currentUser.permissions || [];
       session.plan = currentUser.plan;
       session.expiresAt = currentUser.expiresAt;

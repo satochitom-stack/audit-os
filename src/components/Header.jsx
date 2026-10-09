@@ -61,8 +61,12 @@ export default function Header({
   }, []);
 
   const isAdmin = session?.role === 'admin';
-  const userTitle = session?.displayName || (isAdmin ? 'ผู้ดูแลระบบส่วนกลาง (Admin)' : (orgProfile?.auditorName || session?.username));
-  const departmentLabel = isAdmin ? 'Super Admin Backoffice' : (session?.organization || orgProfile?.name || 'หน่วยตรวจสอบภายใน');
+  const userTitle = isAdmin
+    ? 'ผู้ดูแลระบบส่วนกลาง'
+    : (session?.displayName || orgProfile?.auditorName || session?.username || 'ผู้ตรวจสอบภายใน');
+  const departmentLabel = isAdmin
+    ? 'Super Admin Control'
+    : (session?.organization || orgProfile?.name || 'หน่วยตรวจสอบภายใน');
 
   return (
     <header className="bg-[#faf9f6]/95 dark:bg-[#1a1e28]/95 backdrop-blur-md border-b border-stone-200/90 dark:border-stone-800 sticky top-0 z-30 shadow-xs no-print shrink-0 transition-colors">
@@ -107,23 +111,25 @@ export default function Header({
               </div>
 
               {/* Subtitle / Organization Location */}
-              <button
-                onClick={isAdmin ? onOpenSettings : undefined}
-                className={`text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 flex items-center mt-0.5 transition-colors text-left truncate ${
-                  isAdmin ? 'hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer' : 'cursor-default'
-                }`}
-                title={isAdmin ? 'คลิกเพื่อแก้ไขข้อมูลหน่วยงานและผู้ตรวจสอบ' : ''}
-              >
-                <Building2 className="w-3.5 h-3.5 mr-1 text-amber-700 dark:text-amber-400 shrink-0" />
-                <span className="truncate max-w-[220px] sm:max-w-md font-medium">
-                  {orgProfile.name} • {orgProfile.district} {orgProfile.province}
-                </span>
-                {isAdmin && (
-                  <span className="hidden lg:inline text-[10px] ml-1.5 text-amber-700 dark:text-amber-400 opacity-70 hover:opacity-100">
-                    (คลิกแก้ไข)
+              {isAdmin ? (
+                <div className="text-[11px] sm:text-xs text-amber-800 dark:text-amber-400 flex items-center mt-0.5 font-medium truncate">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1 text-amber-600 shrink-0" />
+                  <span className="truncate">
+                    ศูนย์ควบคุมระบบส่วนกลาง (Platform Root) • ดูแลระบบ อปท. ทั่วประเทศ
                   </span>
-                )}
-              </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onOpenSettings}
+                  className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 flex items-center mt-0.5 transition-colors text-left truncate cursor-pointer hover:text-amber-700 dark:hover:text-amber-300"
+                  title="คลิกเพื่อแก้ไขข้อมูลหน่วยงานและผู้ตรวจสอบ"
+                >
+                  <Building2 className="w-3.5 h-3.5 mr-1 text-amber-700 dark:text-amber-400 shrink-0" />
+                  <span className="truncate max-w-[220px] sm:max-w-md font-medium">
+                    {orgProfile.name} • {orgProfile.district} {orgProfile.province}
+                  </span>
+                </button>
+              )}
             </div>
           </div>
 
