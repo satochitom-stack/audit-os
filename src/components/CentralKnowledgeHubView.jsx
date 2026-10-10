@@ -25,42 +25,33 @@ import {
   ArrowRight,
   Layers,
   Filter,
-  ShieldCheck,
-  Printer,
-  BookMarked
+  Printer
 } from 'lucide-react';
 import {
   CENTRAL_DOC_CATEGORIES,
-  INITIAL_CENTRAL_DOCUMENTS,
-  V614_STAGES,
-  V614_BOOK_CHAPTERS
+  INITIAL_CENTRAL_DOCUMENTS
 } from '../data/centralKnowledgeData';
 
-export default function CentralKnowledgeHubView({ session, onCloneToWorkingPapers, onNavigateTab }) {
+export default function CentralKnowledgeHubView({ session, onCloneToWorkingPapers }) {
   const [documents, setDocuments] = useState(() => {
     try {
       const saved = localStorage.getItem('ia_central_documents');
       if (saved) {
-        const parsed = JSON.parse(saved);
+        let parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge initial documents (such as newly added V614 workfiles) that are missing from localStorage
-          const existingIds = new Set(parsed.map((d) => d.id));
-          const missing = INITIAL_CENTRAL_DOCUMENTS.filter((d) => !existingIds.has(d.id));
-          if (missing.length > 0) {
-            const merged = [...missing, ...parsed];
-            localStorage.setItem('ia_central_documents', JSON.stringify(merged));
-            return merged;
+          // Clean out any V614 items from central hub storage
+          const cleaned = parsed.filter((d) => !d.id?.startsWith('DOC-V614-'));
+          if (cleaned.length !== parsed.length) {
+            localStorage.setItem('ia_central_documents', JSON.stringify(cleaned));
           }
-          return parsed;
+          return cleaned.length > 0 ? cleaned : INITIAL_CENTRAL_DOCUMENTS;
         }
       }
     } catch (_) {}
     return INITIAL_CENTRAL_DOCUMENTS;
   });
 
-  const [selectedCategory, setSelectedCategory] = useState('v614-workfiles');
-  const [selectedV614Stage, setSelectedV614Stage] = useState('all');
-  const [showChapterGuide, setShowChapterGuide] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [previewDoc, setPreviewDoc] = useState(null);
@@ -72,14 +63,14 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
   // New Document state for Admin
   const [newDocForm, setNewDocForm] = useState({
-    category: 'v614-workfiles',
+    category: 'regulations',
     code: '',
     title: '',
     topic: '',
     organization: 'สถ. / กรมบัญชีกลาง',
     year: '2569',
-    fileType: 'DOCX',
-    fileSize: '45 KB',
+    fileType: 'PDF',
+    fileSize: '1.2 MB',
     summary: '',
     keyPoints: '',
     fullContent: '',
@@ -100,13 +91,6 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   const filteredDocs = useMemo(() => {
     return documents.filter((doc) => {
       if (selectedCategory !== 'all' && doc.category !== selectedCategory) return false;
-      if (
-        selectedCategory === 'v614-workfiles' &&
-        selectedV614Stage !== 'all' &&
-        doc.stage !== selectedV614Stage
-      ) {
-        return false;
-      }
       if (selectedTag && !doc.tags?.includes(selectedTag)) return false;
 
       const q = searchTerm.toLowerCase();
@@ -120,7 +104,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         (doc.tags || []).some((t) => t.toLowerCase().includes(q))
       );
     });
-  }, [documents, selectedCategory, selectedV614Stage, searchTerm, selectedTag]);
+  }, [documents, selectedCategory, searchTerm, selectedTag]);
 
   // All unique tags
   const allTags = useMemo(() => {
@@ -132,7 +116,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   const handleCopyText = (id, text) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    showToast('คัดลอกเนื้อหาเรียบร้อยแล้ว');
+    showToast('คัดลอกข้อความเรียบร้อยแล้ว');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -241,24 +225,24 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-amber-700 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-2 animate-in fade-in slide-in-from-top-3">
-          <CheckCircle2 className="w-5 h-5" />
+        <div className="fixed top-20 right-6 z-50 bg-stone-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-2 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           <span className="text-sm font-semibold">{toastMessage}</span>
         </div>
       )}
 
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-500/15 via-stone-100/80 to-amber-500/10 dark:from-stone-900/80 dark:via-stone-900/60 dark:to-stone-900/80 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>รวมไฟล์งาน ว 614 & ฐานความรู้มาตรฐาน</span>
+                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>คลังเอกสารและคู่มือมาตรฐาน</span>
               </span>
               <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
                 <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>คู่มือ อ.ธนัชรัก • พี่เอ๋ GURUAUDIT • มาตรฐาน สถ.</span>
+                <span>ระเบียบ • คู่มือ สถ. • มาตรฐานสากล</span>
               </span>
               <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
                 <BookOpen className="w-3.5 h-3.5 text-stone-500" />
@@ -266,10 +250,10 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              คลังเอกสารกลาง & ชุดไฟล์งานการตรวจสอบภายในแบบครบวงจร
+              คลังเอกสารกลาง & ฐานความรู้ผู้ตรวจสอบภายใน อปท.
             </h1>
             <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-              รวบรวมแบบฟอร์มหนังสือราชการ 20 แฟ้มงานตามหนังสือ ว 614, ต้นแบบกระดาษทำการ 16 กิจกรรม, ระเบียบการเงินการคลัง และหลักสูตรผู้ตรวจสอบภายใน อปท. พร้อมใช้งาน คัดลอก และพิมพ์ได้ทันที
+              รวบรวมระเบียบการเงินการคลัง พ.ร.บ. จัดซื้อจัดจ้างฯ คู่มือมาตรฐาน สถ. สไลด์หลักสูตรผู้ตรวจสอบ (หลักสูตรทอง) และรวมประเด็นข้อทักท้วง สตง. ที่พบบ่อย
             </p>
           </div>
 
@@ -303,19 +287,18 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   onClick={() => {
                     setSelectedCategory(cat.id);
                     setSelectedTag('');
-                    if (cat.id !== 'v614-workfiles') setSelectedV614Stage('all');
                   }}
                   className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                     isSelected
-                      ? 'bg-amber-500/20 text-amber-950 dark:text-amber-100 border border-amber-500/40 shadow-xs'
+                      ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
                       : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200/80 border border-transparent'
                   }`}
                 >
                   <span>{cat.label}</span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                       isSelected
-                        ? 'bg-amber-600 text-white'
+                        ? 'bg-amber-500/20 text-amber-900 dark:text-amber-200 font-bold'
                         : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300'
                     }`}
                   >
@@ -377,132 +360,14 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         </div>
       </div>
 
-      {/* V614 Lifecycle Roadmap & 5-Chapter Interactive Section */}
-      {selectedCategory === 'v614-workfiles' && (
-        <div className="bg-gradient-to-br from-amber-500/10 via-amber-50 dark:via-stone-900 to-amber-500/5 border border-amber-300 dark:border-amber-800/60 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center space-x-1 bg-amber-600 text-white rounded-lg px-2.5 py-0.5 text-[11px] font-bold">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>หนังสือ กค 0409.2/ว 614</span>
-                </span>
-                <span className="text-xs text-amber-800 dark:text-amber-400 font-semibold">
-                  แนวทางการจัดทำแผนการตรวจสอบแบบครบวงจร (คู่มือ อ.ธนัชรัก / พี่เอ๋ GURUAUDIT)
-                </span>
-              </div>
-              <h2 className="text-base sm:text-lg font-black text-stone-900 dark:text-stone-100">
-                ชุดรวม 20 แฟ้มงานการตรวจสอบภายในมาตรฐาน & ผังกระบวนการแบบครบวงจร (หน้า 111)
-              </h2>
-              <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-                จำแนกตาม 4 ขั้นตอนการปฏิบัติงานตรวจสอบ: การวางแผน (14 แฟ้ม) • การปฏิบัติงาน (2 แฟ้ม) • การรายงานผล (3 แฟ้ม) • การติดตามผล (1 แฟ้ม)
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowChapterGuide(!showChapterGuide)}
-              className="self-start md:self-auto text-xs font-bold text-amber-900 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/70 hover:bg-amber-200 border border-amber-300/80 dark:border-amber-700 rounded-xl px-3.5 py-2 transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
-            >
-              <BookMarked className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>{showChapterGuide ? '▲ ซ่อนสารบัญ 5 บท' : '▼ ดูสารบัญ 5 บท & เมนูในระบบ'}</span>
-            </button>
-          </div>
-
-          {/* 4 Stages Tabs (ผังหน้า 111) */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-amber-200/60 dark:border-stone-800">
-            {V614_STAGES.map((st) => {
-              const isSelected = selectedV614Stage === st.id;
-              const count =
-                st.id === 'all'
-                  ? documents.filter((d) => d.category === 'v614-workfiles').length
-                  : documents.filter(
-                      (d) => d.category === 'v614-workfiles' && d.stage === st.id
-                    ).length;
-              return (
-                <button
-                  key={st.id}
-                  onClick={() => setSelectedV614Stage(st.id)}
-                  className={`p-2.5 rounded-xl text-left transition-all border cursor-pointer ${
-                    isSelected
-                      ? 'bg-amber-600 text-white border-amber-700 shadow-xs'
-                      : 'bg-white/80 dark:bg-stone-800/80 text-stone-700 dark:text-stone-300 border-amber-200/50 dark:border-stone-700 hover:bg-white dark:hover:bg-stone-800'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs truncate">{st.label}</span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                        isSelected
-                          ? 'bg-amber-800 text-amber-100'
-                          : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  </div>
-                  <p
-                    className={`text-[10px] line-clamp-1 mt-0.5 ${
-                      isSelected ? 'text-amber-100' : 'text-stone-400'
-                    }`}
-                  >
-                    {st.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Collapsible 5 Chapters Mapping */}
-          {showChapterGuide && (
-            <div className="bg-white dark:bg-stone-850 rounded-2xl p-4 border border-amber-200/80 dark:border-stone-700 space-y-3 animate-in fade-in duration-200">
-              <h4 className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center space-x-1.5">
-                <GraduationCap className="w-4 h-4 text-amber-600" />
-                <span>การเชื่อมโยงสารบัญคู่มือ 5 บท (อ.ธนัชรัก / พี่เอ๋ GURUAUDIT) เข้าสู่ระบบ Audit-OS</span>
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                {V614_BOOK_CHAPTERS.map((ch) => (
-                  <div
-                    key={ch.chapter}
-                    className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/70 dark:border-stone-700 space-y-1.5 flex flex-col justify-between"
-                  >
-                    <div>
-                      <span className="font-bold text-amber-800 dark:text-amber-400 block line-clamp-1">
-                        {ch.title}
-                      </span>
-                      <p className="text-[11px] text-stone-500 leading-snug line-clamp-2 mt-1">
-                        {ch.desc}
-                      </p>
-                      <div className="text-[10px] text-stone-400 mt-1">
-                        ครอบคลุม: {ch.files.map((f) => `แฟ้ม ${f}`).join(', ')}
-                      </div>
-                    </div>
-                    {onNavigateTab && ch.linkedTab && (
-                      <button
-                        onClick={() => onNavigateTab(ch.linkedTab)}
-                        className="mt-2 text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 flex items-center space-x-1 cursor-pointer"
-                      >
-                        <span>เปิดเมนู: {ch.linkedTabName}</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Documents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredDocs.map((doc) => {
-          const isV614 = doc.category === 'v614-workfiles';
           const isWorkingPaper = doc.category === 'working-papers';
           const isCurriculum = doc.category === 'curriculum-2569';
           const isQA = doc.category === 'qa-findings';
 
           let cardAccent = 'border-stone-200/80 dark:border-stone-800 hover:border-amber-500';
-          if (isV614) cardAccent = 'border-amber-300/90 dark:border-amber-800/70 hover:border-amber-500 bg-gradient-to-b from-amber-50/20 to-white dark:from-stone-900 dark:to-stone-900';
           if (isWorkingPaper) cardAccent = 'border-amber-200/80 dark:border-amber-900/60 hover:border-amber-500';
           if (isCurriculum) cardAccent = 'border-stone-300 dark:border-stone-700 hover:border-amber-500';
           if (isQA) cardAccent = 'border-amber-300/80 dark:border-amber-800/60 hover:border-amber-500';
@@ -515,23 +380,9 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               <div className="space-y-3">
                 {/* Card Top: Code & FileType */}
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span
-                      className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded-md ${
-                        isV614
-                          ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300/60 dark:border-amber-800/50'
-                          : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-                      }`}
-                    >
-                      {doc.code}
-                    </span>
-                    {doc.stageLabel && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
-                        {doc.stageLabel.split(' ')[1] || doc.stageLabel}
-                      </span>
-                    )}
-                  </div>
-
+                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+                    {doc.code}
+                  </span>
                   <div className="flex items-center space-x-1.5">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/40">
                       {doc.fileType} {doc.fileSize ? `(${doc.fileSize})` : ''}
@@ -590,7 +441,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   className="flex-1 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1 cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5 text-stone-500" />
-                  <span>ดูตัวอย่าง</span>
+                  <span>ดูเนื้อหา</span>
                 </button>
 
                 {isWorkingPaper && (
@@ -604,27 +455,12 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   </button>
                 )}
 
-                {isV614 && doc.linkedTab && onNavigateTab && (
-                  <button
-                    onClick={() => onNavigateTab(doc.linkedTab)}
-                    className="bg-amber-700 hover:bg-amber-600 text-white font-bold py-2 px-2.5 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer shadow-xs shrink-0"
-                    title={`เปิดในระบบ Audit-OS (${doc.linkedTabName})`}
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{doc.linkedTabName}</span>
-                  </button>
-                )}
-
                 <button
                   onClick={() => handleCopyText(doc.id, doc.fullContent || doc.summary)}
                   className="p-2 rounded-xl border border-stone-200/80 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-all cursor-pointer"
                   title="คัดลอกเนื้อหา"
                 >
-                  {copiedId === doc.id ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5" />
-                  )}
+                  {copiedId === doc.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
@@ -651,14 +487,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300">
                     {previewDoc.code}
                   </span>
-                  {previewDoc.stageLabel && (
-                    <span className="text-xs font-semibold text-amber-800 dark:text-amber-400">
-                      {previewDoc.stageLabel}
-                    </span>
-                  )}
-                  <span className="text-xs text-stone-400">
-                    {previewDoc.organization} ({previewDoc.year})
-                  </span>
+                  <span className="text-xs text-stone-400">{previewDoc.organization} ({previewDoc.year})</span>
                 </div>
                 <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 leading-snug">
                   {previewDoc.title}
@@ -690,28 +519,15 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">ประเด็นสำคัญที่ต้องตรวจสอบ (Key Checkpoints)</h4>
                   <ul className="space-y-1.5 list-disc list-inside bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700">
                     {previewDoc.keyPoints.map((point, idx) => (
-                      <li key={idx} className="leading-relaxed">
-                        {point}
-                      </li>
+                      <li key={idx} className="leading-relaxed">{point}</li>
                     ))}
                   </ul>
                 </div>
               )}
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">
-                    เนื้อหา / หนังสือราชการฉบับเต็ม
-                  </h4>
-                  <button
-                    onClick={() => handleCopyText(previewDoc.id, previewDoc.fullContent || previewDoc.summary)}
-                    className="text-amber-700 hover:text-amber-800 dark:text-amber-400 font-bold flex items-center space-x-1 cursor-pointer text-[11px]"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>คัดลอกร่างข้อความ</span>
-                  </button>
-                </div>
-                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200/80 dark:border-stone-700 font-sans whitespace-pre-line leading-relaxed text-stone-800 dark:text-stone-200 font-mono text-[11px]">
+                <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">เนื้อหา / แนวทางปฏิบัติงานฉบับเต็ม</h4>
+                <div className="p-4 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 font-sans whitespace-pre-line leading-relaxed text-stone-700 dark:text-stone-300">
                   {previewDoc.fullContent || previewDoc.summary}
                 </div>
               </div>
@@ -730,7 +546,6 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                 <button
                   onClick={() => handlePrintDocument(previewDoc)}
                   className="bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 text-stone-800 dark:text-stone-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
-                  title="พิมพ์เอกสารมาตรฐาน"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>พิมพ์เอกสาร</span>
@@ -750,20 +565,6 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                     <span>นำเข้ากระดาษทำการของฉันทันที</span>
                   </button>
                 )}
-
-                {previewDoc.linkedTab && onNavigateTab && (
-                  <button
-                    onClick={() => {
-                      onNavigateTab(previewDoc.linkedTab);
-                      setPreviewDoc(null);
-                    }}
-                    className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md flex items-center space-x-1.5 cursor-pointer"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>เปิดใช้งานในระบบ ({previewDoc.linkedTabName})</span>
-                  </button>
-                )}
-
                 <button
                   onClick={() => setPreviewDoc(null)}
                   className="bg-stone-800 text-white hover:bg-stone-700 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer"
@@ -802,7 +603,6 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                     onChange={(e) => setNewDocForm({ ...newDocForm, category: e.target.value })}
                     className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
                   >
-                    <option value="v614-workfiles">ชุดไฟล์งาน ว 614 ครบวงจร (20 แฟ้ม)</option>
                     <option value="regulations">กฎหมาย & ระเบียบการเงินการคลัง</option>
                     <option value="working-papers">ต้นแบบกระดาษทำการ & เช็คลิสต์</option>
                     <option value="curriculum-2569">หลักสูตรทอง 2569</option>
@@ -817,7 +617,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                     type="text"
                     value={newDocForm.code}
                     onChange={(e) => setNewDocForm({ ...newDocForm, code: e.target.value })}
-                    placeholder="เช่น ว 614 - แฟ้ม 21, พ.ร.บ. พัสดุฯ"
+                    placeholder="เช่น ว 23, พ.ร.บ. พัสดุฯ"
                     className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-bold"
                   />
                 </div>
@@ -829,7 +629,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   type="text"
                   value={newDocForm.title}
                   onChange={(e) => setNewDocForm({ ...newDocForm, title: e.target.value })}
-                  placeholder="เช่น บันทึกข้อความ ขออนุมัติ..."
+                  placeholder="เช่น ระเบียบกระทรวงมหาดไทยว่าด้วย..."
                   className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
                   required
                 />
@@ -841,7 +641,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   type="text"
                   value={newDocForm.topic}
                   onChange={(e) => setNewDocForm({ ...newDocForm, topic: e.target.value })}
-                  placeholder="เช่น การเบิกจ่ายเงิน, แผนการตรวจสอบ, ค่าเช่าบ้าน"
+                  placeholder="เช่น การเบิกจ่ายเงิน, งานก่อสร้าง, ค่าเช่าบ้าน"
                   className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                 />
               </div>
@@ -907,7 +707,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   type="text"
                   value={newDocForm.tags}
                   onChange={(e) => setNewDocForm({ ...newDocForm, tags: e.target.value })}
-                  placeholder="เช่น ว 614, เกณฑ์ความเสี่ยง, แผนประจำปี"
+                  placeholder="เช่น กฎหมาย, เบิกจ่าย, ค่าเช่าบ้าน"
                   className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                 />
               </div>

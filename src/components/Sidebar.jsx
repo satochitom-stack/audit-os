@@ -73,11 +73,12 @@ export default function Sidebar({
     {
       groupTitle: 'คลังความรู้ & เครื่องมือช่วยตรวจ',
       items: [
-        { id: 'central-hub', stepNum: '11', label: '11. คลังเอกสารกลาง & ระเบียบ', icon: BookOpen, desc: 'ระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 และตัวอย่าง' },
+        { id: 'forms', stepNum: '11', label: '11. บันทึก/คำสั่ง (ว 614 สารบรรณ)', icon: FileText, desc: 'ชุด 20 บันทึกข้อความและคำสั่งตามระเบียบงานสารบรรณ' },
+        { id: 'central-hub', stepNum: '12', label: '12. คลังเอกสารกลาง & ระเบียบ', icon: BookOpen, desc: 'ระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 และตัวอย่าง' },
         {
           id: 'audit-toolkits',
-          stepNum: '12',
-          label: '12. เครื่องมือช่วยคำนวณเชิงเทคนิค',
+          stepNum: '13',
+          label: '13. เครื่องมือช่วยคำนวณเชิงเทคนิค',
           icon: Wrench,
           hasSubmenu: true,
           subItems: [
@@ -302,7 +303,7 @@ export default function Sidebar({
             >
               <div className="flex items-center space-x-2.5">
                 <Settings className="w-4 h-4 text-amber-700 dark:text-amber-300" />
-                <span>13. ระบบหลังบ้าน Super Admin</span>
+                <span>14. ระบบหลังบ้าน Super Admin</span>
               </div>
               {pendingCount > 0 && (
                 <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">

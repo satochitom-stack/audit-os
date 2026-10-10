@@ -1,15 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Building,
-  Award,
-  FileSpreadsheet,
-  Search,
   FileText,
+  Search,
   Copy,
   Check,
-  FolderOpen,
-  ExternalLink,
-  Download,
   Eye,
   X,
   Plus,
@@ -17,9 +11,23 @@ import {
   Calendar,
   Layers,
   Filter,
+  Download,
+  Printer,
+  ExternalLink,
+  Building,
+  Award,
+  CheckCircle2,
+  ArrowRight,
+  ShieldCheck,
   FileCheck2,
-  Send
+  BookOpen
 } from 'lucide-react';
+import {
+  V614_CATEGORIES,
+  V614_OFFICIAL_TEMPLATES
+} from '../data/v614TemplatesData';
+import OfficialThaiMemo from './OfficialThaiMemo';
+import OfficialThaiOrder from './OfficialThaiOrder';
 
 export default function FormsView({
   formsBase = [],
@@ -28,609 +36,793 @@ export default function FormsView({
   session,
   setCurrentTab
 }) {
+  const [selectedStage, setSelectedStage] = useState('all');
+  const [selectedDocType, setSelectedDocType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [copiedId, setCopiedId] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
-  const isAdmin = session?.role === 'admin';
-
-  // New Form Document Form State
-  const [newDoc, setNewDoc] = useState({
-    category: 'การบริหารความเสี่ยง',
-    code: '',
-    title: '',
-    topic: '',
-    summary: '',
-    fileRef: '',
-    fileUrl: '',
-    fileType: 'PDF',
-    fileSize: ''
-  });
-
-  const categories = [
-    { id: 'all', label: 'ทั้งหมด' },
-    { id: 'การบริหารความเสี่ยง', label: 'การบริหารความเสี่ยง' },
-    { id: 'การควบคุมภายใน', label: 'การควบคุมภายใน' },
-    { id: 'พัสดุและสัญญา', label: 'พัสดุและสัญญา' },
-    { id: 'การเงินและการคลัง', label: 'การเงินและการคลัง' },
-    { id: 'งานตรวจสอบภายใน', label: 'งานตรวจสอบภายใน' },
-    { id: 'ทั่วไป', label: 'ทั่วไป' }
-  ];
+  const orgName = orgProfile?.name || session?.organization || 'องค์การบริหารส่วนตำบลต้นแบบ';
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const filteredItems = useMemo(() => {
-    return (formsBase || []).filter((item) => {
-      const matchCat =
-        selectedCategory === 'all' || item.category === selectedCategory;
-      const q = (searchTerm || '').toLowerCase();
-      const matchSearch =
-        (item.title || '').toLowerCase().includes(q) ||
-        (item.code || '').toLowerCase().includes(q) ||
-        (item.topic || '').toLowerCase().includes(q) ||
-        (item.summary || '').toLowerCase().includes(q) ||
-        (item.fileRef || '').toLowerCase().includes(q);
-      return matchCat && matchSearch;
-    });
-  }, [formsBase, selectedCategory, searchTerm]);
-
-  const handleCopy = (id, text) => {
+  const handleCopyText = (id, text) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    showToast('คัดลอกชื่อแบบฟอร์มเรียบร้อยแล้ว');
+    showToast('คัดลอกข้อความเรียบร้อยแล้ว');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Filter templates
+  const filteredTemplates = useMemo(() => {
+    return V614_OFFICIAL_TEMPLATES.filter((doc) => {
+      if (selectedStage !== 'all' && doc.stage !== selectedStage) return false;
+      if (selectedDocType !== 'all' && doc.docType !== selectedDocType) return false;
 
-    const sizeStr =
-      file.size > 1024 * 1024
-        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-        : `${Math.round(file.size / 1024)} KB`;
+      const q = searchTerm.toLowerCase();
+      if (!q) return true;
 
-    let fileType = 'PDF';
-    const lowerName = file.name.toLowerCase();
-    if (lowerName.endsWith('.docx') || lowerName.endsWith('.doc')) fileType = 'WORD';
-    else if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) fileType = 'EXCEL';
+      return (
+        (doc.title || '').toLowerCase().includes(q) ||
+        (doc.code || '').toLowerCase().includes(q) ||
+        (doc.subject || '').toLowerCase().includes(q) ||
+        (doc.summary || '').toLowerCase().includes(q)
+      );
+    });
+  }, [selectedStage, selectedDocType, searchTerm]);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setNewDoc((prev) => ({
-        ...prev,
-        fileUrl: event.target.result,
-        fileRef: file.name,
-        fileSize: sizeStr,
-        fileType,
-        title: prev.title || file.name.replace(/\.[^/.]+$/, '')
-      }));
-    };
-    reader.readAsDataURL(file);
+  // Download Microsoft Word (.doc) File with exact Saraban Margins and Styling
+  const handleDownloadWord = (doc) => {
+    const resolvedOrg = orgName;
+    let bodyContent = '';
+
+    if (doc.docType === 'order') {
+      bodyContent = `
+        <div style="text-align: center; margin-bottom: 20pt;">
+          <p style="text-align: center; margin: 0 0 6pt 0;"><span style="font-size: 22pt; font-weight: bold; font-family: 'TH Sarabun PSK';">(ตราครุฑ)</span></p>
+          <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0; font-family: 'TH Sarabun PSK';">${doc.title || 'คำสั่ง' + resolvedOrg}</p>
+          <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 0 0; font-family: 'TH Sarabun PSK';">${doc.docNumber || 'ที่ ........./๒๕๖๙'}</p>
+          <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 12pt 0; font-family: 'TH Sarabun PSK';">เรื่อง ${doc.subject || doc.title}</p>
+        </div>
+        <div style="border-top: 1pt solid black; margin-bottom: 12pt;"></div>
+        <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ${(doc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
+        </p>
+        ${(doc.orderClauses || [])
+          .map(
+            (c) =>
+              `<p style="margin-left: 2cm; margin-bottom: 6pt; text-align: justify; font-size: 16pt; font-family: 'TH Sarabun PSK';">${c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}</p>`
+          )
+          .join('')}
+        <p style="text-indent: 2.5cm; margin-top: 12pt; margin-bottom: 8pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ${(doc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}
+        </p>
+        <p style="text-indent: 3cm; margin-top: 12pt; margin-bottom: 24pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ${doc.docDate || ''}
+        </p>
+        <table style="width: 100%; border: none; margin-top: 30pt;">
+          <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%; text-align: center; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+              <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">${doc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}</p>
+              <p style="margin: 2pt 0 0 0;">${doc.orderSignatoryPosition ? doc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}</p>
+            </td>
+          </tr>
+        </table>
+      `;
+    } else if (doc.docType === 'charter' || doc.docType === 'plan') {
+      bodyContent = `
+        <div style="text-align: center; margin-bottom: 20pt;">
+          <p style="text-align: center; margin: 0 0 6pt 0;"><span style="font-size: 22pt; font-weight: bold; font-family: 'TH Sarabun PSK';">(ตราครุฑ)</span></p>
+          <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0; font-family: 'TH Sarabun PSK';">${doc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}</p>
+          <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 12pt 0; font-family: 'TH Sarabun PSK';">${doc.docNumber || ''}</p>
+        </div>
+        <div style="border-top: 1pt solid black; margin-bottom: 12pt;"></div>
+        <div style="font-size: 16pt; line-height: 1.35; font-family: 'TH Sarabun PSK'; text-align: justify;">
+          ${(doc.fullContent || doc.summary).replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
+        </div>
+        <table style="width: 100%; border: none; margin-top: 30pt;">
+          <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%; text-align: center; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+              <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">${doc.signatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}</p>
+              <p style="margin: 2pt 0 0 0;">${doc.signatoryPosition ? doc.signatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}</p>
+            </td>
+          </tr>
+        </table>
+      `;
+    } else {
+      // บันทึกข้อความ (Official Memorandum Form 2)
+      bodyContent = `
+        <table style="width: 100%; border-bottom: 2pt solid black; padding-bottom: 8pt; margin-bottom: 14pt;">
+          <tr>
+            <td style="width: 20%; vertical-align: top;">
+              <span style="font-size: 18pt; font-weight: bold; font-family: 'TH Sarabun PSK';">(ตราครุฑ)</span>
+            </td>
+            <td style="width: 80%; text-align: center; vertical-align: middle;">
+              <span style="font-size: 26pt; font-weight: bold; letter-spacing: 2px; font-family: 'TH Sarabun PSK';">บันทึกข้อความ</span>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding-top: 8pt;">
+              <p style="margin: 0 0 4pt 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+                <strong>ส่วนราชการ:</strong> ${doc.agency ? doc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'หน่วยตรวจสอบภายใน ' + resolvedOrg} ${doc.phone ? 'โทร. ' + doc.phone : ''}
+              </p>
+              <table style="width: 100%; border: none; margin: 0; padding: 0;">
+                <tr>
+                  <td style="width: 50%; padding: 0;">
+                    <p style="margin: 0 0 4pt 0; font-size: 16pt; font-family: 'TH Sarabun PSK';"><strong>ที่:</strong> ${doc.docNumber || 'อบ ........./๒๕๖๙'}</p>
+                  </td>
+                  <td style="width: 50%; padding: 0;">
+                    <p style="margin: 0 0 4pt 0; font-size: 16pt; font-family: 'TH Sarabun PSK';"><strong>วันที่:</strong> ${doc.docDate || '...... เดือน ................... พ.ศ. .........'}</p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+                <strong>เรื่อง:</strong> <strong>${doc.subject || doc.title}</strong>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <p style="font-size: 16pt; margin-bottom: 12pt; font-family: 'TH Sarabun PSK';">
+          <strong>เรียน:</strong> ${doc.to ? doc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}
+        </p>
+
+        <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ${(doc.part1_background || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
+        </p>
+
+        <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ${(doc.part2_facts || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
+        </p>
+
+        <p style="text-indent: 2.5cm; margin-bottom: 16pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ${(doc.part3_proposal || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
+        </p>
+
+        <!-- ลายมือชื่อผู้ตรวจ -->
+        <table style="width: 100%; border: none; margin-top: 24pt; margin-bottom: 24pt;">
+          <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%; text-align: center; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+              <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">${doc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])'}</p>
+              <p style="margin: 2pt 0 0 0;">${doc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ'}</p>
+              ${doc.signatoryRole ? `<p style="margin: 2pt 0 0 0; font-size: 14pt;">(${doc.signatoryRole})</p>` : ''}
+            </td>
+          </tr>
+        </table>
+
+        <!-- ส่วนเกษียณหนังสือ (ข้อสั่งการ) -->
+        <table style="width: 100%; border-top: 1.5pt solid black; margin-top: 20pt; border-collapse: collapse;">
+          <tr>
+            <td style="width: 50%; border: 1pt solid #777; padding: 8pt; vertical-align: top; font-size: 15pt; font-family: 'TH Sarabun PSK';">
+              <p style="margin: 0 0 6pt 0; font-weight: bold; text-decoration: underline;">ความเห็นของปลัดองค์กรปกครองส่วนท้องถิ่น</p>
+              <p style="margin: 0 0 4pt 0; font-size: 14pt;">เรียน นายก${resolvedOrg}</p>
+              <p style="margin: 0 0 3pt 0;">[  ] เพื่อโปรดทราบ</p>
+              <p style="margin: 0 0 3pt 0;">[  ] ${doc.palatReview || 'เห็นควรอนุมัติและสั่งการตามเสนอ'}</p>
+              <p style="margin: 0 0 12pt 0;">[  ] อื่นๆ ..............................................................</p>
+              <p style="text-align: center; margin: 16pt 0 0 0;">(ลงชื่อ)........................................................</p>
+              <p style="text-align: center; margin: 2pt 0 0 0; font-size: 14pt;">ปลัด${resolvedOrg}</p>
+            </td>
+            <td style="width: 50%; border: 1pt solid #777; padding: 8pt; vertical-align: top; font-size: 15pt; font-family: 'TH Sarabun PSK';">
+              <p style="margin: 0 0 6pt 0; font-weight: bold; text-decoration: underline;">คำสั่งการของนายกองค์กรปกครองส่วนท้องถิ่น</p>
+              <p style="margin: 0 0 3pt 0;">[  ] ทราบ</p>
+              <p style="margin: 0 0 3pt 0;">[  ] ${doc.executiveOrder || 'อนุมัติ / เห็นชอบตามเสนอ'}</p>
+              <p style="margin: 0 0 12pt 0;">[  ] อื่นๆ ..............................................................</p>
+              <p style="text-align: center; margin: 16pt 0 0 0;">(ลงชื่อ)........................................................</p>
+              <p style="text-align: center; margin: 2pt 0 0 0; font-size: 14pt;">นายก${resolvedOrg}</p>
+            </td>
+          </tr>
+        </table>
+      `;
+    }
+
+    const fullWordHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>${doc.title}</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          @page Section1 {
+            size: 595.3pt 841.9pt; /* A4 Portrait */
+            margin: 70.85pt 56.7pt 56.7pt 70.85pt; /* Top 2.5cm, Right 2.0cm, Bottom 2.0cm, Left 2.5cm */
+            mso-header-margin: 36pt;
+            mso-footer-margin: 36pt;
+            mso-paper-source: 0;
+          }
+          div.Section1 { page: Section1; }
+          body {
+            font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Angsana New', sans-serif;
+            font-size: 16pt;
+            line-height: 1.25;
+            color: #000;
+          }
+          p { margin: 0 0 6pt 0; font-size: 16pt; font-family: 'TH Sarabun PSK', sans-serif; }
+        </style>
+      </head>
+      <body>
+        <div class="Section1">
+          ${bodyContent}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\ufeff', fullWordHtml], {
+      type: 'application/msword;charset=utf-8'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${doc.code} - ${doc.title.slice(0, 40)}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`ดาวน์โหลดไฟล์ Word (.doc) สำเร็จแล้ว!`);
   };
 
-  const handleAddDocument = (e) => {
-    e.preventDefault();
-    if (!newDoc.title.trim()) {
-      alert('กรุณาระบุชื่อแบบฟอร์ม');
+  // Direct Standard Print Window
+  const handlePrintDocument = (doc) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('กรุณาอนุญาตป๊อปอัปเพื่อพิมพ์เอกสาร');
       return;
     }
+    const resolvedOrg = orgName;
 
-    const docToAdd = {
-      id: `FORM-CUSTOM-${Date.now()}`,
-      category: newDoc.category,
-      code: newDoc.code.trim() || 'แบบฟอร์ม',
-      title: newDoc.title.trim(),
-      topic: newDoc.topic.trim() || newDoc.title.trim(),
-      summary: newDoc.summary.trim() || 'แบบฟอร์มมาตรฐานสำหรับปฏิบัติงาน',
-      fileRef: newDoc.fileRef || 'ไฟล์แนบระบบ',
-      fileUrl: newDoc.fileUrl || '',
-      downloadUrl: newDoc.fileUrl || '',
-      fileType: newDoc.fileType || 'PDF',
-      fileSize: newDoc.fileSize || 'ไฟล์แนบ',
-      date: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }),
-      isCustom: true
-    };
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${doc.title}</title>
+          <meta charset="utf-8" />
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 2.5cm 2cm 2cm 2.5cm;
+            }
+            body {
+              font-family: 'Sarabun', 'TH Sarabun New', Tahoma, sans-serif;
+              padding: 0;
+              margin: 0;
+              line-height: 1.6;
+              color: #000;
+              background: #fff;
+              font-size: 15px;
+            }
+            .memo-header {
+              border-bottom: 2px solid black;
+              padding-bottom: 10px;
+              margin-bottom: 18px;
+            }
+            .memo-title {
+              text-align: center;
+              font-size: 26px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .indent {
+              text-indent: 2.5cm;
+              text-align: justify;
+              margin-bottom: 12px;
+            }
+            table { width: 100%; border-collapse: collapse; }
+            .review-box { border: 1px solid #666; padding: 10px; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          ${
+            doc.docType === 'order'
+              ? `
+            <div style="text-align:center; margin-bottom: 24px;">
+              <div style="font-size: 22px; font-weight: bold; margin-bottom: 4px;">(ตราครุฑ)</div>
+              <h1 style="font-size: 22px; font-weight: bold; margin: 0;">${doc.title || 'คำสั่ง' + resolvedOrg}</h1>
+              <div style="font-size: 16px; font-weight: bold; margin-top: 4px;">${doc.docNumber || 'ที่ ........./๒๕๖๙'}</div>
+              <div style="font-size: 16px; font-weight: bold; margin-top: 4px;">เรื่อง ${doc.subject || doc.title}</div>
+            </div>
+            <hr style="border: 0.5px solid black; margin-bottom: 16px;" />
+            <div class="indent">${(doc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}</div>
+            ${(doc.orderClauses || []).map((c) => `<div style="padding-left: 1.5cm; margin-bottom: 8px; text-align: justify;">${c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}</div>`).join('')}
+            <div class="indent" style="margin-top: 16px;">${(doc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}</div>
+            <div style="text-indent: 3cm; margin-top: 16px;">${doc.docDate || ''}</div>
+            <div style="margin-top: 40px; text-align: right; padding-right: 40px;">
+              <div>(ลงชื่อ)........................................................</div>
+              <div style="font-weight: bold; margin-top: 6px;">${doc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}</div>
+              <div>${doc.orderSignatoryPosition ? doc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}</div>
+            </div>
+          `
+              : `
+            <div class="memo-header">
+              <table style="width: 100%;">
+                <tr>
+                  <td style="width: 20%; vertical-align: top; font-weight: bold; font-size: 18px;">(ตราครุฑ)</td>
+                  <td style="width: 80%; text-align: center;"><div class="memo-title">บันทึกข้อความ</div></td>
+                </tr>
+              </table>
+              <div style="margin-top: 12px; font-size: 15px;">
+                <div style="margin-bottom: 4px;"><strong>ส่วนราชการ:</strong> ${doc.agency ? doc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'หน่วยตรวจสอบภายใน ' + resolvedOrg} ${doc.phone ? 'โทร. ' + doc.phone : ''}</div>
+                <table style="width: 100%; margin-bottom: 4px;">
+                  <tr>
+                    <td style="width: 50%;"><strong>ที่:</strong> ${doc.docNumber || 'อบ ........./๒๕๖๙'}</td>
+                    <td style="width: 50%;"><strong>วันที่:</strong> ${doc.docDate || '...... เดือน ................... พ.ศ. .........'}</td>
+                  </tr>
+                </table>
+                <div><strong>เรื่อง:</strong> <strong>${doc.subject || doc.title}</strong></div>
+              </div>
+            </div>
 
-    if (onUpdateFormsBase) {
-      onUpdateFormsBase((prev) => [docToAdd, ...prev]);
-      showToast('เพิ่มแบบฟอร์มใหม่เรียบร้อยแล้ว');
-    }
+            <div style="margin-bottom: 14px;"><strong>เรียน:</strong> ${doc.to ? doc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}</div>
 
-    setIsAddModalOpen(false);
-    setNewDoc({
-      category: 'การบริหารความเสี่ยง',
-      code: '',
-      title: '',
-      topic: '',
-      summary: '',
-      fileRef: '',
-      fileUrl: '',
-      fileType: 'PDF',
-      fileSize: ''
-    });
-  };
+            <div class="indent">${(doc.part1_background || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}</div>
+            <div class="indent">${(doc.part2_facts || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}</div>
+            <div class="indent">${(doc.part3_proposal || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}</div>
 
-  const handleDeleteDocument = (id, title) => {
-    if (window.confirm(`ยืนยันการลบแบบฟอร์ม "${title}" หรือไม่?`)) {
-      if (onUpdateFormsBase) {
-        onUpdateFormsBase((prev) => prev.filter((item) => item.id !== id));
-        showToast('ลบแบบฟอร์มเรียบร้อยแล้ว');
-      }
-    }
-  };
+            <div style="margin-top: 36px; text-align: right; padding-right: 40px;">
+              <div>(ลงชื่อ)........................................................</div>
+              <div style="font-weight: bold; margin-top: 6px;">${doc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])'}</div>
+              <div>${doc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ'}</div>
+            </div>
 
-  const isPdf = (url) => {
-    if (!url) return false;
-    return url.toLowerCase().includes('.pdf') || url.startsWith('data:application/pdf');
+            <table style="width: 100%; border-top: 2px solid black; margin-top: 30px; font-size: 13px;">
+              <tr>
+                <td style="width: 50%; border: 1px solid #777; padding: 10px; vertical-align: top;">
+                  <div style="font-weight: bold; text-decoration: underline; margin-bottom: 6px;">ความเห็นของปลัดองค์กรปกครองส่วนท้องถิ่น</div>
+                  <div>เรียน นายก${resolvedOrg}</div>
+                  <div>[  ] เพื่อโปรดทราบ</div>
+                  <div>[  ] ${doc.palatReview || 'เห็นควรอนุมัติตามเสนอ'}</div>
+                  <div style="margin-top: 24px; text-align: center;">
+                    <div>(ลงชื่อ)........................................................</div>
+                    <div>ปลัด${resolvedOrg}</div>
+                  </div>
+                </td>
+                <td style="width: 50%; border: 1px solid #777; padding: 10px; vertical-align: top;">
+                  <div style="font-weight: bold; text-decoration: underline; margin-bottom: 6px;">คำสั่งการของนายกองค์กรปกครองส่วนท้องถิ่น</div>
+                  <div>[  ] ทราบ</div>
+                  <div>[  ] ${doc.executiveOrder || 'อนุมัติ / เห็นชอบตามเสนอ'}</div>
+                  <div style="margin-top: 24px; text-align: center;">
+                    <div>(ลงชื่อ)........................................................</div>
+                    <div>นายก${resolvedOrg}</div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          `
+          }
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
   };
 
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl border border-slate-700 text-xs font-semibold flex items-center space-x-2 animate-in fade-in slide-in-from-bottom-2">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
+        <div className="fixed top-20 right-6 z-50 bg-stone-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-2 animate-in fade-in slide-in-from-top-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+          <span className="text-sm font-semibold">{toastMessage}</span>
         </div>
       )}
 
-      {/* Header & Search Bar */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-amber-500/15 via-stone-100/80 to-amber-500/10 dark:from-stone-900/80 dark:via-stone-900/60 dark:to-stone-900/80 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
                 <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+                <span>{orgName}</span>
               </span>
               <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>คลังแบบฟอร์มมาตรฐาน (Forms Library)</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                <span>หนังสือกรมบัญชีกลาง ว ๖๑๔ • ระเบียบ มท. ๒๕๔๕</span>
               </span>
               <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <FileSpreadsheet className="w-3.5 h-3.5 text-stone-500" />
-                <span>พร้อมใช้งาน {formsBase.length} ฉบับ</span>
+                <FileCheck2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>ระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖ (ตราครุฑ & เกษียณสั่งการ)</span>
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              คลังเอกสารและแบบฟอร์มมาตรฐาน อปท.
+              แบบบันทึกข้อความ & คำสั่งการตรวจสอบภายใน (ว ๖๑๔ สารบรรณ)
             </h1>
-          </div>
-
-          {/* Admin Upload Button */}
-          {isAdmin && (
-            <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-amber-500/30"
-              >
-                <Plus className="w-4 h-4" />
-                <span>เพิ่มแบบฟอร์ม / อัปโหลดไฟล์</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Stats Badges */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-stone-200/60 dark:border-stone-800">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/80 dark:bg-stone-800 text-amber-900 dark:text-amber-300 border border-stone-200/80 dark:border-stone-700 text-xs font-semibold shadow-2xs">
-            <Layers className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>ทั้งหมด {formsBase.length} ฉบับ</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-900 dark:text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
-            <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>พร้อมเปิดอ่านและดาวน์โหลดทุกรายการ</span>
-          </span>
-          {searchTerm && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold">
-              <Filter className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>พบ {filteredItems.length} รายการจากการค้นหา</span>
-            </span>
-          )}
-        </div>
-
-        {/* Search & Categories Filter */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-          <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
-            <input
-              type="text"
-              placeholder="พิมพ์คำค้นหา เช่น ว 3482, บส. 1, การบริหารความเสี่ยง, ปค. 4, จัดซื้อจัดจ้าง..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 focus:ring-2 focus:ring-amber-500 outline-none text-xs bg-white/90 dark:bg-stone-900/90 text-stone-900 dark:text-stone-100 placeholder-stone-400 shadow-2xs"
-            />
-          </div>
-
-          <div className="flex items-center space-x-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
-                  selectedCategory === cat.id
-                    ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-                    : 'bg-white/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-200/60 dark:border-stone-700'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+            <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+              ชุด ๒๐ แบบบันทึกข้อความ คำสั่ง กฎบัตร และรายงานมาตรฐานครบวงจรตามระเบียบงานสารบรรณ พร้อมระบบส่งออกเป็นไฟล์ Word (.doc) และพิมพ์เอกสารราชการเพื่อนำไปปรับเปลี่ยนตามบริบทของ อปท. ได้ทันที
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Cards List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredItems.map((item) => {
-          const isCopied = copiedId === item.id;
-          const activeFileUrl = item.fileUrl || item.downloadUrl;
-          const isPdfFile = isPdf(activeFileUrl);
+      {/* Filter Tabs & Search Controls */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Stage Tabs (ตาม 4 ขั้นตอนการตรวจสอบ) */}
+          <div className="flex flex-wrap gap-1.5">
+            {V614_CATEGORIES.map((cat) => {
+              const isSelected = selectedStage === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedStage(cat.id)}
+                  className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200/80 border border-transparent'
+                  }`}
+                >
+                  <span>{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search Box */}
+          <div className="relative min-w-[260px]">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
+            <input
+              type="text"
+              placeholder="ค้นหาชื่อบันทึก, เรื่อง, รหัส..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-800 dark:text-stone-100"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Type Filter Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-stone-100 dark:border-stone-800 text-[11px]">
+          <span className="text-stone-400 font-semibold mr-1">จำแนกตามประเภทหนังสือ:</span>
+          {[
+            { id: 'all', label: 'ทั้งหมด' },
+            { id: 'memo', label: 'บันทึกข้อความ (แบบที่ ๒)' },
+            { id: 'order', label: 'คำสั่ง (แบบที่ ๑๔)' },
+            { id: 'charter', label: 'กฎบัตร / นโยบาย' },
+            { id: 'plan', label: 'แผนงาน / Engagement Plan' }
+          ].map((type) => (
+            <button
+              key={type.id}
+              onClick={() => setSelectedDocType(type.id)}
+              className={`px-2.5 py-0.5 rounded-lg border transition-all cursor-pointer ${
+                selectedDocType === type.id
+                  ? 'bg-stone-800 text-white font-bold border-stone-900 dark:bg-stone-700'
+                  : 'bg-stone-50 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 border-stone-200/80 dark:border-stone-700 hover:border-amber-400'
+              }`}
+            >
+              {type.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Templates Grid (20 รายการ) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filteredTemplates.map((doc) => {
+          const isMemo = doc.docType === 'memo';
+          const isOrder = doc.docType === 'order';
 
           return (
             <div
-              key={item.id}
-              className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all space-y-3.5 flex flex-col justify-between group"
+              key={doc.id}
+              className="bg-white dark:bg-stone-900 rounded-3xl p-5 border border-stone-200/90 dark:border-stone-800 hover:border-amber-500/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
             >
-              <div className="space-y-2.5">
-                {/* Category & Format Badges */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
-                      {item.category}
+              <div className="space-y-3">
+                {/* Card Top: Code & Type Badges */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300/60 dark:border-amber-800/50">
+                      {doc.code}
                     </span>
-                    {item.code && (
-                      <span className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 text-[10px] px-2 py-0.5 rounded-md font-bold">
-                        {item.code}
-                      </span>
-                    )}
-                    {item.fileType && (
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${
-                          item.fileType.includes('WORD')
-                            ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200'
-                            : item.fileType.includes('EXCEL')
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
-                            : 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200'
-                        }`}
-                      >
-                        {item.fileType} {item.fileSize ? `(${item.fileSize})` : ''}
-                      </span>
-                    )}
-                    {item.pageCount && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-500 font-semibold">
-                        {item.pageCount}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center space-x-1 shrink-0">
-                    <button
-                      onClick={() => handleCopy(item.id, `${item.title} - ${item.topic}`)}
-                      className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
-                      title="คัดลอกชื่อแบบฟอร์ม"
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isOrder
+                          ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200'
+                          : isMemo
+                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200'
+                          : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300'
+                      }`}
                     >
-                      {isCopied ? (
-                        <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </button>
+                      {isOrder
+                        ? 'คำสั่ง (แบบ ๑๔)'
+                        : isMemo
+                        ? 'บันทึกข้อความ (แบบ ๒)'
+                        : doc.docType === 'charter'
+                        ? 'กฎบัตร/ประกาศ'
+                        : 'แผนปฏิบัติงาน'}
+                    </span>
+                  </div>
 
-                    {isAdmin && (item.isCustom || !item.isOfficial) && (
-                      <button
-                        onClick={() => handleDeleteDocument(item.id, item.title)}
-                        className="text-rose-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
-                        title="ลบแบบฟอร์มนี้"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                  <span className="text-[10px] font-semibold text-stone-400">
+                    {doc.stageName}
+                  </span>
+                </div>
+
+                {/* Title & Subject */}
+                <div className="space-y-1">
+                  <h3 className="font-bold text-sm text-stone-900 dark:text-stone-100 line-clamp-2 leading-snug">
+                    {doc.title}
+                  </h3>
+                  <div className="text-xs text-amber-800 dark:text-amber-400 font-medium line-clamp-2">
+                    เรื่อง: {doc.subject}
                   </div>
                 </div>
 
-                {/* Title & Topic */}
-                <div>
-                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug group-hover:text-amber-800 dark:group-hover:text-amber-400 transition-colors">
-                    {item.title}
-                  </h3>
-                  {item.topic && (
-                    <div className="text-xs font-semibold text-amber-800 dark:text-amber-400 mt-1">
-                      เรื่อง: {item.topic}
-                    </div>
-                  )}
-                </div>
-
-                {/* Summary Box */}
-                {item.summary && (
-                  <p className="text-xs text-stone-600 dark:text-stone-300 bg-stone-50 dark:bg-stone-950/60 p-3 rounded-xl border border-stone-100 dark:border-stone-800/80 leading-relaxed">
-                    {item.summary}
-                  </p>
-                )}
+                {/* Summary */}
+                <p className="text-xs text-stone-600 dark:text-stone-300 line-clamp-3 leading-relaxed">
+                  {doc.summary}
+                </p>
               </div>
 
-              {/* Footer File Reference & Actions */}
-              <div className="pt-3 border-t border-stone-100 dark:border-stone-800/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-stone-400 gap-2.5">
-                <div
-                  className="flex items-center text-stone-500 dark:text-stone-400 font-mono text-[11px] truncate max-w-full sm:max-w-[210px]"
-                  title={item.fileRef}
-                >
-                  <FolderOpen className="w-3.5 h-3.5 mr-1.5 text-amber-600 shrink-0" />
-                  <span className="truncate">{item.fileRef || 'ไฟล์แนบ'}</span>
+              {/* Card Footer Actions */}
+              <div className="pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setPreviewDoc(doc)}
+                    className="flex-1 bg-amber-50 hover:bg-amber-100 dark:bg-stone-800 dark:hover:bg-stone-750 text-amber-900 dark:text-amber-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1 cursor-pointer border border-amber-200/80 dark:border-stone-700"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                    <span>ดูสารบรรณ A4</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDownloadWord(doc)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
+                    title="ดาวน์โหลดไฟล์ Microsoft Word (.doc)"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Word</span>
+                  </button>
+
+                  <button
+                    onClick={() => handlePrintDocument(doc)}
+                    className="p-2 rounded-xl border border-stone-200/80 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 hover:text-stone-900 dark:text-stone-300 transition-all cursor-pointer"
+                    title="พิมพ์ / บันทึกเป็น PDF"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-                  {/* Preview Button for PDFs (เปิดอ่านได้โดยไม่ต้องดาวน์โหลด) */}
-                  {isPdfFile && activeFileUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setPreviewDoc(item)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                      title="เปิดดูเอกสารตัวเต็มในระบบโดยไม่ต้องดาวน์โหลด"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                      <span>เปิดอ่าน</span>
-                    </button>
-                  )}
-
-                  {/* Primary Download Button */}
-                  {activeFileUrl ? (
-                    <a
-                      href={activeFileUrl}
-                      download={item.fileRef || `${item.id}.pdf`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition-all cursor-pointer"
-                      title="ดาวน์โหลดไฟล์ลงเครื่อง"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>
-                        {item.fileType?.includes('WORD')
-                          ? 'ดาวน์โหลด Word'
-                          : item.fileType?.includes('EXCEL')
-                          ? 'ดาวน์โหลด Excel'
-                          : 'ดาวน์โหลด'}
-                      </span>
-                    </a>
-                  ) : (
-                    <span className="text-stone-400 dark:text-stone-500 text-[11px]">
-                      ไม่มีไฟล์แนบ
-                    </span>
-                  )}
-                </div>
+                {doc.linkedTab && setCurrentTab && (
+                  <button
+                    onClick={() => setCurrentTab(doc.linkedTab)}
+                    className="w-full text-left py-1 px-2 rounded-lg text-[11px] font-bold text-stone-500 hover:text-amber-800 dark:hover:text-amber-300 flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <span className="truncate">เชื่อมโยง: {doc.linkedTabName}</span>
+                    <ArrowRight className="w-3 h-3 shrink-0" />
+                  </button>
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      {filteredItems.length === 0 && (
-        <div className="bg-white dark:bg-stone-900 rounded-2xl p-12 text-center border border-stone-200/80 dark:border-stone-800 text-stone-500 dark:text-stone-400 space-y-3">
-          <FileSpreadsheet className="w-10 h-10 text-stone-300 dark:text-stone-700 mx-auto" />
-          <div className="text-base font-bold text-stone-700 dark:text-stone-200">ไม่พบแบบฟอร์มที่ค้นหา</div>
-          <div className="text-xs max-w-sm mx-auto">
-            ลองค้นหาด้วยคำสำคัญอื่น เช่น <strong>ว 3482</strong>, <strong>การบริหารความเสี่ยง</strong> หรือกดเลือกหมวดหมู่ <strong>"ทั้งหมด"</strong>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setSearchTerm('');
-              setSelectedCategory('all');
-            }}
-            className="px-4 py-2 bg-amber-50 dark:bg-stone-800 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-xl cursor-pointer hover:bg-amber-100"
-          >
-            ล้างคำค้นหาทั้งหมด
-          </button>
+      {filteredTemplates.length === 0 && (
+        <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
+          <FileText className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-stone-700 dark:text-stone-200">ไม่พบบันทึกข้อความหรือคำสั่งที่ตรงกับเงื่อนไข</h3>
+          <p className="text-xs text-stone-500 mt-1">ลองเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่อื่น</p>
         </div>
       )}
 
-      {/* =========================================================================
-          PDF PREVIEW MODAL (เปิดดูเอกสารได้โดยตรงโดยไม่ต้องดาวน์โหลด)
-      ========================================================================= */}
+      {/* FULL A4 SARABAN PREVIEW MODAL */}
       {previewDoc && (
-        <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-stone-900 w-full max-w-5xl h-[92vh] rounded-2xl shadow-2xl border border-stone-200/80 dark:border-stone-800 flex flex-col overflow-hidden">
-            {/* Modal Header */}
-            <div className="p-4 border-b border-stone-200/80 dark:border-stone-800 flex items-center justify-between gap-3 bg-stone-50 dark:bg-stone-850">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <FileCheck2 className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 truncate">
-                    {previewDoc.title}
-                  </h3>
-                  {previewDoc.topic && (
-                    <p className="text-[11px] text-amber-800 dark:text-amber-400 truncate">
-                      {previewDoc.topic}
-                    </p>
-                  )}
-                </div>
+        <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-stone-100 dark:bg-stone-900 rounded-3xl max-w-4xl w-full max-h-[95vh] flex flex-col border border-stone-300 dark:border-stone-800 shadow-2xl overflow-hidden">
+            {/* Modal Control Header */}
+            <div className="p-4 bg-white dark:bg-stone-850 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between gap-4">
+              <div className="flex items-center space-x-2 truncate">
+                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                  {previewDoc.code}
+                </span>
+                <span className="font-bold text-sm text-stone-800 dark:text-stone-100 truncate">
+                  {previewDoc.title}
+                </span>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={previewDoc.fileUrl || previewDoc.downloadUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 rounded-lg bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                  title="เปิดในแท็บใหม่"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">เปิดในแท็บใหม่</span>
-                </a>
-
-                <a
-                  href={previewDoc.fileUrl || previewDoc.downloadUrl}
-                  download={previewDoc.fileRef || `${previewDoc.id}.pdf`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  onClick={() => handleDownloadWord(previewDoc)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>ดาวน์โหลดไฟล์</span>
-                </a>
+                  <span>ดาวน์โหลด Word (.doc)</span>
+                </button>
 
                 <button
-                  type="button"
+                  onClick={() => handlePrintDocument(previewDoc)}
+                  className="bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 text-stone-800 dark:text-stone-200 font-bold py-1.5 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>พิมพ์ / PDF</span>
+                </button>
+
+                <button
                   onClick={() => setPreviewDoc(null)}
-                  className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-200/60 dark:hover:bg-stone-800 cursor-pointer transition-colors"
+                  className="text-stone-400 hover:text-stone-600 p-1.5 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            {/* Modal Iframe */}
-            <div className="flex-1 bg-stone-100 dark:bg-stone-950 p-2 overflow-hidden flex flex-col">
-              <iframe
-                src={`${previewDoc.fileUrl || previewDoc.downloadUrl}#toolbar=1&navpanes=1`}
-                className="w-full h-full rounded-lg border border-stone-300 dark:border-stone-800 bg-white"
-                title={previewDoc.title}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          ADMIN ADD / UPLOAD FORM MODAL (เฉพาะ ADMIN เท่านั้น)
-      ========================================================================= */}
-      {isAdmin && isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-stone-900 w-full max-w-lg rounded-2xl shadow-2xl border border-stone-200/80 dark:border-stone-800 overflow-hidden my-8">
-            <div className="p-4 border-b border-stone-100 dark:border-stone-800 flex items-center justify-between bg-stone-50 dark:bg-stone-850">
-              <div className="flex items-center space-x-2 text-stone-900 dark:text-stone-100 font-bold">
-                <Plus className="w-5 h-5 text-amber-700 dark:text-amber-400" />
-                <span>เพิ่มแบบฟอร์มมาตรฐานใหม่ (สำหรับ ADMIN)</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="text-stone-400 hover:text-stone-600 p-1 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddDocument} className="p-5 space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
-                    หมวดหมู่แบบฟอร์ม <span className="text-rose-500">*</span>:
-                  </label>
-                  <select
-                    value={newDoc.category}
-                    onChange={(e) => setNewDoc({ ...newDoc, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-bold"
-                  >
-                    {categories
-                      .filter((c) => c.id !== 'all')
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
-                    รหัส / เลขที่แบบฟอร์ม:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เช่น ว 3482 หรือ บส. 1"
-                    value={newDoc.code}
-                    onChange={(e) => setNewDoc({ ...newDoc, code: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
-                  ชื่อแบบฟอร์ม <span className="text-rose-500">*</span>:
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น แบบรายงานการบริหารจัดการความเสี่ยง..."
-                  value={newDoc.title}
-                  onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-bold"
+            {/* Modal Body: Realistic Thai Saraban Sheet */}
+            <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar flex justify-center bg-stone-200/60 dark:bg-stone-950">
+              {previewDoc.docType === 'order' ? (
+                <OfficialThaiOrder
+                  orderHeader={previewDoc.title || `คำสั่ง${orgName}`}
+                  orderNumber={previewDoc.docNumber || 'ที่ ........./๒๕๖๙'}
+                  orderSubject={previewDoc.subject || previewDoc.title}
+                  preamble={(previewDoc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                  clauses={(previewDoc.orderClauses || []).map((c) =>
+                    c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
+                  )}
+                  effectiveDate={(previewDoc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                  issuedDate={previewDoc.docDate || ''}
+                  signatory={{
+                    name: previewDoc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])',
+                    position: previewDoc.orderSignatoryPosition
+                      ? previewDoc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
+                      : `นายก${orgName}`
+                  }}
                 />
-              </div>
-
-              <div>
-                <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
-                  ชื่อเรื่อง / อ้างอิงหนังสือสั่งการ:
-                </label>
-                <input
-                  type="text"
-                  placeholder="เช่น หนังสือกระทรวงมหาดไทย ด่วนที่สุด ที่ มท..."
-                  value={newDoc.topic}
-                  onChange={(e) => setNewDoc({ ...newDoc, topic: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-stone-700 dark:text-stone-300 font-bold mb-1">
-                  คำอธิบายสรุปสาระสำคัญ:
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="สรุปวัตถุประสงค์และการนำแบบฟอร์มนี้ไปใช้งาน..."
-                  value={newDoc.summary}
-                  onChange={(e) => setNewDoc({ ...newDoc, summary: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100"
-                />
-              </div>
-
-              {/* File Upload Box */}
-              <div className="p-3.5 rounded-xl border border-dashed border-amber-300 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 space-y-2">
-                <label className="block text-stone-800 dark:text-stone-200 font-bold">
-                  อัปโหลดไฟล์เอกสารจากเครื่อง (PDF, Word, Excel):
-                </label>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx"
-                  onChange={handleFileUpload}
-                  className="w-full text-xs text-stone-600 dark:text-stone-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-700 file:text-white hover:file:bg-amber-600 cursor-pointer"
-                />
-                {newDoc.fileRef && (
-                  <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5" />
-                    <span>
-                      แนบไฟล์: {newDoc.fileRef} ({newDoc.fileSize}) - {newDoc.fileType}
-                    </span>
+              ) : previewDoc.docType === 'charter' || previewDoc.docType === 'plan' ? (
+                <div
+                  className="bg-white text-black p-8 sm:p-14 max-w-4xl w-full mx-auto shadow-md border border-stone-300"
+                  style={{
+                    fontFamily: "'Sarabun', 'TH Sarabun New', Tahoma, sans-serif",
+                    lineHeight: 1.6,
+                    fontSize: '15px'
+                  }}
+                >
+                  <div className="text-center pb-4">
+                    <div className="font-bold text-lg mb-1">(ตราครุฑ)</div>
+                    <h1 className="font-bold text-xl text-black">
+                      {previewDoc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                    </h1>
+                    <div className="font-bold text-sm text-stone-600 mt-1">{previewDoc.docNumber}</div>
                   </div>
-                )}
+                  <hr className="border-stone-400 my-4" />
+                  <div className="space-y-4 py-2 text-justify text-[15px] leading-relaxed whitespace-pre-line">
+                    {(previewDoc.fullContent || previewDoc.summary).replace(
+                      /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                      orgName
+                    )}
+                  </div>
+                  <div className="pt-8 flex justify-end">
+                    <div className="w-64 text-center space-y-4">
+                      <div>(ลงชื่อ)........................................................</div>
+                      <div className="font-bold">
+                        {previewDoc.signatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}
+                      </div>
+                      <div className="text-sm">นายก{orgName}</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <OfficialThaiMemo
+                  agency={
+                    previewDoc.agency
+                      ? previewDoc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
+                      : `หน่วยตรวจสอบภายใน ${orgName}`
+                  }
+                  phone={previewDoc.phone || '๐-xxxx-xxxx'}
+                  docNumber={previewDoc.docNumber || 'อบ ........./๒๕๖๙'}
+                  date={previewDoc.docDate || '...... เดือน ................... พ.ศ. .........'}
+                  subject={previewDoc.subject || previewDoc.title}
+                  to={
+                    previewDoc.to
+                      ? previewDoc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
+                      : `นายก${orgName} (ผ่าน ปลัด${orgName})`
+                  }
+                  signatory={{
+                    name: previewDoc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])',
+                    position: previewDoc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+                    role: previewDoc.signatoryRole || 'ผู้ตรวจสอบภายใน'
+                  }}
+                  palatReview={{
+                    name: '........................................................',
+                    position: `ปลัด${orgName}`
+                  }}
+                  executiveOrder={{
+                    name: '........................................................',
+                    position: `นายก${orgName}`
+                  }}
+                  showReviewBoxes={true}
+                >
+                  <p className="indent-10">
+                    {(previewDoc.part1_background || '').replace(
+                      /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                      orgName
+                    )}
+                  </p>
+                  <p className="indent-10">
+                    {(previewDoc.part2_facts || '').replace(
+                      /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                      orgName
+                    )}
+                  </p>
+                  <p className="indent-10">
+                    {(previewDoc.part3_proposal || '').replace(
+                      /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                      orgName
+                    )}
+                  </p>
+                </OfficialThaiMemo>
+              )}
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div className="p-4 bg-white dark:bg-stone-850 border-t border-stone-200 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() =>
+                    handleCopyText(
+                      previewDoc.id,
+                      previewDoc.fullContent ||
+                        `${previewDoc.title}\n\n${previewDoc.part1_background}\n\n${previewDoc.part2_facts}\n\n${previewDoc.part3_proposal}`
+                    )
+                  }
+                  className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>คัดลอกข้อความ</span>
+                </button>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-200/80 dark:border-stone-800">
+              <div className="flex items-center space-x-2">
+                {previewDoc.linkedTab && setCurrentTab && (
+                  <button
+                    onClick={() => {
+                      setCurrentTab(previewDoc.linkedTab);
+                      setPreviewDoc(null);
+                    }}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>เปิดใช้งานในระบบ ({previewDoc.linkedTabName})</span>
+                  </button>
+                )}
+
                 <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold cursor-pointer"
+                  onClick={() => setPreviewDoc(null)}
+                  className="bg-stone-800 text-white hover:bg-stone-700 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer"
                 >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold shadow-xs cursor-pointer"
-                >
-                  บันทึกแบบฟอร์ม
+                  ปิดหน้าต่าง
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
