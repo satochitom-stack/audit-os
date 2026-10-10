@@ -976,6 +976,55 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                     </div>
                   </div>
                 </form>
+
+                {/* System Update Broadcast (เหมือนระบบร้านคำก้อมวัสดุ) */}
+                <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-stone-50/80 dark:bg-stone-850/80 p-3.5 rounded-2xl border border-stone-200/60 dark:border-stone-800">
+                  <div className="flex items-center space-x-2.5">
+                    <span className="text-amber-500 text-sm">✨</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-stone-900 dark:text-stone-100">
+                        แจ้งเตือนอัปเดตเวอร์ชันใหม่ (แบบระบบร้านคำก้อมวัสดุ)
+                      </h4>
+                      <p className="text-[11px] text-stone-500">
+                        ส่งป๊อปอัปแจ้งเตือนสีเข้มขรึม พร้อมข้อความยืนยันความปลอดภัยบน Cloud ไปยังหน้าจอผู้ใช้งานทุกคน
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent('audit-system-update-detected', {
+                            detail: {
+                              title: 'ระบบมีการอัปเดตเวอร์ชันใหม่!',
+                              description: 'ทางทีมงานได้ทำการอัปเดตและปรับปรุงฟีเจอร์ใหม่เรียบร้อยแล้ว ข้อมูลทั้งหมดของคุณปลอดภัยในระบบ Cloud สามารถคลิกปุ่มด้านขวาเพื่อเริ่มใช้งานเวอร์ชันใหม่ได้ทันที'
+                            }
+                          })
+                        );
+                        showToast('👁️ เปิดแสดงตัวอย่างการแจ้งเตือนอัปเดตแล้ว');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-200 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      ดูตัวอย่าง
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await broadcastSystemUpdate({
+                          title: 'ระบบมีการอัปเดตเวอร์ชันใหม่!',
+                          description: 'ทางทีมงานได้ทำการอัปเดตและปรับปรุงฟีเจอร์ใหม่เรียบร้อยแล้ว ข้อมูลทั้งหมดของคุณปลอดภัยในระบบ Cloud สามารถคลิกปุ่มด้านขวาเพื่อเริ่มใช้งานเวอร์ชันใหม่ได้ทันที'
+                        });
+                        showToast('🚀 ส่งสัญญาณแจ้งเตือนอัปเดตไปยังผู้ใช้ทุกคนผ่าน Cloud เรียบร้อยแล้ว!');
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center space-x-1.5"
+                    >
+                      <span>🚀 ส่งสัญญาณอัปเดต</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>

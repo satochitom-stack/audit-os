@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.5.3';
+const appVersion = '2.5.4';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS อัปเดตเวอร์ชันใหม่',
-        description: 'ระบบได้รับการอัปเดตฟังก์ชันและปรับปรุงประสิทธิภาพล่าสุดเรียบร้อยแล้ว',
-        changeSummary: 'ปรับปรุงระบบกระดาษทำการ การจัดการสมาชิก และระบบแจ้งเตือนอัปเดต'
+        title: 'ระบบมีการอัปเดตเวอร์ชันใหม่!',
+        description: 'ทางทีมงานได้ทำการอัปเดตและปรับปรุงฟีเจอร์ใหม่เรียบร้อยแล้ว ข้อมูลทั้งหมดของคุณปลอดภัยในระบบ Cloud สามารถคลิกปุ่มด้านขวาเพื่อเริ่มใช้งานเวอร์ชันใหม่ได้ทันที',
+        changeSummary: ''
       };
       try {
         if (!fs.existsSync('./public')) {

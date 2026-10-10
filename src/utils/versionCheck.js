@@ -1,12 +1,18 @@
 /**
  * versionCheck.js
- * Utility to detect new application builds and broadcast updates across tabs.
+ * Utility to detect new application builds and broadcast updates across tabs & Cloud.
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.5.3';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
+
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.5.4';
 export const APP_BUILD_TIME = typeof __BUILD_TIMESTAMP__ !== 'undefined' ? Number(__BUILD_TIMESTAMP__) : Date.now();
 
 const BROADCAST_CHANNEL_NAME = 'audit_os_system_updates';
+
+export const DEFAULT_UPDATE_TITLE = 'ระบบมีการอัปเดตเวอร์ชันใหม่!';
+export const DEFAULT_UPDATE_DESC = 'ทางทีมงานได้ทำการอัปเดตและปรับปรุงฟีเจอร์ใหม่เรียบร้อยแล้ว ข้อมูลทั้งหมดของคุณปลอดภัยในระบบ Cloud สามารถคลิกปุ่มด้านขวาเพื่อเริ่มใช้งานเวอร์ชันใหม่ได้ทันที';
 
 /**
  * Fetch latest version metadata from public/version.json
@@ -25,7 +31,6 @@ export async function fetchRemoteVersion() {
     const data = await response.json();
     return data;
   } catch (err) {
-    // Silently ignore network failures in offline / dev mode
     return null;
   }
 }
@@ -37,12 +42,10 @@ export function isNewVersionAvailable(remoteData) {
   if (!remoteData) return false;
 
   const remoteTime = Number(remoteData.buildTime) || 0;
-  // If remote build is newer by more than 2 seconds
   if (remoteTime > APP_BUILD_TIME + 2000) {
     return true;
   }
 
-  // If semantic version is higher
   if (remoteData.version && remoteData.version !== APP_VERSION) {
     return true;
   }
@@ -51,15 +54,15 @@ export function isNewVersionAvailable(remoteData) {
 }
 
 /**
- * Broadcast an update event (Admin can trigger this or system can notify tabs)
+ * Broadcast an update event across browser tabs AND Cloud Firestore
  */
-export function broadcastSystemUpdate(customDetails = {}) {
+export async function broadcastSystemUpdate(customDetails = {}) {
   const updatePayload = {
     version: customDetails.version || APP_VERSION,
     buildTime: Date.now(),
-    title: customDetails.title || 'ระบบ Audit-OS อัปเดตเวอร์ชันใหม่',
-    description: customDetails.description || 'มีการปรับปรุงระบบและฟังก์ชันการทำงานล่าสุดเรียบร้อยแล้ว',
-    changeSummary: customDetails.changeSummary || 'กรุณารีเฟรชหน้าเว็บเพื่อใช้งานฟังก์ชันเวอร์ชันล่าสุด',
+    title: customDetails.title || DEFAULT_UPDATE_TITLE,
+    description: customDetails.description || DEFAULT_UPDATE_DESC,
+    changeSummary: customDetails.changeSummary || '',
     triggeredAt: Date.now()
   };
 
@@ -72,6 +75,12 @@ export function broadcastSystemUpdate(customDetails = {}) {
       channel.postMessage(updatePayload);
       channel.close();
     }
+
+    // Broadcast via Cloud Firestore to all connected devices
+    if (db) {
+      const docRef = doc(db, 'system_settings', 'version_update');
+      await setDoc(docRef, updatePayload, { merge: true });
+    }
   } catch (e) {
     console.warn('Broadcast notice error:', e);
   }
@@ -80,7 +89,33 @@ export function broadcastSystemUpdate(customDetails = {}) {
 }
 
 /**
- * Reloads the application and clears cache storage if possible
+ * Subscribe to Cloud Firestore update broadcasts
+ */
+export function subscribeToCloudUpdateBroadcast(callback) {
+  if (!db) return () => {};
+  try {
+    const docRef = doc(db, 'system_settings', 'version_update');
+    return onSnapshot(
+      docRef,
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data && data.triggeredAt && data.triggeredAt > APP_BUILD_TIME) {
+            callback(data);
+          }
+        }
+      },
+      (err) => {
+        console.warn('Cloud update listener error:', err.message);
+      }
+    );
+  } catch (err) {
+    return () => {};
+  }
+}
+
+/**
+ * Reloads the application and clears cache storage
  */
 export async function reloadAppForUpdate() {
   try {
