@@ -51,6 +51,8 @@ import {
   autoRepairDataLinkages,
   getUsers,
   saveUsers,
+  pullUsersFromCloud,
+  subscribeToCloudUsers,
   getDepartments,
   saveDepartments,
   getPendingUsers,
@@ -118,6 +120,15 @@ export default function App() {
     };
     window.addEventListener('ia-pending-users-changed', handlePendingChanged);
     return () => window.removeEventListener('ia-pending-users-changed', handlePendingChanged);
+  }, []);
+
+  // Firebase Cloud Firestore Users Synchronization (real-time cross-device sync)
+  useEffect(() => {
+    pullUsersFromCloud();
+    const unsub = subscribeToCloudUsers(() => {
+      // Users updated in background
+    });
+    return () => unsub();
   }, []);
 
   // Supabase Cloud Realtime listener for pending registrations

@@ -4,6 +4,16 @@
 
 import { getSupabaseClient, isSupabaseConfigured } from '../services/supabaseClient';
 import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  onSnapshot
+} from 'firebase/firestore';
+import { db } from '../services/firebase';
+import {
   DLA_RISK_ASSESSMENT_16,
   DLA_ANNUAL_AUDIT_PLAN_DATA,
   DLA_STRATEGIC_PLAN_3YEARS
@@ -444,6 +454,105 @@ export function autoRepairDataLinkages() {
 // -------------------------------------------------------------
 // User Management Functions
 // -------------------------------------------------------------
+// Firebase Cloud Firestore Synchronization
+// -------------------------------------------------------------
+export async function syncUserToCloud(user) {
+  if (!db || !user?.username) return;
+  try {
+    const cleanUsername = user.username.trim().toLowerCase();
+    const docRef = doc(db, 'platform_users', cleanUsername);
+    const cleanData = JSON.parse(JSON.stringify(user));
+    await setDoc(docRef, cleanData, { merge: true });
+  } catch (err) {
+    console.warn('Firestore user sync notice:', err.message);
+  }
+}
+
+export async function deleteUserFromCloud(username) {
+  if (!db || !username) return;
+  try {
+    const clean = username.trim().toLowerCase();
+    const docRef = doc(db, 'platform_users', clean);
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.warn('Firestore user delete notice:', err.message);
+  }
+}
+
+export async function pullUsersFromCloud() {
+  if (!db) return getUsers();
+  try {
+    const colRef = collection(db, 'platform_users');
+    const snapshot = await getDocs(colRef);
+    const localUsers = getUsers();
+    const cloudUserMap = new Map();
+
+    if (!snapshot.empty) {
+      snapshot.docs.forEach((d) => {
+        const u = d.data();
+        if (u?.username) cloudUserMap.set(u.username.toLowerCase(), u);
+      });
+    }
+
+    // Merge: cloud users into local cache
+    const mergedMap = new Map();
+    localUsers.forEach((u) => mergedMap.set(u.username.toLowerCase(), u));
+    cloudUserMap.forEach((u, k) => {
+      const existing = mergedMap.get(k) || {};
+      mergedMap.set(k, { ...existing, ...u });
+    });
+
+    // Proactively sync any local users up to cloud if they were registered locally
+    localUsers.forEach((u) => {
+      if (u.username && !cloudUserMap.has(u.username.toLowerCase())) {
+        syncUserToCloud(u);
+      }
+    });
+
+    const mergedList = Array.from(mergedMap.values());
+    saveUsers(mergedList);
+    return mergedList;
+  } catch (err) {
+    console.warn('Firestore pull users notice:', err.message);
+  }
+  return getUsers();
+}
+
+export function subscribeToCloudUsers(callback) {
+  if (!db) return () => {};
+  try {
+    const colRef = collection(db, 'platform_users');
+    return onSnapshot(
+      colRef,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudUsers = snapshot.docs.map((d) => d.data());
+          const localUsers = getUsers();
+          const mergedMap = new Map();
+          localUsers.forEach((u) => mergedMap.set(u.username.toLowerCase(), u));
+          cloudUsers.forEach((u) => {
+            if (u.username) {
+              const existing = mergedMap.get(u.username.toLowerCase()) || {};
+              mergedMap.set(u.username.toLowerCase(), { ...existing, ...u });
+            }
+          });
+          const mergedList = Array.from(mergedMap.values());
+          saveUsers(mergedList);
+          if (typeof callback === 'function') {
+            callback(mergedList);
+          }
+        }
+      },
+      (err) => {
+        console.warn('Realtime cloud users listener notice:', err.message);
+      }
+    );
+  } catch (err) {
+    console.warn('Realtime cloud users listener setup error:', err.message);
+    return () => {};
+  }
+}
+
 export function getUsers() {
   try {
     const raw = localStorage.getItem(USERS_KEY);
@@ -501,6 +610,7 @@ export async function addUser({ username, displayName, organization, province, p
 
   users.push(newUser);
   saveUsers(users);
+  syncUserToCloud(newUser);
   return newUser;
 }
 
@@ -520,6 +630,7 @@ export async function updateUser(username, updates) {
 
   users[idx] = user;
   saveUsers(users);
+  syncUserToCloud(user);
 
   // If updating current session, refresh
   const cur = getSession();
@@ -536,6 +647,7 @@ export function deleteUser(username) {
   const users = getUsers();
   const updated = users.filter((u) => u.username?.toLowerCase() !== clean);
   saveUsers(updated);
+  deleteUserFromCloud(clean);
   return updated;
 }
 
@@ -616,6 +728,7 @@ export function extendMemberSubscription(username, extraDays = 30, planId = 'mon
   };
 
   saveUsers(users);
+  syncUserToCloud(users[idx]);
   return users[idx];
 }
 
@@ -696,6 +809,7 @@ export async function registerUser({ username, displayName, organization, distri
 
   existingUsers.push(newUser);
   saveUsers(existingUsers);
+  syncUserToCloud(newUser);
 
   // Keep a record in registration log
   const pendingList = getPendingUsers();
@@ -759,6 +873,7 @@ export function approveMemberRegistration(pendingId, planId = 'annual', duration
     users.push(newUser);
   }
   saveUsers(users);
+  syncUserToCloud(newUser);
 
   pendingList.splice(idx, 1);
   savePendingUsers(pendingList);
@@ -816,7 +931,26 @@ export async function verifyLogin(username, password) {
   }
 
   // 3. Registered Auditor lookup
-  const user = getUserByUsername(trimmed);
+  let user = getUserByUsername(trimmed);
+
+  // If not found in local browser cache, check directly in Cloud Firestore
+  if (!user && db) {
+    try {
+      const docRef = doc(db, 'platform_users', trimmed);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        user = snap.data();
+        const currentUsers = getUsers();
+        if (!currentUsers.some((u) => u.username?.toLowerCase() === trimmed)) {
+          currentUsers.push(user);
+          saveUsers(currentUsers);
+        }
+      }
+    } catch (e) {
+      console.warn('Cloud login lookup notice:', e.message);
+    }
+  }
+
   if (user) {
     if (user.status === 'suspended') {
       throw new Error('บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');

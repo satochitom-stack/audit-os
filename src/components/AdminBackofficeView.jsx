@@ -46,6 +46,8 @@ import {
 import {
   getUsers,
   saveUsers,
+  pullUsersFromCloud,
+  subscribeToCloudUsers,
   getPendingUsers,
   savePendingUsers,
   MEMBERSHIP_PLANS,
@@ -134,16 +136,33 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const reloadData = () => {
-    setUsers(getUsers());
+  const reloadData = async () => {
+    try {
+      const cloudUsers = await pullUsersFromCloud();
+      if (cloudUsers) setUsers(cloudUsers);
+      else setUsers(getUsers());
+    } catch (_) {
+      setUsers(getUsers());
+    }
     setPendingUsers(getPendingUsers());
     setPayments(getPaymentRecords());
     const s = getSystemSettings();
     setSettings(s);
     setBroadcastText(s.announcement || '');
     setIsBroadcastActive(s.broadcastActive !== false);
-    showToast('รีเฟรชข้อมูลระบบล่าสุดเรียบร้อยแล้ว');
+    showToast('รีเฟรชข้อมูลระบบล่าสุดจากคลาวด์เรียบร้อยแล้ว');
   };
+
+  // Realtime Cloud Firestore sync for Users list
+  useEffect(() => {
+    pullUsersFromCloud().then((cloudUsers) => {
+      if (cloudUsers) setUsers(cloudUsers);
+    });
+    const unsub = subscribeToCloudUsers((cloudUsers) => {
+      if (cloudUsers) setUsers(cloudUsers);
+    });
+    return () => unsub();
+  }, []);
 
   // Close 3-dots action menu when clicking outside
   useEffect(() => {
