@@ -1648,6 +1648,7 @@ export default function App() {
                 key={`central-hub-${selectedYear}`}
                 session={session}
                 onCloneToWorkingPapers={handleCloneToWorkingPapers}
+                onNavigateTab={setCurrentTab}
               />
             )}
 

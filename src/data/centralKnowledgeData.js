@@ -1,8 +1,10 @@
-// คลังเอกสารกลางและฐานความรู้สำหรับผู้ตรวจสอบภายใน อปท. (Central Knowledge & Document Hub)
-// รวบรวมระเบียบ กฎหมาย หนังสือสั่งการ ตัวอย่างกระดาษทำการจาก สถ. และไดรฟ์ D:\งานตรวจสอบภายใน\เอกสารความรู้-เอกสารตัวอย่าง
+import { V614_WORKFILES_DOCUMENTS, V614_STAGES, V614_BOOK_CHAPTERS } from './v614TemplatesData';
+
+export { V614_STAGES, V614_BOOK_CHAPTERS, V614_WORKFILES_DOCUMENTS };
 
 export const CENTRAL_DOC_CATEGORIES = [
   { id: 'all', label: 'ทั้งหมด', icon: 'FolderOpen' },
+  { id: 'v614-workfiles', label: 'ชุดไฟล์งาน ว 614 ครบวงจร (20 แฟ้ม)', icon: 'ShieldCheck' },
   { id: 'regulations', label: 'กฎหมาย & ระเบียบการเงินการคลัง', icon: 'BookOpen' },
   { id: 'working-papers', label: 'ต้นแบบกระดาษทำการ & เช็คลิสต์', icon: 'ClipboardCheck' },
   { id: 'curriculum-2569', label: 'หลักสูตรผู้ตรวจสอบ (หลักสูตรทอง) 2569', icon: 'GraduationCap' },
@@ -11,6 +13,10 @@ export const CENTRAL_DOC_CATEGORIES = [
 ];
 
 export const INITIAL_CENTRAL_DOCUMENTS = [
+  // ==========================================
+  // หมวดพิเศษ: ชุดไฟล์งาน ว 614 ครบวงจร (20 แฟ้มมาตรฐาน)
+  // ==========================================
+  ...V614_WORKFILES_DOCUMENTS,
   // ==========================================
   // หมวดที่ 1: กฎหมาย & ระเบียบการเงินการคลัง
   // ==========================================
