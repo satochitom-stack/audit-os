@@ -1406,14 +1406,17 @@ export default function AuditRiskView({
 
               <OfficialDocActionToolbar
                 onDownloadWord={handleDownloadWord}
+                wordTitle="แบบประเมินความเสี่ยง / บันทึกข้อความ (.doc)"
+                wordSubtitle={`แบบฟอร์มประเมินความเสี่ยง SOFCK และบันทึกข้อความเสนออนุมัติ ปี ${selectedYear}`}
                 onDownloadExcel={handleDownloadExcel}
+                excelTitle="ตารางประเมินความเสี่ยง SOFCK (.xlsx)"
+                excelSubtitle={`ตารางกิจกรรมและคะแนน 5 มิติ SOFCK ปีงบประมาณ ${selectedYear}`}
                 onPrint={() => {
                   setActiveSubTab('report');
                   setTimeout(() => window.print(), 200);
                 }}
-                wordTooltip="ดาวน์โหลดแบบฟอร์มประเมินความเสี่ยง / บันทึกข้อความ Word (.doc)"
-                excelTooltip="ดาวน์โหลดตารางความเสี่ยง SOFCK 16 กิจกรรม Excel (.xlsx)"
-                printTooltip="ดูตัวอย่างเอกสารรายงานและสั่งพิมพ์"
+                pdfTitle="พิมพ์รายงานการประเมินความเสี่ยง / PDF"
+                pdfSubtitle="พิมพ์แบบฟอร์ม สถ. หรือบันทึกข้อความเสนออนุมัติ (A4)"
               />
             </div>
 
@@ -1829,11 +1832,14 @@ export default function AuditRiskView({
 
             <OfficialDocActionToolbar
               onDownloadWord={handleDownloadWord}
+              wordTitle={reportFormat === 'dla-form' ? 'แบบฟอร์มประเมินความเสี่ยง สถ. (.doc)' : 'บันทึกข้อความเสนออนุมัติผลประเมิน (.doc)'}
+              wordSubtitle={reportFormat === 'dla-form' ? `ตารางประเมินกิจกรรมความเสี่ยงตามคู่มือ สถ. ปี ${selectedYear}` : `บันทึกข้อความตามระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖ ปี ${selectedYear}`}
               onDownloadExcel={handleDownloadExcel}
+              excelTitle="ตารางคะแนนประเมินความเสี่ยง (.xlsx)"
+              excelSubtitle={`ข้อมูลกิจกรรม สำนัก/กอง และคะแนนเฉลี่ย ปี ${selectedYear}`}
               onPrint={() => window.print()}
-              wordTooltip="ดาวน์โหลดเอกสาร Word (.doc) ตามระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖"
-              excelTooltip="ดาวน์โหลดตารางการประเมินความเสี่ยง Excel (.xlsx)"
-              printTooltip="สั่งพิมพ์เอกสาร หรือบันทึกเป็น PDF"
+              pdfTitle="พิมพ์เอกสารทางการ / บันทึกเป็น PDF"
+              pdfSubtitle="พิมพ์รายงานรูปแบบที่เลือก หรือบันทึกเป็น PDF"
             />
           </div>
 

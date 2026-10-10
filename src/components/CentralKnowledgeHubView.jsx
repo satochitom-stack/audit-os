@@ -252,41 +252,26 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>คลังเอกสารและคู่มือมาตรฐาน</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ระเบียบ • คู่มือ สถ. • มาตรฐานสากล</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <BookOpen className="w-3.5 h-3.5 text-stone-500" />
-                <span>แชร์ใช้งานร่วมกันทุก อปท.</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              คลังเอกสารกลาง & ฐานความรู้ผู้ตรวจสอบภายใน อปท.
-            </h1>
-            <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-              รวบรวมระเบียบการเงินการคลัง พ.ร.บ. จัดซื้อจัดจ้างฯ คู่มือมาตรฐาน สถ. สไลด์หลักสูตรผู้ตรวจสอบ (หลักสูตรทอง) และรวมประเด็นข้อทักท้วง สตง. ที่พบบ่อย
-            </p>
+      {/* Top Banner */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>คลังเอกสารและคู่มือมาตรฐาน</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ระเบียบ • คู่มือ สถ. • มาตรฐานสากล</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <BookOpen className="w-3.5 h-3.5 text-stone-500" />
+              <span>แชร์ใช้งานร่วมกันทุก อปท.</span>
+            </span>
           </div>
-
-          {isAdmin && (
-            <button
-              onClick={() => setShowAddDocModal(true)}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-2 cursor-pointer self-start md:self-auto shrink-0 border border-amber-500/30"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ เพิ่มเอกสารในคลังกลาง (ADMIN)</span>
-            </button>
-          )}
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            คลังเอกสารกลาง & ฐานความรู้ผู้ตรวจสอบภายใน อปท.
+          </h1>
         </div>
       </div>
 
@@ -331,7 +316,17 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
           </div>
 
           {/* Search Box */}
-          <div className="relative min-w-[260px]">
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddDocModal(true)}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-3.5 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0 border border-amber-500/30"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ เพิ่มเอกสาร (ADMIN)</span>
+              </button>
+            )}
+            <div className="relative min-w-[220px]">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
             <input
               type="text"
@@ -348,6 +343,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
+          </div>
           </div>
         </div>
 

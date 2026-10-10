@@ -199,92 +199,95 @@ export default function OpeningMeetingView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              การประชุมเปิดการตรวจสอบ (Opening Meeting)
-            </h1>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              onClick={handleLoadDlaOpeningMeeting}
-              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
-              title="โหลดตัวอย่างรายงานการประชุมเปิดการตรวจสอบตามคู่มือ สถ. หน้า 50"
-            >
-              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>📥 โหลดตัวอย่าง สถ. (หน้า 50)</span>
-            </button>
-            <OfficialDocActionToolbar
-              onDownloadWord={handleDownloadWord}
-              onDownloadExcel={handleDownloadExcel}
-              onPrint={handlePrint}
-              wordTooltip="ดาวน์โหลดรายงานการประชุมเปิดตรวจ / หนังสือแจ้ง Word (.doc)"
-              excelTooltip="ดาวน์โหลดรายชื่อผู้เข้าร่วมประชุม Excel (.xlsx)"
-              printTooltip="พิมพ์เอกสารราชการ หรือบันทึกเป็น PDF"
-            />
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            การประชุมเปิดการตรวจสอบ (Opening Meeting)
+          </h1>
         </div>
       </div>
 
-      {/* Select Project & Subtabs */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <div className="flex items-center space-x-3">
-          <label className="text-xs font-bold text-stone-600 dark:text-stone-300 shrink-0">
-            เลือกโครงการตรวจสอบ:
-          </label>
-          <select
-            value={selectedPlanId}
-            onChange={(e) => setSelectedPlanId(e.target.value)}
-            className="text-xs p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold max-w-md text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
-          >
-            {annualPlans.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.projectName || p.title || p.topic} ({p.department || 'หน่วยรับตรวจ'})
-              </option>
-            ))}
-            {annualPlans.length === 0 && (
-              <option value="PLAN-01">การตรวจสอบการรับเงินและนำส่งเงิน (กองคลัง)</option>
-            )}
-          </select>
+      {/* Select Project & Action Controls Bar */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-3 sm:p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 print:hidden">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2">
+            <label className="text-xs font-bold text-stone-600 dark:text-stone-300 shrink-0">
+              โครงการ:
+            </label>
+            <select
+              value={selectedPlanId}
+              onChange={(e) => setSelectedPlanId(e.target.value)}
+              className="text-xs p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold max-w-xs text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer truncate"
+            >
+              {annualPlans.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.projectName || p.title || p.topic} ({p.department || 'หน่วยรับตรวจ'})
+                </option>
+              ))}
+              {annualPlans.length === 0 && (
+                <option value="PLAN-01">การตรวจสอบการรับเงินและนำส่งเงิน (กองคลัง)</option>
+              )}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-1.5">
+            <button
+              onClick={() => setActiveSubTab('minutes')}
+              className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeSubTab === 'minutes'
+                  ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                  : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 hover:bg-stone-200/80 border border-transparent'
+              }`}
+            >
+              รายงานประชุม (Minutes)
+            </button>
+            <button
+              onClick={() => setActiveSubTab('notice')}
+              className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeSubTab === 'notice'
+                  ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                  : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 hover:bg-stone-200/80 border border-transparent'
+              }`}
+            >
+              หนังสือแจ้งเข้าตรวจ (Notice)
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 shrink-0 self-end md:self-auto">
           <button
-            onClick={() => setActiveSubTab('minutes')}
-            className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeSubTab === 'minutes'
-                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-                : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 hover:bg-stone-200/80 border border-transparent'
-            }`}
+            onClick={handleLoadDlaOpeningMeeting}
+            className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+            title="โหลดตัวอย่างรายงานการประชุมเปิดการตรวจสอบตามคู่มือ สถ. หน้า 50"
           >
-            รายงานการประชุมเปิดตรวจ (Minutes)
+            <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span>📥 โหลดตัวอย่าง สถ. (หน้า 50)</span>
           </button>
-          <button
-            onClick={() => setActiveSubTab('notice')}
-            className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeSubTab === 'notice'
-                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-                : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 hover:bg-stone-200/80 border border-transparent'
-            }`}
-          >
-            หนังสือแจ้งเข้าตรวจล่วงหน้า (Notice Letter)
-          </button>
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadWord}
+            wordTitle="รายงานการประชุมเปิดตรวจ / หนังสือแจ้ง (.doc)"
+            wordSubtitle={`รายงานการประชุมเปิดตรวจโครงการ ${currentPlan.projectName || 'ตรวจสอบ'} (คู่มือ สถ. หน้า ๕๐)`}
+            onDownloadExcel={handleDownloadExcel}
+            excelTitle="รายชื่อผู้เข้าร่วมประชุม (.xlsx)"
+            excelSubtitle="บัญชีรายชื่อผู้เข้าร่วมประชุมเปิดการตรวจและหน่วยรับตรวจ"
+            onPrint={handlePrint}
+            pdfTitle="พิมพ์รายงานการประชุมเปิดตรวจ / PDF"
+            pdfSubtitle="พิมพ์รายงานการประชุมเปิดการตรวจสอบและใบลงชื่อ (A4)"
+          />
         </div>
       </div>
 

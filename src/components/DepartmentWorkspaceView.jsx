@@ -56,6 +56,7 @@ import {
   initialCdcFangthoengWorkspaceData
 } from '../data/initialData';
 import { exportDepartmentWorkspacesExcel } from '../services/reportExportService';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 
 export default function DepartmentWorkspaceView({
   orgProfile = {},
@@ -542,90 +543,90 @@ export default function DepartmentWorkspaceView({
         </div>
       )}
 
-      {/* Top Header & Department Switcher */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>พื้นที่ทำงานเฉพาะส่วนราชการ: {activeDept}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              พื้นที่ทำงานเฉพาะส่วนราชการ: {activeDept}
-            </h1>
+      {/* Top Banner */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>พื้นที่ทำงานเฉพาะส่วนราชการ: {activeDept}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            </span>
           </div>
-
-          {/* Department Switcher Tabs & Excel Export Button */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {isAdmin ? (
-              <div className="flex flex-wrap items-center bg-white/80 dark:bg-stone-800/80 p-1.5 rounded-2xl border border-stone-200/80 dark:border-stone-700/80 shrink-0 gap-1 shadow-2xs">
-                {[
-                  { id: 'สำนักปลัด', label: 'สำนักปลัด', icon: Building2 },
-                  { id: 'กองคลัง', label: 'กองคลัง', icon: BadgeDollarSign },
-                  { id: 'กองช่าง', label: 'กองช่าง', icon: HardHat },
-                  { id: 'กองการศึกษา', label: 'กองการศึกษา', icon: GraduationCap },
-                  { id: 'กองสวัสดิการสังคม', label: 'กองสวัสดิการสังคม', icon: HeartHandshake },
-                  { id: 'ศพด.วัดเจริญทัศน์', label: 'ศพด.วัดเจริญทัศน์', icon: Baby },
-                  { id: 'ศพด.บ้านฝางเทิง', label: 'ศพด.บ้านฝางเทิง', icon: Baby }
-                ].map((d) => {
-                  const isSelected = activeDept === d.id;
-                  const Icon = d.icon;
-                  return (
-                    <button
-                      key={d.id}
-                      onClick={() => setActiveDept(d.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
-                        isSelected
-                          ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-                          : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100/60 dark:hover:bg-stone-700/60 border border-transparent'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{d.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>เข้าสู่ระบบในฐานะ: {session?.displayName || userDept}</span>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                exportDepartmentWorkspacesExcel({
-                  officeData,
-                  financeData,
-                  techData,
-                  orgProfile,
-                  selectedYear
-                });
-                showToast(`📗 ส่งออกข้อมูล Excel ของ ${activeDept} เรียบร้อยแล้ว`);
-              }}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors shrink-0"
-              title="ส่งออกข้อมูลสำนัก/กอง เป็น Excel (.xlsx)"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>ส่งออก Excel</span>
-            </button>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            พื้นที่ทำงานเฉพาะส่วนราชการ: {activeDept}
+          </h1>
         </div>
+      </div>
 
-        {/* Sub-Tabs Navigation for Active Department */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-bold">
+      {/* Department Switcher & Toolbar */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-3 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        {isAdmin ? (
+          <div className="flex flex-wrap items-center bg-stone-50 dark:bg-stone-800/80 p-1 rounded-xl border border-stone-200 dark:border-stone-700 gap-1 shadow-2xs">
+            {[
+              { id: 'สำนักปลัด', label: 'สำนักปลัด', icon: Building2 },
+              { id: 'กองคลัง', label: 'กองคลัง', icon: BadgeDollarSign },
+              { id: 'กองช่าง', label: 'กองช่าง', icon: HardHat },
+              { id: 'กองการศึกษา', label: 'กองการศึกษา', icon: GraduationCap },
+              { id: 'กองสวัสดิการสังคม', label: 'กองสวัสดิการสังคม', icon: HeartHandshake },
+              { id: 'ศพด.วัดเจริญทัศน์', label: 'ศพด.วัดเจริญทัศน์', icon: Baby },
+              { id: 'ศพด.บ้านฝางเทิง', label: 'ศพด.บ้านฝางเทิง', icon: Baby }
+            ].map((d) => {
+              const isSelected = activeDept === d.id;
+              const Icon = d.icon;
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => setActiveDept(d.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                    isSelected
+                      ? 'bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                      : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-700 border border-transparent'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{d.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>เข้าสู่ระบบในฐานะ: {session?.displayName || userDept}</span>
+          </div>
+        )}
+
+        <div className="flex items-center space-x-2">
+          <OfficialDocActionToolbar
+            onExcel={() => {
+              exportDepartmentWorkspacesExcel({
+                officeData,
+                financeData,
+                techData,
+                orgProfile,
+                selectedYear
+              });
+              showToast(`📗 ส่งออกข้อมูล Excel ของ ${activeDept} เรียบร้อยแล้ว`);
+            }}
+            onPdf={() => window.print()}
+            excelTitle={`ส่งออกข้อมูล ${activeDept} (Excel .xlsx)`}
+            excelSubtitle={`ตารางข้อมูลทะเบียนคุมและสถิติการปฏิบัติงานของ ${activeDept}`}
+            pdfTitle={`พิมพ์สรุปพื้นที่ทำงาน ${activeDept} (PDF/Print)`}
+            pdfSubtitle={`จัดพิมพ์ภาพรวมและสถิติข้อมูลของ ${activeDept}`}
+          />
+        </div>
+      </div>
+
+      {/* Sub-Tabs Navigation for Active Department */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-2.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap items-center gap-1.5 text-xs font-bold">
           {/* 1. สำนักปลัด Sub-Tabs */}
           {activeDept === 'สำนักปลัด' && (
             <>
@@ -986,7 +987,6 @@ export default function DepartmentWorkspaceView({
             </>
           )}
 
-        </div>
       </div>
 
       {/* EXECUTIVE DIRECTIVES CALLOUT BANNER (if any directive assigned to activeDept) */}

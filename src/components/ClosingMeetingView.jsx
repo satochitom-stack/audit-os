@@ -239,59 +239,30 @@ export default function ClosingMeetingView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              การประชุมปิดการตรวจสอบ (Closing Meeting)
-            </h1>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
-            <button
-              onClick={handlePullFindingsFromWorkingPapers}
-              className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
-              title="ดึงข้อตรวจพบจากกระดาษทำการ (ขั้นที่ 6) เข้าสู่วาระการประชุมปิดตรวจ"
-            >
-              <ClipboardCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>📥 ดึงข้อตรวจพบจากกระดาษทำการ (ขั้น 6)</span>
-            </button>
-            <button
-              onClick={handleLoadDlaClosingMeeting}
-              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
-              title="โหลดตัวอย่างรายงานการประชุมปิดการตรวจสอบตามคู่มือ สถ. หน้า 52"
-            >
-              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>📥 โหลดตัวอย่าง สถ. (หน้า 52)</span>
-            </button>
-            <OfficialDocActionToolbar
-              onDownloadWord={handleDownloadWord}
-              onDownloadExcel={handleDownloadExcel}
-              onPrint={handlePrint}
-              wordTooltip="ดาวน์โหลดรายงานการประชุมปิดการตรวจสอบเป็นไฟล์ Word (.doc)"
-              excelTooltip="ส่งออกประเด็นข้อตรวจพบและข้อตกลงเป็นไฟล์ Excel (.xlsx)"
-              printTooltip="พิมพ์รายงานการประชุมปิดการตรวจสอบ / บันทึกเป็น PDF"
-            />
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            การประชุมปิดการตรวจสอบ (Closing Meeting)
+          </h1>
         </div>
       </div>
 
-      {/* Select Project Bar */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex items-center justify-between gap-4 print:hidden">
+      {/* Select Project Bar & Actions */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-3 sm:p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 print:hidden">
         <div className="flex items-center space-x-3">
           <label className="text-xs font-bold text-stone-600 dark:text-stone-300 shrink-0">
             เลือกโครงการตรวจสอบ:
@@ -299,17 +270,44 @@ export default function ClosingMeetingView({
           <select
             value={selectedPlanId}
             onChange={(e) => setSelectedPlanId(e.target.value)}
-            className="text-xs p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold max-w-md text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+            className="text-xs p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold max-w-xs text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer truncate"
           >
             {annualPlans.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.projectName || p.title || p.topic} ({p.department || 'หน่วยรับตรวจ'})
               </option>
             ))}
-            {annualPlans.length === 0 && (
-              <option value="PLAN-01">การตรวจสอบการรับเงินและนำส่งเงิน (กองคลัง)</option>
-            )}
           </select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto shrink-0">
+          <button
+            onClick={handlePullFindingsFromWorkingPapers}
+            className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+            title="ดึงข้อตรวจพบจากกระดาษทำการ (ขั้นที่ 6) เข้าสู่วาระการประชุมปิดตรวจ"
+          >
+            <ClipboardCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span>📥 ดึงจากกระดาษทำการ (ขั้น 6)</span>
+          </button>
+          <button
+            onClick={handleLoadDlaClosingMeeting}
+            className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+            title="โหลดตัวอย่างรายงานการประชุมปิดการตรวจสอบตามคู่มือ สถ. หน้า 52"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span>📥 โหลดตัวอย่าง สถ. (หน้า 52)</span>
+          </button>
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadWord}
+            wordTitle="รายงานการประชุมปิดการตรวจสอบ (.doc)"
+            wordSubtitle={`รายงานการประชุมปิดตรวจและข้อตกลงร่วมกันโครงการ ${currentPlan.projectName || 'ตรวจสอบ'}`}
+            onDownloadExcel={handleDownloadExcel}
+            excelTitle="ประเด็นข้อตรวจพบและข้อตกลง (.xlsx)"
+            excelSubtitle="ตารางสรุป Criteria, Condition, คำชี้แจง และ Agreement"
+            onPrint={handlePrint}
+            pdfTitle="พิมพ์รายงานการประชุมปิดตรวจ / PDF"
+            pdfSubtitle="พิมพ์รายงานการประชุมปิดการตรวจสอบและบันทึกข้อตกลง (A4)"
+          />
         </div>
       </div>
 

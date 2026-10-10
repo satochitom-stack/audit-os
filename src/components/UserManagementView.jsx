@@ -628,45 +628,49 @@ export default function UserManagementView({ currentSession, onSwitchSession, on
       )}
 
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>การบริหารจัดการผู้ใช้งาน</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ระบบกำหนดสิทธิ์การเข้าถึงเมนู (RBAC)</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Users className="w-3.5 h-3.5 text-stone-500" />
-                <span>ผู้ใช้งานทั่วไป: {users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin').length} บัญชี (ไม่รวม Admin)</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              จัดการผู้ใช้งาน & กำหนดสิทธิ์เมนูรายกอง
-            </h1>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>การบริหารจัดการผู้ใช้งาน</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ระบบกำหนดสิทธิ์การเข้าถึงเมนู (RBAC)</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Users className="w-3.5 h-3.5 text-stone-500" />
+              <span>ผู้ใช้งานทั่วไป: {users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin').length} บัญชี (ไม่รวม Admin)</span>
+            </span>
           </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            จัดการผู้ใช้งาน & กำหนดสิทธิ์เมนูรายกอง
+          </h1>
+        </div>
+      </div>
 
-          <div className="flex flex-wrap gap-2.5 shrink-0">
-            <button
-              onClick={handleOpenAdd}
-              className="flex items-center space-x-2 bg-amber-700 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ เพิ่มผู้ใช้งาน / กองใหม่</span>
-            </button>
-            <button
-              onClick={handleResetDefaults}
-              className="flex items-center space-x-2 bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 border border-stone-200/80 dark:border-stone-700 text-stone-700 dark:text-stone-200 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
-              title="รีเซ็ตสิทธิ์เป็นค่าเริ่มต้น"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
-              <span>รีเซ็ตสิทธิ์เริ่มต้น</span>
-            </button>
-          </div>
+      {/* User Management Action Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-stone-900/80 p-3 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs">
+        <div className="text-xs font-bold text-stone-600 dark:text-stone-300">
+          การบริหารจัดการบัญชีผู้ใช้งานและสิทธิ์กอง
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center space-x-2 bg-amber-700 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ เพิ่มผู้ใช้งาน / กองใหม่</span>
+          </button>
+          <button
+            onClick={handleResetDefaults}
+            className="flex items-center space-x-2 bg-white hover:bg-stone-50 dark:bg-stone-800 dark:hover:bg-stone-750 border border-stone-200/80 dark:border-stone-700 text-stone-700 dark:text-stone-200 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+            title="รีเซ็ตสิทธิ์เป็นค่าเริ่มต้น"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
+            <span>รีเซ็ตสิทธิ์เริ่มต้น</span>
+          </button>
         </div>
       </div>
 

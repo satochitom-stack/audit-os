@@ -389,57 +389,25 @@ export default function AuditFollowUpView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              ทะเบียนคุม & การติดตามผลข้อเสนอแนะ (Harmonized Audit Follow-up)
-            </h1>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs print:hidden">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              onClick={handleLoadDlaFollowupRegister}
-              className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
-              title="โหลดทะเบียนติดตามผล 6 ภารกิจหลักมาตรฐาน อปท. ตามคู่มือ สถ. หน้า 53"
-            >
-              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>📥 โหลดทะเบียน 6 ภารกิจ (คู่มือ สถ.)</span>
-            </button>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>เพิ่มข้อตรวจพบเพื่อติดตาม</span>
-            </button>
-            <OfficialDocActionToolbar
-              onDownloadWord={handleDownloadWord}
-              onDownloadExcel={handleDownloadExcel}
-              onPrint={() => window.print()}
-              wordTooltip={
-                activeTab === 'memo'
-                  ? 'ดาวน์โหลดหนังสือเตือนติดตามผลเป็นไฟล์ Word (.doc)'
-                  : 'ดาวน์โหลดทะเบียนคุมติดตามผลเป็นไฟล์ Word (.doc)'
-              }
-              excelTooltip="ส่งออกทะเบียนคุมติดตามผลเป็นไฟล์ Excel (.xlsx)"
-              printTooltip="พิมพ์ทะเบียนคุม / หนังสือติดตามผล / บันทึกเป็น PDF"
-            />
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            ทะเบียนคุม & การติดตามผลข้อเสนอแนะ (Harmonized Audit Follow-up)
+          </h1>
         </div>
       </div>
 
@@ -484,31 +452,75 @@ export default function AuditFollowUpView({
         </div>
       </div>
 
-      {/* Navigation Subtabs */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-2 border border-stone-200/80 dark:border-stone-800 shadow-xs flex space-x-2 print:hidden">
-        <button
-          onClick={() => setActiveTab('register')}
-          className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
-            activeTab === 'register'
-              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
-          }`}
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-          <span>ทะเบียนคุมการปฏิบัติตามข้อเสนอแนะ (Follow-up Register)</span>
-        </button>
+      {/* Navigation Subtabs & Action Toolbar */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-2 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap items-center justify-between gap-2 print:hidden">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setActiveTab('register')}
+            className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+              activeTab === 'register'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
+            }`}
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>ทะเบียนคุมการปฏิบัติตามข้อเสนอแนะ (Follow-up Register)</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('memo')}
-          className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
-            activeTab === 'memo'
-              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
-          }`}
-        >
-          <Send className="w-4 h-4" />
-          <span>บันทึกข้อความติดตามผล (เตือนครบกำหนด 30/60 วัน)</span>
-        </button>
+          <button
+            onClick={() => setActiveTab('memo')}
+            className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+              activeTab === 'memo'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100/80 dark:hover:bg-stone-800/80 border border-transparent'
+            }`}
+          >
+            <Send className="w-4 h-4" />
+            <span>บันทึกข้อความติดตามผล (เตือนครบกำหนด 30/60 วัน)</span>
+          </button>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          {activeTab === 'register' && (
+            <>
+              <button
+                onClick={handleLoadDlaFollowupRegister}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                title="โหลดตัวอย่างทะเบียนคุม 6 ภารกิจหลัก สถ."
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>โหลดตัวอย่าง 6 ภารกิจ สถ.</span>
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>เพิ่มข้อตรวจพบ</span>
+              </button>
+            </>
+          )}
+
+          <OfficialDocActionToolbar
+            onWord={handleDownloadWord}
+            onExcel={activeTab === 'register' ? handleDownloadExcel : null}
+            onPdf={() => window.print()}
+            wordTitle={activeTab === 'register' ? 'ส่งออกทะเบียนคุม (Word .doc)' : 'ส่งออกบันทึกข้อความติดตามผล (Word .doc)'}
+            wordSubtitle={
+              activeTab === 'register'
+                ? 'ทะเบียนคุมและติดตามผลข้อเสนอแนะ พร้อมตารางสรุปและช่องลงนาม'
+                : 'บันทึกข้อความแจ้งเตือนเร่งรัดติดตามผลตามระเบียบงานสารบรรณ'
+            }
+            excelTitle={activeTab === 'register' ? 'ส่งออกทะเบียนคุม (Excel .xlsx)' : undefined}
+            excelSubtitle={activeTab === 'register' ? 'ตารางทะเบียนคุมข้อสังเกตและสถานะการปรับปรุงแก้ไข' : undefined}
+            pdfTitle={activeTab === 'register' ? 'พิมพ์ทะเบียนคุม (PDF/Print)' : 'พิมพ์บันทึกข้อความเตือน (PDF/Print)'}
+            pdfSubtitle={
+              activeTab === 'register'
+                ? 'จัดพิมพ์ทะเบียนคุมแบบหน้ากว้างและรายงานสรุป'
+                : 'จัดพิมพ์บันทึกข้อความตราครุฑมาตรฐาน'
+            }
+          />
+        </div>
       </div>
 
       {/* ==================================================== */}

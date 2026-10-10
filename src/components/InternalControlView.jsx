@@ -271,52 +271,29 @@ export default function InternalControlView({
   return (
     <div className="space-y-6">
       {/* Header & Description */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>หลักเกณฑ์กระทรวงการคลัง พ.ศ. 2561</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              ระบบการควบคุมภายใน (Internal Control - แบบ ปค.1, ปค.4, ปค.5)
-            </h1>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>หลักเกณฑ์กระทรวงการคลัง พ.ศ. 2561</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <OfficialDocActionToolbar
-              onDownloadWord={handleDownloadWord}
-              onDownloadExcel={handleDownloadExcel}
-              onPrint={() => window.print()}
-              wordTooltip={
-                activeTab === 'pk1'
-                  ? 'ดาวน์โหลดหนังสือรับรอง (แบบ ปค.1) เป็นไฟล์ Word (.doc)'
-                  : activeTab === 'pk5'
-                  ? 'ดาวน์โหลดรายงานติดตาม (แบบ ปค.5) เป็นไฟล์ Word (.doc)'
-                  : 'ดาวน์โหลดรายงานประเมินผลระดับกอง (แบบ ปค.4) เป็นไฟล์ Word (.doc)'
-              }
-              excelTooltip={
-                activeTab === 'pk5'
-                  ? 'ส่งออกตารางแบบ ปค.5 เป็นไฟล์ Excel (.xlsx)'
-                  : 'ส่งออกตารางแบบ ปค.4 เป็นไฟล์ Excel (.xlsx)'
-              }
-              printTooltip="พิมพ์รายงาน ปค. / บันทึกเป็น PDF"
-            />
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            ระบบการควบคุมภายใน (Internal Control - แบบ ปค.1, ปค.4, ปค.5)
+          </h1>
         </div>
       </div>
 
-      {/* Tab Selector */}
+      {/* Tab Selector & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 dark:border-stone-800 pb-3">
         <div className="flex flex-wrap gap-2">
           <button
@@ -354,16 +331,64 @@ export default function InternalControlView({
           </button>
         </div>
 
-        {activeTab === 'pk4' && setInternalControls && (
-          <button
-            type="button"
-            onClick={() => setShowAddModal(true)}
-            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer border border-amber-500/30"
-          >
-            <Plus className="w-4 h-4" />
-            <span>เพิ่มกระบวนการประเมิน ปค.4</span>
-          </button>
-        )}
+        <div className="flex items-center space-x-2">
+          {activeTab === 'pk4' && setInternalControls && (
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer border border-amber-500/30"
+            >
+              <Plus className="w-4 h-4" />
+              <span>เพิ่มกระบวนการประเมิน ปค.4</span>
+            </button>
+          )}
+
+          <OfficialDocActionToolbar
+            onWord={handleDownloadWord}
+            onExcel={activeTab !== 'pk1' ? handleDownloadExcel : null}
+            onPdf={() => window.print()}
+            wordTitle={
+              activeTab === 'pk1'
+                ? 'ส่งออกหนังสือรับรอง ปค.1 (Word .doc)'
+                : activeTab === 'pk5'
+                ? 'ส่งออกรายงานติดตาม ปค.5 (Word .doc)'
+                : 'ส่งออกรายงานประเมินผล ปค.4 (Word .doc)'
+            }
+            wordSubtitle={
+              activeTab === 'pk1'
+                ? 'หนังสือรับรองการประเมินผลการควบคุมภายในระดับองค์กร (ปค.1)'
+                : activeTab === 'pk5'
+                ? 'รายงานการประเมินผลและการติดตามการปฏิบัติตามแผนปรับปรุง (ปค.5)'
+                : 'รายงานการประเมินผลการควบคุมภายในระดับส่วนงานย่อย (ปค.4)'
+            }
+            excelTitle={
+              activeTab === 'pk5'
+                ? 'ส่งออกตาราง ปค.5 (Excel .xlsx)'
+                : activeTab === 'pk4'
+                ? 'ส่งออกตาราง ปค.4 (Excel .xlsx)'
+                : undefined
+            }
+            excelSubtitle={
+              activeTab === 'pk5'
+                ? 'ตารางติดตามผลการปรับปรุงการควบคุมภายในระดับ อปท.'
+                : activeTab === 'pk4'
+                ? 'ตารางการประเมินและการปรับปรุงการควบคุมภายในระดับกอง'
+                : undefined
+            }
+            pdfTitle={
+              activeTab === 'pk1'
+                ? 'พิมพ์หนังสือรับรอง ปค.1 (PDF/Print)'
+                : activeTab === 'pk5'
+                ? 'พิมพ์รายงาน ปค.5 (PDF/Print)'
+                : 'พิมพ์รายงาน ปค.4 (PDF/Print)'
+            }
+            pdfSubtitle={
+              activeTab === 'pk1'
+                ? 'จัดพิมพ์หนังสือรับรอง ปค.1 พร้อมลงนามหัวหน้าหน่วยงาน'
+                : 'จัดพิมพ์แบบรายงานตามมาตรฐานกรมบัญชีกลาง'
+            }
+          />
+        </div>
       </div>
 
       {/* Tab: PK 4 */}

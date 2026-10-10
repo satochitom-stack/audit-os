@@ -792,11 +792,14 @@ export default function PlanningView({
 
           <OfficialDocActionToolbar
             onDownloadWord={handleDownloadDlaPlanFormWord}
+            wordTitle="แบบฟอร์มแผนประจำปี สถ. (.doc)"
+            wordSubtitle={`แบบฟอร์มแผนการปฏิบัติงานตามคู่มือ สถ. หน้า ๑๖ ปี ${selectedYear}`}
             onDownloadExcel={handleDownloadAnnualPlanExcel}
+            excelTitle="ตารางแผนการตรวจสอบประจำปี (.xlsx)"
+            excelSubtitle={`ตารางโครงการ วัตถุประสงค์ และผู้รับผิดชอบ ปี ${selectedYear}`}
             onPrint={() => window.print()}
-            wordTooltip="ดาวน์โหลดแบบฟอร์มแผนประจำปี Word (.doc)"
-            excelTooltip="ดาวน์โหลดตารางแผนปฏิบัติการตรวจสอบประจำปี Excel (.xlsx)"
-            printTooltip="สั่งพิมพ์แผน หรือบันทึกเป็น PDF"
+            pdfTitle="พิมพ์แผนการตรวจสอบประจำปี / PDF"
+            pdfSubtitle="พิมพ์แบบฟอร์มแผนงานประจำปี A4 แนวนอน"
           />
         </div>
       </div>
@@ -806,44 +809,42 @@ export default function PlanningView({
       ========================================================================= */}
       {activeTab === 'annual' && (
         <div className="space-y-5">
-          {/* Header Info Banner */}
-          <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                    <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                    <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-                  </span>
-                  <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                    <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                    <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
-                  </span>
-                  <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                    <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                    <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-                  </span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
-                  แผนการตรวจสอบประจำปี (Annual Audit Plan) ประจำปีงบประมาณ พ.ศ. {selectedYear}
-                </h2>
+          {/* Header Info Banner (Archetype: Clean without embedded buttons) */}
+          <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                  <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                  <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+                </span>
+                <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                  <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                  <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+                </span>
+                <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                  <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                  <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+                </span>
               </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
+                แผนการตรวจสอบประจำปี (Annual Audit Plan) ประจำปีงบประมาณ พ.ศ. {selectedYear}
+              </h2>
+            </div>
+          </div>
 
-              {/* Quick Summary Badges */}
-              <div className="grid grid-cols-3 gap-2 text-center shrink-0 bg-white/80 dark:bg-stone-850/60 backdrop-blur-md p-3 rounded-xl border border-stone-200/80 dark:border-stone-700 shadow-2xs">
-                <div className="px-2">
-                  <div className="text-xl font-black text-stone-900 dark:text-stone-100">{annualPlans.length}</div>
-                  <div className="text-[10px] text-stone-500 dark:text-stone-400">โครงการทั้งหมด</div>
-                </div>
-                <div className="px-2 border-x border-stone-200 dark:border-stone-700">
-                  <div className="text-xl font-black text-amber-800 dark:text-amber-400">{highRiskCount}</div>
-                  <div className="text-[10px] text-stone-500 dark:text-stone-400">ความเสี่ยงสูง</div>
-                </div>
-                <div className="px-2">
-                  <div className="text-xl font-black text-emerald-700 dark:text-emerald-400">{avgProgress}%</div>
-                  <div className="text-[10px] text-stone-500 dark:text-stone-400">ความก้าวหน้าเฉลี่ย</div>
-                </div>
-              </div>
+          {/* Quick Summary Badges Strip */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs text-center">
+              <div className="text-2xl font-black text-stone-900 dark:text-stone-100">{annualPlans.length}</div>
+              <div className="text-xs font-bold text-stone-500 dark:text-stone-400 mt-0.5">โครงการตรวจสอบทั้งหมด</div>
+            </div>
+            <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-2xl p-4 border border-amber-200/80 dark:border-amber-900/50 shadow-xs text-center">
+              <div className="text-2xl font-black text-amber-800 dark:text-amber-400">{highRiskCount}</div>
+              <div className="text-xs font-bold text-amber-700 dark:text-amber-300 mt-0.5">กิจกรรมความเสี่ยงสูง</div>
+            </div>
+            <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-2xl p-4 border border-emerald-200/80 dark:border-emerald-900/50 shadow-xs text-center">
+              <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{avgProgress}%</div>
+              <div className="text-xs font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">ความก้าวหน้าเฉลี่ย</div>
             </div>
           </div>
 
@@ -1069,44 +1070,42 @@ export default function PlanningView({
       ========================================================================= */}
       {activeTab === 'strategic' && (
         <div className="space-y-6">
-          {/* Header Banner */}
-          <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                    <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                    <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-                  </span>
-                  <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                    <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                    <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
-                  </span>
-                  <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                    <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                    <span>กรอบแผน 3-5 ปี</span>
-                  </span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                  แผนการตรวจสอบระยะยาว 3-5 ปี (Strategic Multi-Year Audit Plan)
-                </h2>
+          {/* Header Banner (Archetype: Clean without embedded badges) */}
+          <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                  <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                  <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+                </span>
+                <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                  <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                  <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+                </span>
+                <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                  <Calendar className="w-3.5 h-3.5 text-stone-500" />
+                  <span>กรอบแผน 3-5 ปี</span>
+                </span>
               </div>
+              <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                แผนการตรวจสอบระยะยาว 3-5 ปี (Strategic Multi-Year Audit Plan)
+              </h2>
+            </div>
+          </div>
 
-              {/* Cycle Badges */}
-              <div className="flex items-center space-x-3 text-xs shrink-0">
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-center">
-                  <div className="text-base font-black text-rose-700 dark:text-rose-400">{strategicAnnualCount}</div>
-                  <div className="text-[10px] text-slate-500">ตรวจทุกปี (High)</div>
-                </div>
-                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-center">
-                  <div className="text-base font-black text-amber-700 dark:text-amber-400">{strategicBiannualCount}</div>
-                  <div className="text-[10px] text-slate-500">ทุก 2 ปี (Medium)</div>
-                </div>
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-center">
-                  <div className="text-base font-black text-emerald-700 dark:text-emerald-400">{strategicTriannualCount}</div>
-                  <div className="text-[10px] text-slate-500">ทุก 3 ปี (Low)</div>
-                </div>
-              </div>
+          {/* Cycle Badges Strip (Moved out of banner) */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-center shadow-xs">
+              <div className="text-xl font-black text-rose-700 dark:text-rose-400">{strategicAnnualCount}</div>
+              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">ตรวจทุกปี (High Risk)</div>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-center shadow-xs">
+              <div className="text-xl font-black text-amber-700 dark:text-amber-400">{strategicBiannualCount}</div>
+              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">ทุก 2 ปี (Medium Risk)</div>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-center shadow-xs">
+              <div className="text-xl font-black text-emerald-700 dark:text-emerald-400">{strategicTriannualCount}</div>
+              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">ทุก 3 ปี (Low Risk)</div>
             </div>
           </div>
 

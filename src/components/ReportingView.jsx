@@ -517,14 +517,31 @@ export default function ReportingView({
             </>
           )}
 
-          <OfficialDocActionToolbar
-            onDownloadWord={handleDownloadCurrentReportWord}
-            onDownloadExcel={() => setShowExportHubModal(true)}
-            onPrint={() => window.print()}
-            wordTooltip="ดาวน์โหลดรายงานผลการตรวจสอบเป็นไฟล์ Word (.doc)"
-            excelTooltip="ศูนย์ส่งออกรายงานทางการเป็นไฟล์ Excel (.xlsx)"
-            printTooltip="พิมพ์รายงาน / บันทึกเป็น PDF"
-          />
+          {activeTab !== 'annual-report' && (
+            <OfficialDocActionToolbar
+              onWord={activeTab === 'capa' ? handleDownloadCapaMemoWord : handleDownloadCurrentReportWord}
+              onExcel={() => setShowExportHubModal(true)}
+              onPdf={() => window.print()}
+              wordTitle={
+                activeTab === 'capa'
+                  ? 'ส่งออกบันทึกสรุปเสนอผู้บริหาร (Word .doc)'
+                  : activeTab === 'exit'
+                  ? 'ส่งออกสรุปการปิดตรวจ (Word .doc)'
+                  : 'ส่งออกรายงานผลการตรวจสอบ (Word .doc)'
+              }
+              wordSubtitle={
+                activeTab === 'capa'
+                  ? 'บันทึกข้อความรายงานผลการติดตามข้อทักท้วงตามระเบียบงานสารบรรณ'
+                  : activeTab === 'exit'
+                  ? 'สรุปประเด็นข้อตรวจพบและการประชุมปิดตรวจ Exit Conference'
+                  : 'รายงานผลการตรวจสอบ 5 องค์ประกอบตามหนังสือ ว 614'
+              }
+              excelTitle="ศูนย์ส่งออกรายงาน (Excel .xlsx)"
+              excelSubtitle="ส่งออกข้อมูลข้อตรวจพบและทะเบียนคุมเป็นไฟล์ Excel ครบชุด"
+              pdfTitle="พิมพ์รายงาน / PDF"
+              pdfSubtitle="จัดพิมพ์เอกสารรายงานตามระเบียบงานสารบรรณ"
+            />
+          )}
         </div>
       </div>
 

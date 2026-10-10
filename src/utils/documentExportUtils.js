@@ -135,28 +135,45 @@ export function wrapWordHtml(bodyContent, title = 'เอกสารราช�
  * 1. ส่งออกบันทึกข้อความทางการเป็นไฟล์ Word (.doc)
  * สอดคล้องระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖ แบบที่ ๒
  */
-export function exportThaiMemoToWord({
-  agency = 'หน่วยตรวจสอบภายใน',
-  phone = '',
-  docNumber = 'อบ ๗๘๔๐๘/พิเศษ',
-  docDate = '',
-  subject = 'เรื่องเสนอเพื่อโปรดพิจารณา',
-  to = 'นายกองค์กรปกครองส่วนท้องถิ่น (ผ่าน ปลัดองค์กรปกครองส่วนท้องถิ่น)',
-  contentParagraphs = [],
-  signatoryName = 'ผู้ตรวจสอบภายใน',
-  signatoryPosition = 'นักวิชาการตรวจสอบภายในชำนาญการ',
-  signatoryRole = 'ผู้รายงาน',
-  palatReviewText = 'เห็นควรอนุมัติและสั่งการตามเสนอ',
-  executiveOrderText = 'อนุมัติ / เห็นชอบตามเสนอ',
-  orgName = 'องค์กรปกครองส่วนท้องถิ่น',
-  fileName = 'บันทึกข้อความ'
-}) {
-  const resolvedDate = docDate || `วันที่ ...... เดือน ........................ พ.ศ. ............`;
+export function exportThaiMemoToWord(arg1 = {}, arg2) {
+  let opts = {};
+  if (typeof arg1 === 'object' && arg1 !== null) {
+    opts = { ...arg1 };
+    if (typeof arg2 === 'string') {
+      opts.fileName = arg2;
+    }
+  } else {
+    opts = {};
+  }
 
-  const paragraphsHtml = contentParagraphs.map((p) => {
-    if (!p) return '';
-    return `<p class="indent" style="margin-bottom: 8pt; text-align: justify; line-height: 1.3;">${p.replace(/\n/g, '<br/>')}</p>`;
-  }).join('');
+  const agency = opts.agency || opts.agencyName || 'หน่วยตรวจสอบภายใน';
+  const phone = opts.phone || '';
+  const docNumber = opts.docNumber || 'อบ ๗๘๔๐๘/พิเศษ';
+  const docDate = opts.docDate || opts.date || `วันที่ ...... เดือน ........................ พ.ศ. ............`;
+  const subject = opts.subject || 'เรื่องเสนอเพื่อโปรดพิจารณา';
+  const to = opts.to || opts.destination || 'นายกองค์กรปกครองส่วนท้องถิ่น (ผ่าน ปลัดองค์กรปกครองส่วนท้องถิ่น)';
+  
+  // Support both contentParagraphs array and content string (HTML)
+  let paragraphsHtml = '';
+  if (Array.isArray(opts.contentParagraphs) && opts.contentParagraphs.length > 0) {
+    paragraphsHtml = opts.contentParagraphs.map((p) => {
+      if (!p) return '';
+      return `<p class="indent" style="margin-bottom: 8pt; text-align: justify; line-height: 1.3;">${p.replace(/\n/g, '<br/>')}</p>`;
+    }).join('');
+  } else if (typeof opts.content === 'string' && opts.content.trim()) {
+    paragraphsHtml = `<div style="line-height: 1.3; font-size: 16pt;">${opts.content}</div>`;
+  } else if (typeof opts.bodyContent === 'string' && opts.bodyContent.trim()) {
+    paragraphsHtml = `<div style="line-height: 1.3; font-size: 16pt;">${opts.bodyContent}</div>`;
+  }
+
+  const signatoryName = opts.signatoryName || opts.signatory?.name || 'ผู้ตรวจสอบภายใน';
+  const signatoryPosition = opts.signatoryPosition || opts.signatory?.position || 'นักวิชาการตรวจสอบภายในชำนาญการ';
+  const signatoryRole = opts.signatoryRole || opts.signatory?.role || 'ผู้รายงาน';
+  const palatReviewText = opts.palatReviewText || 'เห็นควรอนุมัติและสั่งการตามเสนอ';
+  const executiveOrderText = opts.executiveOrderText || 'อนุมัติ / เห็นชอบตามเสนอ';
+  const orgName = opts.orgName || 'องค์กรปกครองส่วนท้องถิ่น';
+  let rawFileName = opts.fileName || 'บันทึกข้อความ';
+  rawFileName = rawFileName.replace(/\.doc$/i, '');
 
   const bodyContent = `
     <!-- ส่วนหัวบันทึกข้อความ -->
@@ -180,7 +197,7 @@ export function exportThaiMemoToWord({
                 <span class="header-field">ที่:</span> ${escapeHtml(docNumber)}
               </td>
               <td style="width: 50%;">
-                <span class="header-field">วันที่:</span> ${escapeHtml(resolvedDate)}
+                <span class="header-field">วันที่:</span> ${escapeHtml(docDate)}
               </td>
             </tr>
           </table>
@@ -242,58 +259,117 @@ export function exportThaiMemoToWord({
 
   const fullHtml = wrapWordHtml(bodyContent, subject);
   const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword;charset=utf-8' });
-  downloadBlob(blob, `${fileName}.doc`);
+  downloadBlob(blob, `${rawFileName}.doc`);
 }
 
 /**
  * 2. ส่งออกเอกสารทั่วไป / รายงานทางการเป็น Word (.doc)
+ * รองรับทั้งแบบ Object { title, htmlContent, fileName } และแบบ Positional (htmlContent, fileName, title)
  */
-export function exportDocumentToWord({
-  title = 'รายงานผลการตรวจสอบ',
-  htmlContent = '',
-  fileName = 'รายงานตรวจสอบ'
-}) {
+export function exportDocumentToWord(arg1 = {}, arg2, arg3) {
+  let title = 'รายงานผลการตรวจสอบ';
+  let htmlContent = '';
+  let fileName = 'รายงานตรวจสอบ';
+
+  if (typeof arg1 === 'object' && arg1 !== null && !Array.isArray(arg1)) {
+    title = arg1.title || 'รายงานผลการตรวจสอบ';
+    htmlContent = arg1.htmlContent || arg1.content || arg1.bodyContent || '';
+    fileName = arg1.fileName || 'รายงานตรวจสอบ';
+  } else if (typeof arg1 === 'string') {
+    // Positional call: exportDocumentToWord(bodyContent, fileName, title)
+    htmlContent = arg1;
+    if (typeof arg2 === 'string') fileName = arg2;
+    if (typeof arg3 === 'string') title = arg3;
+  }
+
+  const cleanFileName = (fileName || 'รายงานตรวจสอบ').replace(/\.doc$/i, '');
   const fullHtml = wrapWordHtml(htmlContent, title);
   const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword;charset=utf-8' });
-  downloadBlob(blob, `${fileName}.doc`);
+  downloadBlob(blob, `${cleanFileName}.doc`);
 }
 
 /**
  * 3. ส่งออกตารางข้อมูลเป็นไฟล์ Excel (.xlsx) ด้วย SheetJS
+ * รองรับทั้งแบบ Object { sheetName, headers, rows, fileName, colWidths }
+ * และแบบ Positional (sheetName, headersOrData, rowsOrFileName, fileName, colWidths)
  */
-export function exportDataToExcel({
-  sheetName = 'ข้อมูลตรวจสอบ',
-  headers = [],
-  rows = [],
-  fileName = 'ตารางตรวจสอบ',
-  colWidths = []
-}) {
+export function exportDataToExcel(arg1 = {}, arg2, arg3, arg4, arg5) {
+  let sheetName = 'ข้อมูลตรวจสอบ';
+  let headers = [];
+  let rows = [];
+  let fileName = 'ตารางตรวจสอบ';
+  let colWidths = [];
+
+  if (typeof arg1 === 'object' && arg1 !== null && !Array.isArray(arg1) && ('headers' in arg1 || 'rows' in arg1 || 'sheetName' in arg1 || 'fileName' in arg1)) {
+    // Object signature
+    sheetName = arg1.sheetName || 'ข้อมูลตรวจสอบ';
+    headers = arg1.headers || [];
+    rows = arg1.rows || [];
+    fileName = arg1.fileName || 'ตารางตรวจสอบ';
+    colWidths = arg1.colWidths || [];
+  } else {
+    // Positional signature: exportDataToExcel(sheetName, headers, rows, fileName, colWidths)
+    // or: exportDataToExcel(sheetName, [headers, ...rows], fileName)
+    sheetName = typeof arg1 === 'string' ? arg1 : 'ข้อมูลตรวจสอบ';
+
+    if (Array.isArray(arg2) && arg2.length > 0 && Array.isArray(arg2[0]) && (!arg3 || typeof arg3 === 'string')) {
+      // arg2 is [headers, ...rows]
+      headers = arg2[0] || [];
+      rows = arg2.slice(1);
+      fileName = typeof arg3 === 'string' ? arg3 : 'ตารางตรวจสอบ';
+      colWidths = Array.isArray(arg4) ? arg4 : [];
+    } else {
+      headers = Array.isArray(arg2) ? arg2 : [];
+      rows = Array.isArray(arg3) ? arg3 : [];
+      fileName = typeof arg4 === 'string' ? arg4 : 'ตารางตรวจสอบ';
+      colWidths = Array.isArray(arg5) ? arg5 : [];
+    }
+  }
+
+  // Clean filename: remove trailing .xlsx if present
+  const cleanFileName = (fileName || 'ตารางตรวจสอบ').replace(/\.xlsx$/i, '');
+
   try {
     const workbook = XLSX.utils.book_new();
 
+    // Ensure rows format (convert objects to arrays if needed)
+    const formattedRows = rows.map((row) => {
+      if (Array.isArray(row)) return row;
+      if (typeof row === 'object' && row !== null) {
+        if (headers.length > 0) {
+          return headers.map((h, i) => row[h] ?? row[Object.keys(row)[i]] ?? '');
+        }
+        return Object.values(row);
+      }
+      return [row];
+    });
+
     // Combine headers and rows into 2D array
-    const data = [headers, ...rows];
+    const data = headers.length > 0 ? [headers, ...formattedRows] : formattedRows;
     const worksheet = XLSX.utils.aoa_to_sheet(data);
 
     if (colWidths && colWidths.length > 0) {
-      worksheet['!cols'] = colWidths.map((w) => ({ wch: w }));
+      worksheet['!cols'] = colWidths.map((w) => ({ wch: typeof w === 'number' ? w : 18 }));
     }
 
     const cleanSheetName = (sheetName || 'Sheet1').replace(/[:\\/?*\[\]]/g, '').slice(0, 31);
     XLSX.utils.book_append_sheet(workbook, worksheet, cleanSheetName);
 
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    XLSX.writeFile(workbook, `${cleanFileName}.xlsx`);
     return true;
   } catch (err) {
-    console.error('Error exporting to XLSX, using fallback:', err);
+    console.error('Error exporting to XLSX, using fallback CSV:', err);
     // Fallback: CSV with UTF-8 BOM
     let csv = '\uFEFF';
-    csv += headers.map((h) => `"${String(h).replace(/"/g, '""')}"`).join(',') + '\r\n';
+    if (headers.length > 0) {
+      csv += headers.map((h) => `"${String(h ?? '').replace(/"/g, '""')}"`).join(',') + '\r\n';
+    }
     rows.forEach((r) => {
-      csv += r.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',') + '\r\n';
+      const rowArr = Array.isArray(r) ? r : Object.values(r || {});
+      csv += rowArr.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',') + '\r\n';
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    downloadBlob(blob, `${fileName}.csv`);
+    downloadBlob(blob, `${cleanFileName}.csv`);
     return true;
   }
 }

@@ -244,89 +244,92 @@ export default function AnnualAuditReportView({
       )}
 
       {/* Top Banner (no-print) */}
-      <div className="no-print bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              รายงานผลการตรวจสอบภายในประจำปีงบประมาณ (Annual Audit Report)
-            </h1>
+      <div className="no-print bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <OfficialDocActionToolbar
-              onDownloadWord={handleDownloadWord}
-              onDownloadExcel={handleExportExcel}
-              onPrint={() => window.print()}
-              wordTooltip="ดาวน์โหลดรายงานผลการตรวจสอบประจำปีและหนังสือนำส่งเป็นไฟล์ Word (.doc)"
-              excelTooltip="ส่งออกรายงานผลการตรวจสอบประจำปีเป็นไฟล์ Excel (.xlsx)"
-              printTooltip="พิมพ์รายงานผลการตรวจสอบ / บันทึกเป็น PDF"
-            />
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            รายงานผลการตรวจสอบภายในประจำปีงบประมาณ (Annual Audit Report)
+          </h1>
         </div>
       </div>
 
-      {/* Toggles for display (no-print) */}
-      <div className="no-print bg-stone-50/80 dark:bg-stone-900/60 p-3.5 rounded-xl border border-stone-200/80 dark:border-stone-800 flex flex-wrap items-center gap-4 text-xs font-medium text-stone-600 dark:text-stone-300">
-        <span className="font-bold text-stone-800 dark:text-stone-200">ตัวเลือกการแสดงผลส่วนรายงาน:</span>
-        <label className="flex items-center space-x-1.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showCoverMemo}
-            onChange={(e) => setShowCoverMemo(e.target.checked)}
-            className="rounded accent-amber-700"
+      {/* Toggles for display & Action Toolbar (no-print) */}
+      <div className="no-print bg-stone-50/80 dark:bg-stone-900/60 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs font-medium text-stone-600 dark:text-stone-300 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="font-bold text-stone-800 dark:text-stone-200">ตัวเลือกการแสดงผลส่วนรายงาน:</span>
+          <label className="flex items-center space-x-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showCoverMemo}
+              onChange={(e) => setShowCoverMemo(e.target.checked)}
+              className="rounded accent-amber-700"
+            />
+            <span>หนังสือนำส่ง / บันทึกข้อความ</span>
+          </label>
+          <label className="flex items-center space-x-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showExecSummary}
+              onChange={(e) => setShowExecSummary(e.target.checked)}
+              className="rounded accent-amber-700"
+            />
+            <span>บทสรุปสำหรับผู้บริหาร</span>
+          </label>
+          <label className="flex items-center space-x-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showDeptDetails}
+              onChange={(e) => setShowDeptDetails(e.target.checked)}
+              className="rounded accent-amber-700"
+            />
+            <span>ผลการตรวจรายกอง</span>
+          </label>
+          <label className="flex items-center space-x-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showCapaTable}
+              onChange={(e) => setShowCapaTable(e.target.checked)}
+              className="rounded accent-amber-700"
+            />
+            <span>ตารางติดตามข้อทักท้วง (CAPA)</span>
+          </label>
+          <label className="flex items-center space-x-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showControlEvaluation}
+              onChange={(e) => setShowControlEvaluation(e.target.checked)}
+              className="rounded accent-amber-700"
+            />
+            <span>การควบคุมภายในภาพรวม</span>
+          </label>
+        </div>
+
+        <div className="shrink-0 self-end md:self-auto">
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadWord}
+            wordTitle="รายงานผลการตรวจสอบประจำปี (.doc)"
+            wordSubtitle={`รายงานสรุปผลการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} + หนังสือนำส่ง`}
+            onDownloadExcel={handleExportExcel}
+            excelTitle="ตารางสรุปผลการตรวจสอบประจำปี (.xlsx)"
+            excelSubtitle="ตารางสถิติข้อตรวจพบ ข้อเสนอแนะ และการติดตามผลรายสำนัก/กอง"
+            onPrint={() => window.print()}
+            pdfTitle="พิมพ์รายงานผลการตรวจสอบประจำปี / PDF"
+            pdfSubtitle="พิมพ์รายงานผลการตรวจสอบภายในประจำปีฉบับทางการ (A4)"
           />
-          <span>หนังสือนำส่ง / บันทึกข้อความ</span>
-        </label>
-        <label className="flex items-center space-x-1.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showExecSummary}
-            onChange={(e) => setShowExecSummary(e.target.checked)}
-            className="rounded accent-amber-700"
-          />
-          <span>บทสรุปสำหรับผู้บริหาร</span>
-        </label>
-        <label className="flex items-center space-x-1.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showDeptDetails}
-            onChange={(e) => setShowDeptDetails(e.target.checked)}
-            className="rounded accent-amber-700"
-          />
-          <span>ผลการตรวจรายกอง</span>
-        </label>
-        <label className="flex items-center space-x-1.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showCapaTable}
-            onChange={(e) => setShowCapaTable(e.target.checked)}
-            className="rounded accent-amber-700"
-          />
-          <span>ตารางติดตามข้อทักท้วง (CAPA)</span>
-        </label>
-        <label className="flex items-center space-x-1.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showControlEvaluation}
-            onChange={(e) => setShowControlEvaluation(e.target.checked)}
-            className="rounded accent-amber-700"
-          />
-          <span>การควบคุมภายในภาพรวม</span>
-        </label>
+        </div>
       </div>
 
       {/* =========================================================================

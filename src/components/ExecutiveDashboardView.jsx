@@ -247,51 +247,54 @@ export default function ExecutiveDashboardView({
   return (
     <div className="space-y-6">
       {/* Executive Header Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>Executive Governance Cockpit</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. 2569</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
-              แดชบอร์ดผู้บริหาร {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
-            </h1>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>Executive Governance Cockpit</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. 2569</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setShowCreateDirectiveModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer border border-amber-500/30"
-            >
-              <Plus className="w-4 h-4" />
-              <span>บันทึกข้อสั่งการผู้บริหาร</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentTab && setCurrentTab('reporting')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 text-xs font-bold border border-stone-200/80 dark:border-stone-700 transition-all cursor-pointer shadow-2xs"
-            >
-              <FileText className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>รายงานสรุปประจำปี</span>
-            </button>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 dark:text-stone-100">
+            แดชบอร์ดผู้บริหาร {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
+          </h1>
         </div>
+      </div>
 
-        {/* 4 Financial & Governance KPI Highlights (ตารางสรุป 4 มิติสำคัญ) */}
+      {/* Executive Command Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-stone-900/80 p-3 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs">
+        <div className="text-xs font-bold text-stone-500 dark:text-stone-400">
+          ระบบกำกับและติดตามข้อสั่งการผู้บริหาร
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setShowCreateDirectiveModal(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer border border-amber-500/30"
+          >
+            <Plus className="w-4 h-4" />
+            <span>บันทึกข้อสั่งการผู้บริหาร</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentTab && setCurrentTab('reporting')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-stone-50 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 text-xs font-bold border border-stone-200/80 dark:border-stone-700 transition-all cursor-pointer shadow-2xs"
+          >
+            <FileText className="w-4 h-4 text-stone-500 dark:text-stone-400" />
+            <span>รายงานสรุปประจำปี</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 4 Financial & Governance KPI Highlights (ตารางสรุป 4 มิติสำคัญ) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-stone-200/60 dark:border-stone-800">
           <div className="bg-white/80 dark:bg-stone-800/80 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-700/60 shadow-2xs">
             <div className="text-stone-600 dark:text-stone-400 text-xs font-medium flex items-center gap-1.5 mb-1">
@@ -353,7 +356,6 @@ export default function ExecutiveDashboardView({
             </div>
           </div>
         </div>
-      </div>
 
       {/* 4 Critical Legal Countdowns (มาตรการเฝ้าระวังทางกฎหมายและระเบียบเร่งด่วน) */}
       <div className="space-y-3">

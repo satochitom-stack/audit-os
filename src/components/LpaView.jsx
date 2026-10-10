@@ -104,8 +104,8 @@ export default function LpaView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-3xl">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
               <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
@@ -124,26 +124,37 @@ export default function LpaView({
             การประเมินประสิทธิภาพ อปท. (LPA ด้านที่ 1 การบริหารจัดการ)
           </h1>
         </div>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-4 shrink-0">
-          <OfficialDocActionToolbar
-            onDownloadWord={handleDownloadWord}
-            onDownloadExcel={handleDownloadExcel}
-            onPrint={() => window.print()}
-            wordTooltip="ดาวน์โหลดแบบประเมิน LPA ด้านที่ 1 เป็นไฟล์ Word (.doc)"
-            excelTooltip="ส่งออกคะแนนและเกณฑ์ LPA ด้านที่ 1 เป็นไฟล์ Excel (.xlsx)"
-            printTooltip="พิมพ์แบบประเมิน LPA / บันทึกเป็น PDF"
-          />
-
-          <div className="bg-white/80 dark:bg-stone-800/80 rounded-2xl p-4 border border-emerald-500/30 text-center shrink-0 shadow-2xs">
-            <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400">คะแนนประเมินตนเอง</div>
-            <div className="text-3xl font-black text-emerald-600 dark:text-emerald-300 mt-1">
+      {/* Control & Summary Strip */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap items-center justify-between gap-4 print:hidden">
+        <div className="flex items-center space-x-4">
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 rounded-xl px-4 py-2 border border-emerald-500/20">
+            <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400">คะแนนประเมินตนเอง: </span>
+            <span className="text-base font-black text-emerald-700 dark:text-emerald-300 ml-1">
               {totalScore} / {maxScore}
-            </div>
-            <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-              ระดับยอดเยี่ยม (100%)
-            </div>
+            </span>
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 ml-2">
+              (ระดับยอดเยี่ยม 100%)
+            </span>
           </div>
+          <span className="text-xs text-stone-500 font-medium hidden sm:inline">
+            ตัวชี้วัดที่ 29, 30, 31 งานตรวจสอบภายในและการควบคุมภายใน
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <OfficialDocActionToolbar
+            onWord={handleDownloadWord}
+            onExcel={handleDownloadExcel}
+            onPdf={() => window.print()}
+            wordTitle="ส่งออกแบบประเมิน LPA (Word .doc)"
+            wordSubtitle="แบบประเมินประสิทธิภาพ อปท. ด้านที่ 1 งานตรวจสอบและควบคุมภายใน"
+            excelTitle="ส่งออกคะแนนและเกณฑ์ LPA (Excel .xlsx)"
+            excelSubtitle="ตารางตัวชี้วัดที่ 29, 30, 31 พร้อมคะแนนและเอกสารหลักฐานอ้างอิง"
+            pdfTitle="พิมพ์แบบประเมิน LPA (PDF/Print)"
+            pdfSubtitle="จัดพิมพ์แบบประเมินประสิทธิภาพมาตรฐานกรมส่งเสริมการปกครองท้องถิ่น"
+          />
         </div>
       </div>
 

@@ -430,31 +430,26 @@ export default function FormsView({
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-500/15 via-stone-100/80 to-amber-500/10 dark:from-stone-900/80 dark:via-stone-900/60 dark:to-stone-900/80 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgName}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>หนังสือกรมบัญชีกลาง ว ๖๑๔ • ระเบียบ มท. ๒๕๔๕</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <FileCheck2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>ระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖ (ตราครุฑ & เกษียณสั่งการ)</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              แบบบันทึกข้อความ & คำสั่งการตรวจสอบภายใน (ว ๖๑๔ สารบรรณ)
-            </h1>
-            <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-              ชุด ๒๐ แบบบันทึกข้อความ คำสั่ง กฎบัตร และรายงานมาตรฐานครบวงจรตามระเบียบงานสารบรรณ พร้อมระบบส่งออกเป็นไฟล์ Word (.doc) และพิมพ์เอกสารราชการเพื่อนำไปปรับเปลี่ยนตามบริบทของ อปท. ได้ทันที
-            </p>
+      {/* Top Banner */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgName}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>หนังสือกรมบัญชีกลาง ว ๖๑๔ • ระเบียบ มท. ๒๕๔๕</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <FileCheck2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>ระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖ (ตราครุฑ & เกษียณสั่งการ)</span>
+            </span>
           </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            แบบบันทึกข้อความ & คำสั่งการตรวจสอบภายใน (ว ๖๑๔ สารบรรณ)
+          </h1>
         </div>
       </div>
 

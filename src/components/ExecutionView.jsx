@@ -521,8 +521,8 @@ export default function ExecutionView({
   return (
     <div className="space-y-6">
       {/* Top Header & Topic Selector */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6 backdrop-blur-xs">
-        <div className="space-y-2">
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
               <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
@@ -541,41 +541,10 @@ export default function ExecutionView({
             กระดาษทำการการตรวจสอบ (Audit Working Papers)
           </h1>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <button
-            type="button"
-            onClick={handleSyncFromEngagementPlan}
-            className="no-print bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-stone-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
-            title="ซิงค์ขั้นตอนการตรวจและเกณฑ์จากแผนการปฏิบัติงาน (Step 4)"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-            <span className="hidden sm:inline">ซิงค์จากแผนงาน</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleLoadDlaWorkingPapers}
-            className="no-print bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
-            title="โหลดกระดาษทำการ 6 ภารกิจหลักมาตรฐาน อปท. จากคู่มือ สถ."
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-            <span>📥 โหลด 6 ภารกิจ (คู่มือ สถ.)</span>
-          </button>
-
-          <OfficialDocActionToolbar
-            onDownloadWord={handleDownloadWord}
-            onDownloadExcel={() => exportWorkingPaperToExcel(currentWp, orgProfile)}
-            onPrint={() => window.print()}
-            wordTooltip="ดาวน์โหลดกระดาษทำการตรวจสอบ Word (.doc)"
-            excelTooltip="ดาวน์โหลดกระดาษทำการตรวจสอบ Excel (.xls)"
-            printTooltip="สั่งพิมพ์กระดาษทำการ หรือบันทึกเป็น PDF"
-          />
-        </div>
       </div>
 
-      {/* Working Paper Selector Bar */}
-      <div className="bg-white dark:bg-stone-900 p-4 sm:p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Working Paper Selector Bar & Actions */}
+      <div className="bg-white dark:bg-stone-900 p-4 sm:p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0">
             <FileSpreadsheet className="w-5 h-5" />
@@ -588,7 +557,7 @@ export default function ExecutionView({
               <select
                 value={currentWp.id}
                 onChange={(e) => handleSelectOrGenerateWp(e.target.value)}
-                className="w-full appearance-none bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100 text-sm font-bold py-2.5 pl-3.5 pr-9 rounded-xl border border-stone-300 dark:border-stone-700 outline-none cursor-pointer truncate shadow-2xs"
+                className="w-full appearance-none bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100 text-sm font-bold py-2 pl-3.5 pr-9 rounded-xl border border-stone-300 dark:border-stone-700 outline-none cursor-pointer truncate shadow-2xs"
               >
                 {engagementPlans.length > 0 && (
                   <optgroup label="📋 โครงการตามแผนปฏิบัติงาน (Engagement Plans ว 614)">
@@ -611,19 +580,43 @@ export default function ExecutionView({
                   ))}
                 </optgroup>
               </select>
-              <ChevronDown className="w-4 h-4 text-stone-500 dark:text-stone-400 absolute right-3 top-3.5 pointer-events-none" />
+              <ChevronDown className="w-4 h-4 text-stone-500 dark:text-stone-400 absolute right-3 top-3 pointer-events-none" />
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-stone-100 dark:border-stone-800">
-          <span className="inline-flex items-center space-x-1.5 bg-stone-100 dark:bg-stone-800 px-3 py-1.5 rounded-xl text-xs font-semibold text-stone-700 dark:text-stone-300">
-            <Building className="w-3.5 h-3.5 text-stone-500" />
-            <span>หน่วยรับตรวจ: {currentWp.department || 'ไม่ระบุ'}</span>
-          </span>
-          <span className="inline-flex items-center space-x-1 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200">
-            <span>รหัส: {currentWp.id}</span>
-          </span>
+        <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-stone-100 dark:border-stone-800">
+          <button
+            type="button"
+            onClick={handleSyncFromEngagementPlan}
+            className="no-print bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-stone-700 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            title="ซิงค์ขั้นตอนการตรวจและเกณฑ์จากแผนการปฏิบัติงาน (Step 4)"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span className="hidden sm:inline">ซิงค์จากแผนงาน</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLoadDlaWorkingPapers}
+            className="no-print bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-950 dark:text-amber-200 border border-amber-200 dark:border-amber-800 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
+            title="โหลดกระดาษทำการ 6 ภารกิจหลักมาตรฐาน อปท. จากคู่มือ สถ."
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>โหลด 6 ภารกิจ สถ.</span>
+          </button>
+
+          <OfficialDocActionToolbar
+            onWord={handleDownloadWord}
+            onExcel={() => exportWorkingPaperToExcel(currentWp, orgProfile)}
+            onPdf={() => window.print()}
+            wordTitle="ส่งออกกระดาษทำการ (Word .doc)"
+            wordSubtitle={`${currentWp.id}: ${currentWp.topic || 'กระดาษทำการ'} พร้อมบันทึกข้อตรวจพบและช่องลงนาม`}
+            excelTitle="ส่งออกกระดาษทำการ (Excel .xls)"
+            excelSubtitle="ตารางแนวทางการตรวจสอบ Checklist และประเด็นข้อตรวจพบ"
+            pdfTitle="พิมพ์กระดาษทำการ (PDF/Print)"
+            pdfSubtitle="จัดพิมพ์แบบกระดาษทำการตรวจสอบภายในมาตรฐาน"
+          />
         </div>
       </div>
 

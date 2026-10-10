@@ -85,52 +85,64 @@ export default function DashboardView({
       )}
 
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgDisplayName}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName ? `${orgProfile.auditorName} (${orgProfile.auditorPosition || 'ผู้ตรวจสอบภายใน'})` : 'หน่วยตรวจสอบภายใน'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              ระบบงานตรวจสอบภายใน {orgDisplayName}
-            </h1>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgDisplayName}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ผู้ตรวจสอบ: {orgProfile?.auditorName ? `${orgProfile.auditorName} (${orgProfile.auditorPosition || 'ผู้ตรวจสอบภายใน'})` : 'หน่วยตรวจสอบภายใน'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
+            </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            {!hasAuditorName && (
-              <button
-                onClick={onOpenSettings}
-                className="bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
-              >
-                <Settings className="w-4 h-4" />
-                <span>ตั้งชื่อผู้ตรวจสอบ</span>
-              </button>
-            )}
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            ระบบงานตรวจสอบภายใน {orgDisplayName}
+          </h1>
+        </div>
+      </div>
+
+      {/* Action Toolbar Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-stone-900/80 p-3 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs">
+        <div className="text-xs font-bold text-stone-500 dark:text-stone-400">
+          ทางลัดการดำเนินงานตรวจสอบภายใน
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {!hasAuditorName && (
             <button
-              onClick={() => setCurrentTab('execution')}
-              className="bg-amber-700 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
+              onClick={onOpenSettings}
+              className="bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
             >
-              <ClipboardList className="w-4 h-4 text-amber-200" />
-              <span>เปิดกระดาษทำการ</span>
+              <Settings className="w-4 h-4" />
+              <span>ตั้งค่าชื่อผู้ตรวจสอบ</span>
             </button>
-            <button
-              onClick={() => setCurrentTab('reporting')}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 border border-stone-200/80 dark:border-stone-700 text-stone-800 dark:text-stone-200 px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center space-x-2 cursor-pointer active:scale-95"
-            >
-              <FileText className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>สรุปรายงานผล</span>
-            </button>
-          </div>
+          )}
+          <button
+            onClick={onOpenSettings}
+            className="bg-white hover:bg-stone-50 dark:bg-stone-850 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700/80 px-3.5 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center space-x-1.5 cursor-pointer"
+          >
+            <Settings className="w-4 h-4 text-stone-500" />
+            <span>ตั้งค่า อปท.</span>
+          </button>
+          <button
+            onClick={() => setCurrentTab('execution')}
+            className="bg-amber-700 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+          >
+            <ClipboardList className="w-4 h-4 text-amber-200" />
+            <span>เปิดกระดาษทำการ</span>
+          </button>
+          <button
+            onClick={() => setCurrentTab('reporting')}
+            className="bg-white hover:bg-stone-50 dark:bg-stone-800 dark:hover:bg-stone-750 border border-stone-200/80 dark:border-stone-700 text-stone-800 dark:text-stone-200 px-3.5 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+          >
+            <FileText className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <span>สรุปรายงานผล</span>
+          </button>
         </div>
       </div>
 

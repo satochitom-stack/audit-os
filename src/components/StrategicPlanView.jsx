@@ -191,74 +191,78 @@ export default function StrategicPlanView({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-8 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden print:hidden backdrop-blur-xs">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-                <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-                <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                <span>ปีงบประมาณ พ.ศ. {selectedYear} - {parseInt(selectedYear || 2569) + 2}</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              แผนการตรวจสอบระยะยาว (3 ปี) & การคำนวณคน-วัน (Audit Capacity)
-            </h1>
+      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden print:hidden backdrop-blur-xs">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+            </span>
+            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+              <Calendar className="w-3.5 h-3.5 text-stone-500" />
+              <span>ปีงบประมาณ พ.ศ. {year1} - {year3}</span>
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              onClick={handleLoadDlaStrategicPlan}
-              className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95"
-              title="โหลดชุดข้อมูล 16 กิจกรรม 3 ปี รวม 590 คน-วัน ตามคู่มือ สถ."
-            >
-              <Sparkles className="w-4 h-4 text-amber-200" />
-              <span>โหลดตัวอย่าง 3 ปี & 590 คน-วัน (คู่มือ สถ.)</span>
-            </button>
-            <OfficialDocActionToolbar
-              onDownloadWord={handleDownloadWord}
-              onDownloadExcel={handleDownloadExcel}
-              onPrint={() => window.print()}
-              wordTooltip="ดาวน์โหลดบันทึกขออนุมัติแผนระยะยาว 3 ปี Word (.doc)"
-              excelTooltip="ดาวน์โหลดตารางแผน 3 ปีและอัตรากำลังคน-วัน Excel (.xlsx)"
-              printTooltip="พิมพ์แผนระยะยาว 3 ปี หรือบันทึกเป็น PDF"
-            />
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
+            แผนการตรวจสอบระยะยาว (3 ปี) & การคำนวณคน-วัน (Audit Capacity)
+          </h1>
         </div>
       </div>
 
-      {/* Navigation Subtabs */}
-      <div className="bg-white/80 dark:bg-stone-900/80 rounded-2xl p-2 border border-stone-200/80 dark:border-stone-800 shadow-xs flex space-x-2 print:hidden backdrop-blur-xs">
-        <button
-          onClick={() => setActiveTab('manday')}
-          className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
-            activeTab === 'manday'
-              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
-          }`}
-        >
-          <Calculator className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-          <span>การคำนวณคน-วัน (Audit Man-Days Capacity)</span>
-        </button>
+      {/* Navigation Subtabs & Action Toolbar */}
+      <div className="bg-white/80 dark:bg-stone-900/80 rounded-2xl p-2.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 print:hidden backdrop-blur-xs">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            onClick={() => setActiveTab('manday')}
+            className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+              activeTab === 'manday'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
+                : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+            }`}
+          >
+            <Calculator className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span>การคำนวณคน-วัน (Audit Man-Days Capacity)</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('three_year')}
-          className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
-            activeTab === 'three_year'
-              ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-          <span>ตารางแผนการตรวจสอบระยะยาว 3 ปี ({year1} - {year3})</span>
-        </button>
+          <button
+            onClick={() => setActiveTab('three_year')}
+            className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+              activeTab === 'three_year'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 shadow-xs border border-amber-500/30'
+                : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span>ตารางแผนการตรวจสอบระยะยาว 3 ปี ({year1} - {year3})</span>
+          </button>
+        </div>
+
+        <div className="flex items-center space-x-2 shrink-0">
+          <button
+            onClick={handleLoadDlaStrategicPlan}
+            className="bg-amber-700 hover:bg-amber-800 active:scale-98 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
+            title="โหลดชุดข้อมูล 16 กิจกรรม 3 ปี รวม 590 คน-วัน ตามคู่มือ สถ."
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+            <span>โหลดตัวอย่าง สถ. (590 คน-วัน)</span>
+          </button>
+
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadWord}
+            wordTitle="บันทึกขออนุมัติแผนระยะยาว 3 ปี (.doc)"
+            wordSubtitle={`บันทึกข้อความสารบรรณเสนออนุมัติต่อนายก ${year1} - ${year3}`}
+            onDownloadExcel={handleDownloadExcel}
+            excelTitle="ตารางแผน 3 ปีและอัตรากำลัง (.xlsx)"
+            excelSubtitle={`ตาราง 16 กิจกรรมและสรุปคน-วันรายปี พ.ศ. ${year1} - ${year3}`}
+            onPrint={() => window.print()}
+            pdfTitle="พิมพ์แผนระยะยาว 3 ปี / PDF"
+            pdfSubtitle="พิมพ์สรุปแผนระยะยาวและอัตรากำลังคน-วัน (A4)"
+          />
+        </div>
       </div>
 
       {/* VIEW: MAN-DAY CALCULATION */}
