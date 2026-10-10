@@ -568,46 +568,40 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         </div>
       )}
 
-      {/* Main Top Header matching user's Image 1 & 2 */}
-      <div className="bg-gradient-to-r from-stone-900 via-amber-950/70 to-stone-900 rounded-3xl p-6 sm:p-7 text-white border border-amber-500/30 shadow-xl relative overflow-hidden backdrop-blur-md">
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-0.5 rounded-full text-xs font-black tracking-wide">
-                <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span>ระบบดูแลหลังบ้าน (Admin Dashboard)</span>
-              </span>
-              <span className="inline-flex items-center space-x-1 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-                <span>LIVE SYSTEM</span>
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-              ตรวจสอบข้อมูลผู้ใช้ สถิติรายรับแพ็กเกจ ตรวจจับผู้ใช้งานออนไลน์ และแก้ไขข้อมูลช่องทางรับเงินหน้าบ้านแบบเรียลไทม์
-            </p>
+      {/* Top Header: เรียบง่าย สะอาดตา ไม่มีกรอบใหญ่ เหลือเฉพาะหัวข้อและปุ่มเครื่องมือ */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+            <ShieldCheck className="w-5 h-5 text-amber-600 dark:text-amber-400" />
           </div>
+          <h1 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight">
+            ระบบดูแลหลังบ้าน (Admin Dashboard)
+          </h1>
+          <span className="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300/60 dark:border-emerald-800 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
+            <span>LIVE SYSTEM</span>
+          </span>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="flex items-center space-x-2 shrink-0">
+          <button
+            onClick={reloadData}
+            className="bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+            title="ดึงข้อมูลล่าสุด"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-stone-500" />
+            <span>ดึงข้อมูลล่าสุด</span>
+          </button>
+
+          {onSwitchToWorkbench && (
             <button
-              onClick={reloadData}
-              className="bg-stone-800 hover:bg-stone-750 text-amber-200 border border-amber-500/30 hover:border-amber-400 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-2 cursor-pointer shadow-xs"
-              title="ดึงข้อมูลล่าสุด"
+              onClick={onSwitchToWorkbench}
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm shadow-amber-600/20 flex items-center space-x-1.5 cursor-pointer"
             >
-              <RefreshCw className="w-4 h-4 text-amber-400" />
-              <span>ดึงข้อมูลล่าสุด</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>เข้าสู่หน้าตรวจ (Workbench)</span>
             </button>
-
-            {onSwitchToWorkbench && (
-              <button
-                onClick={onSwitchToWorkbench}
-                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-md shadow-amber-600/30 flex items-center space-x-2 cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>เข้าสู่หน้าตรวจ (Workbench)</span>
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
