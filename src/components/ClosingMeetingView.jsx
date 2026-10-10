@@ -18,6 +18,8 @@ import {
   Award
 } from 'lucide-react';
 import { DLA_CLOSING_MEETING_DATA } from '../data/dlaStandardTemplates';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportDocumentToWord, exportDataToExcel, wrapWordHtml } from '../utils/documentExportUtils';
 
 export default function ClosingMeetingView({
   selectedYear = '2569',
@@ -137,6 +139,103 @@ export default function ClosingMeetingView({
     window.print();
   };
 
+  const handleDownloadWord = () => {
+    const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
+    const projName = currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน';
+    const deptName = currentPlan.department || 'หน่วยรับตรวจ';
+    const auditorName = orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน';
+    const auditorPos = orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน';
+
+    const bodyContent = `
+      <div style="text-align: center; margin-bottom: 16pt;">
+        <p style="margin: 0; font-size: 20pt; font-weight: bold; font-family: 'TH Sarabun PSK';">รายงานการประชุมปิดการตรวจสอบ (Closing Meeting Minutes)</p>
+        <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK';">โครงการ: ${projName}</p>
+        <p style="margin: 2pt 0 0 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">หน่วยรับตรวจ: ${deptName} ${orgName}</p>
+        <p style="margin: 2pt 0 0 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">ประจำปีงบประมาณ พ.ศ. ${selectedYear}</p>
+      </div>
+      <div style="border-top: 1pt solid black; margin-bottom: 14pt;"></div>
+
+      <table style="width: 100%; border: none; font-size: 16pt; font-family: 'TH Sarabun PSK'; margin-bottom: 12pt;">
+        <tr>
+          <td style="width: 50%;"><strong>วัน/เดือน/ปี ที่ประชุม:</strong> ${meetingDate}</td>
+          <td style="width: 50%;"><strong>เวลา:</strong> ${meetingTime}</td>
+        </tr>
+        <tr>
+          <td colspan="2"><strong>สถานที่ประชุม:</strong> ${meetingLocation}</td>
+        </tr>
+      </table>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-bottom: 4pt;">ผู้เข้าร่วมประชุม:</p>
+      <ol style="margin-top: 0; margin-left: 20pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        <li>${auditorName} ตำแหน่ง ${auditorPos} (ฝ่ายตรวจสอบภายใน)</li>
+        <li>หัวหน้าหน่วยรับตรวจ และเจ้าหน้าที่ผู้รับผิดชอบงาน (${deptName})</li>
+      </ol>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 12pt; margin-bottom: 4pt;">วาระการประชุมและสรุปประเด็นข้อตรวจพบเบื้องต้น:</p>
+      <p style="text-indent: 2.5cm; font-size: 16pt; font-family: 'TH Sarabun PSK'; line-height: 1.35; margin-bottom: 8pt; text-align: justify;">
+        ผู้ตรวจสอบภายในได้ชี้แจงวัตถุประสงค์ของการประชุมปิดการตรวจสอบ เพื่อนำเสนอข้อเท็จจริงและข้อตรวจพบเบื้องต้นที่ได้จากการปฏิบัติงานตรวจสอบ พร้อมทั้งรับฟังคำชี้แจงและเหตุผลความจำเป็นจากหน่วยรับตรวจ เพื่อสร้างความเข้าใจที่ถูกต้องตรงกันและร่วมกันกำหนดแนวทางแก้ไขปรับปรุงที่เป็นไปได้ในทางปฏิบัติ ดังนี้
+      </p>
+
+      ${findings
+        .map(
+          (f, i) => `
+      <div style="margin-bottom: 12pt; padding: 8pt; border: 1pt solid #ccc; font-family: 'TH Sarabun PSK';">
+        <p style="margin: 0 0 4pt 0; font-size: 16pt; font-weight: bold;">ประเด็นที่ ${i + 1}: ${f.topic}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>สภาพที่ตรวจพบ (Condition):</strong> ${f.condition || '-'}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>เกณฑ์มาตรฐาน (Criteria):</strong> ${f.criteria || '-'}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>คำชี้แจงของหน่วยรับตรวจ (Auditee Feedback):</strong> ${f.auditeeFeedback || '-'}</p>
+        <p style="margin: 2pt 0; font-size: 16pt; color: #047857;"><strong>ข้อตกลงแนวทางแก้ไขร่วมกัน (Agreed Action):</strong> ${f.agreement || '-'}</p>
+      </div>
+      `
+        )
+        .join('')}
+
+      <p style="text-indent: 2.5cm; font-size: 16pt; font-family: 'TH Sarabun PSK'; line-height: 1.35; margin-top: 14pt; margin-bottom: 24pt; text-align: justify;">
+        ฝ่ายตรวจสอบภายในจะนำข้อเท็จจริงและคำชี้แจงดังกล่าวไปประกอบการยกร่างรายงานผลการตรวจสอบภายในฉบับสมบูรณ์ เพื่อเสนอผู้บริหารท้องถิ่นและแจ้งให้หน่วยรับตรวจดำเนินการปรับปรุงแก้ไขตามกรอบเวลาต่อไป
+      </p>
+
+      <table style="width: 100%; border: none; margin-top: 30pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        <tr>
+          <td style="width: 50%; text-align: center;">
+            <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${auditorName})</p>
+            <p style="margin: 2pt 0 0 0;">${auditorPos}</p>
+            <p style="margin: 2pt 0 0 0;">ผู้บันทึกรายงานการประชุม</p>
+          </td>
+          <td style="width: 50%; text-align: center;">
+            <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(........................................................)</p>
+            <p style="margin: 2pt 0 0 0;">ผู้อำนวยการ${deptName}</p>
+            <p style="margin: 2pt 0 0 0;">ผู้รับรองรายงานการประชุม</p>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    exportDocumentToWord(bodyContent, `รายงานการประชุมปิดการตรวจสอบ_${projName}_${selectedYear}.doc`, 'รายงานการประชุมปิดการตรวจสอบ');
+  };
+
+  const handleDownloadExcel = () => {
+    const headers = [
+      'ที่',
+      'ประเด็นข้อตรวจพบ',
+      'เกณฑ์อ้างอิง (Criteria)',
+      'สภาพที่ตรวจพบ (Condition)',
+      'คำชี้แจงหน่วยรับตรวจ (Feedback)',
+      'ข้อตกลงแนวทางแก้ไข (Agreement)'
+    ];
+    const rows = findings.map((f, i) => [
+      i + 1,
+      f.topic || '',
+      f.criteria || '',
+      f.condition || '',
+      f.auditeeFeedback || '',
+      f.agreement || ''
+    ]);
+    const filename = `Closing_Meeting_Findings_${currentPlan.projectName || 'audit'}_${selectedYear}.xlsx`;
+    exportDataToExcel('ประเด็นปิดตรวจ', [headers, ...rows], filename);
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -179,13 +278,14 @@ export default function ClosingMeetingView({
               <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               <span>📥 โหลดตัวอย่าง สถ. (หน้า 52)</span>
             </button>
-            <button
-              onClick={handlePrint}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
-            >
-              <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>พิมพ์</span>
-            </button>
+            <OfficialDocActionToolbar
+              onDownloadWord={handleDownloadWord}
+              onDownloadExcel={handleDownloadExcel}
+              onPrint={handlePrint}
+              wordTooltip="ดาวน์โหลดรายงานการประชุมปิดการตรวจสอบเป็นไฟล์ Word (.doc)"
+              excelTooltip="ส่งออกประเด็นข้อตรวจพบและข้อตกลงเป็นไฟล์ Excel (.xlsx)"
+              printTooltip="พิมพ์รายงานการประชุมปิดการตรวจสอบ / บันทึกเป็น PDF"
+            />
           </div>
         </div>
       </div>

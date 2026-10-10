@@ -18,6 +18,8 @@ import {
   Award
 } from 'lucide-react';
 import { exportAnnualAuditReportExcel } from '../services/reportExportService';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportDocumentToWord, wrapWordHtml, THAI_GARUDA_SVG } from '../utils/documentExportUtils';
 
 export default function AnnualAuditReportView({
   orgProfile = {},
@@ -69,6 +71,168 @@ export default function AnnualAuditReportView({
     }
   };
 
+  // Handle Export to Word
+  const handleDownloadWord = () => {
+    const docNumber = orgProfile.docCode ? `${orgProfile.docCode}/รายงาน` : 'อบ 78408 / ......';
+    const reportTitle = `รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear}`;
+
+    const bodyContent = `
+      <!-- หนังสือนำส่ง / บันทึกข้อความ -->
+      <table style="width: 100%; border: none; margin-bottom: 8pt; font-family: 'TH Sarabun PSK';">
+        <tr>
+          <td style="width: 15%; vertical-align: top; text-align: left;">
+            <div style="width: 60pt; height: 60pt;">${THAI_GARUDA_SVG}</div>
+          </td>
+          <td style="width: 70%; text-align: center; vertical-align: middle;">
+            <p style="margin: 0; font-size: 29pt; font-weight: bold; font-family: 'TH Sarabun PSK';">บันทึกข้อความ</p>
+          </td>
+          <td style="width: 15%;"></td>
+        </tr>
+      </table>
+
+      <table style="width: 100%; border: none; font-size: 16pt; font-family: 'TH Sarabun PSK'; line-height: 1.25; margin-bottom: 8pt;">
+        <tr>
+          <td style="width: 60%;"><strong>ส่วนราชการ:</strong> ${agencyName} ${orgName}</td>
+          <td style="width: 40%;"><strong>โทรศัพท์:</strong> ${orgProfile.phone || '045-842-xxx'}</td>
+        </tr>
+        <tr>
+          <td><strong>ที่:</strong> ${docNumber}</td>
+          <td><strong>วันที่:</strong> ...... เดือน .......................... พ.ศ. ${selectedYear}</td>
+        </tr>
+        <tr>
+          <td colspan="2"><strong>เรื่อง:</strong> ${reportTitle}</td>
+        </tr>
+      </table>
+      <div style="border-top: 1pt solid black; margin-bottom: 12pt;"></div>
+
+      <p style="font-size: 16pt; font-family: 'TH Sarabun PSK'; margin-bottom: 8pt;"><strong>เรียน:</strong> ${approverPosition} (ผ่าน ${palatPosition})</p>
+
+      <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        ตามที่ ${agencyName} ${orgName} ได้รับอนุมัติแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} และได้เข้าปฏิบัติงานตรวจสอบภายในหน่วยรับตรวจในสังกัด ${orgName} ตามมาตรฐานการปฏิบัติงานวิชาชีพการตรวจสอบภายในภาครัฐ และระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. 2545 และที่แก้ไขเพิ่มเติม เพื่อประเมินความมีประสิทธิภาพ ประสิทธิผล ความโปร่งใส และความคุ้มค่าของการบริหารจัดการ การเงิน การบัญชี การพัสดุ และการใช้ทรัพยากรของทางราชการ นั้น
+      </p>
+
+      <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        บัดนี้ การปฏิบัติงานตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ได้เสร็จสิ้นสมบูรณ์แล้ว ${agencyName} จึงขอรายงานผลการตรวจสอบภายในฉบับสมบูรณ์ พร้อมข้อสังเกตและข้อเสนอแนะในการปรับปรุงระบบการควบคุมภายในและการบริหารความเสี่ยง รายละเอียดปรากฏตามรายงานแนบท้ายนี้
+      </p>
+
+      <p style="text-indent: 2.5cm; margin-bottom: 16pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        จึงเรียนมาเพื่อโปรดทราบ และพิจารณาให้ความเห็นชอบพร้อมทั้งมอบหมายให้หน่วยรับตรวจถือปฏิบัติตามข้อเสนอแนะต่อไป
+      </p>
+
+      <table style="width: 100%; border: none; margin-top: 16pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        <tr>
+          <td style="width: 50%;"></td>
+          <td style="width: 50%; text-align: center;">
+            <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${auditorName})</p>
+            <p style="margin: 2pt 0 0 0;">${auditorPosition}</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- ความเห็นของ ปลัด อปท. และ นายก อปท. -->
+      <table style="width: 100%; border: 1pt solid #333; border-collapse: collapse; margin-top: 20pt; font-size: 15pt; font-family: 'TH Sarabun PSK';">
+        <tr>
+          <td style="width: 50%; border: 1pt solid #333; padding: 8pt; vertical-align: top;">
+            <p style="margin: 0 0 4pt 0; font-weight: bold;">๑. ความเห็นของปลัด${orgName}</p>
+            <p style="margin: 0 0 40pt 0;">เห็นควรโปรดทราบ และมอบหมายให้ทุกสำนัก/กองถือปฏิบัติตามข้อเสนอแนะ</p>
+            <p style="margin: 0; text-align: center;">(ลงชื่อ)........................................................</p>
+            <p style="margin: 2pt 0 0 0; text-align: center; font-weight: bold;">(${palatName})</p>
+            <p style="margin: 2pt 0 0 0; text-align: center;">${palatPosition}</p>
+          </td>
+          <td style="width: 50%; border: 1pt solid #333; padding: 8pt; vertical-align: top;">
+            <p style="margin: 0 0 4pt 0; font-weight: bold;">๒. คำสั่ง / ข้อวินิจฉัยนายก${orgName}</p>
+            <p style="margin: 0 0 40pt 0;">[  ] ทราบ และมอบหมายหน่วยรับตรวจดำเนินการแก้ไขตามข้อเสนอแนะ</p>
+            <p style="margin: 0; text-align: center;">(ลงชื่อ)........................................................</p>
+            <p style="margin: 2pt 0 0 0; text-align: center; font-weight: bold;">(${approverName})</p>
+            <p style="margin: 2pt 0 0 0; text-align: center;">${approverPosition}</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- PAGE BREAK -->
+      <br clear="all" style="page-break-before:always" />
+
+      <!-- ส่วนรายงานผลการตรวจสอบภายในประจำปี -->
+      <div style="text-align: center; margin-bottom: 20pt; font-family: 'TH Sarabun PSK';">
+        <p style="margin: 0; font-size: 20pt; font-weight: bold;">${reportTitle}</p>
+        <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold;">${orgName}</p>
+        <p style="margin: 2pt 0 0 0; font-size: 16pt;">หน่วยตรวจสอบภายใน: ${agencyName}</p>
+      </div>
+      <div style="border-top: 1.5pt solid black; margin-bottom: 16pt;"></div>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-bottom: 4pt;">ส่วนที่ ๑: บทสรุปสำหรับผู้บริหาร (Executive Summary)</p>
+      <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        หน่วยตรวจสอบภายในได้ดำเนินการตรวจสอบตามแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} จำนวนทั้งสิ้น ${totalPlans} โครงการ/กิจกรรม ครอบคลุมการปฏิบัติงานด้านการเงิน การบัญชี การจัดซื้อจัดจ้าง และการบริหารทรัพย์สิน ผลการตรวจสอบพบว่าโดยรวมมีการปฏิบัติงานที่เป็นไปตามระเบียบ แต่ยังมีข้อสังเกตและข้อตรวจพบที่ควรได้รับการปรับปรุงแก้ไข โดยมีประเด็นข้อตรวจพบทั้งสิ้น ${totalCapa} ประเด็น ได้รับการแก้ไขเสร็จสิ้นแล้ว ${closedCapa} ประเด็น อยู่ระหว่างการดำเนินการ ${pendingCapa} ประเด็น คิดเป็นอัตราความร่วมมือและการแก้ไข ${complianceRate}%
+      </p>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 14pt; margin-bottom: 4pt;">ส่วนที่ ๒: วัตถุประสงค์และขอบเขตการตรวจสอบ</p>
+      <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        การตรวจสอบมีวัตถุประสงค์เพื่อประเมินความเพียงพอของระบบการควบคุมภายใน ความถูกต้องและเชื่อถือได้ของข้อมูลทางการเงิน การปฏิบัติตามกฎหมาย ระเบียบ หนังสือสั่งการของทางราชการ ตลอดจนประเมินความคุ้มค่าและประสิทธิภาพของการใช้จ่ายงบประมาณแผ่นดิน
+      </p>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 14pt; margin-bottom: 4pt;">ส่วนที่ ๓: สรุปผลการตรวจสอบและข้อตรวจพบจำแนกตามหน่วยรับตรวจ</p>
+      <table style="width: 100%; border-collapse: collapse; border: 1pt solid black; font-size: 15pt; font-family: 'TH Sarabun PSK'; margin-bottom: 14pt;">
+        <thead>
+          <tr style="background-color: #f2f2f2;">
+            <th style="border: 1pt solid black; padding: 6pt; width: 8%; text-align: center;">ลำดับ</th>
+            <th style="border: 1pt solid black; padding: 6pt; width: 32%; text-align: center;">โครงการ / กิจกรรมตรวจสอบ</th>
+            <th style="border: 1pt solid black; padding: 6pt; width: 20%; text-align: center;">หน่วยรับตรวจ</th>
+            <th style="border: 1pt solid black; padding: 6pt; width: 40%; text-align: center;">ผลการตรวจสอบ / ข้อเสนอแนะ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${annualPlans
+            .map(
+              (p, i) => `
+          <tr>
+            <td style="border: 1pt solid black; padding: 6pt; text-align: center; vertical-align: top;">${i + 1}</td>
+            <td style="border: 1pt solid black; padding: 6pt; vertical-align: top;"><strong>${p.projectName || p.topic || '-'}</strong></td>
+            <td style="border: 1pt solid black; padding: 6pt; text-align: center; vertical-align: top;">${p.department || '-'}</td>
+            <td style="border: 1pt solid black; padding: 6pt; vertical-align: top;">${p.objective || 'ปฏิบัติงานตามระเบียบและข้อกำหนดทางราชการ'}</td>
+          </tr>`
+            )
+            .join('')}
+        </tbody>
+      </table>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 14pt; margin-bottom: 4pt;">ส่วนที่ ๔: ตารางติดตามข้อทักท้วงและการแก้ไขปรับปรุง (CAPA Register)</p>
+      <table style="width: 100%; border-collapse: collapse; border: 1pt solid black; font-size: 14pt; font-family: 'TH Sarabun PSK'; margin-bottom: 14pt;">
+        <thead>
+          <tr style="background-color: #f2f2f2;">
+            <th style="border: 1pt solid black; padding: 5pt; width: 8%; text-align: center;">ที่</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 28%; text-align: center;">ข้อตรวจพบ / สภาพที่พบ</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 22%; text-align: center;">เกณฑ์อ้างอิง</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 28%; text-align: center;">ข้อเสนอแนะ</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 14%; text-align: center;">สถานะ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(capaFindings.length > 0 ? capaFindings : [{ id: 1, topic: 'การบันทึกบัญชีและการจัดทำงบกระทบยอด', criteria: 'ระเบียบรับจ่ายเงินฯ 2566', recommendation: 'เร่งรัดจัดทำงบกระทบยอดให้เป็นปัจจุบันทุกสิ้นเดือน', status: 'closed' }])
+            .map(
+              (c, i) => `
+          <tr>
+            <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${i + 1}</td>
+            <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${c.topic || c.finding || '-'}</td>
+            <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${c.criteria || '-'}</td>
+            <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${c.recommendation || '-'}</td>
+            <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${c.status === 'verified_closed' || c.status === 'closed' ? 'แก้ไขแล้ว' : 'อยู่ระหว่างปรับปรุง'}</td>
+          </tr>`
+            )
+            .join('')}
+        </tbody>
+      </table>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 14pt; margin-bottom: 4pt;">ส่วนที่ ๕: การประเมินระบบการควบคุมภายในและการบริหารความเสี่ยงภาพรวม</p>
+      <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        จากการประเมินผลการควบคุมภายในตามหลักเกณฑ์กระทรวงการคลังว่าด้วยมาตรฐานและหลักเกณฑ์ปฏิบัติการควบคุมภายในสำหรับหน่วยงานของรัฐ พ.ศ. 2561 (แบบ ปค.4 และ ปค.5) พบว่า ${orgName} มีการกำหนดสภาพแวดล้อมการควบคุม กิจกรรมการควบคุม และการประเมินความเสี่ยงที่เพียงพอในระดับหนึ่ง ทั้งนี้ขอเสนอแนะให้หน่วยงานกำชับเจ้าหน้าที่ผู้รับผิดชอบนำข้อสังเกตและข้อเสนอแนะที่ได้ไปปรับปรุงขั้นตอนการปฏิบัติงานอย่างต่อเนื่องต่อไป
+      </p>
+    `;
+
+    exportDocumentToWord(bodyContent, `รายงานผลการตรวจสอบประจำปี_${selectedYear}.doc`, reportTitle);
+    showToast('📘 ดาวน์โหลดรายงานผลการตรวจสอบประจำปี (.doc) เรียบร้อยแล้ว');
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
@@ -103,23 +267,14 @@ export default function AnnualAuditReportView({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleExportExcel}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>ส่งออก Excel (.xlsx)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-700 hover:bg-amber-600 text-white shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors border border-amber-600/30"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>พิมพ์รายงาน / บันทึกเป็น PDF</span>
-            </button>
+            <OfficialDocActionToolbar
+              onDownloadWord={handleDownloadWord}
+              onDownloadExcel={handleExportExcel}
+              onPrint={() => window.print()}
+              wordTooltip="ดาวน์โหลดรายงานผลการตรวจสอบประจำปีและหนังสือนำส่งเป็นไฟล์ Word (.doc)"
+              excelTooltip="ส่งออกรายงานผลการตรวจสอบประจำปีเป็นไฟล์ Excel (.xlsx)"
+              printTooltip="พิมพ์รายงานผลการตรวจสอบ / บันทึกเป็น PDF"
+            />
           </div>
         </div>
       </div>

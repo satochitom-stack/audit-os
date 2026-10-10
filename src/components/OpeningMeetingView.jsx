@@ -17,6 +17,13 @@ import {
   Award
 } from 'lucide-react';
 import { DLA_OPENING_MEETING_DATA } from '../data/dlaStandardTemplates';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import OfficialThaiMemo from './OfficialThaiMemo';
+import {
+  exportDataToExcel,
+  exportThaiMemoToWord,
+  exportDocumentToWord
+} from '../utils/documentExportUtils';
 
 export default function OpeningMeetingView({
   selectedYear = '2569',
@@ -95,6 +102,100 @@ export default function OpeningMeetingView({
     window.print();
   };
 
+  const handleDownloadWord = () => {
+    try {
+      if (activeSubTab === 'notice') {
+        exportThaiMemoToWord({
+          agency: `หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`,
+          phone: orgProfile?.phone || '',
+          docNumber: `อบ ๗๘๔๐๘/เปิดตรวจ`,
+          docDate: `${meetingDate}`,
+          subject: `ขอเชิญร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) โครงการ ${currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน'}`,
+          to: `หัวหน้า${currentPlan.department || 'หน่วยรับตรวจ'}`,
+          contentParagraphs: [
+            `<strong>๑. เรื่องเดิม:</strong> ตามที่ นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้อนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear} นั้น`,
+            `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายใน กำหนดจะเข้าปฏิบัติงานตรวจสอบโครงการ <strong>${currentPlan.projectName || currentPlan.topic}</strong> จึงขอเชิญท่านและเจ้าหน้าที่ผู้เกี่ยวข้องร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) ในวันที่ <strong>${meetingDate}</strong> เวลา <strong>${meetingTime}</strong> ณ <strong>${meetingLocation}</strong>`,
+            `<strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> ในการประชุมดังกล่าวจะมีการชี้แจงวัตถุประสงค์ ขอบเขต และขั้นตอนการตรวจสอบ เพื่อสร้างความเข้าใจร่วมกัน จึงเรียนมาเพื่อโปรดเข้าร่วมประชุมตามกำหนดเวลาดังกล่าว<br/><br/>` +
+            `จึงเรียนมาเพื่อโปรดพิจารณา`
+          ],
+          signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+          signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+          signatoryRole: 'หัวหน้าทีมตรวจสอบ',
+          palatReviewText: 'ทราบและเห็นควรแจ้งหน่วยรับตรวจเข้าร่วมประชุม',
+          executiveOrderText: 'ทราบ มอบหมายหน่วยรับตรวจเข้าร่วมประชุมตามกำหนด',
+          orgName: orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น',
+          fileName: `หนังสือเชิญประชุมเปิดตรวจ_${currentPlan.id || 'PLAN'}_${orgProfile?.name || 'อปท'}`
+        });
+      } else {
+        const attendeesHtml = attendees.map((a, i) => `<tr><td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${i + 1}</td><td style="border: 1pt solid #000; padding: 4pt; font-weight: bold;">${a.name}</td><td style="border: 1pt solid #000; padding: 4pt;">${a.position}</td><td style="border: 1pt solid #000; padding: 4pt;">${a.role}</td></tr>`).join('');
+        const agendasHtml = agendas.map((ag) => `
+          <div style="margin-bottom: 10pt;">
+            <p style="font-weight: bold; margin: 0 0 2pt 0;">${ag.title}</p>
+            <p style="text-indent: 1.5cm; margin: 0; text-align: justify;">${ag.details}</p>
+          </div>
+        `).join('');
+
+        const content = `
+          <div style="text-align: center; margin-bottom: 16pt;">
+            <h2 style="font-size: 18pt; font-weight: bold; margin: 0;">รายงานการประชุมเปิดการตรวจสอบ (Opening Meeting)</h2>
+            <div style="font-size: 16pt; font-weight: bold; margin-top: 4pt;">โครงการ: ${currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน'}</div>
+            <div style="font-size: 14pt; margin-top: 2pt;">หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</div>
+            <div style="font-size: 13pt; margin-top: 4pt;">ประชุมเมื่อวันที่ ${meetingDate} เวลา ${meetingTime} ณ ${meetingLocation}</div>
+          </div>
+          <h3 style="font-size: 15pt; font-weight: bold; margin-bottom: 6pt;">ผู้เข้าร่วมประชุม</h3>
+          <table class="table-bordered" style="width: 100%; border: 1pt solid #000; border-collapse: collapse; font-size: 13pt; margin-bottom: 14pt;">
+            <thead>
+              <tr style="background-color: #f3f4f6; font-weight: bold;">
+                <th style="border: 1pt solid #000; padding: 4pt; width: 8%;">ที่</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 35%;">ชื่อ - สกุล</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 32%;">ตำแหน่ง</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 25%;">สถานะในที่ประชุม</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${attendeesHtml}
+            </tbody>
+          </table>
+          <h3 style="font-size: 15pt; font-weight: bold; margin-bottom: 6pt;">สาระสำคัญและวาระการประชุม</h3>
+          <div style="font-size: 14pt; line-height: 1.4;">
+            ${agendasHtml}
+          </div>
+          <div style="margin-top: 30pt; text-align: right; padding-right: 40pt;">
+            <p style="margin: 0;">(ลงชื่อ)........................................................ผู้บันทึกรายงานการประชุม</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
+            <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+          </div>
+        `;
+
+        exportDocumentToWord({
+          title: `รายงานการประชุมเปิดตรวจ_${currentPlan.id || 'PLAN'}`,
+          htmlContent: content,
+          fileName: `รายงานการประชุมเปิดการตรวจสอบ_สถ_${currentPlan.id || 'PLAN'}_${orgProfile?.name || 'อปท'}`
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการดาวน์โหลด Word');
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    try {
+      const headers = ['ลำดับ', 'ชื่อ - สกุล', 'ตำแหน่ง', 'สถานะการประชุม'];
+      const rows = attendees.map((a, i) => [i + 1, a.name, a.position, a.role]);
+      exportDataToExcel({
+        sheetName: 'ผู้เข้าร่วมประชุม',
+        headers,
+        rows,
+        fileName: `รายชื่อผู้เข้าร่วมประชุมเปิดตรวจ_${currentPlan.id || 'PLAN'}_${orgProfile?.name || 'อปท'}`,
+        colWidths: [8, 30, 30, 24]
+      });
+    } catch (err) {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการดาวน์โหลด Excel');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -129,13 +230,14 @@ export default function OpeningMeetingView({
               <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               <span>📥 โหลดตัวอย่าง สถ. (หน้า 50)</span>
             </button>
-            <button
-              onClick={handlePrint}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
-            >
-              <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>พิมพ์เอกสารราชการ</span>
-            </button>
+            <OfficialDocActionToolbar
+              onDownloadWord={handleDownloadWord}
+              onDownloadExcel={handleDownloadExcel}
+              onPrint={handlePrint}
+              wordTooltip="ดาวน์โหลดรายงานการประชุมเปิดตรวจ / หนังสือแจ้ง Word (.doc)"
+              excelTooltip="ดาวน์โหลดรายชื่อผู้เข้าร่วมประชุม Excel (.xlsx)"
+              printTooltip="พิมพ์เอกสารราชการ หรือบันทึกเป็น PDF"
+            />
           </div>
         </div>
       </div>

@@ -31,6 +31,8 @@ import {
   CENTRAL_DOC_CATEGORIES,
   INITIAL_CENTRAL_DOCUMENTS
 } from '../data/centralKnowledgeData';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportDocumentToWord } from '../utils/documentExportUtils';
 
 export default function CentralKnowledgeHubView({ session, onCloneToWorkingPapers }) {
   const [documents, setDocuments] = useState(() => {
@@ -173,6 +175,25 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     setTimeout(() => {
       printWindow.print();
     }, 500);
+  };
+
+  const handleDownloadWord = (doc) => {
+    if (!doc) return;
+    const bodyContent = `
+      <div style="text-align: center; margin-bottom: 16pt; font-family: 'TH Sarabun PSK';">
+        <p style="margin: 0; font-size: 16pt; font-weight: bold;">${doc.code || ''} | ${doc.organization || ''} (พ.ศ. ${doc.year || ''})</p>
+        <p style="margin: 4pt 0 0 0; font-size: 20pt; font-weight: bold;">${doc.title || ''}</p>
+        <p style="margin: 2pt 0 0 0; font-size: 14pt; color: #555;">ประเภท: ${doc.fileType || ''} | หมวดหมู่: ${doc.category || ''}</p>
+      </div>
+      <div style="border-top: 1pt solid black; margin-bottom: 12pt;"></div>
+      <div style="background-color: #f8f9fa; padding: 10pt; border: 1pt solid #ddd; margin-bottom: 12pt; font-family: 'TH Sarabun PSK'; font-size: 16pt;">
+        <strong>สาระสำคัญ:</strong> ${doc.summary || ''}
+      </div>
+      <div style="font-family: 'TH Sarabun PSK'; font-size: 16pt; line-height: 1.35; white-space: pre-wrap; text-align: justify;">
+        ${doc.fullContent || doc.summary || ''}
+      </div>
+    `;
+    exportDocumentToWord(bodyContent, `${doc.title || 'เอกสารคลังความรู้'}.doc`, doc.title);
   };
 
   // Add Document Submit
@@ -543,13 +564,12 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   <Copy className="w-3.5 h-3.5" />
                   <span>คัดลอกข้อความ</span>
                 </button>
-                <button
-                  onClick={() => handlePrintDocument(previewDoc)}
-                  className="bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 text-stone-800 dark:text-stone-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>พิมพ์เอกสาร</span>
-                </button>
+                <OfficialDocActionToolbar
+                  onDownloadWord={() => handleDownloadWord(previewDoc)}
+                  onPrint={() => handlePrintDocument(previewDoc)}
+                  wordTooltip={`ดาวน์โหลด ${previewDoc.title} เป็นไฟล์ Word (.doc)`}
+                  printTooltip={`พิมพ์ ${previewDoc.title} / บันทึกเป็น PDF`}
+                />
               </div>
 
               <div className="flex items-center space-x-2">

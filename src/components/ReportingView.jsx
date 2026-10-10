@@ -32,6 +32,8 @@ import ConfirmModal from './ConfirmModal';
 import AnnualAuditReportView from './AnnualAuditReportView';
 import ReportExportHubModal from './ReportExportHubModal';
 import OfficialThaiMemo from './OfficialThaiMemo';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportThaiMemoToWord, exportDocumentToWord } from '../utils/documentExportUtils';
 import { initialCapaFindings } from '../data/initialData';
 import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
 
@@ -321,6 +323,79 @@ export default function ReportingView({
   const palatName = orgProfile.palatName?.trim() || 'ปลัดองค์กรปกครองส่วนท้องถิ่น';
   const palatPosition = orgProfile.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น';
 
+  const handleDownloadCurrentReportWord = () => {
+    const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
+    const wp = workingPapers.find((w) => w.id === selectedWpId) || workingPapers[0];
+    const projTitle = wp?.title || activeReport.title || 'รายงานผลการตรวจสอบภายใน';
+    const deptName = wp?.department || activeReport.department || 'หน่วยรับตรวจ';
+
+    const bodyContent = `
+      <div style="text-align: center; margin-bottom: 16pt;">
+        <p style="margin: 0; font-size: 20pt; font-weight: bold; font-family: 'TH Sarabun PSK';">รายงานผลการตรวจสอบภายใน</p>
+        <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK';">เรื่อง: ${projTitle}</p>
+        <p style="margin: 2pt 0 0 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">หน่วยรับตรวจ: ${deptName} ${orgName}</p>
+        <p style="margin: 2pt 0 0 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">ประจำปีงบประมาณ พ.ศ. ${selectedYear}</p>
+      </div>
+      <div style="border-top: 1pt solid black; margin-bottom: 14pt;"></div>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-bottom: 4pt;">๑. วัตถุประสงค์และขอบเขตการตรวจสอบ:</p>
+      <p style="text-indent: 2.5cm; font-size: 16pt; font-family: 'TH Sarabun PSK'; line-height: 1.35; margin-bottom: 8pt; text-align: justify;">
+        ${activeReport.objective || `เพื่อประเมินความมีประสิทธิภาพ ประสิทธิผล ความถูกต้องตามระเบียบกฎหมายของทางราชการ และความเพียงพอของระบบการควบคุมภายในของ ${deptName}`}
+      </p>
+
+      <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 12pt; margin-bottom: 4pt;">๒. ข้อตรวจพบและข้อสังเกตสำคัญ (5 องค์ประกอบตาม ว 614):</p>
+      <div style="margin-bottom: 12pt; padding: 10pt; border: 1pt solid #ccc; font-family: 'TH Sarabun PSK';">
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>สภาพที่ตรวจพบ (Condition):</strong> ${activeReport.condition || '-'}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>เกณฑ์มาตรฐาน (Criteria):</strong> ${activeReport.criteria || '-'}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>สาเหตุ (Cause):</strong> ${activeReport.cause || '-'}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>ผลกระทบ (Effect):</strong> ${activeReport.effect || '-'}</p>
+        <p style="margin: 2pt 0; font-size: 16pt; color: #047857;"><strong>ข้อเสนอแนะ (Recommendation):</strong> ${activeReport.recommendation || '-'}</p>
+      </div>
+
+      <table style="width: 100%; border: none; margin-top: 30pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        <tr>
+          <td style="width: 50%;"></td>
+          <td style="width: 50%; text-align: center;">
+            <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${auditorName})</p>
+            <p style="margin: 2pt 0 0 0;">${auditorPosition}</p>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    exportDocumentToWord(bodyContent, `รายงานผลการตรวจสอบ_${projTitle}_${selectedYear}.doc`, projTitle);
+  };
+
+  const handleDownloadCapaMemoWord = () => {
+    const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
+    const memoData = {
+      agency: `${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgName}`,
+      docNumber: orgProfile?.docCode ? `${orgProfile.docCode}/ติดตาม` : 'อบ ๗๘๔๐๘/ติดตาม',
+      date: `...... เดือน ...................... พ.ศ. ${selectedYear}`,
+      subject: `รายงานผลการติดตามการปฏิบัติตามข้อทักท้วงและข้อสังเกต ประจำปีงบประมาณ พ.ศ. ${selectedYear}`,
+      to: `นายก${orgName} (ผ่าน ปลัด${orgName})`,
+      content: `
+        <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ตามที่ สำนักงานการตรวจเงินแผ่นดิน (สตง.) ผู้ตรวจราชการกรมส่งเสริมการปกครองท้องถิ่น และหน่วยตรวจสอบภายใน ได้มีข้อทักท้วงและข้อสังเกตเกี่ยวกับการปฏิบัติงานทางการเงิน การพัสดุ และการบริหารงานของส่วนราชการในสังกัด ${orgName} นั้น
+        </p>
+        <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          หน่วยตรวจสอบภายใน ได้ดำเนินการติดตามผลการปรับปรุงแก้ไขข้อบกพร่องตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๕ และข้อ ๒๖ ครบถ้วนตามกรอบระยะเวลา ๖๐ วันแล้ว จึงขอสรุปผลการติดตามการปฏิบัติตามข้อทักท้วงและข้อสังเกต รวมทั้งสิ้น ${findingsList.length} เรื่อง โดยดำเนินการแล้วเสร็จและยุติข้อสังเกตได้ ${closedCount} เรื่อง อยู่ระหว่างดำเนินการ ${findingsList.length - closedCount} เรื่อง
+        </p>
+        <p style="text-indent: 2.5cm; margin-bottom: 16pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          จึงเรียนมาเพื่อโปรดทราบ และพิจารณาให้ความเห็นชอบแจ้งหน่วยรับตรวจที่ยังอยู่ระหว่างดำเนินการให้เร่งรัดการปรับปรุงแก้ไขให้แล้วเสร็จตามกำหนดต่อไป
+        </p>
+      `,
+      signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+      signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+      palatName: orgProfile?.palatName || 'ปลัด อปท.',
+      palatPosition: orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น',
+      approverName: orgProfile?.approverName || 'นายก อปท.',
+      approverPosition: orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'
+    };
+    exportThaiMemoToWord(memoData, `บันทึกข้อความรายงานผลการติดตามข้อทักท้วง_${selectedYear}.doc`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
@@ -442,22 +517,14 @@ export default function ReportingView({
             </>
           )}
 
-          <button
-            type="button"
-            onClick={() => setShowExportHubModal(true)}
-            className="no-print bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>ส่งออก Excel ทางการ (.xlsx)</span>
-          </button>
-
-          <button
-            onClick={() => window.print()}
-            className="no-print bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 text-xs font-bold px-3.5 py-2 rounded-xl shadow-2xs flex items-center space-x-1.5 cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400" />
-            <span>พิมพ์</span>
-          </button>
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadCurrentReportWord}
+            onDownloadExcel={() => setShowExportHubModal(true)}
+            onPrint={() => window.print()}
+            wordTooltip="ดาวน์โหลดรายงานผลการตรวจสอบเป็นไฟล์ Word (.doc)"
+            excelTooltip="ศูนย์ส่งออกรายงานทางการเป็นไฟล์ Excel (.xlsx)"
+            printTooltip="พิมพ์รายงาน / บันทึกเป็น PDF"
+          />
         </div>
       </div>
 
@@ -1403,13 +1470,12 @@ export default function ReportingView({
                 </h3>
               </div>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => window.print()}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>พิมพ์บันทึกข้อความ</span>
-                </button>
+                <OfficialDocActionToolbar
+                  onDownloadWord={handleDownloadCapaMemoWord}
+                  onPrint={() => window.print()}
+                  wordTooltip="ดาวน์โหลดบันทึกข้อความรายงานผลการติดตามเป็นไฟล์ Word (.doc)"
+                  printTooltip="พิมพ์บันทึกข้อความ / บันทึกเป็น PDF"
+                />
                 <button
                   onClick={() => setShowCapaMemoModal(false)}
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"

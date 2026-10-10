@@ -32,6 +32,12 @@ import {
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import OfficialThaiMemo from './OfficialThaiMemo';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import {
+  exportDataToExcel,
+  exportThaiMemoToWord,
+  exportDocumentToWord
+} from '../utils/documentExportUtils';
 import { AUDIT_DIMENSIONS, generateEngagementPlanWithAI } from '../data/engagementPlanTemplates';
 import { DLA_ANNUAL_AUDIT_PLAN_DATA, DLA_STRATEGIC_PLAN_3YEARS } from '../data/dlaStandardTemplates';
 
@@ -501,6 +507,143 @@ export default function PlanningView({
   const strategicBiannualCount = useMemo(() => strategicPlan.filter((s) => s.frequency?.includes('2 ปี')).length, [strategicPlan]);
   const strategicTriannualCount = useMemo(() => strategicPlan.filter((s) => s.frequency?.includes('3 ปี')).length, [strategicPlan]);
 
+  // Handlers for exporting Word and Excel
+  const handleDownloadAnnualPlanExcel = () => {
+    try {
+      const headers = [
+        'ลำดับ',
+        'รหัสโครงการ',
+        'โครงการ / เรื่องที่ตรวจสอบ',
+        'ด้านการตรวจสอบ',
+        'สำนัก/กอง (หน่วยรับตรวจ)',
+        'ระยะเวลาดำเนินการ',
+        'ระดับความเสี่ยง',
+        'งบประมาณ (บาท)',
+        'วัตถุประสงค์การตรวจสอบ',
+        'สถานะการดำเนินงาน'
+      ];
+      const rows = annualPlans.map((p, idx) => [
+        idx + 1,
+        p.id,
+        p.title,
+        p.dimension,
+        p.department,
+        p.period || p.quarter || '-',
+        p.riskLevel,
+        Number(p.budget || 0),
+        p.objective || '-',
+        p.status === 'completed' ? 'เสร็จสิ้น' : p.status === 'in_progress' ? 'กำลังตรวจ' : 'รอดำเนินการ'
+      ]);
+
+      exportDataToExcel({
+        sheetName: `แผนประจำปี_${selectedYear}`,
+        headers,
+        rows,
+        fileName: `แผนการปฏิบัติงานตรวจสอบประจำปี_${selectedYear}_${orgProfile?.name || 'อปท'}`,
+        colWidths: [8, 16, 38, 18, 20, 22, 16, 16, 40, 18]
+      });
+      showToast('ดาวน์โหลดแผนประจำปี Excel (.xlsx) สำเร็จแล้ว');
+    } catch (err) {
+      console.error(err);
+      showToast('⚠️ เกิดข้อผิดพลาดในการดาวน์โหลด Excel');
+    }
+  };
+
+  const handleDownloadApprovalMemoWord = () => {
+    try {
+      exportThaiMemoToWord({
+        agency: `${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`,
+        phone: orgProfile?.phone || '',
+        docNumber: orgProfile?.docCode ? `${orgProfile.docCode}/แผน` : 'อบ ๗๘๔๐๘/แผน',
+        docDate: `๒๙ สิงหาคม ๒๕๖๘`,
+        subject: `ขออนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`,
+        to: `นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`,
+        contentParagraphs: [
+          `<strong>๑. เรื่องเดิม:</strong> ตามระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๑๘ กำหนดให้ผู้ตรวจสอบภายในต้องเสนอแผนการปฏิบัติงานตรวจสอบประจำปีต่อนายกองค์กรปกครองส่วนท้องถิ่นเพื่อพิจารณาอนุมัติก่อนเริ่มปีงบประมาณ นั้น`,
+          `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายในได้จัดทำแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear} โดยผ่านการประเมินความเสี่ยงตามหลักเกณฑ์กระทรวงการคลัง (ว ๓๘๐) และวิเคราะห์ทรัพยากรการตรวจสอบ รวมโครงการตรวจสอบทั้งสิ้น <strong>${annualPlans.length} โครงการ</strong> ครอบคลุมสำนัก/กองต่างๆ ดังนี้<br/>` +
+          annualPlans.map((p, i) => `&nbsp;&nbsp;&nbsp;&nbsp;๒.${i + 1} ${p.title} (${p.department}) ระดับความเสี่ยง: ${p.riskLevel}`).join('<br/>'),
+          `<strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> เพื่อให้การปฏิบัติงานตรวจสอบภายในเป็นไปตามระเบียบและบรรลุวัตถุประสงค์ในการกำกับดูแลที่ดี จึงขอเสนอดังนี้:<br/>` +
+          `&nbsp;&nbsp;&nbsp;&nbsp;๓.๑ โปรดพิจารณาอนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear} ตามเอกสารแนบท้าย<br/>` +
+          `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ แจ้งสำนัก/กองที่เกี่ยวข้องเพื่อทราบและเตรียมความพร้อมรับการตรวจสอบต่อไป<br/><br/>` +
+          `จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ`
+        ],
+        signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+        signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+        signatoryRole: 'ผู้จัดทำแผนการปฏิบัติงาน',
+        palatReviewText: 'เห็นควรอนุมัติแผนการปฏิบัติงานตรวจสอบประจำปีตามเสนอ',
+        executiveOrderText: 'อนุมัติแผนการปฏิบัติงานตรวจสอบประจำปีตามเสนอ และแจ้งหน่วยรับตรวจทราบ',
+        orgName: orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น',
+        fileName: `บันทึกขออนุมัติแผนประจำปี_${selectedYear}_${orgProfile?.name || 'อปท'}`
+      });
+      showToast('ดาวน์โหลดบันทึกขออนุมัติแผน Word (.doc) สำเร็จแล้ว');
+    } catch (err) {
+      console.error(err);
+      showToast('⚠️ เกิดข้อผิดพลาดในการดาวน์โหลด Word');
+    }
+  };
+
+  const handleDownloadDlaPlanFormWord = () => {
+    try {
+      const planRows = annualPlans.map((p, idx) => `
+        <tr>
+          <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${idx + 1}</td>
+          <td style="border: 1pt solid #000; padding: 4pt; font-weight: bold;">${p.title}</td>
+          <td style="border: 1pt solid #000; padding: 4pt;">${p.department}</td>
+          <td style="border: 1pt solid #000; padding: 4pt;">${p.objective || '-'}</td>
+          <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${p.period || p.quarter || '-'}</td>
+          <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${p.riskLevel}</td>
+        </tr>
+      `).join('');
+
+      const content = `
+        <div style="text-align: center; margin-bottom: 16pt;">
+          <h2 style="font-size: 18pt; font-weight: bold; margin: 0;">แผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}</h2>
+          <div style="font-size: 16pt; font-weight: bold; margin-top: 4pt;">หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</div>
+          <div style="font-size: 14pt; margin-top: 2pt;">(ตามแบบฟอร์มคู่มือ สถ. หน้า 16)</div>
+        </div>
+        <table class="table-bordered" style="width: 100%; border: 1pt solid #000; border-collapse: collapse; font-size: 14pt;">
+          <thead>
+            <tr style="background-color: #f3f4f6; font-weight: bold;">
+              <th style="border: 1pt solid #000; padding: 6pt; width: 6%;">ลำดับ</th>
+              <th style="border: 1pt solid #000; padding: 6pt; width: 30%;">โครงการ / กิจกรรมที่ตรวจสอบ</th>
+              <th style="border: 1pt solid #000; padding: 6pt; width: 18%;">หน่วยรับตรวจ</th>
+              <th style="border: 1pt solid #000; padding: 6pt; width: 26%;">วัตถุประสงค์การตรวจสอบ</th>
+              <th style="border: 1pt solid #000; padding: 6pt; width: 10%;">ระยะเวลา</th>
+              <th style="border: 1pt solid #000; padding: 6pt; width: 10%;">ระดับความเสี่ยง</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${planRows}
+          </tbody>
+        </table>
+        <table style="width: 100%; margin-top: 30pt; border: none;">
+          <tr>
+            <td style="width: 50%; text-align: center;">
+              <p style="margin: 0;">(ลงชื่อ)........................................................ผู้จัดทำแผน</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
+              <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+            </td>
+            <td style="width: 50%; text-align: center;">
+              <p style="margin: 0;">(ลงชื่อ)........................................................ผู้อนุมัติแผน</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.mayorName || 'นายก อปท.'})</p>
+              <p style="margin: 2pt 0 0 0;">นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</p>
+            </td>
+          </tr>
+        </table>
+      `;
+
+      exportDocumentToWord({
+        title: `แผนปฏิบัติงานตรวจสอบ_${selectedYear}`,
+        htmlContent: content,
+        fileName: `แบบฟอร์มแผนการปฏิบัติงานประจำปี_สถ_${selectedYear}_${orgProfile?.name || 'อปท'}`
+      });
+      showToast('ดาวน์โหลดแบบฟอร์มแผน Word (.doc) สำเร็จแล้ว');
+    } catch (err) {
+      console.error(err);
+      showToast('⚠️ เกิดข้อผิดพลาดในการดาวน์โหลด Word');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
@@ -647,13 +790,14 @@ export default function PlanningView({
             </button>
           )}
 
-          <button
-            onClick={() => window.print()}
-            className="no-print bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-bold px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-700 shadow-xs flex items-center space-x-1.5 cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5 text-stone-500" />
-            <span>พิมพ์</span>
-          </button>
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadDlaPlanFormWord}
+            onDownloadExcel={handleDownloadAnnualPlanExcel}
+            onPrint={() => window.print()}
+            wordTooltip="ดาวน์โหลดแบบฟอร์มแผนประจำปี Word (.doc)"
+            excelTooltip="ดาวน์โหลดตารางแผนปฏิบัติการตรวจสอบประจำปี Excel (.xlsx)"
+            printTooltip="สั่งพิมพ์แผน หรือบันทึกเป็น PDF"
+          />
         </div>
       </div>
 
@@ -1466,13 +1610,13 @@ export default function PlanningView({
                 </h3>
               </div>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => window.print()}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>พิมพ์บันทึกข้อความ</span>
-                </button>
+                <OfficialDocActionToolbar
+                  onDownloadWord={handleDownloadApprovalMemoWord}
+                  onPrint={() => window.print()}
+                  showExcel={false}
+                  wordTooltip="ดาวน์โหลดบันทึกขออนุมัติแผน Word (.doc) ตามระเบียบงานสารบรรณ"
+                  printTooltip="สั่งพิมพ์บันทึกข้อความ หรือบันทึกเป็น PDF"
+                />
                 <button
                   onClick={() => setShowApprovalMemoModal(false)}
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -2173,13 +2317,14 @@ export default function PlanningView({
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => window.print()}
-                  className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>พิมพ์แบบฟอร์ม</span>
-                </button>
+                <OfficialDocActionToolbar
+                  onDownloadWord={handleDownloadDlaPlanFormWord}
+                  onDownloadExcel={handleDownloadAnnualPlanExcel}
+                  onPrint={() => window.print()}
+                  wordTooltip="ดาวน์โหลดแบบฟอร์มแผนประจำปี (สถ. หน้า 16) Word (.doc)"
+                  excelTooltip="ดาวน์โหลดตารางแผนประจำปี Excel (.xlsx)"
+                  printTooltip="สั่งพิมพ์แบบฟอร์มแผน หรือบันทึกเป็น PDF"
+                />
                 <button
                   onClick={() => setShowDlaPlanFormModal(false)}
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"

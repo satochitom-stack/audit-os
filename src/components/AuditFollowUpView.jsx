@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { DLA_FOLLOWUP_REGISTER_6, DLA_FOLLOWUP_MEMO_TEMPLATE } from '../data/dlaStandardTemplates';
 import OfficialThaiMemo from './OfficialThaiMemo';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportDocumentToWord, exportThaiMemoToWord, exportDataToExcel } from '../utils/documentExportUtils';
 
 export default function AuditFollowUpView({
   selectedYear = '2569',
@@ -267,6 +269,123 @@ export default function AuditFollowUpView({
   const currentMemoItem = selectedFindingForMemo || registerItems[0] || defaultItems[0];
   const isCgdRegime = currentMemoItem.regime === 'cgd_60';
 
+  const handleDownloadWord = () => {
+    if (activeTab === 'memo') {
+      const memoData = {
+        agency: `${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgProfile?.name || 'อปท.'}`,
+        docNumber: `มท ๐๘๐๘/${selectedYear}/ว...`,
+        date: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
+        subject: `ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'}`,
+        to: `ผู้อำนวยการ${currentMemoItem.department || 'หน่วยรับตรวจ'}`,
+        content: `
+          <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+            ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ในภารกิจ "${currentMemoItem.title}" และ นายก${orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ ${currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} นั้น
+          </p>
+          <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+            บัดนี้ ได้ครบกำหนดระยะเวลา ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} แล้ว (ครบกำหนดวันที่ ${currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม ${isCgdRegime ? 'หลักเกณฑ์ปฏิบัติการตรวจสอบภายในสำหรับหน่วยงานของรัฐ พ.ศ. ๒๕๖๑ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๔) พ.ศ. ๒๕๖๖' : 'ระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๑'} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว
+          </p>
+          <div style="margin: 10pt 0; padding: 8pt; border: 1pt solid #ccc; font-family: 'TH Sarabun PSK';">
+            <p style="margin: 0; font-weight: bold; font-size: 16pt;">ข้อเสนอแนะที่ต้องติดตาม:</p>
+            <p style="margin: 4pt 0 0 0; font-size: 16pt;">${currentMemoItem.recommendation || '-'}</p>
+          </div>
+          <p style="text-indent: 2.5cm; margin-top: 10pt; margin-bottom: 16pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+            จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป
+          </p>
+        `,
+        signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+        signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน',
+        palatName: orgProfile?.palatName || 'ปลัด อปท.',
+        palatPosition: orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น',
+        approverName: orgProfile?.approverName || 'นายก อปท.',
+        approverPosition: orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'
+      };
+      exportThaiMemoToWord(memoData, `หนังสือติดตามผล_${currentMemoItem.department || 'หน่วยรับตรวจ'}_${selectedYear}.doc`);
+    } else {
+      const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
+      const bodyContent = `
+        <div style="text-align: center; margin-bottom: 16pt; font-family: 'TH Sarabun PSK';">
+          <p style="margin: 0; font-size: 20pt; font-weight: bold;">ทะเบียนคุมและติดตามผลการปฏิบัติตามข้อเสนอแนะการตรวจสอบภายใน</p>
+          <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold;">${orgName}</p>
+          <p style="margin: 2pt 0 0 0; font-size: 16pt;">ประจำปีงบประมาณ พ.ศ. ${selectedYear}</p>
+        </div>
+        <div style="border-top: 1.5pt solid black; margin-bottom: 14pt;"></div>
+
+        <table style="width: 100%; border-collapse: collapse; border: 1pt solid black; font-size: 14pt; font-family: 'TH Sarabun PSK'; margin-bottom: 16pt;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="border: 1pt solid black; padding: 5pt; width: 6%; text-align: center;">ลำดับ</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 22%; text-align: center;">ภารกิจ / เรื่อง</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 14%; text-align: center;">หน่วยรับตรวจ</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 28%; text-align: center;">ข้อตรวจพบ / ข้อเสนอแนะ</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 15%; text-align: center;">กำหนดเวลา</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 15%; text-align: center;">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${registerItems
+              .map(
+                (item, i) => `
+              <tr>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${i + 1}</td>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;"><strong>${item.title || '-'}</strong></td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${item.department || '-'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${item.recommendation || '-'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${item.deadlineDate || '-'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${item.status === 'completed' ? 'เสร็จสิ้นสมบูรณ์' : item.status === 'urgent' ? 'เร่งด่วน' : item.status === 'overdue' ? 'เกินกำหนด' : 'อยู่ระหว่างดำเนินการ'}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+
+        <table style="width: 100%; border: none; margin-top: 30pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%; text-align: center;">
+              <p style="margin: 0;">(ลงชื่อ)........................................................ผู้ตรวจสอบภายใน</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
+              <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+            </td>
+          </tr>
+        </table>
+      `;
+      exportDocumentToWord(bodyContent, `ทะเบียนติดตามผลการตรวจสอบ_${selectedYear}.doc`, 'ทะเบียนคุมและติดตามผลการตรวจสอบภายใน');
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    const headers = [
+      'ลำดับ',
+      'ภารกิจ / เรื่อง',
+      'หน่วยรับตรวจ',
+      'เกณฑ์อ้างอิง',
+      'ข้อตรวจพบ/สภาพที่พบ',
+      'ข้อเสนอแนะ',
+      'วันที่สั่งการ',
+      'วันครบกำหนด',
+      'สถานะการดำเนินงาน'
+    ];
+    const rows = registerItems.map((item, i) => [
+      i + 1,
+      item.title || '',
+      item.department || '',
+      item.regime === 'cgd_60' ? 'เกณฑ์ กค. 60 วัน' : 'ระเบียบ มท. 30 วัน',
+      item.condition || '',
+      item.recommendation || '',
+      item.orderDate || '',
+      item.deadlineDate || '',
+      item.status === 'completed'
+        ? 'เสร็จสิ้นสมบูรณ์'
+        : item.status === 'urgent'
+        ? 'เร่งด่วน'
+        : item.status === 'overdue'
+        ? 'เกินกำหนด'
+        : 'อยู่ระหว่างดำเนินการ'
+    ]);
+    exportDataToExcel('ทะเบียนติดตามผล', [headers, ...rows], `Audit_FollowUp_Register_${selectedYear}.xlsx`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -308,13 +427,18 @@ export default function AuditFollowUpView({
               <Plus className="w-4 h-4" />
               <span>เพิ่มข้อตรวจพบเพื่อติดตาม</span>
             </button>
-            <button
-              onClick={() => window.print()}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 font-bold px-3.5 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
-            >
-              <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>พิมพ์</span>
-            </button>
+            <OfficialDocActionToolbar
+              onDownloadWord={handleDownloadWord}
+              onDownloadExcel={handleDownloadExcel}
+              onPrint={() => window.print()}
+              wordTooltip={
+                activeTab === 'memo'
+                  ? 'ดาวน์โหลดหนังสือเตือนติดตามผลเป็นไฟล์ Word (.doc)'
+                  : 'ดาวน์โหลดทะเบียนคุมติดตามผลเป็นไฟล์ Word (.doc)'
+              }
+              excelTooltip="ส่งออกทะเบียนคุมติดตามผลเป็นไฟล์ Excel (.xlsx)"
+              printTooltip="พิมพ์ทะเบียนคุม / หนังสือติดตามผล / บันทึกเป็น PDF"
+            />
           </div>
         </div>
       </div>

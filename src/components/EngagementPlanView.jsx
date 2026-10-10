@@ -32,6 +32,12 @@ import {
 } from '../data/engagementPlanTemplates';
 import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
 import ConfirmModal from './ConfirmModal';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import {
+  exportDataToExcel,
+  exportThaiMemoToWord,
+  exportDocumentToWord
+} from '../utils/documentExportUtils';
 import { getDepartments } from '../utils/auth';
 
 export default function EngagementPlanView({
@@ -223,6 +229,122 @@ export default function EngagementPlanView({
     window.print();
   };
 
+  // Export handlers for Word (.doc) and Excel (.xlsx)
+  const handleDownloadWord = () => {
+    if (!selectedPlan) return;
+    try {
+      if (activeTab === 'communication') {
+        // Export Engagement Letter
+        exportThaiMemoToWord({
+          agency: `หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`,
+          phone: orgProfile?.phone || '045-XXXXXX',
+          docNumber: `ฝค ๐๑/${selectedYear}`,
+          docDate: `๑๕ ตุลาคม ๒๕๖๘`,
+          subject: `แจ้งเข้าปฏิบัติงานตรวจสอบภายใน โครงการ ${selectedPlan.title}`,
+          to: `หัวหน้า${selectedPlan.department}`,
+          contentParagraphs: [
+            `<strong>๑. เรื่องเดิม:</strong> ตามที่ นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้อนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear} ของหน่วยตรวจสอบภายใน เมื่อวันที่ ๒๙ สิงหาคม ๒๕๖๘ นั้น`,
+            `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายใน กำหนดจะเข้าปฏิบัติงานตรวจสอบโครงการ <strong>${selectedPlan.title}</strong> ประจำปีงบประมาณ พ.ศ. ${selectedYear} ตั้งแต่วันที่ ๒๐ ตุลาคม ๒๕๖๘ ถึงวันที่ ๓๐ พฤศจิกายน ๒๕๖๘ รวมระยะเวลา ${selectedPlan.timelineDays || 15} วันทำการ โดยมีวัตถุประสงค์เพื่อประเมินความเพียงพอของระบบการควบคุมภายในและความถูกต้องตามระเบียบ`,
+            `<strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> เพื่อให้การปฏิบัติงานตรวจสอบเป็นไปด้วยความเรียบร้อยและมีประสิทธิภาพ หน่วยตรวจสอบภายในขอความร่วมมือจากหน่วยรับตรวจ ดังนี้:<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๓.๑ จัดประชุมเปิดการตรวจสอบ (Opening Meeting) ร่วมกันในวันที่ ๒๐ ตุลาคม ๒๕๖๘ เวลา ๐๙.๓๐ น.<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ มอบหมายเจ้าหน้าที่ผู้รับผิดชอบงานเพื่อประสานงานและจัดเตรียมเอกสารที่เกี่ยวข้อง<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๓.๓ จัดเตรียมสถานที่และอำนวยความสะดวกในการเข้าปฏิบัติงานตรวจสอบ<br/><br/>` +
+            `จึงเรียนมาเพื่อโปรดทราบและพิจารณาดำเนินการ`
+          ],
+          signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+          signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+          signatoryRole: 'หัวหน้าทีมตรวจสอบ',
+          palatReviewText: 'ทราบและเห็นควรแจ้งหน่วยรับตรวจเตรียมความพร้อม',
+          executiveOrderText: 'ทราบ และมอบหมายหน่วยรับตรวจอำนวยความสะดวก',
+          orgName: orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น',
+          fileName: `หนังสือแจ้งเข้าตรวจ_${selectedPlan.id}_${orgProfile?.name || 'อปท'}`
+        });
+      } else {
+        // Export Engagement Plan Document
+        const stepsHtml = (selectedPlan.steps || []).map((s, idx) => `
+          <tr>
+            <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${idx + 1}</td>
+            <td style="border: 1pt solid #000; padding: 4pt; font-weight: bold;">${s.title}</td>
+            <td style="border: 1pt solid #000; padding: 4pt;">${s.procedure || '-'}</td>
+            <td style="border: 1pt solid #000; padding: 4pt;">${s.evidence || '-'}</td>
+            <td style="border: 1pt solid #000; padding: 4pt;">${s.samplingMethod || '-'}</td>
+            <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${s.wpRef || '-'}</td>
+          </tr>
+        `).join('');
+
+        const planHtml = `
+          <div style="text-align: center; margin-bottom: 16pt;">
+            <h2 style="font-size: 18pt; font-weight: bold; margin: 0;">แผนการปฏิบัติงานการตรวจสอบรายกิจกรรม (Engagement Plan)</h2>
+            <div style="font-size: 16pt; font-weight: bold; margin-top: 4pt;">โครงการ: ${selectedPlan.title}</div>
+            <div style="font-size: 14pt; margin-top: 2pt;">หน่วยรับตรวจ: ${selectedPlan.department} | รหัส: ${selectedPlan.id}</div>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 14pt; font-size: 14pt;">
+            <tr><td style="width: 25%; font-weight: bold;">วัตถุประสงค์การตรวจ:</td><td>${selectedPlan.objective || '-'}</td></tr>
+            <tr><td style="font-weight: bold;">ขอบเขตการตรวจ:</td><td>${selectedPlan.scope || '-'}</td></tr>
+            <tr><td style="font-weight: bold;">เกณฑ์และระเบียบ:</td><td>${Array.isArray(selectedPlan.criteria) ? selectedPlan.criteria.join(', ') : selectedPlan.criteria || '-'}</td></tr>
+            <tr><td style="font-weight: bold;">กรอบเวลาตรวจสอบ:</td><td>${selectedPlan.timelineDays || 15} วันทำการ (งวด ${selectedPlan.fiscalYear || selectedYear})</td></tr>
+          </table>
+          <h3 style="font-size: 15pt; font-weight: bold; margin-bottom: 6pt;">แนวการตรวจสอบ (Audit Program)</h3>
+          <table class="table-bordered" style="width: 100%; border: 1pt solid #000; border-collapse: collapse; font-size: 13pt;">
+            <thead>
+              <tr style="background-color: #f3f4f6; font-weight: bold;">
+                <th style="border: 1pt solid #000; padding: 6pt; width: 6%;">ที่</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 24%;">ขั้นตอนการตรวจสอบ</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 28%;">วิธีการตรวจสอบ (Audit Procedure)</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 20%;">หลักฐานที่ต้องตรวจ</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 14%;">การสุ่มตัวอย่าง</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 8%;">อ้างอิง WP</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${stepsHtml || '<tr><td colspan="6" style="text-align: center; border: 1pt solid #000; padding: 8pt;">- ไม่มีขั้นตอนการตรวจ -</td></tr>'}
+            </tbody>
+          </table>
+          <div style="margin-top: 30pt; text-align: right; padding-right: 40pt;">
+            <p style="margin: 0;">ลงชื่อ....................................................................</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
+            <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+          </div>
+        `;
+
+        exportDocumentToWord({
+          title: `แผนปฏิบัติงาน_${selectedPlan.id}`,
+          htmlContent: planHtml,
+          fileName: `แผนปฏิบัติงานตรวจสอบ_ว614_${selectedPlan.id}_${orgProfile?.name || 'อปท'}`
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการดาวน์โหลด Word');
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    if (!selectedPlan) return;
+    try {
+      const headers = ['ลำดับ', 'ขั้นตอนการตรวจ', 'วิธีการตรวจ (Procedure)', 'หลักฐานที่ต้องตรวจ', 'การสุ่มตัวอย่าง', 'อ้างอิง WP'];
+      const rows = (selectedPlan.steps || []).map((s, idx) => [
+        idx + 1,
+        s.title,
+        s.procedure || '-',
+        s.evidence || '-',
+        s.samplingMethod || '-',
+        s.wpRef || '-'
+      ]);
+
+      exportDataToExcel({
+        sheetName: selectedPlan.id.slice(0, 30),
+        headers,
+        rows,
+        fileName: `แนวการตรวจสอบ_AuditProgram_${selectedPlan.id}_${orgProfile?.name || 'อปท'}`,
+        colWidths: [8, 30, 40, 30, 24, 14]
+      });
+    } catch (err) {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการดาวน์โหลด Excel');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. Header Banner */}
@@ -263,13 +385,14 @@ export default function EngagementPlanView({
             <Sparkles className="w-4 h-4 text-amber-200" />
             <span>+ AI สร้างแผนตาม ว 614</span>
           </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center space-x-1.5 bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-2xs transition-all cursor-pointer"
-          >
-            <Printer className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-            <span>พิมพ์แผน (A4)</span>
-          </button>
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadWord}
+            onDownloadExcel={handleDownloadExcel}
+            onPrint={handlePrint}
+            wordTooltip="ดาวน์โหลดแผนปฏิบัติงาน ว 614 Word (.doc)"
+            excelTooltip="ดาวน์โหลดแนวการตรวจสอบ Audit Program Excel (.xlsx)"
+            printTooltip="พิมพ์แผนปฏิบัติงาน (A4) หรือบันทึกเป็น PDF"
+          />
         </div>
       </div>
 
@@ -1065,13 +1188,13 @@ export default function EngagementPlanView({
                   แบบร่างหนังสือแจ้งเข้าตรวจล่วงหน้า (Engagement Letter)
                 </h3>
               </div>
-              <button
-                onClick={handlePrint}
-                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>พิมพ์หนังสือแจ้ง</span>
-              </button>
+              <OfficialDocActionToolbar
+                onDownloadWord={handleDownloadWord}
+                onPrint={handlePrint}
+                showExcel={false}
+                wordTooltip="ดาวน์โหลดหนังสือแจ้งเข้าตรวจล่วงหน้า Word (.doc) ตามระเบียบงานสารบรรณ"
+                printTooltip="พิมพ์หนังสือแจ้งเข้าตรวจ หรือบันทึกเป็น PDF"
+              />
             </div>
 
             {/* Letter Body Preview */}

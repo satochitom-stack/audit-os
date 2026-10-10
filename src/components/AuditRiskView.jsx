@@ -37,6 +37,12 @@ import {
 import ConfirmModal from './ConfirmModal';
 import OfficialThaiMemo from './OfficialThaiMemo';
 import OrgChartStructure from './OrgChartStructure';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import {
+  exportThaiMemoToWord,
+  exportDocumentToWord,
+  exportRiskMatrixToExcel
+} from '../utils/documentExportUtils';
 import { getDepartments } from '../utils/auth';
 import {
   DLA_RISK_CRITERIA_SOFCK,
@@ -1118,6 +1124,125 @@ export default function AuditRiskView({
     });
   };
 
+  // Export handlers for Word (.doc) and Excel (.xlsx)
+  const handleDownloadExcel = () => {
+    try {
+      exportRiskMatrixToExcel({
+        activities: scoredActivities,
+        orgProfile,
+        selectedYear
+      });
+      showToast('ดาวน์โหลดตารางความเสี่ยง Excel (.xlsx) สำเร็จแล้ว');
+    } catch (err) {
+      console.error(err);
+      showToast('⚠️ เกิดข้อผิดพลาดในการดาวน์โหลด Excel');
+    }
+  };
+
+  const handleDownloadWord = () => {
+    try {
+      if (reportFormat === 'memo') {
+        exportThaiMemoToWord({
+          agency: `หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`,
+          phone: orgProfile?.phone || '',
+          docNumber: orgProfile?.docCode ? `${orgProfile.docCode}/ความเสี่ยง` : 'อบ ๗๑๒๐๑/พิเศษ',
+          docDate: '๒๙ สิงหาคม ๒๕๖๘',
+          subject: `รายงานผลการประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`,
+          to: `นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`,
+          contentParagraphs: [
+            `<strong>๑. เรื่องเดิม:</strong> ตามระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ และหนังสือกรมบัญชีกลาง ด่วนที่สุด ที่ กค ๐๔๑๖.๓/ว ๓๘๐ เรื่อง แนวปฏิบัติการประเมินความเสี่ยงเพื่อวางแผนการตรวจสอบ กำหนดให้ผู้ตรวจสอบภายในต้องดำเนินการประเมินความเสี่ยงของกิจกรรมและหน่วยรับตรวจทั้งหมดในจักรวาลการตรวจสอบ (Audit Universe) เพื่อนำผลมาจัดลำดับความสำคัญในการคัดเลือกกิจกรรมบรรจุลงในแผนการตรวจสอบประจำปี นั้น`,
+            `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงกิจกรรมของทุกสำนัก/กอง ในสังกัด ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ประจำปีงบประมาณ พ.ศ. ${selectedYear} ตามกรอบปัจจัยเสี่ยง ๕ มิติ (SOFCK) รวมทั้งสิ้น <strong>${totalActivities} กิจกรรม</strong> ปรากฏผลการประเมินความเสี่ยง ดังนี้<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๑ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูง (๒.๔ - ๓.๐ คะแนน)</strong> จำนวน <strong>${highCount} กิจกรรม</strong><br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๒ กิจกรรมที่มีความเสี่ยง <strong>ระดับปานกลาง (๑.๖ - ๒.๒ คะแนน)</strong> จำนวน <strong>${mediumCount} กิจกรรม</strong><br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๓ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำ (๑.๐ - ๑.๔ คะแนน)</strong> จำนวน <strong>${lowCount} กิจกรรม</strong>`,
+            `<strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> เพื่อให้การจัดทำแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} สอดคล้องกับระเบียบกระทรวงมหาดไทย และมุ่งเน้นการใช้ทรัพยากรตรวจสอบที่มีอยู่อย่างจำกัดให้เกิดประสิทธิภาพสูงสุด หน่วยตรวจสอบภายในจึงขอเสนอดังนี้:<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๓.๑ เห็นชอบผลการประเมินความเสี่ยงตามตารางประเมินความเสี่ยงแนบท้ายนี้<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำกิจกรรมที่มีระดับความเสี่ยงสูง จำนวน ${highCount} กิจกรรม ไปบรรจุเป็นโครงการตรวจสอบในแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} ต่อไป<br/><br/>` +
+            `จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ`
+          ],
+          signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+          signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+          signatoryRole: 'ผู้ประเมินความเสี่ยงและจัดทำแผน',
+          palatReviewText: 'เห็นควรอนุมัติผลการประเมินความเสี่ยงและให้นำไปจัดทำแผนการตรวจสอบประจำปีต่อไป',
+          executiveOrderText: 'อนุมัติตามเสนอ และมอบหมายให้จัดทำแผนการตรวจสอบประจำปีเสนอตามระเบียบต่อไป',
+          orgName: orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น',
+          fileName: `บันทึกขออนุมัติผลประเมินความเสี่ยง_${selectedYear}_${orgProfile?.name || 'อปท'}`
+        });
+      } else {
+        let tableRows = '';
+        getDepartments().filter((d) => d !== 'หน่วยตรวจสอบภายใน').forEach((dept) => {
+          const items = scoredActivities.filter((a) => a.department === dept);
+          if (items.length > 0) {
+            tableRows += `<tr style="background-color: #e5e7eb; font-weight: bold;"><td colspan="9" style="padding: 6pt; border: 1pt solid #000;">${dept}</td></tr>`;
+            items.forEach((item, idx) => {
+              const s = item.scoreS ?? 0;
+              const o = item.scoreO ?? 0;
+              const f = item.scoreF ?? 0;
+              const c = item.scoreC ?? 0;
+              const k = item.scoreK ?? 0;
+              const avg = item.averageScore ?? ((s + o + f + c + k) / 5).toFixed(2);
+              const level = item.riskLevel || (avg >= 2.4 ? 'สูง' : avg >= 1.6 ? 'ปานกลาง' : 'ต่ำ');
+              tableRows += `
+                <tr>
+                  <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${idx + 1}</td>
+                  <td style="border: 1pt solid #000; padding: 4pt;">${item.name || item.title || item.activity || ''}</td>
+                  <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${s}</td>
+                  <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${o}</td>
+                  <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${f}</td>
+                  <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${c}</td>
+                  <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${k}</td>
+                  <td style="text-align: center; border: 1pt solid #000; padding: 4pt; font-weight: bold;">${avg}</td>
+                  <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${level}</td>
+                </tr>
+              `;
+            });
+          }
+        });
+
+        const dlaHtml = `
+          <div style="text-align: center; margin-bottom: 16pt;">
+            <h2 style="font-size: 18pt; font-weight: bold; margin: 0;">การประเมินความเสี่ยง ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</h2>
+            <div style="font-size: 16pt; font-weight: bold; margin-top: 4pt;">ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ</div>
+            <div style="font-size: 14pt; margin-top: 2pt;">ประจำปีงบประมาณ พ.ศ. ${selectedYear}</div>
+          </div>
+          <table class="table-bordered" style="width: 100%; border: 1pt solid #000; border-collapse: collapse; font-size: 14pt;">
+            <thead>
+              <tr style="background-color: #f3f4f6; font-weight: bold;">
+                <th style="border: 1pt solid #000; padding: 6pt; width: 5%;">ที่</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 35%;">กิจกรรม</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 6%;">S</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 6%;">O</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 6%;">F</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 6%;">C</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 6%;">K</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 15%;">คะแนนเฉลี่ย</th>
+                <th style="border: 1pt solid #000; padding: 6pt; width: 15%;">ระดับความเสี่ยง</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          <div style="margin-top: 30pt; text-align: right; padding-right: 40pt;">
+            <p style="margin: 0;">ลงชื่อ....................................................................</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
+            <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+          </div>
+        `;
+
+        exportDocumentToWord({
+          title: `ตารางประเมินความเสี่ยง_${selectedYear}`,
+          htmlContent: dlaHtml,
+          fileName: `ตารางประเมินความเสี่ยง_SOFCK_ปี_${selectedYear}_${orgProfile?.name || 'อปท'}`
+        });
+      }
+      showToast('ดาวน์โหลดเอกสาร Word (.doc) สำเร็จแล้ว');
+    } catch (err) {
+      console.error(err);
+      showToast('⚠️ เกิดข้อผิดพลาดในการดาวน์โหลด Word');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
@@ -1279,16 +1404,17 @@ export default function AuditRiskView({
                 </button>
               </div>
 
-              <button
-                onClick={() => {
+              <OfficialDocActionToolbar
+                onDownloadWord={handleDownloadWord}
+                onDownloadExcel={handleDownloadExcel}
+                onPrint={() => {
                   setActiveSubTab('report');
                   setTimeout(() => window.print(), 200);
                 }}
-                className="text-amber-800 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40 px-3 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer transition-all"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>พิมพ์รายงาน</span>
-              </button>
+                wordTooltip="ดาวน์โหลดแบบฟอร์มประเมินความเสี่ยง / บันทึกข้อความ Word (.doc)"
+                excelTooltip="ดาวน์โหลดตารางความเสี่ยง SOFCK 16 กิจกรรม Excel (.xlsx)"
+                printTooltip="ดูตัวอย่างเอกสารรายงานและสั่งพิมพ์"
+              />
             </div>
 
             {/* Row 2: Search & Filters Bar */}
@@ -1701,13 +1827,14 @@ export default function AuditRiskView({
               </div>
             </div>
 
-            <button
-              onClick={() => window.print()}
-              className="bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer self-start sm:self-auto"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>พิมพ์เอกสารนี้</span>
-            </button>
+            <OfficialDocActionToolbar
+              onDownloadWord={handleDownloadWord}
+              onDownloadExcel={handleDownloadExcel}
+              onPrint={() => window.print()}
+              wordTooltip="ดาวน์โหลดเอกสาร Word (.doc) ตามระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖"
+              excelTooltip="ดาวน์โหลดตารางการประเมินความเสี่ยง Excel (.xlsx)"
+              printTooltip="สั่งพิมพ์เอกสาร หรือบันทึกเป็น PDF"
+            />
           </div>
 
           {/* Format 1: Official DLA Table Form */}

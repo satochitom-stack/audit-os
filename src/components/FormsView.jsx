@@ -28,6 +28,7 @@ import {
 } from '../data/v614TemplatesData';
 import OfficialThaiMemo from './OfficialThaiMemo';
 import OfficialThaiOrder from './OfficialThaiOrder';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 
 export default function FormsView({
   formsBase = [],
@@ -586,7 +587,7 @@ export default function FormsView({
 
               {/* Card Footer Actions */}
               <div className="pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-between gap-2">
                   <button
                     onClick={() => setPreviewDoc(doc)}
                     className="flex-1 bg-amber-50 hover:bg-amber-100 dark:bg-stone-800 dark:hover:bg-stone-750 text-amber-900 dark:text-amber-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1 cursor-pointer border border-amber-200/80 dark:border-stone-700"
@@ -595,22 +596,13 @@ export default function FormsView({
                     <span>ดูสารบรรณ A4</span>
                   </button>
 
-                  <button
-                    onClick={() => handleDownloadWord(doc)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
-                    title="ดาวน์โหลดไฟล์ Microsoft Word (.doc)"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Word</span>
-                  </button>
-
-                  <button
-                    onClick={() => handlePrintDocument(doc)}
-                    className="p-2 rounded-xl border border-stone-200/80 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 hover:text-stone-900 dark:text-stone-300 transition-all cursor-pointer"
-                    title="พิมพ์ / บันทึกเป็น PDF"
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                  </button>
+                  <OfficialDocActionToolbar
+                    compact={true}
+                    onDownloadWord={() => handleDownloadWord(doc)}
+                    onPrint={() => handlePrintDocument(doc)}
+                    wordTooltip={`ดาวน์โหลด ${doc.title} เป็นไฟล์ Word (.doc)`}
+                    printTooltip={`พิมพ์ ${doc.title} / บันทึกเป็น PDF`}
+                  />
                 </div>
 
                 {doc.linkedTab && setCurrentTab && (
@@ -652,21 +644,12 @@ export default function FormsView({
               </div>
 
               <div className="flex items-center space-x-2 shrink-0">
-                <button
-                  onClick={() => handleDownloadWord(previewDoc)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>ดาวน์โหลด Word (.doc)</span>
-                </button>
-
-                <button
-                  onClick={() => handlePrintDocument(previewDoc)}
-                  className="bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 text-stone-800 dark:text-stone-200 font-bold py-1.5 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>พิมพ์ / PDF</span>
-                </button>
+                <OfficialDocActionToolbar
+                  onDownloadWord={() => handleDownloadWord(previewDoc)}
+                  onPrint={() => handlePrintDocument(previewDoc)}
+                  wordTooltip={`ดาวน์โหลด ${previewDoc.title} เป็นไฟล์ Word (.doc)`}
+                  printTooltip={`พิมพ์ ${previewDoc.title} / บันทึกเป็น PDF`}
+                />
 
                 <button
                   onClick={() => setPreviewDoc(null)}

@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { getDepartments } from '../utils/auth';
 import ConfirmModal from './ConfirmModal';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExportUtils';
 
 export default function InternalControlView({
   internalControls,
@@ -105,6 +107,167 @@ export default function InternalControlView({
   const pk5List = internalControls?.pk5 || [];
   const pk1Data = internalControls?.pk1 || {};
 
+  const handleDownloadWord = () => {
+    const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
+
+    if (activeTab === 'pk1') {
+      const signerName = orgProfile?.approverName || pk1Data?.signer || 'นายกองค์กรปกครองส่วนท้องถิ่น';
+      const signerPos = orgProfile?.approverPosition || pk1Data?.position || 'นายกองค์กรปกครองส่วนท้องถิ่น';
+      const signDate = pk1Data?.signDate || `30 กันยายน ${selectedYear}`;
+
+      const bodyContent = `
+        <div style="text-align: center; margin-bottom: 20pt; font-family: 'TH Sarabun PSK';">
+          <p style="text-align: center; margin: 0 0 6pt 0;"><span style="font-size: 22pt; font-weight: bold;">(ตราครุฑ)</span></p>
+          <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0;">หนังสือรับรองการปฏิบัติตามมาตรฐานการควบคุมภายใน (แบบ ปค.1)</p>
+          <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 0 0;">${orgName} ${orgProfile?.district || ''} ${orgProfile?.province || ''}</p>
+          <p style="font-size: 16pt; margin: 2pt 0 0 0;">สำหรับปีงบประมาณสิ้นสุดวันที่ 30 กันยายน พ.ศ. ${selectedYear}</p>
+        </div>
+        <div style="border-top: 1.5pt solid black; margin-bottom: 16pt;"></div>
+
+        <p style="text-indent: 2.5cm; margin-bottom: 12pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ${orgName} ได้ประเมินผลการควบคุมภายในของหน่วยงานตามมาตรฐานและหลักเกณฑ์ปฏิบัติการควบคุมภายในสำหรับหน่วยงานของรัฐที่กระทรวงการคลังกำหนด สำหรับปีงบประมาณสิ้นสุดวันที่ 30 กันยายน พ.ศ. ${selectedYear}
+        </p>
+
+        <p style="text-indent: 2.5cm; margin-bottom: 12pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          จากผลการประเมินดังกล่าว เห็นว่า ระบบการควบคุมภายในของ ${orgName} มีความเพียงพอและมีประสิทธิผลตามสมควร ที่จะให้ความเชื่อมั่นอย่างสมเหตุสมผลว่า การดำเนินงานจะบรรลุวัตถุประสงค์ด้านการดำเนินงาน ด้านการรายงานทางการเงิน และด้านการปฏิบัติตามกฎหมายและระเบียบ
+        </p>
+
+        <table style="width: 100%; border: none; margin-top: 40pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%; text-align: center;">
+              <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${signerName})</p>
+              <p style="margin: 2pt 0 0 0;">${signerPos}</p>
+              <p style="margin: 4pt 0 0 0;">วันที่ ${signDate}</p>
+            </td>
+          </tr>
+        </table>
+      `;
+      exportDocumentToWord(bodyContent, `แบบ_ปค1_หนังสือรับรองการควบคุมภายใน_${selectedYear}.doc`, 'หนังสือรับรองการควบคุมภายใน (แบบ ปค.1)');
+    } else if (activeTab === 'pk5') {
+      const bodyContent = `
+        <div style="text-align: center; margin-bottom: 16pt; font-family: 'TH Sarabun PSK';">
+          <p style="margin: 0; font-size: 20pt; font-weight: bold;">แบบ ปค.5: รายงานการติดตามประเมินผลการควบคุมภายใน</p>
+          <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold;">${orgName}</p>
+          <p style="margin: 2pt 0 0 0; font-size: 16pt;">ประจำปีงบประมาณ พ.ศ. ${selectedYear} (งวด 6 เดือน และ 12 เดือน)</p>
+        </div>
+        <div style="border-top: 1.5pt solid black; margin-bottom: 14pt;"></div>
+
+        <table style="width: 100%; border-collapse: collapse; border: 1pt solid black; font-size: 14pt; font-family: 'TH Sarabun PSK'; margin-bottom: 16pt;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="border: 1pt solid black; padding: 5pt; width: 6%; text-align: center;">ลำดับ</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 14%; text-align: center;">ส่วนราชการ</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 25%; text-align: center;">ประเด็นความเสี่ยง</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 25%; text-align: center;">กิจกรรมการควบคุม</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 15%; text-align: center;">ผู้รับผิดชอบ/กำหนดเวลา</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 15%; text-align: center;">สถานะการดำเนินงาน</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pk5List
+              .map(
+                (item, i) => `
+              <tr>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${i + 1}</td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${item.department || '-'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;"><strong>${item.riskIssue || '-'}</strong></td>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${item.controlActivity || '-'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${item.responsiblePerson || '-'} (${item.timeline || '-'})</td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${item.status || '-'}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      `;
+      exportDocumentToWord(bodyContent, `แบบ_ปค5_รายงานติดตามประเมินผล_${selectedYear}.doc`, 'แบบ ปค.5 รายงานการติดตามประเมินผลการควบคุมภายใน');
+    } else {
+      const bodyContent = `
+        <div style="text-align: center; margin-bottom: 16pt; font-family: 'TH Sarabun PSK';">
+          <p style="margin: 0; font-size: 20pt; font-weight: bold;">แบบ ปค.4: รายงานการประเมินผลการควบคุมภายในระดับสำนัก/กอง</p>
+          <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold;">${orgName}</p>
+          <p style="margin: 2pt 0 0 0; font-size: 16pt;">ประจำปีงบประมาณ พ.ศ. ${selectedYear} (ตามหลักเกณฑ์กระทรวงการคลัง พ.ศ. 2561)</p>
+        </div>
+        <div style="border-top: 1.5pt solid black; margin-bottom: 14pt;"></div>
+
+        <table style="width: 100%; border-collapse: collapse; border: 1pt solid black; font-size: 14pt; font-family: 'TH Sarabun PSK'; margin-bottom: 16pt;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="border: 1pt solid black; padding: 5pt; width: 6%; text-align: center;">ลำดับ</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 14%; text-align: center;">สำนัก / กอง</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 25%; text-align: center;">กระบวนการปฏิบัติงาน</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 25%; text-align: center;">การประเมินผลการควบคุม</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 10%; text-align: center;">ความเสี่ยงคงเหลือ</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 20%; text-align: center;">แผนการปรับปรุง</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pk4List
+              .map(
+                (item, i) => `
+              <tr>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${i + 1}</td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${item.department || '-'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;"><strong>${item.process || item.evaluatedProcess || '-'}</strong></td>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${item.controlEvaluation || item.existingControl || '-'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${item.residualRisk || '-'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${item.improvementPlan || '-'}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      `;
+      exportDocumentToWord(bodyContent, `แบบ_ปค4_รายงานประเมินผลระดับกอง_${selectedYear}.doc`, 'แบบ ปค.4 รายงานประเมินผลการควบคุมภายใน');
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    if (activeTab === 'pk5') {
+      const headers = [
+        'ลำดับ',
+        'ส่วนราชการ',
+        'ประเด็นความเสี่ยง',
+        'กิจกรรมการควบคุมที่กำหนด',
+        'ผู้รับผิดชอบ',
+        'กำหนดเวลาแล้วเสร็จ',
+        'สถานะการดำเนินงาน'
+      ];
+      const rows = pk5List.map((item, i) => [
+        i + 1,
+        item.department || '',
+        item.riskIssue || '',
+        item.controlActivity || '',
+        item.responsiblePerson || '',
+        item.timeline || '',
+        item.status || ''
+      ]);
+      exportDataToExcel('แบบ ปค.5', [headers, ...rows], `Internal_Control_PK5_${selectedYear}.xlsx`);
+    } else {
+      const headers = [
+        'ลำดับ',
+        'สำนัก/กอง',
+        'กระบวนการปฏิบัติงาน',
+        'การประเมินผลการควบคุม',
+        'ความเสี่ยงคงเหลือ',
+        'แผนการปรับปรุงการควบคุม'
+      ];
+      const rows = pk4List.map((item, i) => [
+        i + 1,
+        item.department || '',
+        item.process || item.evaluatedProcess || '',
+        item.controlEvaluation || item.existingControl || '',
+        item.residualRisk || '',
+        item.improvementPlan || ''
+      ]);
+      exportDataToExcel('แบบ ปค.4', [headers, ...rows], `Internal_Control_PK4_${selectedYear}.xlsx`);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Description */}
@@ -131,14 +294,24 @@ export default function InternalControlView({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="no-print bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-200/80 dark:border-stone-700 text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xs flex items-center space-x-2 transition-all cursor-pointer"
-            >
-              <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>พิมพ์รายงาน ปค.</span>
-            </button>
+            <OfficialDocActionToolbar
+              onDownloadWord={handleDownloadWord}
+              onDownloadExcel={handleDownloadExcel}
+              onPrint={() => window.print()}
+              wordTooltip={
+                activeTab === 'pk1'
+                  ? 'ดาวน์โหลดหนังสือรับรอง (แบบ ปค.1) เป็นไฟล์ Word (.doc)'
+                  : activeTab === 'pk5'
+                  ? 'ดาวน์โหลดรายงานติดตาม (แบบ ปค.5) เป็นไฟล์ Word (.doc)'
+                  : 'ดาวน์โหลดรายงานประเมินผลระดับกอง (แบบ ปค.4) เป็นไฟล์ Word (.doc)'
+              }
+              excelTooltip={
+                activeTab === 'pk5'
+                  ? 'ส่งออกตารางแบบ ปค.5 เป็นไฟล์ Excel (.xlsx)'
+                  : 'ส่งออกตารางแบบ ปค.4 เป็นไฟล์ Excel (.xlsx)'
+              }
+              printTooltip="พิมพ์รายงาน ปค. / บันทึกเป็น PDF"
+            />
           </div>
         </div>
       </div>

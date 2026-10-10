@@ -15,6 +15,8 @@ import {
   Award
 } from 'lucide-react';
 import { DLA_STRATEGIC_PLAN_3YEARS } from '../data/dlaStandardTemplates';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportDataToExcel, exportThaiMemoToWord } from '../utils/documentExportUtils';
 
 export default function StrategicPlanView({
   selectedYear = '2569',
@@ -105,6 +107,87 @@ export default function StrategicPlanView({
     .filter((a) => a.y1)
     .reduce((sum, a) => sum + (a.manDays || 0), 0);
 
+  // Handlers for exporting Word (.doc) and Excel (.xlsx)
+  const handleDownloadExcel = () => {
+    try {
+      const headers = [
+        'รหัส',
+        'กิจกรรมที่ตรวจสอบ',
+        'สำนัก/กอง',
+        'ระดับความเสี่ยง',
+        `ปีที่ 1 (พ.ศ. ${year1})`,
+        `ปีที่ 2 (พ.ศ. ${year2})`,
+        `ปีที่ 3 (พ.ศ. ${year3})`,
+        'จำนวนคน-วัน'
+      ];
+      const rows = strategicActivities.map((act) => [
+        act.id,
+        act.name,
+        act.department,
+        act.riskLevel,
+        act.y1 ? '✓' : '-',
+        act.y2 ? '✓' : '-',
+        act.y3 ? '✓' : '-',
+        act.manDays || 0
+      ]);
+      rows.push([
+        '',
+        'รวมอัตรากำลังคน-วันตลอดแผน 3 ปี',
+        '',
+        '',
+        strategicActivities.filter(a => a.y1).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
+        strategicActivities.filter(a => a.y2).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
+        strategicActivities.filter(a => a.y3).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
+        strategicActivities.reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน'
+      ]);
+
+      exportDataToExcel({
+        sheetName: `แผน 3 ปี_${year1}-${year3}`,
+        headers,
+        rows,
+        fileName: `แผนการตรวจสอบระยะยาว_3ปี_พศ_${year1}_${year3}_${orgProfile?.name || 'อปท'}`,
+        colWidths: [12, 38, 20, 16, 16, 16, 16, 16]
+      });
+    } catch (err) {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการดาวน์โหลด Excel');
+    }
+  };
+
+  const handleDownloadWord = () => {
+    try {
+      exportThaiMemoToWord({
+        agency: `หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`,
+        phone: orgProfile?.phone || '',
+        docNumber: orgProfile?.docCode ? `${orgProfile.docCode}/แผน๓ปี` : 'อบ ๗๘๔๐๘/แผน๓ปี',
+        docDate: `๒๙ สิงหาคม ๒๕๖๘`,
+        subject: `ขออนุมัติแผนการตรวจสอบระยะยาว (๓ ปี) ประจำปีงบประมาณ พ.ศ. ${year1} - ${year3}`,
+        to: `นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`,
+        contentParagraphs: [
+          `<strong>๑. เรื่องเดิม:</strong> ตามระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ กำหนดให้หน่วยตรวจสอบภายในต้องจัดทำแผนการตรวจสอบระยะยาว เพื่อให้ครอบคลุมกิจกรรมสำคัญของทุกหน่วยรับตรวจในจักรวาลการตรวจสอบ (Audit Universe) อย่างเป็นระบบ นั้น`,
+          `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายในได้จัดทำแผนการตรวจสอบระยะยาว (๓ ปี) ประจำปีงบประมาณ พ.ศ. ${year1} - ${year3} โดยวิเคราะห์จากผลการประเมินความเสี่ยงและขีดความสามารถอัตรากำลัง (Audit Capacity) รวมทั้งสิ้น ${strategicActivities.length} กิจกรรม คิดเป็นอัตรากำลังรวม ${strategicActivities.reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน โดยมีรายละเอียดการกระจายกิจกรรมในแต่ละปีงบประมาณ ดังนี้<br/>` +
+          `&nbsp;&nbsp;&nbsp;&nbsp;๒.๑ ปีงบประมาณ พ.ศ. ${year1} กำหนดตรวจจำนวน ${strategicActivities.filter(a => a.y1).length} กิจกรรม รวม ${strategicActivities.filter(a => a.y1).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน<br/>` +
+          `&nbsp;&nbsp;&nbsp;&nbsp;๒.๒ ปีงบประมาณ พ.ศ. ${year2} กำหนดตรวจจำนวน ${strategicActivities.filter(a => a.y2).length} กิจกรรม รวม ${strategicActivities.filter(a => a.y2).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน<br/>` +
+          `&nbsp;&nbsp;&nbsp;&nbsp;๒.๓ ปีงบประมาณ พ.ศ. ${year3} กำหนดตรวจจำนวน ${strategicActivities.filter(a => a.y3).length} กิจกรรม รวม ${strategicActivities.filter(a => a.y3).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน`,
+          `<strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> เพื่อให้การปฏิบัติงานตรวจสอบภายในมีทิศทางที่ชัดเจนและสอดคล้องกับระเบียบกระทรวงมหาดไทย จึงขอเสนอดังนี้:<br/>` +
+          `&nbsp;&nbsp;&nbsp;&nbsp;๓.๑ เห็นชอบแผนการตรวจสอบระยะยาว (๓ ปี) ประจำปีงบประมาณ พ.ศ. ${year1} - ${year3} ตามเอกสารแนบท้ายนี้<br/>` +
+          `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำแผนปีแรก (พ.ศ. ${year1}) ไปจัดทำเป็นแผนการปฏิบัติงานประจำปีต่อไป<br/><br/>` +
+          `จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ`
+        ],
+        signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+        signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+        signatoryRole: 'ผู้จัดทำแผนการตรวจสอบ',
+        palatReviewText: 'เห็นควรอนุมัติแผนการตรวจสอบระยะยาว (๓ ปี) ตามเสนอ',
+        executiveOrderText: 'อนุมัติแผนการตรวจสอบระยะยาว (๓ ปี) ตามเสนอ',
+        orgName: orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น',
+        fileName: `บันทึกขออนุมัติแผนระยะยาว๓ปี_พศ_${year1}_${year3}_${orgProfile?.name || 'อปท'}`
+      });
+    } catch (err) {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการดาวน์โหลด Word');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -139,13 +222,14 @@ export default function StrategicPlanView({
               <Sparkles className="w-4 h-4 text-amber-200" />
               <span>โหลดตัวอย่าง 3 ปี & 590 คน-วัน (คู่มือ สถ.)</span>
             </button>
-            <button
-              onClick={() => window.print()}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
-            >
-              <Printer className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-              <span>พิมพ์แผน 3 ปี</span>
-            </button>
+            <OfficialDocActionToolbar
+              onDownloadWord={handleDownloadWord}
+              onDownloadExcel={handleDownloadExcel}
+              onPrint={() => window.print()}
+              wordTooltip="ดาวน์โหลดบันทึกขออนุมัติแผนระยะยาว 3 ปี Word (.doc)"
+              excelTooltip="ดาวน์โหลดตารางแผน 3 ปีและอัตรากำลังคน-วัน Excel (.xlsx)"
+              printTooltip="พิมพ์แผนระยะยาว 3 ปี หรือบันทึกเป็น PDF"
+            />
           </div>
         </div>
       </div>

@@ -12,6 +12,8 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExportUtils';
 
 export default function LpaView({
   lpaIndicators,
@@ -31,6 +33,73 @@ export default function LpaView({
 
   const totalScore = lpaIndicators.reduce((acc, curr) => acc + curr.score, 0);
   const maxScore = lpaIndicators.reduce((acc, curr) => acc + curr.maxScore, 0);
+
+  const handleDownloadWord = () => {
+    const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
+    const bodyContent = `
+      <div style="text-align: center; margin-bottom: 16pt; font-family: 'TH Sarabun PSK';">
+        <p style="margin: 0; font-size: 20pt; font-weight: bold;">แบบประเมินประสิทธิภาพขององค์กรปกครองส่วนท้องถิ่น (LPA)</p>
+        <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold;">ด้านที่ ๑ การบริหารจัดการ: งานตรวจสอบภายใน</p>
+        <p style="margin: 2pt 0 0 0; font-size: 16pt;">${orgName} ประจำปีงบประมาณ พ.ศ. ${selectedYear}</p>
+      </div>
+      <div style="border-top: 1.5pt solid black; margin-bottom: 14pt;"></div>
+
+      <p style="font-size: 16pt; font-family: 'TH Sarabun PSK'; margin-bottom: 8pt;">
+        <strong>สรุปคะแนนประเมินตนเอง:</strong> ได้รับคะแนนรวม <strong>${totalScore}</strong> จากคะแนนเต็ม <strong>${maxScore}</strong> คิดเป็นร้อยละ <strong>${Math.round((totalScore / maxScore) * 100)}%</strong>
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; border: 1pt solid black; font-size: 14pt; font-family: 'TH Sarabun PSK'; margin-bottom: 16pt;">
+        <thead>
+          <tr style="background-color: #f2f2f2;">
+            <th style="border: 1pt solid black; padding: 5pt; width: 8%; text-align: center;">ตัวชี้วัด</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 42%; text-align: center;">ชื่อตัวชี้วัด / รายละเอียด</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 10%; text-align: center;">เต็ม</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 10%; text-align: center;">ได้</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 30%; text-align: center;">เอกสารหลักฐานอ้างอิง</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lpaIndicators
+            .map(
+              (ind) => `
+            <tr>
+              <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${ind.id}</td>
+              <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;"><strong>${ind.name}</strong><br/><span style="color:#555; font-size:12pt;">${ind.desc || ''}</span></td>
+              <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${ind.maxScore}</td>
+              <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top; font-weight: bold;">${ind.score}</td>
+              <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${(ind.evidences || []).map((e) => `• ${e}`).join('<br/>')}</td>
+            </tr>
+          `
+            )
+            .join('')}
+        </tbody>
+      </table>
+
+      <table style="width: 100%; border: none; margin-top: 30pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        <tr>
+          <td style="width: 50%;"></td>
+          <td style="width: 50%; text-align: center;">
+            <p style="margin: 0;">(ลงชื่อ)........................................................ผู้ประเมิน</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
+            <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+          </td>
+        </tr>
+      </table>
+    `;
+    exportDocumentToWord(bodyContent, `แบบประเมิน_LPA_ด้านที่1_${selectedYear}.doc`, 'แบบประเมินประสิทธิภาพ LPA');
+  };
+
+  const handleDownloadExcel = () => {
+    const headers = ['ตัวชี้วัดที่', 'ชื่อตัวชี้วัด', 'คะแนนเต็ม', 'คะแนนประเมินตนเอง', 'รายการเอกสารหลักฐานอ้างอิง'];
+    const rows = lpaIndicators.map((ind) => [
+      ind.id,
+      ind.name,
+      ind.maxScore,
+      ind.score,
+      (ind.evidences || []).join('; ')
+    ]);
+    exportDataToExcel('LPA ด้านที่ 1', [headers, ...rows], `LPA_Assessment_Indicators_${selectedYear}.xlsx`);
+  };
 
   return (
     <div className="space-y-6">
@@ -56,13 +125,24 @@ export default function LpaView({
           </h1>
         </div>
 
-        <div className="bg-white/80 dark:bg-stone-800/80 rounded-2xl p-4 border border-emerald-500/30 text-center shrink-0 shadow-2xs">
-          <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400">คะแนนประเมินตนเอง</div>
-          <div className="text-3xl font-black text-emerald-600 dark:text-emerald-300 mt-1">
-            {totalScore} / {maxScore}
-          </div>
-          <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-            ระดับยอดเยี่ยม (100%)
+        <div className="flex flex-wrap items-center gap-4 shrink-0">
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadWord}
+            onDownloadExcel={handleDownloadExcel}
+            onPrint={() => window.print()}
+            wordTooltip="ดาวน์โหลดแบบประเมิน LPA ด้านที่ 1 เป็นไฟล์ Word (.doc)"
+            excelTooltip="ส่งออกคะแนนและเกณฑ์ LPA ด้านที่ 1 เป็นไฟล์ Excel (.xlsx)"
+            printTooltip="พิมพ์แบบประเมิน LPA / บันทึกเป็น PDF"
+          />
+
+          <div className="bg-white/80 dark:bg-stone-800/80 rounded-2xl p-4 border border-emerald-500/30 text-center shrink-0 shadow-2xs">
+            <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400">คะแนนประเมินตนเอง</div>
+            <div className="text-3xl font-black text-emerald-600 dark:text-emerald-300 mt-1">
+              {totalScore} / {maxScore}
+            </div>
+            <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+              ระดับยอดเยี่ยม (100%)
+            </div>
           </div>
         </div>
       </div>
@@ -166,13 +246,11 @@ export default function LpaView({
                       <FolderOpen className="w-3.5 h-3.5 mr-1" />
                       แฟ้มเอกสารอ้างอิง: D:\งานตรวจสอบภายใน\LPA\LPA ปี 68 ตรวจของ ปี 67\ตัวชี้วัดที่ {ind.id}.docx
                     </span>
-                    <button
-                      onClick={() => window.print()}
-                      className="no-print text-stone-700 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-400 font-bold flex items-center space-x-1 cursor-pointer"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>พิมพ์แบบประเมินตัวชี้วัดนี้</span>
-                    </button>
+                    <OfficialDocActionToolbar
+                      compact={true}
+                      onPrint={() => window.print()}
+                      printTooltip={`พิมพ์แบบประเมินตัวชี้วัดที่ ${ind.id}`}
+                    />
                   </div>
                 </div>
               )}

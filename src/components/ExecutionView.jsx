@@ -23,6 +23,8 @@ import {
   Award
 } from 'lucide-react';
 import { exportWorkingPaperToExcel } from '../utils/exportExcel';
+import { exportDocumentToWord } from '../utils/documentExportUtils';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
 
 export default function ExecutionView({
@@ -414,6 +416,108 @@ export default function ExecutionView({
     setTimeout(() => setAutoFindingToast(''), 4000);
   };
 
+  const handleDownloadWord = () => {
+    if (!currentWp) return;
+    try {
+      const checklistRows = (currentWp.checklist || []).map((c, i) => `
+        <tr>
+          <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${i + 1}</td>
+          <td style="border: 1pt solid #000; padding: 4pt;">${c.question}</td>
+          <td style="text-align: center; border: 1pt solid #000; padding: 4pt; font-weight: bold;">${c.result === 'passed' ? 'ปฏิบัติถูกต้อง' : c.result === 'failed' ? 'มีข้อบกพร่อง' : 'ไม่เกี่ยวข้อง'}</td>
+          <td style="border: 1pt solid #000; padding: 4pt;">${c.note || '-'}</td>
+        </tr>
+      `).join('');
+
+      const sampleRows = (currentWp.samples || []).map((s, i) => `
+        <tr>
+          <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${i + 1}</td>
+          <td style="border: 1pt solid #000; padding: 4pt;">${s.docNo || '-'}</td>
+          <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${s.date || '-'}</td>
+          <td style="border: 1pt solid #000; padding: 4pt;">${s.payee || '-'}</td>
+          <td style="text-align: right; border: 1pt solid #000; padding: 4pt;">${Number(s.amount || 0).toLocaleString('th-TH')}</td>
+          <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${s.testResult || '-'}</td>
+          <td style="border: 1pt solid #000; padding: 4pt;">${s.note || '-'}</td>
+        </tr>
+      `).join('');
+
+      const content = `
+        <div style="text-align: center; margin-bottom: 16pt;">
+          <h2 style="font-size: 18pt; font-weight: bold; margin: 0;">กระดาษทำการตรวจสอบภายใน (Audit Working Paper)</h2>
+          <div style="font-size: 16pt; font-weight: bold; margin-top: 4pt;">${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</div>
+          <div style="font-size: 14pt; margin-top: 2pt;">รหัสกระดาษทำการ: ${currentWp.id} | หน่วยรับตรวจ: ${currentWp.department}</div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12pt; font-size: 14pt;">
+          <tr><td style="width: 25%; font-weight: bold;">เรื่องที่ตรวจสอบ:</td><td colspan="3">${currentWp.topic}</td></tr>
+          <tr><td style="font-weight: bold;">ผู้ตรวจสอบ:</td><td>${currentWp.auditor || orgProfile?.auditorName}</td><td style="font-weight: bold;">งวดตรวจสอบ:</td><td>${currentWp.auditPeriod || selectedYear}</td></tr>
+          <tr><td style="font-weight: bold;">เกณฑ์/ระเบียบ:</td><td colspan="3">${(currentWp.criteria || []).join(', ') || '-'}</td></tr>
+        </table>
+        <h3 style="font-size: 15pt; font-weight: bold; margin-bottom: 6pt;">1. แนวทางการตรวจสอบและการควบคุมภายใน (Audit Program Checklist)</h3>
+        <table class="table-bordered" style="width: 100%; border: 1pt solid #000; border-collapse: collapse; font-size: 13pt; margin-bottom: 14pt;">
+          <thead>
+            <tr style="background-color: #f3f4f6; font-weight: bold;">
+              <th style="border: 1pt solid #000; padding: 4pt; width: 6%;">ที่</th>
+              <th style="border: 1pt solid #000; padding: 4pt; width: 54%;">รายการตรวจสอบ</th>
+              <th style="border: 1pt solid #000; padding: 4pt; width: 20%;">ผลการตรวจ</th>
+              <th style="border: 1pt solid #000; padding: 4pt; width: 20%;">หมายเหตุ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${checklistRows || '<tr><td colspan="4" style="text-align: center; border: 1pt solid #000; padding: 6pt;">- ไม่มีข้อมูล -</td></tr>'}
+          </tbody>
+        </table>
+        ${sampleRows ? `
+          <h3 style="font-size: 15pt; font-weight: bold; margin-bottom: 6pt;">2. ตารางบันทึกการสุ่มตรวจตัวอย่าง (Sample Testing Records)</h3>
+          <table class="table-bordered" style="width: 100%; border: 1pt solid #000; border-collapse: collapse; font-size: 13pt; margin-bottom: 14pt;">
+            <thead>
+              <tr style="background-color: #f3f4f6; font-weight: bold;">
+                <th style="border: 1pt solid #000; padding: 4pt; width: 6%;">ลำดับ</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 18%;">เลขที่เอกสาร</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 12%;">วันที่</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 20%;">ผู้รับเงิน/คู่สัญญา</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 14%;">จำนวนเงิน (บาท)</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 12%;">ผลการตรวจ</th>
+                <th style="border: 1pt solid #000; padding: 4pt; width: 18%;">ข้อสังเกต</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sampleRows}
+            </tbody>
+          </table>
+        ` : ''}
+        <h3 style="font-size: 15pt; font-weight: bold; margin-bottom: 6pt;">3. สรุปข้อตรวจพบและข้อเสนอแนะ (Audit Findings)</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14pt; margin-bottom: 18pt;">
+          <tr><td style="width: 25%; font-weight: bold; vertical-align: top;">สภาพการณ์ (Condition):</td><td style="padding-bottom: 4pt;">${currentWp.finding?.condition || '-'}</td></tr>
+          <tr><td style="font-weight: bold; vertical-align: top;">สาเหตุ (Cause):</td><td style="padding-bottom: 4pt;">${currentWp.finding?.cause || '-'}</td></tr>
+          <tr><td style="font-weight: bold; vertical-align: top;">ผลกระทบ (Effect):</td><td style="padding-bottom: 4pt;">${currentWp.finding?.effect || '-'}</td></tr>
+          <tr><td style="font-weight: bold; vertical-align: top;">ข้อเสนอแนะ (Recommendation):</td><td style="padding-bottom: 4pt;">${currentWp.finding?.recommendation || '-'}</td></tr>
+        </table>
+        <table style="width: 100%; margin-top: 30pt; border: none;">
+          <tr>
+            <td style="width: 50%; text-align: center;">
+              <p style="margin: 0;">(ลงชื่อ)........................................................ผู้ตรวจสอบ</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
+              <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+            </td>
+            <td style="width: 50%; text-align: center;">
+              <p style="margin: 0;">(ลงชื่อ)........................................................ผู้สอบทาน</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.palatName || 'ปลัด อปท.'})</p>
+              <p style="margin: 2pt 0 0 0;">ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</p>
+            </td>
+          </tr>
+        </table>
+      `;
+
+      exportDocumentToWord({
+        title: `กระดาษทำการ_${currentWp.id}`,
+        htmlContent: content,
+        fileName: `กระดาษทำการ_${currentWp.id}_${orgProfile?.name || 'อปท'}`
+      });
+    } catch (err) {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการดาวน์โหลด Word');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header & Topic Selector */}
@@ -459,23 +563,14 @@ export default function ExecutionView({
             <span>📥 โหลด 6 ภารกิจ (คู่มือ สถ.)</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => exportWorkingPaperToExcel(currentWp, orgProfile)}
-            className="no-print bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Export Excel</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="no-print bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-colors"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>พิมพ์</span>
-          </button>
+          <OfficialDocActionToolbar
+            onDownloadWord={handleDownloadWord}
+            onDownloadExcel={() => exportWorkingPaperToExcel(currentWp, orgProfile)}
+            onPrint={() => window.print()}
+            wordTooltip="ดาวน์โหลดกระดาษทำการตรวจสอบ Word (.doc)"
+            excelTooltip="ดาวน์โหลดกระดาษทำการตรวจสอบ Excel (.xls)"
+            printTooltip="สั่งพิมพ์กระดาษทำการ หรือบันทึกเป็น PDF"
+          />
         </div>
       </div>
 

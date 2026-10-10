@@ -26,6 +26,8 @@ import {
   Layers,
   Sparkles
 } from 'lucide-react';
+import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExportUtils';
 
 export default function AuditCommitteeView({
   selectedYear = '2569',
@@ -354,6 +356,89 @@ export default function AuditCommitteeView({
     return defaultMembers;
   });
 
+  const handleDownloadWord = () => {
+    const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
+    const totalScore = evaluations.reduce((acc, curr) => acc + (curr.score || 0), 0);
+    const maxScore = evaluations.reduce((acc, curr) => acc + (curr.maxScore || 4), 0);
+    const percent = Math.round((totalScore / maxScore) * 100);
+
+    const bodyContent = `
+      <div style="text-align: center; margin-bottom: 16pt; font-family: 'TH Sarabun PSK';">
+        <p style="margin: 0; font-size: 20pt; font-weight: bold;">รายงานผลการประเมินตนเองของคณะกรรมการตรวจสอบ (Audit Committee Self-Evaluation)</p>
+        <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold;">${orgName}</p>
+        <p style="margin: 2pt 0 0 0; font-size: 16pt;">ประจำปีงบประมาณ พ.ศ. ${selectedYear} (ตามคู่มือกระทรวงการคลัง สิงหาคม ๒๕๖๘)</p>
+      </div>
+      <div style="border-top: 1.5pt solid black; margin-bottom: 14pt;"></div>
+
+      <p style="font-size: 16pt; font-family: 'TH Sarabun PSK'; margin-bottom: 8pt;">
+        <strong>สรุปผลการประเมินภาพรวม:</strong> ได้รับคะแนนรวม <strong>${totalScore}</strong> จากคะแนนเต็ม <strong>${maxScore}</strong> คิดเป็นร้อยละ <strong>${percent}%</strong> 
+        ระดับผลการประเมิน: <strong>${percent >= 85 ? 'ดีเยี่ยม' : percent >= 70 ? 'ดี' : percent >= 50 ? 'พอใช้' : 'ต้องปรับปรุง'}</strong>
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; border: 1pt solid black; font-size: 14pt; font-family: 'TH Sarabun PSK'; margin-bottom: 16pt;">
+        <thead>
+          <tr style="background-color: #f2f2f2;">
+            <th style="border: 1pt solid black; padding: 5pt; width: 6%; text-align: center;">ลำดับ</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 34%; text-align: center;">ด้านการประเมิน</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 10%; text-align: center;">คะแนนเต็ม</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 10%; text-align: center;">ได้</th>
+            <th style="border: 1pt solid black; padding: 5pt; width: 40%; text-align: center;">หลักฐาน / ข้อเสนอแนะพัฒนา</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${evaluations
+            .map(
+              (e) => `
+            <tr>
+              <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${e.id}</td>
+              <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;"><strong>${e.name}</strong><br/><span style="color:#555; font-size:12pt;">${e.desc}</span></td>
+              <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${e.maxScore}</td>
+              <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top; font-weight: bold;">${e.score}</td>
+              <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">หลักฐาน: ${e.evidence || '-'}<br/>ข้อเสนอแนะ: ${e.improvement || '-'}</td>
+            </tr>
+          `
+            )
+            .join('')}
+        </tbody>
+      </table>
+
+      <table style="width: 100%; border: none; margin-top: 30pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+        <tr>
+          <td style="width: 50%;"></td>
+          <td style="width: 50%; text-align: center;">
+            <p style="margin: 0;">(ลงชื่อ)........................................................</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${evaluatorName})</p>
+            <p style="margin: 2pt 0 0 0;">ประธานคณะกรรมการตรวจสอบ ${orgName}</p>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    exportDocumentToWord(bodyContent, `รายงานการประเมินตนเองคณะกรรมการตรวจสอบ_${selectedYear}.doc`, 'รายงานผลการประเมินตนเองคณะกรรมการตรวจสอบ');
+  };
+
+  const handleDownloadExcel = () => {
+    const headers = [
+      'ลำดับ',
+      'ด้านการประเมินผลการปฏิบัติงาน',
+      'คำอธิบายเกณฑ์มาตรฐาน',
+      'คะแนนเต็ม',
+      'คะแนนที่ได้',
+      'หลักฐานเชิงประจักษ์',
+      'ข้อเสนอแนะเพื่อการพัฒนา'
+    ];
+    const rows = evaluations.map((e) => [
+      e.id,
+      e.name,
+      e.desc,
+      e.maxScore,
+      e.score,
+      e.evidence || '',
+      e.improvement || ''
+    ]);
+    exportDataToExcel('ประเมินตนเองคณะกรรมการตรวจสอบ', [headers, ...rows], `Audit_Committee_Evaluation_${selectedYear}.xlsx`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -380,13 +465,14 @@ export default function AuditCommitteeView({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              onClick={() => window.print()}
-              className="bg-white/80 hover:bg-white dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 font-bold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer border border-stone-200/80 dark:border-stone-700 shadow-2xs"
-            >
-              <Printer className="w-4 h-4 text-stone-500 dark:text-stone-400" />
-              <span>พิมพ์รายงานผลการประเมิน / กฎบัตร</span>
-            </button>
+            <OfficialDocActionToolbar
+              onDownloadWord={handleDownloadWord}
+              onDownloadExcel={handleDownloadExcel}
+              onPrint={() => window.print()}
+              wordTooltip="ดาวน์โหลดรายงานผลการประเมินตนเองคณะกรรมการตรวจสอบเป็นไฟล์ Word (.doc)"
+              excelTooltip="ส่งออกตารางการประเมินตนเอง 11 ด้านเป็นไฟล์ Excel (.xlsx)"
+              printTooltip="พิมพ์รายงานผลการประเมินตนเอง / กฎบัตร / บันทึกเป็น PDF"
+            />
           </div>
         </div>
       </div>
