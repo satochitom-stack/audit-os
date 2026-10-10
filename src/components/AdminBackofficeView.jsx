@@ -1013,9 +1013,10 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         });
                         showToast('🚀 ส่งสัญญาณแจ้งเตือนอัปเดตไปยังผู้ใช้ทุกคนผ่าน Cloud เรียบร้อยแล้ว!');
                       }}
-                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center space-x-1.5"
+                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-black transition-all shadow-sm shadow-amber-600/20 cursor-pointer flex items-center space-x-1.5"
                     >
-                      <span>🚀 ส่งสัญญาณอัปเดต</span>
+                      <Sparkles className="w-3.5 h-3.5 text-stone-950" />
+                      <span>ส่งสัญญาณอัปเดต</span>
                     </button>
                   </div>
                 </div>
