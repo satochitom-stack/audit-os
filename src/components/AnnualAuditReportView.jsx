@@ -244,13 +244,6 @@ export default function AnnualAuditReportView({
         </div>
       )}
 
-      <PageHeaderBanner
-        title={`รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} (รายงานทางการ สถ.)`}
-        orgName={orgProfile?.name}
-        auditorName={`ผู้รายงาน: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
-        year={selectedYear}
-      />
-
       {/* Toggles for display & Action Toolbar (no-print) */}
       <div className="no-print bg-stone-50/80 dark:bg-stone-900/60 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs font-medium text-stone-600 dark:text-stone-300 shadow-2xs">
         <div className="flex flex-wrap items-center gap-4">

@@ -36,7 +36,9 @@ export default function FormsView({
   onUpdateFormsBase,
   orgProfile = {},
   session,
-  setCurrentTab
+  setCurrentTab,
+  selectedYear = '2569',
+  riskManagement = {}
 }) {
   const [selectedStage, setSelectedStage] = useState('all');
   const [selectedDocType, setSelectedDocType] = useState('all');

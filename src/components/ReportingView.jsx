@@ -407,6 +407,22 @@ export default function ReportingView({
         </div>
       )}
 
+      {/* Page Header Banner (หัวข้อหลักแสดงด้านบนสุดเสมอ) */}
+      <PageHeaderBanner
+        title={
+          activeTab === 'annual-report'
+            ? `รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} (รายงานทางการ สถ.)`
+            : activeTab === 'report'
+            ? `รายงานผลการตรวจสอบรายกิจกรรม (WP Report 5 องค์ประกอบ) ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
+            : activeTab === 'exit'
+            ? `สรุปผลการตรวจสอบและการประชุมปิดตรวจ (Exit Conference) ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
+            : `ระบบติดตามข้อทักท้วงและการแก้ไขปรับปรุง (CAPA Tracking Suite) ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
+        }
+        orgName={orgProfile?.name}
+        auditorName={`ผู้รายงาน: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        year={selectedYear}
+      />
+
       {/* Sub-navigation tabs */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-3">
         <div className="flex flex-wrap gap-2">
@@ -901,12 +917,6 @@ export default function ReportingView({
       ========================================================================= */}
       {activeTab === 'capa' && (
         <div className="space-y-6">
-      <PageHeaderBanner
-        title="รายงานผลการตรวจสอบภายในและข้อตรวจพบ (Audit Reporting & Findings)"
-        orgName={orgProfile?.name}
-        auditorName={`ผู้ตรวจสอบ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
-        year={selectedYear}
-      />
 
           {/* Statistical Counters */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

@@ -52,50 +52,49 @@ export default function Sidebar({
   const planKey = session?.plan || 'annual';
   const planInfo = MEMBERSHIP_PLANS[planKey] || MEMBERSHIP_PLANS.annual;
 
-  // 12-Step Lifecycle Sections strictly for Internal Auditors
+  // Navigation Menu Sections for Internal Auditors
   const LIFECYCLE_STEPS = [
     {
-      groupTitle: 'ขั้นตอนที่ 1 - 4: การวางแผนตรวจสอบ',
+      groupTitle: 'การวางแผนตรวจสอบ',
       items: [
-        { id: 'audit-risk', stepNum: '1', label: '1. การประเมินความเสี่ยง (Risk Assessment)', icon: ShieldAlert, desc: 'วิเคราะห์เกณฑ์ 5 ด้าน SOFCK และผังความเสี่ยง Universe' },
-        { id: 'strategic-plan', stepNum: '2', label: '2. แผนระยะยาว 3 ปี (Strategic Plan)', icon: Calendar, desc: 'คำนวณวันทำการตรวจ และแผนหมุนเวียน 3 ปี' },
-        { id: 'planning', stepNum: '3', label: '3. แผนการตรวจสอบประจำปี (Annual Audit Plan)', icon: FileText, desc: 'จัดทำแผนประจำปี บันทึกขอนายก และกฎบัตร' },
-        { id: 'engagement-plan', stepNum: '4', label: '4. แผนการปฏิบัติงาน (Engagement Plan)', icon: Sparkles, desc: 'แผนการปฏิบัติงานรายโครงการและแนวการตรวจ' }
+        { id: 'audit-risk', label: 'การประเมินความเสี่ยง (Risk Assessment)', icon: ShieldAlert, desc: 'วิเคราะห์เกณฑ์ 5 ด้าน SOFCK และผังความเสี่ยง Universe' },
+        { id: 'strategic-plan', label: 'แผนระยะยาว 3 ปี (Strategic Plan)', icon: Calendar, desc: 'คำนวณวันทำการตรวจ และแผนหมุนเวียน 3 ปี' },
+        { id: 'planning', label: 'แผนการตรวจสอบประจำปี (Annual Audit Plan)', icon: FileText, desc: 'จัดทำแผนประจำปี บันทึกขอนายก และกฎบัตร' },
+        { id: 'engagement-plan', label: 'แผนการปฏิบัติงาน (Engagement Plan)', icon: Sparkles, desc: 'แผนการปฏิบัติงานรายโครงการและแนวการตรวจ' }
       ]
     },
     {
-      groupTitle: 'ขั้นตอนที่ 5 - 7: การลงพื้นที่ตรวจสอบ',
+      groupTitle: 'การลงพื้นที่ตรวจสอบ',
       items: [
-        { id: 'opening-meeting', stepNum: '5', label: '5. การประชุมเปิดการตรวจสอบ (Opening Meeting)', icon: Users, desc: 'หนังสือแจ้งล่วงหน้า และบันทึกรายงานเปิดตรวจ' },
-        { id: 'execution', stepNum: '6', label: '6. กระดาษทำการตรวจสอบ (Working Papers)', icon: ClipboardCheck, desc: 'บันทึกการตรวจสอบ สุ่มตัวอย่าง และสรุปข้อตรวจพบ' },
-        { id: 'closing-meeting', stepNum: '7', label: '7. การประชุมปิดการตรวจสอบ (Closing Meeting)', icon: CheckCircle2, desc: 'สรุปข้อตรวจพบเบื้องต้น และบันทึกปิดตรวจ' }
+        { id: 'opening-meeting', label: 'การประชุมเปิดการตรวจสอบ (Opening Meeting)', icon: Users, desc: 'หนังสือแจ้งล่วงหน้า และบันทึกรายงานเปิดตรวจ' },
+        { id: 'execution', label: 'กระดาษทำการตรวจสอบ (Working Papers)', icon: ClipboardCheck, desc: 'บันทึกการตรวจสอบ สุ่มตัวอย่าง และสรุปข้อตรวจพบ' },
+        { id: 'closing-meeting', label: 'การประชุมปิดการตรวจสอบ (Closing Meeting)', icon: CheckCircle2, desc: 'สรุปข้อตรวจพบเบื้องต้น และบันทึกปิดตรวจ' }
       ]
     },
     {
-      groupTitle: 'ขั้นตอนที่ 8 - 10: รายงานผลและติดตาม',
+      groupTitle: 'รายงานผลและติดตาม',
       items: [
-        { id: 'reporting', stepNum: '8', label: '8. รายงานผลการตรวจสอบ (Audit Reporting)', icon: FileSpreadsheet, desc: 'รายงาน 5 องค์ประกอบ และบันทึกข้อความเสนอนายก' },
-        { id: 'tracking-register', stepNum: '9', label: '9. การติดตามผลการตรวจสอบ (Audit Follow-up)', icon: Clock, desc: 'ทะเบียนคุมข้อเสนอแนะ และบันทึกเตือน 30/60 วัน' },
-        { id: 'audit-committee', stepNum: '10', label: '10. คณะกรรมการตรวจสอบ (Audit Committee)', icon: Award, desc: 'กฎบัตร ปฏิทิน 4 ไตรมาส ประเมิน 11 ด้าน & QAIP' }
+        { id: 'reporting', label: 'รายงานผลการตรวจสอบ (Audit Reporting)', icon: FileSpreadsheet, desc: 'รายงาน 5 องค์ประกอบ และบันทึกข้อความเสนอนายก' },
+        { id: 'tracking-register', label: 'การติดตามผลการตรวจสอบ (Audit Follow-up)', icon: Clock, desc: 'ทะเบียนคุมข้อเสนอแนะ และบันทึกเตือน 30/60 วัน' },
+        { id: 'audit-committee', label: 'คณะกรรมการตรวจสอบ (Audit Committee)', icon: Award, desc: 'กฎบัตร ปฏิทิน 4 ไตรมาส ประเมิน 11 ด้าน & QAIP' }
       ]
     },
     {
-      groupTitle: 'งานควบคุมภายใน & บริหารความเสี่ยง (อปท.)',
+      groupTitle: 'งานควบคุมภายใน & บริหารความเสี่ยง',
       items: [
-        { id: 'internal-control', stepNum: 'ปย', label: 'การควบคุมภายใน (แบบ ปย. 1, 4, 5)', icon: ShieldCheck, desc: 'แบบประเมินและรายงานการควบคุมภายใน ตามมาตรฐานกระทรวงการคลัง' },
-        { id: 'risk-management', stepNum: 'บส', label: 'การบริหารความเสี่ยง (แบบ บส. 1 - 5)', icon: Layers, desc: 'แบบ บส. 1 - 5 ตามหนังสือสั่งการ ว 3482 (5 สำนัก/กอง)' },
-        { id: 'lpa', stepNum: 'LPA', label: 'การประเมินประสิทธิภาพ LPA ด้าน 1', icon: Award, desc: 'เกณฑ์ชี้วัดมาตรฐานความโปร่งใสและตรวจสอบภายใน อปท.' }
+        { id: 'internal-control', label: 'การควบคุมภายใน (แบบ ปค. 1, 4, 5, 6)', icon: ShieldCheck, desc: 'แบบประเมินและรายงานการควบคุมภายใน ตามมาตรฐานกระทรวงการคลัง' },
+        { id: 'risk-management', label: 'การบริหารความเสี่ยง (แบบ บส. 1 - 5)', icon: Layers, desc: 'แบบ บส. 1 - 5 ตามหนังสือสั่งการ ว 3482 (5 สำนัก/กอง)' },
+        { id: 'lpa', label: 'การประเมินประสิทธิภาพ LPA ด้าน 1', icon: Award, desc: 'เกณฑ์ชี้วัดมาตรฐานความโปร่งใสและตรวจสอบภายใน อปท.' }
       ]
     },
     {
       groupTitle: 'คลังความรู้ & เครื่องมือช่วยตรวจ',
       items: [
-        { id: 'forms', stepNum: '11', label: '11. บันทึก/คำสั่ง (ว 614 สารบรรณ)', icon: FileText, desc: 'ชุด 20 บันทึกข้อความและคำสั่งตามระเบียบงานสารบรรณ' },
-        { id: 'central-hub', stepNum: '12', label: '12. คลังเอกสารกลาง & ระเบียบ', icon: BookOpen, desc: 'ระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 และตัวอย่าง' },
+        { id: 'forms', label: 'บันทึก/คำสั่ง', icon: FileText, desc: 'ชุดบันทึกข้อความและคำสั่งตามระเบียบงานสารบรรณ' },
+        { id: 'central-hub', label: 'คลังเอกสารกลาง & ระเบียบ', icon: BookOpen, desc: 'ระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 และตัวอย่าง' },
         {
           id: 'audit-toolkits',
-          stepNum: '13',
-          label: '13. เครื่องมือช่วยคำนวณเชิงเทคนิค',
+          label: 'เครื่องมือช่วยคำนวณเชิงเทคนิค',
           icon: Wrench,
           hasSubmenu: true,
           subItems: [
@@ -249,11 +248,12 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* 12-Step Lifecycle Groups */}
+        {/* Lifecycle & Knowledge Groups */}
         {LIFECYCLE_STEPS.map((group, gIdx) => (
-          <div key={gIdx} className="space-y-1">
-            <div className="text-[10px] font-bold text-stone-400 dark:text-stone-500 px-2 tracking-wider uppercase">
-              {group.groupTitle}
+          <div key={gIdx} className="space-y-1.5 pt-2 first:pt-0">
+            <div className="px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:via-amber-950/20 dark:to-transparent rounded-lg border-l-3 border-amber-500 text-[11px] font-black text-amber-950 dark:text-amber-200 tracking-wide uppercase flex items-center justify-between shadow-2xs">
+              <span>{group.groupTitle}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 dark:bg-amber-400/70 shrink-0"></span>
             </div>
 
             <div className="space-y-0.5">

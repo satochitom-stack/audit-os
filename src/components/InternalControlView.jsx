@@ -107,6 +107,70 @@ export default function InternalControlView({
   const pk4List = internalControls?.pk4 || [];
   const pk5List = internalControls?.pk5 || [];
   const pk1Data = internalControls?.pk1 || {};
+  const [pk6SavedToast, setPk6SavedToast] = useState(false);
+
+  const pk6Data = internalControls?.pk6 || {
+    reviewPeriod: 'สำหรับระยะเวลาสิ้นสุดวันที่ 30 กันยายน',
+    auditorName: orgProfile?.auditorName || 'นักวิชาการตรวจสอบภายใน',
+    auditorPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+    reviewDate: `30 กันยายน ${selectedYear}`,
+    overallAssurance: 'adequate',
+    summaryOpinion: `หน่วยตรวจสอบภายในได้สอบทานรายงานการประเมินผลการควบคุมภายใน (แบบ ปค.4 และ แบบ ปค.5) ของฝ่ายบริหาร และสอบทานเอกสารหลักฐานที่เกี่ยวข้อง มีความเห็นว่าระบบการควบคุมภายในของ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} มีความเพียงพอ เหมาะสม และมีการปฏิบัติตามอย่างต่อเนื่องตามสมควร อย่างไรก็ดี มีบางกระบวนการที่ควรเพิ่มการควบคุมตามข้อสังเกตและข้อเสนอแนะ`,
+    elementsReview: [
+      {
+        elementName: '๑. สภาพแวดล้อมการควบคุม (Control Environment)',
+        status: 'adequate',
+        observation: 'ผู้บริหารมีนโยบายส่งเสริมความซื่อสัตย์สุจริต มีโครงสร้างองค์กรและการแบ่งมอบอำนาจหน้าที่ชัดเจน'
+      },
+      {
+        elementName: '๒. การประเมินความเสี่ยง (Risk Assessment)',
+        status: 'adequate',
+        observation: 'มีการระบุและวิเคราะห์ความเสี่ยงที่อาจกระทบต่อการบรรลุวัตถุประสงค์ของภารกิจสำคัญ แต่ควรทบทวนให้ทันต่อเหตุการณ์'
+      },
+      {
+        elementName: '๓. กิจกรรมการควบคุม (Control Activities)',
+        status: 'adequate',
+        observation: 'มีระเบียบ คำสั่ง และแนวปฏิบัติในการแบ่งแยกหน้าที่ การอนุมัติ และการตรวจสอบเอกสารการเงินและพัสดุ'
+      },
+      {
+        elementName: '๔. สารสนเทศและการสื่อสาร (Information & Communication)',
+        status: 'adequate',
+        observation: 'มีการใช้ระบบ e-LAAS และสารสนเทศทางราชการในการปฏิบัติงานและรายงานข้อมูลอย่างต่อเนื่อง'
+      },
+      {
+        elementName: '๕. การติดตามประเมินผล (Monitoring Activities)',
+        status: 'adequate',
+        observation: 'มีการติดตามผลการปฏิบัติงานตามแผน และการประเมินผลการควบคุมภายในประจำปี'
+      }
+    ],
+    auditorRecommendations: `๑. ให้หน่วยรับตรวจเร่งรัดปฏิบัติตามแผนการปรับปรุงการควบคุมภายในตามที่ระบุไว้ในแบบ ปค.5 ให้แล้วเสร็จตามกำหนด\n๒. ให้ผู้บังคับบัญชาแต่ละสำนัก/กอง กำกับดูแลการบันทึกบัญชีและการจัดซื้อจัดจ้างให้เป็นไปตามระเบียบอย่างเคร่งครัด`
+  };
+
+  const handleUpdatePk6 = (field, value) => {
+    if (!setInternalControls) return;
+    setInternalControls((prev) => ({
+      ...prev,
+      pk6: {
+        ...(prev?.pk6 || pk6Data),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleUpdatePk6Element = (index, field, value) => {
+    if (!setInternalControls) return;
+    const currentElements = [...(pk6Data.elementsReview || [])];
+    currentElements[index] = {
+      ...currentElements[index],
+      [field]: value
+    };
+    handleUpdatePk6('elementsReview', currentElements);
+  };
+
+  const handleSavePk6 = () => {
+    setPk6SavedToast(true);
+    setTimeout(() => setPk6SavedToast(false), 3000);
+  };
 
   const handleDownloadWord = () => {
     const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
@@ -185,7 +249,7 @@ export default function InternalControlView({
         </table>
       `;
       exportDocumentToWord(bodyContent, `แบบ_ปค5_รายงานติดตามประเมินผล_${selectedYear}.doc`, 'แบบ ปค.5 รายงานการติดตามประเมินผลการควบคุมภายใน');
-    } else {
+    } else if (activeTab === 'pk4') {
       const bodyContent = `
         <div style="text-align: center; margin-bottom: 16pt; font-family: 'TH Sarabun PSK';">
           <p style="margin: 0; font-size: 20pt; font-weight: bold;">แบบ ปค.4: รายงานการประเมินผลการควบคุมภายในระดับสำนัก/กอง</p>
@@ -224,6 +288,64 @@ export default function InternalControlView({
         </table>
       `;
       exportDocumentToWord(bodyContent, `แบบ_ปค4_รายงานประเมินผลระดับกอง_${selectedYear}.doc`, 'แบบ ปค.4 รายงานประเมินผลการควบคุมภายใน');
+    } else if (activeTab === 'pk6') {
+      const bodyContent = `
+        <div style="text-align: center; margin-bottom: 20pt; font-family: 'TH Sarabun PSK';">
+          <p style="text-align: center; margin: 0 0 6pt 0;"><span style="font-size: 22pt; font-weight: bold;">(ตราครุฑ)</span></p>
+          <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0;">แบบ ปค.6: รายงานการสอบทานการประเมินผลการควบคุมภายในของผู้ตรวจสอบภายใน</p>
+          <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 0 0;">${orgName} ${orgProfile?.district || ''} ${orgProfile?.province || ''}</p>
+          <p style="font-size: 16pt; margin: 2pt 0 0 0;">สำหรับระยะเวลาสิ้นสุดวันที่ 30 กันยายน พ.ศ. ${selectedYear}</p>
+        </div>
+        <div style="border-top: 1.5pt solid black; margin-bottom: 16pt;"></div>
+
+        <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-bottom: 6pt;">เรียน นายก${orgName}</p>
+        <p style="text-indent: 2.5cm; margin-bottom: 12pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          หน่วยตรวจสอบภายในได้ทำการสอบทานการประเมินผลการควบคุมภายในของ ${orgName} สำหรับปีงบประมาณสิ้นสุดวันที่ 30 กันยายน พ.ศ. ${selectedYear} ตามหลักเกณฑ์กระทรวงการคลังว่าด้วยมาตรฐานและหลักเกณฑ์ปฏิบัติการควบคุมภายในสำหรับหน่วยงานของรัฐ พ.ศ. 2561 โดยได้สอบทานรายงานการประเมินผลการควบคุมภายใน (แบบ ปค.4 และ แบบ ปค.5) ของฝ่ายบริหาร และการสุ่มตรวจเอกสารหลักฐานการปฏิบัติงาน
+        </p>
+
+        <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 14pt; margin-bottom: 6pt;">ผลการสอบทานตาม 5 องค์ประกอบของการควบคุมภายใน:</p>
+        <table style="width: 100%; border-collapse: collapse; border: 1pt solid black; font-size: 14pt; font-family: 'TH Sarabun PSK'; margin-bottom: 14pt;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="border: 1pt solid black; padding: 5pt; width: 35%; text-align: center;">องค์ประกอบของการควบคุมภายใน</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 15%; text-align: center;">ผลการประเมิน</th>
+              <th style="border: 1pt solid black; padding: 5pt; width: 50%; text-align: center;">ข้อสังเกตของผู้ตรวจสอบภายใน</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(pk6Data.elementsReview || []).map(el => `
+              <tr>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;"><strong>${el.elementName}</strong></td>
+                <td style="border: 1pt solid black; padding: 5pt; text-align: center; vertical-align: top;">${el.status === 'adequate' ? 'เพียงพอ' : 'ควรปรับปรุง'}</td>
+                <td style="border: 1pt solid black; padding: 5pt; vertical-align: top;">${el.observation || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 14pt; margin-bottom: 6pt;">ข้อสรุปและความเห็นของผู้ตรวจสอบภายใน:</p>
+        <p style="text-indent: 2.5cm; margin-bottom: 12pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          ${pk6Data.summaryOpinion}
+        </p>
+
+        <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 14pt; margin-bottom: 6pt;">ข้อเสนอแนะในการปรับปรุงการควบคุมภายใน:</p>
+        <p style="text-indent: 2.5cm; margin-bottom: 12pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK'; white-space: pre-line;">
+          ${pk6Data.auditorRecommendations}
+        </p>
+
+        <table style="width: 100%; border: none; margin-top: 30pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+          <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%; text-align: center;">
+              <p style="margin: 0;">(ลงชื่อ)........................................................ ผู้ตรวจสอบภายใน</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${pk6Data.auditorName || orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
+              <p style="margin: 2pt 0 0 0;">${pk6Data.auditorPosition || orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+              <p style="margin: 4pt 0 0 0;">วันที่ ${pk6Data.reviewDate || '30 กันยายน ' + selectedYear}</p>
+            </td>
+          </tr>
+        </table>
+      `;
+      exportDocumentToWord(bodyContent, `แบบ_ปค6_รายงานสอบทานผู้ตรวจสอบภายใน_${selectedYear}.doc`, 'แบบ ปค.6 รายงานการสอบทานการควบคุมภายในของผู้ตรวจสอบภายใน');
     }
   };
 
@@ -248,6 +370,15 @@ export default function InternalControlView({
         item.status || ''
       ]);
       exportDataToExcel('แบบ ปค.5', [headers, ...rows], `Internal_Control_PK5_${selectedYear}.xlsx`);
+    } else if (activeTab === 'pk6') {
+      const headers = ['ลำดับ', 'องค์ประกอบการควบคุมภายใน (5 ด้าน)', 'ผลการประเมิน', 'ข้อสังเกตของผู้ตรวจสอบภายใน'];
+      const rows = (pk6Data.elementsReview || []).map((el, i) => [
+        i + 1,
+        el.elementName,
+        el.status === 'adequate' ? 'เพียงพอ' : 'ควรปรับปรุง',
+        el.observation || ''
+      ]);
+      exportDataToExcel('แบบ ปค.6', [headers, ...rows], `Internal_Control_PK6_${selectedYear}.xlsx`);
     } else {
       const headers = [
         'ลำดับ',
@@ -271,11 +402,19 @@ export default function InternalControlView({
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {pk6SavedToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 dark:bg-slate-950 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 border border-slate-700 text-xs font-bold animate-slide-up">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>บันทึกรายงานการสอบทาน ปค.6 เรียบร้อยแล้ว</span>
+        </div>
+      )}
+
       {/* Header & Description */}
       <PageHeaderBanner
-        title="การประเมินผลการควบคุมภายในตามหลักเกณฑ์กระทรวงการคลัง (แบบ ปค.1 - ปค.5)"
+        title="การประเมินผลและการสอบทานการควบคุมภายในตามหลักเกณฑ์กระทรวงการคลัง (แบบ ปค.1 - ปค.6)"
         orgName={orgProfile?.name}
-        auditorName="มาตรฐานกระทรวงการคลัง • ว 79"
+        auditorName="มาตรฐานกระทรวงการคลัง พ.ศ. 2561 • ว 79"
         year={selectedYear}
       />
 
@@ -315,6 +454,18 @@ export default function InternalControlView({
           >
             แบบ ปค.1: หนังสือรับรองระดับ อปท.
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pk6')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+              activeTab === 'pk6'
+                ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
+                : 'bg-white/80 dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-850 border border-stone-200/80 dark:border-stone-800'
+            }`}
+          >
+            <Award className="w-3.5 h-3.5 text-amber-600" />
+            <span>แบบ ปค.6: สอบทานโดยผู้ตรวจสอบภายใน</span>
+          </button>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -334,42 +485,54 @@ export default function InternalControlView({
             onExcel={activeTab !== 'pk1' ? handleDownloadExcel : null}
             onPdf={() => window.print()}
             wordTitle={
-              activeTab === 'pk1'
+              activeTab === 'pk6'
+                ? 'ส่งออกรายงานสอบทาน ปค.6 (Word .doc)'
+                : activeTab === 'pk1'
                 ? 'ส่งออกหนังสือรับรอง ปค.1 (Word .doc)'
                 : activeTab === 'pk5'
                 ? 'ส่งออกรายงานติดตาม ปค.5 (Word .doc)'
                 : 'ส่งออกรายงานประเมินผล ปค.4 (Word .doc)'
             }
             wordSubtitle={
-              activeTab === 'pk1'
+              activeTab === 'pk6'
+                ? 'รายงานการสอบทานการประเมินผลการควบคุมภายในของผู้ตรวจสอบภายใน (ปค.6)'
+                : activeTab === 'pk1'
                 ? 'หนังสือรับรองการประเมินผลการควบคุมภายในระดับองค์กร (ปค.1)'
                 : activeTab === 'pk5'
                 ? 'รายงานการประเมินผลและการติดตามการปฏิบัติตามแผนปรับปรุง (ปค.5)'
                 : 'รายงานการประเมินผลการควบคุมภายในระดับส่วนงานย่อย (ปค.4)'
             }
             excelTitle={
-              activeTab === 'pk5'
+              activeTab === 'pk6'
+                ? 'ส่งออกตาราง ปค.6 (Excel .xlsx)'
+                : activeTab === 'pk5'
                 ? 'ส่งออกตาราง ปค.5 (Excel .xlsx)'
                 : activeTab === 'pk4'
                 ? 'ส่งออกตาราง ปค.4 (Excel .xlsx)'
                 : undefined
             }
             excelSubtitle={
-              activeTab === 'pk5'
+              activeTab === 'pk6'
+                ? 'ตารางการสอบทานองค์ประกอบการควบคุมภายใน 5 ด้านของผู้ตรวจสอบภายใน'
+                : activeTab === 'pk5'
                 ? 'ตารางติดตามผลการปรับปรุงการควบคุมภายในระดับ อปท.'
                 : activeTab === 'pk4'
                 ? 'ตารางการประเมินและการปรับปรุงการควบคุมภายในระดับกอง'
                 : undefined
             }
             pdfTitle={
-              activeTab === 'pk1'
+              activeTab === 'pk6'
+                ? 'พิมพ์รายงานสอบทาน ปค.6 (PDF/Print)'
+                : activeTab === 'pk1'
                 ? 'พิมพ์หนังสือรับรอง ปค.1 (PDF/Print)'
                 : activeTab === 'pk5'
                 ? 'พิมพ์รายงาน ปค.5 (PDF/Print)'
                 : 'พิมพ์รายงาน ปค.4 (PDF/Print)'
             }
             pdfSubtitle={
-              activeTab === 'pk1'
+              activeTab === 'pk6'
+                ? 'จัดพิมพ์รายงานการสอบทานของผู้ตรวจสอบภายใน (แบบ ปค.6)'
+                : activeTab === 'pk1'
                 ? 'จัดพิมพ์หนังสือรับรอง ปค.1 พร้อมลงนามหัวหน้าหน่วยงาน'
                 : 'จัดพิมพ์แบบรายงานตามมาตรฐานกรมบัญชีกลาง'
             }
@@ -557,6 +720,203 @@ export default function InternalControlView({
                 <div className="text-xs text-stone-400 dark:text-stone-500 mt-2 font-mono">
                   วันที่ {pk1Data?.signDate || '30 กันยายน 2569'}
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: PK 6 - รายงานการสอบทานการประเมินผลการควบคุมภายในของผู้ตรวจสอบภายใน */}
+      {activeTab === 'pk6' && (
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 sm:p-8 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-6">
+            <div className="border-b border-stone-200 dark:border-stone-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 mb-2">
+                  <Award className="w-3.5 h-3.5" />
+                  <span>แบบฟอร์มตรวจสอบภายในตามหลักเกณฑ์กระทรวงการคลัง พ.ศ. ๒๕๖๑</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100">
+                  แบบ ปค.6: รายงานการสอบทานการประเมินผลการควบคุมภายในของผู้ตรวจสอบภายใน
+                </h3>
+                <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                  หน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} • สำหรับระยะเวลาสิ้นสุดวันที่ 30 กันยายน พ.ศ. {selectedYear}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSavePk6}
+                className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors shrink-0 self-start sm:self-auto"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>บันทึกการสอบทาน ปค.6</span>
+              </button>
+            </div>
+
+            {/* Scope & Introduction */}
+            <div className="bg-amber-50/50 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200/60 dark:border-amber-900/40 text-xs text-stone-700 dark:text-stone-300 space-y-2">
+              <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center space-x-1.5">
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                <span>วัตถุประสงค์และขอบเขตการสอบทาน:</span>
+              </div>
+              <p className="leading-relaxed text-justify">
+                หน่วยตรวจสอบภายในได้ทำการสอบทานรายงานการประเมินผลการควบคุมภายในของส่วนงานย่อย (แบบ ปค.4) และรายงานการติดตามการปฏิบัติตามแผนการปรับปรุงการควบคุมภายใน (แบบ ปค.5) ของฝ่ายบริหาร รวมทั้งสอบทานหลักฐานการปฏิบัติงานที่เกี่ยวข้อง เพื่อให้ความเชื่อมั่นอย่างสมเหตุสมผลว่าระบบการควบคุมภายในที่องค์กรจัดวางไว้มีความเพียงพอ เหมาะสม และมีการปฏิบัติตามอย่างมีประสิทธิผล
+              </p>
+            </div>
+
+            {/* Overall Assurance Selector */}
+            <div className="bg-stone-50 dark:bg-stone-850 p-4 rounded-xl border border-stone-200/80 dark:border-stone-800 space-y-3">
+              <label className="block text-xs font-bold text-stone-800 dark:text-stone-200">
+                บทสรุปความเห็นของผู้ตรวจสอบภายใน (Internal Auditor's Assurance):
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className={`p-3 rounded-xl border cursor-pointer flex items-start space-x-2.5 transition-all ${
+                  pk6Data.overallAssurance === 'adequate'
+                    ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-500/50 text-emerald-900 dark:text-emerald-200'
+                    : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="overallAssurance"
+                    value="adequate"
+                    checked={pk6Data.overallAssurance === 'adequate'}
+                    onChange={() => handleUpdatePk6('overallAssurance', 'adequate')}
+                    className="mt-0.5 accent-emerald-600"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold block">✓ ระบบการควบคุมภายในมีความเพียงพอและเหมาะสม</span>
+                    <span className="text-[11px] text-stone-500 dark:text-stone-400">การควบคุมภายในโดยรวมมีความเพียงพอและมีประสิทธิผลตามสมควร มีการปฏิบัติตามอย่างต่อเนื่อง</span>
+                  </div>
+                </label>
+
+                <label className={`p-3 rounded-xl border cursor-pointer flex items-start space-x-2.5 transition-all ${
+                  pk6Data.overallAssurance === 'needs_improvement'
+                    ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-500/50 text-amber-900 dark:text-amber-200'
+                    : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="overallAssurance"
+                    value="needs_improvement"
+                    checked={pk6Data.overallAssurance === 'needs_improvement'}
+                    onChange={() => handleUpdatePk6('overallAssurance', 'needs_improvement')}
+                    className="mt-0.5 accent-amber-600"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold block">⚠️ มีข้อบกพร่องที่ควรได้รับการปรับปรุงเพิ่มเติม</span>
+                    <span className="text-[11px] text-stone-500 dark:text-stone-400">มีจุดอ่อนหรือความเสี่ยงที่ฝ่ายบริหารต้องเร่งรัดปรับปรุงตามข้อเสนอแนะ</span>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
+                  ข้อความสรุปความเห็นของผู้ตรวจสอบภายใน:
+                </label>
+                <textarea
+                  rows={3}
+                  value={pk6Data.summaryOpinion}
+                  onChange={(e) => handleUpdatePk6('summaryOpinion', e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs text-stone-800 dark:text-stone-200 leading-relaxed outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+            </div>
+
+            {/* 5 Elements Evaluation Table */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                ผลการสอบทานตาม 5 องค์ประกอบของการควบคุมภายใน (COSO Internal Control Framework):
+              </h4>
+              <div className="overflow-x-auto rounded-xl border border-stone-200/80 dark:border-stone-800">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-stone-100 dark:bg-stone-850 text-stone-700 dark:text-stone-300 border-b border-stone-200 dark:border-stone-800 font-bold">
+                    <tr>
+                      <th className="p-3 w-1/3">องค์ประกอบของการควบคุมภายใน</th>
+                      <th className="p-3 w-28 text-center">ผลการสอบทาน</th>
+                      <th className="p-3">ข้อสังเกตของผู้ตรวจสอบภายใน</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-200/80 dark:divide-stone-800">
+                    {(pk6Data.elementsReview || []).map((el, idx) => (
+                      <tr key={idx} className="hover:bg-stone-50/50 dark:hover:bg-stone-850/50">
+                        <td className="p-3 font-semibold text-stone-900 dark:text-stone-100 align-top">
+                          {el.elementName}
+                        </td>
+                        <td className="p-3 text-center align-top">
+                          <select
+                            value={el.status}
+                            onChange={(e) => handleUpdatePk6Element(idx, 'status', e.target.value)}
+                            className={`px-2 py-1 rounded-lg text-xs font-bold border outline-none cursor-pointer ${
+                              el.status === 'adequate'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                                : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                            }`}
+                          >
+                            <option value="adequate">เพียงพอ</option>
+                            <option value="needs_improvement">ควรปรับปรุง</option>
+                          </select>
+                        </td>
+                        <td className="p-3 align-top">
+                          <input
+                            type="text"
+                            value={el.observation || ''}
+                            onChange={(e) => handleUpdatePk6Element(idx, 'observation', e.target.value)}
+                            className="w-full p-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs text-stone-800 dark:text-stone-200"
+                            placeholder="ระบุข้อสังเกตหรือผลการสอบทาน..."
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-stone-800 dark:text-stone-200">
+                ข้อเสนอแนะในการปรับปรุงการควบคุมภายในของผู้ตรวจสอบภายใน:
+              </label>
+              <textarea
+                rows={3}
+                value={pk6Data.auditorRecommendations}
+                onChange={(e) => handleUpdatePk6('auditorRecommendations', e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs text-stone-800 dark:text-stone-200 leading-relaxed outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="ระบุข้อเสนอแนะเชิงป้องกันและแก้ไข..."
+              />
+            </div>
+
+            {/* Auditor Signature Block */}
+            <div className="pt-4 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto">
+                <div>
+                  <span className="text-[11px] text-stone-500 dark:text-stone-400 block mb-1">ผู้ตรวจสอบภายใน:</span>
+                  <input
+                    type="text"
+                    value={pk6Data.auditorName || orgProfile?.auditorName || ''}
+                    onChange={(e) => handleUpdatePk6('auditorName', e.target.value)}
+                    placeholder="ชื่อ-นามสกุล ผู้ตรวจสอบภายใน"
+                    className="p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs text-stone-800 dark:text-stone-200"
+                  />
+                </div>
+                <div>
+                  <span className="text-[11px] text-stone-500 dark:text-stone-400 block mb-1">ตำแหน่ง:</span>
+                  <input
+                    type="text"
+                    value={pk6Data.auditorPosition || orgProfile?.auditorPosition || ''}
+                    onChange={(e) => handleUpdatePk6('auditorPosition', e.target.value)}
+                    placeholder="ตำแหน่ง"
+                    className="p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs text-stone-800 dark:text-stone-200"
+                  />
+                </div>
+              </div>
+
+              <div className="text-right shrink-0">
+                <span className="text-[11px] text-stone-400 block">วันที่สอบทาน:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200 font-mono">
+                  30 กันยายน พ.ศ. {selectedYear}
+                </span>
               </div>
             </div>
           </div>

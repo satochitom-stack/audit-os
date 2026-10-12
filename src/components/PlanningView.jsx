@@ -655,6 +655,22 @@ export default function PlanningView({
         </div>
       )}
 
+      {/* Page Header Banner (หัวข้อหลักแสดงด้านบนสุดเสมอ) */}
+      <PageHeaderBanner
+        title={
+          activeTab === 'annual'
+            ? `แผนการปฏิบัติงานการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear}`
+            : activeTab === 'strategic'
+            ? `แผนการตรวจสอบระยะยาว 3-5 ปี ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
+            : activeTab === 'risk'
+            ? `การประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
+            : `กฎบัตรการตรวจสอบภายใน (Audit Charter) ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
+        }
+        orgName={orgProfile?.name}
+        auditorName={`ผู้จัดทำ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        year={selectedYear}
+      />
+
       {/* Main Sub-navigation Tabs: 4 Tiers */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-3">
         <div className="flex flex-wrap gap-2">
@@ -810,12 +826,6 @@ export default function PlanningView({
       ========================================================================= */}
       {activeTab === 'annual' && (
         <div className="space-y-5">
-      <PageHeaderBanner
-        title={`แผนการปฏิบัติงานการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
-        orgName={orgProfile?.name}
-        auditorName={`ผู้จัดทำ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
-        year={selectedYear}
-      />
 
           {/* Quick Summary Badges Strip */}
           <div className="grid grid-cols-3 gap-3">
