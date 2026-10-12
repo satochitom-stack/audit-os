@@ -319,6 +319,104 @@ export default function AdminBackofficeView({
     };
   }, [users, payments]);
 
+  // Dynamic 5-Month Real Data Trend Charts calculation
+  const chartData = useMemo(() => {
+    const THAI_MONTHS_SHORT = [
+      'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+      'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+    ];
+
+    const now = new Date();
+    const months = [];
+    for (let i = 4; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+      months.push({
+        label: THAI_MONTHS_SHORT[d.getMonth()] + (i === 0 ? ' (ปัจจุบัน)' : ''),
+        shortLabel: THAI_MONTHS_SHORT[d.getMonth()],
+        isCurrent: i === 0,
+        timestamp: endOfMonth.getTime()
+      });
+    }
+
+    const parseDateMs = (val) => {
+      if (!val) return null;
+      if (typeof val === 'number') return val;
+      const t = new Date(val).getTime();
+      return isNaN(t) ? null : t;
+    };
+
+    // 1. Cumulative Auditor Registrations Trend
+    const regularAuditors = users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin');
+    const userPoints = months.map((m) => {
+      return regularAuditors.filter((u) => {
+        const uTime = parseDateMs(u.createdAt) || parseDateMs(u.registeredAt) || Date.now();
+        return uTime <= m.timestamp;
+      }).length;
+    });
+
+    // 2. Cumulative Revenue Trend (from payment records)
+    const revenuePoints = months.map((m) => {
+      return payments.reduce((sum, p) => {
+        const pTime = parseDateMs(p.paidAt) || parseDateMs(p.createdAt) || parseDateMs(p.date) || Date.now();
+        if (pTime <= m.timestamp) {
+          return sum + (Number(p.amount) || 0);
+        }
+        return sum;
+      }, 0);
+    });
+
+    // Helper to calculate SVG coordinates and smooth paths
+    const buildPath = (values, baselineY = 100, topY = 25) => {
+      const maxVal = Math.max(...values, 1);
+      const range = baselineY - topY; // 75px
+      const xCoords = [35, 118, 200, 282, 365];
+
+      const points = values.map((val, idx) => {
+        const y = Math.max(...values) === 0
+          ? baselineY
+          : baselineY - (val / maxVal) * range;
+        return { x: xCoords[idx], y, val };
+      });
+
+      // Build smooth cubic Bezier path
+      let linePath = `M ${points[0].x},${points[0].y}`;
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i === 0 ? 0 : i - 1];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+        linePath += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+      }
+
+      const last = points[points.length - 1];
+      const first = points[0];
+      const areaPath = `${linePath} L ${last.x},115 L ${first.x},115 Z`;
+
+      return { points, linePath, areaPath, maxVal };
+    };
+
+    return {
+      months,
+      users: {
+        values: userPoints,
+        ...buildPath(userPoints),
+        currentTotal: regularAuditors.length
+      },
+      revenue: {
+        values: revenuePoints,
+        ...buildPath(revenuePoints),
+        currentTotal: payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+      }
+    };
+  }, [users, payments]);
+
   // Filtered and sorted members
   const filteredMembers = useMemo(() => {
     return users
@@ -1117,20 +1215,30 @@ export default function AdminBackofficeView({
             </div>
           </div>
 
-          {/* 2 Analytical Trend Charts matching user's Image 1 */}
+          {/* 2 Analytical Trend Charts dynamically calculated from real database */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Chart 1: รายงานรายรับค่าสมัครสมาชิกสะสม */}
             <div className="bg-white dark:bg-stone-900 p-5 sm:p-6 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3 gap-2">
                 <div>
-                  <h3 className="text-xs sm:text-sm font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                    รายงานรายรับค่าสมัครสมาชิกสะสม (ESTIMATED SALES REVENUE)
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs sm:text-sm font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                      รายงานรายรับค่าสมัครสมาชิกสะสม (ESTIMATED SALES REVENUE)
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60">
+                      ข้อมูลจริง ({payments.length} รายการ)
+                    </span>
+                  </div>
                   <p className="text-[11px] text-stone-500 mt-0.5">
-                    ยอดชำระสะสมคำนวณจากสถานะบัญชีและราคาแพ็กเกจปัจจุบัน
+                    ยอดชำระสะสมคำนวณจากประวัติการชำระเงินจริงในระบบ 5 เดือนย้อนหลัง
                   </p>
                 </div>
-                <TrendingUp className="w-4 h-4 text-amber-600" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
+                    รวม ฿{chartData.revenue.currentTotal.toLocaleString()}
+                  </span>
+                  <TrendingUp className="w-4 h-4 text-amber-600" />
+                </div>
               </div>
 
               {/* Chart Visual */}
@@ -1143,50 +1251,81 @@ export default function AdminBackofficeView({
                     </linearGradient>
                   </defs>
                   {/* Grid lines */}
-                  <line x1="0" y1="30" x2="400" y2="30" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
-                  <line x1="0" y1="60" x2="400" y2="60" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
-                  <line x1="0" y1="90" x2="400" y2="90" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
-                  {/* Area fill */}
+                  <line x1="0" y1="25" x2="400" y2="25" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.4" />
+                  <line x1="0" y1="62" x2="400" y2="62" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.4" />
+                  <line x1="0" y1="100" x2="400" y2="100" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.6" />
+
+                  {/* Dynamic Area fill */}
                   <path
-                    d="M 0,105 Q 80,95 160,80 T 280,50 T 400,30 L 400,120 L 0,120 Z"
+                    d={chartData.revenue.areaPath}
                     fill="url(#revenueGrad)"
                   />
-                  {/* Trend line */}
+                  {/* Dynamic Trend line */}
                   <path
-                    d="M 0,105 Q 80,95 160,80 T 280,50 T 400,30"
+                    d={chartData.revenue.linePath}
                     fill="none"
                     stroke="#d97706"
                     strokeWidth="3"
                     strokeLinecap="round"
                   />
-                  {/* Data points */}
-                  <circle cx="160" cy="80" r="4" fill="#f59e0b" stroke="#78350f" strokeWidth="2" />
-                  <circle cx="280" cy="50" r="4" fill="#f59e0b" stroke="#78350f" strokeWidth="2" />
-                  <circle cx="400" cy="30" r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="2" />
+                  {/* Real Data points & Value tags */}
+                  {chartData.revenue.points.map((pt, idx) => (
+                    <g key={idx}>
+                      <circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={idx === 4 ? 6 : 4.5}
+                        fill="#f59e0b"
+                        stroke={idx === 4 ? "#ffffff" : "#78350f"}
+                        strokeWidth={idx === 4 ? 2.5 : 1.5}
+                      />
+                      <text
+                        x={pt.x}
+                        y={pt.y - 8}
+                        textAnchor="middle"
+                        className="text-[10px] font-mono font-bold fill-stone-700 dark:fill-stone-300 pointer-events-none"
+                      >
+                        ฿{pt.val.toLocaleString()}
+                      </text>
+                    </g>
+                  ))}
                 </svg>
 
-                <div className="flex justify-between text-[11px] text-stone-400 font-medium pt-2 border-t border-stone-100 dark:border-stone-800">
-                  <span>มิ.ย.</span>
-                  <span>ก.ค.</span>
-                  <span>ส.ค.</span>
-                  <span>ก.ย.</span>
-                  <span className="font-bold text-amber-600">ต.ค. (ปัจจุบัน)</span>
+                <div className="flex justify-between text-[11px] text-stone-400 font-medium pt-2 border-t border-stone-100 dark:border-stone-800 px-3">
+                  {chartData.months.map((m, idx) => (
+                    <span
+                      key={idx}
+                      className={m.isCurrent ? "font-bold text-amber-600 dark:text-amber-400" : ""}
+                    >
+                      {m.label}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
 
             {/* Chart 2: อัตราการเติบโตของสมาชิกผู้ใช้ */}
             <div className="bg-white dark:bg-stone-900 p-5 sm:p-6 rounded-3xl border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3 gap-2">
                 <div>
-                  <h3 className="text-xs sm:text-sm font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                    อัตราการเติบโตของสมาชิกผู้ใช้ (AUDITOR REGISTRATIONS TREND)
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs sm:text-sm font-black text-stone-900 dark:text-stone-100 tracking-tight">
+                      อัตราการเติบโตของสมาชิกผู้ใช้ (AUDITOR REGISTRATIONS TREND)
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60">
+                      ข้อมูลจริง ({chartData.users.currentTotal} บัญชี)
+                    </span>
+                  </div>
                   <p className="text-[11px] text-stone-500 mt-0.5">
-                    แสดงจำนวนสถิติผู้สมัครใช้งานระบบทั้งหมดรวมแอดมินและผู้ใช้งานทั่วไป
+                    แสดงสถิติจำนวนผู้สมัครใช้งานจริงในระบบสะสมตามเดือนที่ลงทะเบียน
                   </p>
                 </div>
-                <Radio className="w-4 h-4 text-blue-600" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
+                    รวม {chartData.users.currentTotal} บัญชี
+                  </span>
+                  <Radio className="w-4 h-4 text-blue-600" />
+                </div>
               </div>
 
               {/* Chart Visual */}
@@ -1199,34 +1338,55 @@ export default function AdminBackofficeView({
                     </linearGradient>
                   </defs>
                   {/* Grid lines */}
-                  <line x1="0" y1="30" x2="400" y2="30" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
-                  <line x1="0" y1="60" x2="400" y2="60" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
-                  <line x1="0" y1="90" x2="400" y2="90" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.5" />
-                  {/* Area fill */}
+                  <line x1="0" y1="25" x2="400" y2="25" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.4" />
+                  <line x1="0" y1="62" x2="400" y2="62" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.4" />
+                  <line x1="0" y1="100" x2="400" y2="100" stroke="#e2e8f0" strokeDasharray="3 3" opacity="0.6" />
+
+                  {/* Dynamic Area fill */}
                   <path
-                    d="M 0,110 Q 100,85 200,60 T 320,40 T 400,20 L 400,120 L 0,120 Z"
+                    d={chartData.users.areaPath}
                     fill="url(#growthGrad)"
                   />
-                  {/* Trend line */}
+                  {/* Dynamic Trend line */}
                   <path
-                    d="M 0,110 Q 100,85 200,60 T 320,40 T 400,20"
+                    d={chartData.users.linePath}
                     fill="none"
                     stroke="#2563eb"
                     strokeWidth="3"
                     strokeLinecap="round"
                   />
-                  {/* Data points */}
-                  <circle cx="200" cy="60" r="4" fill="#3b82f6" stroke="#1e3a8a" strokeWidth="2" />
-                  <circle cx="320" cy="40" r="4" fill="#3b82f6" stroke="#1e3a8a" strokeWidth="2" />
-                  <circle cx="400" cy="20" r="5" fill="#3b82f6" stroke="#ffffff" strokeWidth="2" />
+                  {/* Real Data points & Value tags */}
+                  {chartData.users.points.map((pt, idx) => (
+                    <g key={idx}>
+                      <circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={idx === 4 ? 6 : 4.5}
+                        fill="#3b82f6"
+                        stroke={idx === 4 ? "#ffffff" : "#1e3a8a"}
+                        strokeWidth={idx === 4 ? 2.5 : 1.5}
+                      />
+                      <text
+                        x={pt.x}
+                        y={pt.y - 8}
+                        textAnchor="middle"
+                        className="text-[10px] font-mono font-bold fill-stone-700 dark:fill-stone-300 pointer-events-none"
+                      >
+                        {pt.val} บัญชี
+                      </text>
+                    </g>
+                  ))}
                 </svg>
 
-                <div className="flex justify-between text-[11px] text-stone-400 font-medium pt-2 border-t border-stone-100 dark:border-stone-800">
-                  <span>มิ.ย.</span>
-                  <span>ก.ค.</span>
-                  <span>ส.ค.</span>
-                  <span>ก.ย.</span>
-                  <span className="font-bold text-blue-600">ต.ค. (ปัจจุบัน)</span>
+                <div className="flex justify-between text-[11px] text-stone-400 font-medium pt-2 border-t border-stone-100 dark:border-stone-800 px-3">
+                  {chartData.months.map((m, idx) => (
+                    <span
+                      key={idx}
+                      className={m.isCurrent ? "font-bold text-blue-600 dark:text-blue-400" : ""}
+                    >
+                      {m.label}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
