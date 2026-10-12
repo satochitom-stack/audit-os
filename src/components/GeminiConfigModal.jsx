@@ -23,6 +23,7 @@ import {
   AVAILABLE_GEMINI_MODELS,
   DEFAULT_GEMINI_MODEL
 } from '../services/geminiAiService';
+import { luxuryConfirm } from './LuxuryModal';
 
 export default function GeminiConfigModal({ isOpen, onClose }) {
   const [apiKey, setApiKey] = useState('');
@@ -90,13 +91,19 @@ export default function GeminiConfigModal({ isOpen, onClose }) {
     }, 1200);
   };
 
-  const handleClear = () => {
-    if (window.confirm('คุณต้องการล้างการเชื่อมต่อ Google Gemini API ออกจากระบบใช่หรือไม่?')) {
-      saveGeminiConfig({ apiKey: '', model: DEFAULT_GEMINI_MODEL });
-      setApiKey('');
-      setModel(DEFAULT_GEMINI_MODEL);
-      setTestResult(null);
-    }
+  const handleClear = async () => {
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันการล้าง API Key',
+      message: 'คุณต้องการล้างการเชื่อมต่อ Google Gemini API ออกจากระบบใช่หรือไม่?',
+      confirmText: 'ล้างการเชื่อมต่อ',
+      variant: 'warning'
+    });
+    if (!confirmed) return;
+
+    saveGeminiConfig({ apiKey: '', model: DEFAULT_GEMINI_MODEL });
+    setApiKey('');
+    setModel(DEFAULT_GEMINI_MODEL);
+    setTestResult(null);
   };
 
   const isConfigured = Boolean(apiKey && apiKey.trim().length > 10);

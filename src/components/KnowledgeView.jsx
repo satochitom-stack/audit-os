@@ -21,6 +21,7 @@ import {
   Layers,
   Filter
 } from 'lucide-react';
+import { luxuryConfirm, luxuryAlert } from './LuxuryModal';
 
 export default function KnowledgeView({
   knowledgeBase = [],
@@ -109,10 +110,14 @@ export default function KnowledgeView({
     reader.readAsDataURL(file);
   };
 
-  const handleAddDocument = (e) => {
+  const handleAddDocument = async (e) => {
     e.preventDefault();
     if (!newDoc.title.trim()) {
-      alert('กรุณาระบุชื่อหนังสือหรือระเบียบ');
+      await luxuryAlert({
+        title: 'ข้อมูลไม่ครบถ้วน',
+        message: 'กรุณาระบุชื่อหนังสือหรือระเบียบก่อนบันทึก',
+        variant: 'warning'
+      });
       return;
     }
 
@@ -148,12 +153,19 @@ export default function KnowledgeView({
     });
   };
 
-  const handleDeleteDocument = (id, title) => {
-    if (window.confirm(`ยืนยันการลบระเบียบ "${title}" หรือไม่?`)) {
-      if (onUpdateKnowledgeBase) {
-        onUpdateKnowledgeBase((prev) => prev.filter((item) => item.id !== id));
-        showToast('ลบระเบียบเรียบร้อยแล้ว');
-      }
+  const handleDeleteDocument = async (id, title) => {
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันการลบระเบียบ / เอกสาร',
+      message: 'ต้องการลบเอกสารระเบียบนี้ออกจากระบบใช่หรือไม่?',
+      itemTitle: title,
+      confirmText: 'ลบเอกสาร',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
+
+    if (onUpdateKnowledgeBase) {
+      onUpdateKnowledgeBase((prev) => prev.filter((item) => item.id !== id));
+      showToast('ลบระเบียบเรียบร้อยแล้ว');
     }
   };
 

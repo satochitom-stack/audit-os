@@ -49,6 +49,7 @@ import {
   getDocumentFile,
   deleteDocumentFile
 } from '../utils/indexedDbUtils';
+import { luxuryConfirm, luxuryAlert } from './LuxuryModal';
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
 
@@ -203,7 +204,11 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   const handlePrintDocument = (doc) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('กรุณาอนุญาตป๊อปอัปเพื่อพิมพ์เอกสาร');
+      luxuryAlert({
+        title: 'เบราว์เซอร์บล็อกหน้าต่างใหม่',
+        message: 'กรุณาอนุญาตให้เปิดป๊อปอัป (Pop-ups) ในเบราว์เซอร์เพื่อพิมพ์เอกสาร',
+        variant: 'warning'
+      });
       return;
     }
     printWindow.document.write(`
@@ -310,11 +315,19 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   const handleAddDocSubmit = async (e) => {
     e.preventDefault();
     if (!newDocForm.title.trim()) {
-      alert('กรุณาระบุชื่อเรื่องเอกสาร');
+      await luxuryAlert({
+        title: 'ข้อมูลไม่ครบถ้วน',
+        message: 'กรุณาระบุชื่อเรื่องของเอกสารก่อนดำเนินการจัดเก็บ',
+        variant: 'warning'
+      });
       return;
     }
     if (!newDocForm.summary.trim()) {
-      alert('กรุณาระบุสรุปสาระสำคัญของเอกสาร');
+      await luxuryAlert({
+        title: 'ข้อมูลไม่ครบถ้วน',
+        message: 'กรุณาระบุสรุปสาระสำคัญของเอกสาร เพื่อเป็นข้อมูลสำหรับผู้ใช้งานคนอื่น',
+        variant: 'warning'
+      });
       return;
     }
 
@@ -401,7 +414,16 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
   // Delete Document (Admin or Uploader only)
   const handleDeleteDoc = async (doc) => {
-    if (!window.confirm(`ต้องการลบ "${doc.title}" ออกจากคลังเอกสารกลางหรือไม่?`)) return;
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันการลบเอกสารแม่แบบ',
+      message: 'คุณต้องการลบเอกสารนี้ออกจากคลังเอกสารแม่แบบกลางหรือไม่?',
+      itemTitle: doc.title,
+      subMessage: '⚠️ เอกสารและไฟล์แนบที่ถูกลบจะไม่สามารถกู้คืนได้ และผู้ใช้งานอื่นจะไม่สามารถเปิดดูหรือดาวน์โหลดได้อีก',
+      confirmText: 'ลบเอกสารทันที',
+      cancelText: 'ยกเลิก',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
 
     if (doc.hasAttachment || doc.id?.startsWith('DOC-USER-')) {
       try {

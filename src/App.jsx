@@ -42,6 +42,7 @@ import ClosingMeetingView from './components/ClosingMeetingView';
 import AuditFollowUpView from './components/AuditFollowUpView';
 import AuditCommitteeView from './components/AuditCommitteeView';
 import SystemUpdateNotification from './components/SystemUpdateNotification';
+import LuxuryModalContainer from './components/LuxuryModal';
 import UserFeedbackModal from './components/UserFeedbackModal';
 import PackageRenewalModal from './components/PackageRenewalModal';
 import { INITIAL_ENGAGEMENT_PLANS, createEngagementPlansForYear } from './data/engagementPlanTemplates';
@@ -1368,6 +1369,7 @@ export default function App() {
             onCancel={() => setShowOnboarding(false)}
           />
         )}
+        <LuxuryModalContainer />
       </>
     );
   }
@@ -1375,21 +1377,24 @@ export default function App() {
   // 2. หน้าเข้าสู่ระบบ (หากยังไม่ได้เข้าสู่ระบบและไม่ได้อยู่ในหน้าแรก)
   if (!session) {
     return (
-      <LoginView
-        orgProfile={orgProfile}
-        onLogin={(sess) => {
-          const s = sess || getSession();
-          setSession(s);
-          if (s?.role === 'admin') {
-            setAdminWorkspaceMode('admin');
-            setAdminSubTab('overview');
-            setCurrentTab('backoffice');
-          } else {
-            setCurrentTab('dashboard');
-          }
-        }}
-        onBackToWelcome={() => setCurrentTab('welcome')}
-      />
+      <>
+        <LoginView
+          orgProfile={orgProfile}
+          onLogin={(sess) => {
+            const s = sess || getSession();
+            setSession(s);
+            if (s?.role === 'admin') {
+              setAdminWorkspaceMode('admin');
+              setAdminSubTab('overview');
+              setCurrentTab('backoffice');
+            } else {
+              setCurrentTab('dashboard');
+            }
+          }}
+          onBackToWelcome={() => setCurrentTab('welcome')}
+        />
+        <LuxuryModalContainer />
+      </>
     );
   }
 
@@ -1426,6 +1431,7 @@ export default function App() {
   return (
     <div className="h-screen w-full bg-slate-100 dark:bg-slate-800 flex flex-col font-sans overflow-hidden print:h-auto print:overflow-visible print:bg-white">
       <SystemUpdateNotification />
+      <LuxuryModalContainer />
       <Header
         orgProfile={orgProfile}
         selectedYear={selectedYear}

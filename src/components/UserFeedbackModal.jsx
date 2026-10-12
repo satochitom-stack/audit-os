@@ -21,6 +21,7 @@ import {
   getUserFeedbacks,
   saveUserFeedback
 } from '../utils/feedbackUtils';
+import { luxuryAlert } from './LuxuryModal';
 
 export default function UserFeedbackModal({ isOpen, onClose, session, orgProfile }) {
   const [activeTab, setActiveTab] = useState('new'); // 'new' | 'history'
@@ -63,14 +64,22 @@ export default function UserFeedbackModal({ isOpen, onClose, session, orgProfile
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) {
-      alert('กรุณาระบุหัวข้อเรื่องข้อเสนอแนะ');
+      await luxuryAlert({
+        title: 'ข้อมูลไม่ครบถ้วน',
+        message: 'กรุณาระบุหัวข้อเรื่องข้อเสนอแนะ',
+        variant: 'warning'
+      });
       return;
     }
     if (!form.description.trim()) {
-      alert('กรุณาระบุรายละเอียดข้อเสนอแนะ');
+      await luxuryAlert({
+        title: 'ข้อมูลไม่ครบถ้วน',
+        message: 'กรุณาระบุรายละเอียดข้อเสนอแนะ เพื่อให้แอดมินนำไปดำเนินการพัฒนา',
+        variant: 'warning'
+      });
       return;
     }
 

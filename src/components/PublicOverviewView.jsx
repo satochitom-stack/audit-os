@@ -38,6 +38,7 @@ import {
   Loader2
 } from 'lucide-react';
 import RadialOrbitalTimeline from '@/components/ui/radial-orbital-timeline';
+import { luxuryConfirm, luxuryAlert } from './LuxuryModal';
 import { cloudSyncService } from '../services/cloudSyncService';
 
 export default function PublicOverviewView({
@@ -469,19 +470,26 @@ export default function PublicOverviewView({
   };
 
   const handleResetToDefault = async () => {
-    if (window.confirm('ท่านต้องการรีเซ็ตข้อมูลภาพรวมกลับสู่ค่าเริ่มต้นของระบบใช่หรือไม่?')) {
-      setData(defaultOverviewData);
-      setEditForm(defaultOverviewData);
-      localStorage.setItem('ia_public_overview_data', JSON.stringify(defaultOverviewData));
-      try {
-        await cloudSyncService.pushPublicOverviewData(defaultOverviewData);
-        setCloudNotice('☁️ รีเซ็ตและซิงค์ข้อมูลค่าเริ่มต้นขึ้น Supabase Cloud สำเร็จ');
-        setTimeout(() => setCloudNotice(''), 4000);
-      } catch (err) {
-        console.warn(err);
-      }
-      setShowAdminEditModal(false);
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันการรีเซ็ตข้อมูลภาพรวม',
+      message: 'ท่านต้องการรีเซ็ตข้อมูลภาพรวมกลับสู่ค่าเริ่มต้นของระบบใช่หรือไม่?',
+      subMessage: '⚠️ ข้อมูลที่บันทึกไว้ในหน้านี้จะถูกแทนที่ด้วยข้อมูลตัวอย่างเริ่มต้น',
+      confirmText: 'รีเซ็ตค่าเริ่มต้น',
+      variant: 'warning'
+    });
+    if (!confirmed) return;
+
+    setData(defaultOverviewData);
+    setEditForm(defaultOverviewData);
+    localStorage.setItem('ia_public_overview_data', JSON.stringify(defaultOverviewData));
+    try {
+      await cloudSyncService.pushPublicOverviewData(defaultOverviewData);
+      setCloudNotice('☁️ รีเซ็ตและซิงค์ข้อมูลค่าเริ่มต้นขึ้น Supabase Cloud สำเร็จ');
+      setTimeout(() => setCloudNotice(''), 4000);
+    } catch (err) {
+      console.warn(err);
     }
+    setShowAdminEditModal(false);
   };
 
   const getIconComponent = (iconName) => {
@@ -786,7 +794,13 @@ export default function PublicOverviewView({
 
                 <div className="flex items-center space-x-2 shrink-0 self-start sm:self-auto">
                   <button
-                    onClick={() => alert(`ท่านสามารถขอรับแบบฟอร์ม "${form.title}" ได้ที่สำนักงาน ${orgName} หรือดาวน์โหลดผ่านระบบงานเอกสาร`)}
+                    onClick={() =>
+                      luxuryAlert({
+                        title: 'แบบฟอร์มคำขอบริการ',
+                        message: `ท่านสามารถขอรับแบบฟอร์ม "${form.title}" ได้ที่สำนักงาน ${orgName} หรือดาวน์โหลดผ่านระบบงานเอกสาร`,
+                        variant: 'info'
+                      })
+                    }
                     className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 border border-slate-200/60 dark:border-slate-700"
                   >
                     <Download className="w-3.5 h-3.5 text-blue-600" />

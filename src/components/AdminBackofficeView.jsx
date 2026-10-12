@@ -80,6 +80,7 @@ import {
   FEEDBACK_CATEGORIES,
   FEEDBACK_STATUSES
 } from '../utils/feedbackUtils';
+import { luxuryConfirm, luxuryAlert } from './LuxuryModal';
 
 export default function AdminBackofficeView({
   currentSession,
@@ -376,10 +377,17 @@ export default function AdminBackofficeView({
   };
 
   // Toggle Suspend / Lock
-  const handleToggleSuspend = (user) => {
+  const handleToggleSuspend = async (user) => {
     const newStatus = user.status === 'suspended' ? 'active' : 'suspended';
     const actionLabel = newStatus === 'suspended' ? 'ล็อกบัญชี (ระงับสิทธิ์)' : 'ปลดล็อกบัญชี (เปิดสิทธิ์)';
-    if (!window.confirm(`ต้องการ${actionLabel} บัญชี @${user.username} หรือไม่?`)) return;
+    const confirmed = await luxuryConfirm({
+      title: `ยืนยัน${actionLabel}`,
+      message: `คุณต้องการ${actionLabel} การเข้าใช้งานของบัญชีนี้หรือไม่?`,
+      itemTitle: `@${user.username} (${user.displayName || 'ผู้ใช้งาน'})`,
+      confirmText: actionLabel,
+      variant: newStatus === 'suspended' ? 'danger' : 'warning'
+    });
+    if (!confirmed) return;
 
     try {
       updateUser(user.username, { status: newStatus });
@@ -387,20 +395,27 @@ export default function AdminBackofficeView({
       showToast(`${actionLabel} @${user.username} เรียบร้อยแล้ว`);
       setOpenActionUsername(null);
     } catch (err) {
-      alert(err.message);
+      luxuryAlert({ title: 'เกิดข้อผิดพลาด', message: err.message, variant: 'danger' });
     }
   };
 
   // Force Expire Trial Now
-  const handleExpireNow = (user) => {
-    if (!window.confirm(`ต้องการสิ้นสุดสิทธิ์การใช้งานของ @${user.username} ทันทีหรือไม่?`)) return;
+  const handleExpireNow = async (user) => {
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันการสิ้นสุดสิทธิ์ทันที',
+      message: `ต้องการปรับให้ระยะเวลาการใช้งานของบัญชีนี้หมดอายุทันทีหรือไม่?`,
+      itemTitle: `@${user.username} (${user.displayName || 'ผู้ใช้งาน'})`,
+      confirmText: 'สิ้นสุดสิทธิ์ทันที',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
     try {
       updateUser(user.username, { expiresAt: new Date(Date.now() - 1000).toISOString() });
       reloadData();
       showToast(`⛔ สิ้นสุดสิทธิ์ของ @${user.username} ทันทีแล้ว`);
       setOpenActionUsername(null);
     } catch (err) {
-      alert(err.message);
+      luxuryAlert({ title: 'เกิดข้อผิดพลาด', message: err.message, variant: 'danger' });
     }
   };
 
@@ -412,20 +427,28 @@ export default function AdminBackofficeView({
       showToast(`ต่ออายุสมาชิกให้ผู้ใช้ @${username} เพิ่มอีก ${days} วัน เรียบร้อยแล้ว`);
       setOpenActionUsername(null);
     } catch (err) {
-      alert(err.message);
+      luxuryAlert({ title: 'เกิดข้อผิดพลาด', message: err.message, variant: 'danger' });
     }
   };
 
   // Delete User Permanently
-  const handleDeleteUser = (user) => {
-    if (!window.confirm(`⚠️ คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ "${user.displayName}" (@${user.username}) อย่างถาวร? ข้อมูลทั้งหมดจะไม่สามารถกู้คืนได้`)) return;
+  const handleDeleteUser = async (user) => {
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันการลบบัญชีผู้ใช้งานอย่างถาวร',
+      message: 'คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีผู้ใช้นี้ออกจากระบบ?',
+      itemTitle: `${user.displayName} (@${user.username})`,
+      subMessage: '⚠️ คำเตือน: ข้อมูลบัญชี สิทธิ์การเข้าถึง และประวัติทั้งหมดจะไม่สามารถกู้คืนได้',
+      confirmText: 'ลบบัญชีถาวร',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
     try {
       deleteUser(user.username);
       reloadData();
       showToast(`ลบบัญชี @${user.username} ออกจากระบบเรียบร้อยแล้ว`);
       setOpenActionUsername(null);
     } catch (err) {
-      alert(err.message);
+      luxuryAlert({ title: 'เกิดข้อผิดพลาด', message: err.message, variant: 'danger' });
     }
   };
 
@@ -533,12 +556,18 @@ export default function AdminBackofficeView({
   };
 
   // Pending User Management Handlers
-  const handleClearAllPending = () => {
-    if (window.confirm('คุณต้องการรับทราบและล้างการแจ้งเตือนคำขอลงทะเบียนทั้งหมดใช่หรือไม่?')) {
-      clearPendingUsers();
-      setPendingUsers([]);
-      showToast('🧹 ล้างการแจ้งเตือนคำขอลงทะเบียนทั้งหมดเรียบร้อยแล้ว');
-    }
+  const handleClearAllPending = async () => {
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันการล้างคำขอลงทะเบียน',
+      message: 'คุณต้องการรับทราบและล้างการแจ้งเตือนคำขอลงทะเบียนทั้งหมดใช่หรือไม่?',
+      confirmText: 'ล้างคำขอทั้งหมด',
+      variant: 'warning'
+    });
+    if (!confirmed) return;
+
+    clearPendingUsers();
+    setPendingUsers([]);
+    showToast('🧹 ล้างการแจ้งเตือนคำขอลงทะเบียนทั้งหมดเรียบร้อยแล้ว');
   };
 
   const handleDismissPending = (id, displayName) => {
@@ -555,15 +584,19 @@ export default function AdminBackofficeView({
       setUsers(getUsers());
       showToast(`อนุมัติและปรับระดับสมาชิก ${pendingUser.displayName || pendingUser.username} เรียบร้อยแล้ว!`);
     } catch (err) {
-      alert(err.message);
+      luxuryAlert({ title: 'เกิดข้อผิดพลาด', message: err.message, variant: 'danger' });
     }
   };
 
   // Submit Broadcast Announcement
-  const handleBroadcastSubmit = (e) => {
+  const handleBroadcastSubmit = async (e) => {
     e.preventDefault();
     if (!broadcastText.trim()) {
-      alert('กรุณากรอกข้อความประกาศ');
+      await luxuryAlert({
+        title: 'ข้อมูลไม่ครบถ้วน',
+        message: 'กรุณากรอกข้อความประกาศก่อนบันทึกและส่งกระจายเสียง',
+        variant: 'warning'
+      });
       return;
     }
     saveBroadcastAnnouncement(broadcastText.trim(), isBroadcastActive);
@@ -713,27 +746,42 @@ export default function AdminBackofficeView({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const parsed = JSON.parse(event.target.result);
         if (!parsed.users && !parsed.settings) {
-          alert('ไฟล์สำรองไม่ถูกต้อง ไม่พบโครงสร้างข้อมูลระบบ Audit-OS');
+          await luxuryAlert({
+            title: 'ไฟล์สำรองไม่ถูกต้อง',
+            message: 'ไม่พบโครงสร้างข้อมูลของระบบ Audit-OS ในไฟล์ที่เลือก กรุณาตรวจสอบไฟล์สำรอง JSON',
+            variant: 'warning'
+          });
           return;
         }
-        if (window.confirm('คำเตือน: การกู้คืนข้อมูลจะนำเข้าข้อมูลสมาชิก การตั้งค่า และประวัติชำระเงิน คุณต้องการดำเนินการต่อหรือไม่?')) {
-          if (Array.isArray(parsed.users)) saveUsers(parsed.users);
-          if (Array.isArray(parsed.pendingUsers)) savePendingUsers(parsed.pendingUsers);
-          if (Array.isArray(parsed.payments)) savePaymentRecords(parsed.payments);
-          if (parsed.settings) saveSystemSettings(parsed.settings);
-          if (Array.isArray(parsed.feedbacks)) {
-            localStorage.setItem('ia_user_feedbacks', JSON.stringify(parsed.feedbacks));
-            window.dispatchEvent(new CustomEvent('ia_feedbacks_updated'));
-          }
-          reloadData();
-          showToast('✅ กู้คืนข้อมูลระบบ Super Admin จากไฟล์สำรองเรียบร้อยแล้ว');
+        const confirmed = await luxuryConfirm({
+          title: 'ยืนยันการกู้คืนฐานข้อมูลสำรอง',
+          message: 'การกู้คืนข้อมูลจะนำเข้าข้อมูลสมาชิก การตั้งค่า และประวัติการชำระเงินเข้าสู่ระบบ',
+          subMessage: '⚠️ คำเตือน: ข้อมูลระบบปัจจุบันจะถูกปรับปรุงตามไฟล์สำรอง โปรดตรวจสอบความถูกต้อง',
+          confirmText: 'กู้คืนข้อมูลทันที',
+          variant: 'warning'
+        });
+        if (!confirmed) return;
+
+        if (Array.isArray(parsed.users)) saveUsers(parsed.users);
+        if (Array.isArray(parsed.pendingUsers)) savePendingUsers(parsed.pendingUsers);
+        if (Array.isArray(parsed.payments)) savePaymentRecords(parsed.payments);
+        if (parsed.settings) saveSystemSettings(parsed.settings);
+        if (Array.isArray(parsed.feedbacks)) {
+          localStorage.setItem('ia_user_feedbacks', JSON.stringify(parsed.feedbacks));
+          window.dispatchEvent(new CustomEvent('ia_feedbacks_updated'));
         }
+        reloadData();
+        showToast('✅ กู้คืนข้อมูลระบบ Super Admin จากไฟล์สำรองเรียบร้อยแล้ว');
       } catch (err) {
-        alert('ไม่สามารถอ่านไฟล์ JSON สำรองได้: ' + err.message);
+        luxuryAlert({
+          title: 'อ่านไฟล์สำรองไม่สำเร็จ',
+          message: 'ไม่สามารถอ่านไฟล์ JSON สำรองได้: ' + err.message,
+          variant: 'danger'
+        });
       }
     };
     reader.readAsText(file);
@@ -2216,12 +2264,18 @@ export default function AdminBackofficeView({
                         <span>•</span>
                         <span>{item.orgName}</span>
                         <button
-                          onClick={() => {
-                            if (window.confirm('ต้องการลบข้อเสนอแนะนี้หรือไม่?')) {
-                              deleteFeedback(item.id);
-                              setFeedbacks(getUserFeedbacks());
-                              showToast('ลบข้อเสนอแนะเรียบร้อยแล้ว');
-                            }
+                          onClick={async () => {
+                            const confirmed = await luxuryConfirm({
+                              title: 'ยืนยันการลบข้อเสนอแนะ',
+                              message: 'คุณต้องการลบรายการข้อเสนอแนะนี้ออกจากระบบหรือไม่?',
+                              itemTitle: item.title,
+                              confirmText: 'ลบข้อเสนอแนะ',
+                              variant: 'danger'
+                            });
+                            if (!confirmed) return;
+                            deleteFeedback(item.id);
+                            setFeedbacks(getUserFeedbacks());
+                            showToast('ลบข้อเสนอแนะเรียบร้อยแล้ว');
                           }}
                           className="text-stone-400 hover:text-rose-500 p-1 cursor-pointer"
                           title="ลบข้อเสนอแนะ"
@@ -2552,11 +2606,17 @@ export default function AdminBackofficeView({
             <div className="pt-2 flex justify-end">
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm('คุณต้องการล้างแคชส่วนที่ไม่ได้ใช้งาน (Stale Cache) ใช่หรือไม่? (ข้อมูลบัญชีและการตั้งค่าจะไม่สูญหาย)')) {
-                    sessionStorage.clear();
-                    showToast('🧹 ล้างแคชตกค้างเรียบร้อยแล้ว');
-                  }
+                onClick={async () => {
+                  const confirmed = await luxuryConfirm({
+                    title: 'ล้างแคชส่วนกลาง (Stale Cache)',
+                    message: 'คุณต้องการล้างแคชส่วนที่ไม่ได้ใช้งานและดึงข้อมูลใหม่ล่าสุดจากคลาวด์หรือไม่?',
+                    subMessage: 'ℹ️ ข้อมูลบัญชีผู้ใช้ สิทธิ์ และการตั้งค่าหลักจะไม่สูญหาย',
+                    confirmText: 'ล้างแคชทันที',
+                    variant: 'warning'
+                  });
+                  if (!confirmed) return;
+                  sessionStorage.clear();
+                  showToast('🧹 ล้างแคชตกค้างเรียบร้อยแล้ว');
                 }}
                 className="text-xs font-semibold text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 py-1 px-3 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
               >

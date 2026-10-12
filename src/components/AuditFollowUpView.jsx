@@ -26,6 +26,7 @@ import { DLA_FOLLOWUP_REGISTER_6, DLA_FOLLOWUP_MEMO_TEMPLATE } from '../data/dla
 import OfficialThaiMemo from './OfficialThaiMemo';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { exportDocumentToWord, exportThaiMemoToWord, exportDataToExcel } from '../utils/documentExportUtils';
+import { luxuryConfirm } from './LuxuryModal';
 
 export default function AuditFollowUpView({
   selectedYear = '2569',
@@ -160,11 +161,18 @@ export default function AuditFollowUpView({
     saveRegister(updated);
   };
 
-  const handleDeleteItem = (id) => {
-    if (window.confirm('ต้องการลบรายการติดตามผลนี้ใช่หรือไม่?')) {
-      const updated = registerItems.filter((item) => item.id !== id);
-      saveRegister(updated);
-    }
+  const handleDeleteItem = async (id) => {
+    const itemToDelete = registerItems.find((item) => item.id === id);
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันการลบรายการติดตามผล',
+      message: 'ต้องการลบรายการติดตามผลการตรวจสอบนี้ออกจากทะเบียนหรือไม่?',
+      itemTitle: itemToDelete?.finding || `รหัส ${id}`,
+      confirmText: 'ลบรายการ',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
+    const updated = registerItems.filter((item) => item.id !== id);
+    saveRegister(updated);
   };
 
   const handleSelectForMemo = (item) => {
