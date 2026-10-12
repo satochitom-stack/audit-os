@@ -20,7 +20,8 @@ import {
   RefreshCw,
   Edit3,
   Clock,
-  CreditCard
+  CreditCard,
+  Crown
 } from 'lucide-react';
 import { cloudSyncService } from '../services/cloudSyncService';
 import { clearPendingUsers, getSubscriptionCountdown } from '../utils/auth';
@@ -46,7 +47,11 @@ export default function Header({
   onOpenPackageModal,
   pendingCount = 0,
   currentTab = 'audit-risk',
-  setCurrentTab
+  setCurrentTab,
+  adminWorkspaceMode = 'admin',
+  setAdminWorkspaceMode,
+  adminSubTab = 'overview',
+  setAdminSubTab
 }) {
   const [syncStatus, setSyncStatus] = useState(() => cloudSyncService.getSyncStatus());
   const [now, setNow] = useState(() => Date.now());
@@ -194,20 +199,37 @@ export default function Header({
             {/* Quick Super Admin Backoffice / Workbench Switcher */}
             {isAdmin && (
               <button
-                onClick={() => setCurrentTab && setCurrentTab(currentTab === 'backoffice' ? 'audit-risk' : 'backoffice')}
-                title={currentTab === 'backoffice' ? 'สลับไปยังพื้นที่ปฏิบัติงานตรวจสอบ' : 'สลับไปยังระบบหลังบ้าน Super Admin'}
+                type="button"
+                onClick={() => {
+                  if (currentTab === 'backoffice' || adminWorkspaceMode === 'admin') {
+                    if (setAdminWorkspaceMode) setAdminWorkspaceMode('auditor');
+                    if (setCurrentTab) setCurrentTab('dashboard');
+                  } else {
+                    if (setAdminWorkspaceMode) setAdminWorkspaceMode('admin');
+                    if (setCurrentTab) setCurrentTab('backoffice');
+                  }
+                }}
+                title={
+                  currentTab === 'backoffice' || adminWorkspaceMode === 'admin'
+                    ? 'สลับไปดูและทดสอบพื้นที่ปฏิบัติงานของผู้ตรวจสอบ อปท.'
+                    : 'สลับกลับไปยังศูนย์ควบคุม Super Admin Console'
+                }
                 className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs shrink-0 ${
-                  currentTab === 'backoffice'
-                    ? 'bg-stone-800 hover:bg-stone-900 text-amber-100 border border-amber-600/30 shadow-stone-900/20'
+                  currentTab === 'backoffice' || adminWorkspaceMode === 'admin'
+                    ? 'bg-stone-800 hover:bg-stone-900 text-amber-200 border border-amber-600/30 shadow-stone-900/20'
                     : 'bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 shadow-amber-950/20'
                 }`}
               >
-                {currentTab === 'backoffice' ? (
+                {currentTab === 'backoffice' || adminWorkspaceMode === 'admin' ? (
                   <Shield className="w-3.5 h-3.5 text-amber-300" />
                 ) : (
-                  <Settings className="w-3.5 h-3.5 text-amber-300" />
+                  <Crown className="w-3.5 h-3.5 text-amber-300" />
                 )}
-                <span>{currentTab === 'backoffice' ? 'สลับไปหน้าตรวจ' : 'หลังบ้าน Admin'}</span>
+                <span>
+                  {currentTab === 'backoffice' || adminWorkspaceMode === 'admin'
+                    ? 'สลับไปหน้าตรวจ (Auditor)'
+                    : '👑 ศูนย์ควบคุม Super Admin'}
+                </span>
               </button>
             )}
 
@@ -295,40 +317,58 @@ export default function Header({
                     </div>
                   )}
 
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        if (setCurrentTab) setCurrentTab('backoffice');
-                      }}
-                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 font-bold border-b border-stone-100 dark:border-stone-800 cursor-pointer text-left"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-amber-700" />
-                      <span>⚙️ 12. ระบบหลังบ้าน Super Admin</span>
-                    </button>
+                  {isAdmin ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          if (setAdminWorkspaceMode) setAdminWorkspaceMode('admin');
+                          if (setCurrentTab) setCurrentTab('backoffice');
+                        }}
+                        className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 font-black border-b border-stone-100 dark:border-stone-800 cursor-pointer text-left"
+                      >
+                        <Crown className="w-4 h-4 text-amber-600" />
+                        <span>👑 ศูนย์ควบคุม Super Admin Console</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          if (setAdminWorkspaceMode) setAdminWorkspaceMode('auditor');
+                          if (setCurrentTab) setCurrentTab('dashboard');
+                        }}
+                        className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 font-bold border-b border-stone-100 dark:border-stone-800 cursor-pointer text-left"
+                      >
+                        <Shield className="w-4 h-4 text-amber-500" />
+                        <span>🛡️ สลับไปพื้นที่ตรวจ (Auditor Workspace)</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          if (setCurrentTab) setCurrentTab('welcome');
+                        }}
+                        className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium border-b border-stone-100 dark:border-stone-800"
+                      >
+                        <span>🏠 หน้าแรก (ภาพรวมระบบ)</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          if (setCurrentTab) setCurrentTab('dashboard');
+                        }}
+                        className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-800 dark:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 cursor-pointer font-semibold border-b border-stone-100 dark:border-stone-800"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                        <span>🛡️ แดชบอร์ดตรวจสอบ (Audit Cockpit)</span>
+                      </button>
+                    </>
                   )}
-
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      if (setCurrentTab) setCurrentTab('welcome');
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium border-b border-stone-100 dark:border-stone-800"
-                  >
-                    <span>🏠 หน้าแรก (ภาพรวมระบบ)</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      if (setCurrentTab) setCurrentTab('audit-risk');
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-800 dark:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 cursor-pointer font-semibold border-b border-stone-100 dark:border-stone-800"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-                    <span>🛡️ พื้นที่ทำงานตรวจสอบ 12 ขั้นตอน</span>
-                  </button>
 
                   <button
                     onClick={() => {

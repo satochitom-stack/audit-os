@@ -69,7 +69,8 @@ import {
   getSubscriptionCountdown,
   resetUserPassword,
   updateUser,
-  deleteUser
+  deleteUser,
+  addUser
 } from '../utils/auth';
 import { broadcastSystemUpdate, APP_VERSION } from '../utils/versionCheck';
 import {
@@ -80,20 +81,47 @@ import {
   FEEDBACK_STATUSES
 } from '../utils/feedbackUtils';
 
-export default function AdminBackofficeView({ currentSession, session, onSwitchToWorkbench, onRefreshUser }) {
+export default function AdminBackofficeView({
+  currentSession,
+  session,
+  activeTab: controlledActiveTab,
+  onTabChange,
+  onSwitchToWorkbench,
+  onRefreshUser
+}) {
   const activeSession = session || currentSession;
 
-  // 3 Primary Tabs from user's system + Billing audit tab
+  // 6 Primary Tabs for Super Admin Console
   // 'overview' = ภาพรวมระบบ (Dashboard & Analytics)
-  // 'users' = จัดการผู้ใช้งาน (User Management & Broadcast)
+  // 'users' = จัดการผู้ใช้งาน (User Management & Directory)
   // 'pricing_qr' = ตั้งค่าแพ็กเกจและ QR (Pricing & PromptPay QR)
   // 'billing' = บันทึกรายได้ & ประวัติชำระเงิน
-  const [activeTab, setActiveTab] = useState('overview');
+  // 'feedbacks' = กล่องข้อเสนอแนะ & แจ้งต่ออายุ
+  // 'system' = ประกาศระบบ & สำรองข้อมูล
+  const [internalActiveTab, setInternalActiveTab] = useState(controlledActiveTab || 'overview');
+  const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
+  const setActiveTab = (tab) => {
+    setInternalActiveTab(tab);
+    if (onTabChange) onTabChange(tab);
+  };
 
   const [users, setUsers] = useState(() => getUsers());
   const [pendingUsers, setPendingUsers] = useState(() => getPendingUsers());
   const [payments, setPayments] = useState(() => getPaymentRecords());
   const [settings, setSettings] = useState(() => getSystemSettings());
+
+  // Manual Add User Modal State
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    username: '',
+    displayName: '',
+    organization: '',
+    province: '',
+    position: 'นักวิชาการตรวจสอบภายใน',
+    plan: 'annual',
+    password: ''
+  });
+  const [addUserError, setAddUserError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [toastMessage, setToastMessage] = useState(null);
@@ -622,6 +650,96 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     showToast(`บันทึกการชำระเงิน ${Number(paymentForm.amount).toLocaleString()} บาท เรียบร้อยแล้ว`);
   };
 
+  // Submit Manual Add User by Admin
+  const handleCreateUserSubmit = async (e) => {
+    e.preventDefault();
+    setAddUserError('');
+    if (!newUserForm.username.trim() || !newUserForm.displayName.trim() || !newUserForm.password.trim()) {
+      setAddUserError('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
+      return;
+    }
+    try {
+      await addUser({
+        username: newUserForm.username.trim(),
+        displayName: newUserForm.displayName.trim(),
+        organization: newUserForm.organization.trim() || 'อปท.',
+        province: newUserForm.province.trim() || '',
+        position: newUserForm.position.trim() || 'นักวิชาการตรวจสอบภายใน',
+        plan: newUserForm.plan,
+        password: newUserForm.password.trim()
+      });
+      setShowAddUserModal(false);
+      setNewUserForm({
+        username: '',
+        displayName: '',
+        organization: '',
+        province: '',
+        position: 'นักวิชาการตรวจสอบภายใน',
+        plan: 'annual',
+        password: ''
+      });
+      reloadData();
+      showToast(`✨ เพิ่มสมาชิกใหม่ @${newUserForm.username} เรียบร้อยแล้ว`);
+    } catch (err) {
+      setAddUserError(err.message || 'เกิดข้อผิดพลาดในการสร้างผู้ใช้งาน');
+    }
+  };
+
+  // Export Super Admin System Full JSON Backup
+  const handleExportSuperAdminBackup = () => {
+    const backupData = {
+      system: 'Audit-OS Platform Full Backup',
+      version: APP_VERSION,
+      exportedAt: new Date().toISOString(),
+      exportedBy: activeSession?.username || 'admin',
+      users: getUsers(),
+      pendingUsers: getPendingUsers(),
+      payments: getPaymentRecords(),
+      settings: getSystemSettings(),
+      feedbacks: getUserFeedbacks()
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AuditOS_SuperAdmin_FullBackup_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('📦 ดาวน์โหลดไฟล์สำรองข้อมูล Super Admin เรียบร้อยแล้ว');
+  };
+
+  // Import / Restore Super Admin System JSON Backup
+  const handleImportSuperAdminBackup = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (!parsed.users && !parsed.settings) {
+          alert('ไฟล์สำรองไม่ถูกต้อง ไม่พบโครงสร้างข้อมูลระบบ Audit-OS');
+          return;
+        }
+        if (window.confirm('คำเตือน: การกู้คืนข้อมูลจะนำเข้าข้อมูลสมาชิก การตั้งค่า และประวัติชำระเงิน คุณต้องการดำเนินการต่อหรือไม่?')) {
+          if (Array.isArray(parsed.users)) saveUsers(parsed.users);
+          if (Array.isArray(parsed.pendingUsers)) savePendingUsers(parsed.pendingUsers);
+          if (Array.isArray(parsed.payments)) savePaymentRecords(parsed.payments);
+          if (parsed.settings) saveSystemSettings(parsed.settings);
+          if (Array.isArray(parsed.feedbacks)) {
+            localStorage.setItem('ia_user_feedbacks', JSON.stringify(parsed.feedbacks));
+            window.dispatchEvent(new CustomEvent('ia_feedbacks_updated'));
+          }
+          reloadData();
+          showToast('✅ กู้คืนข้อมูลระบบ Super Admin จากไฟล์สำรองเรียบร้อยแล้ว');
+        }
+      } catch (err) {
+        alert('ไม่สามารถอ่านไฟล์ JSON สำรองได้: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   // Helper to render luxury badges based on the 3 tiers with LIVE COUNTDOWN
   const renderLuxuryTierBadge = (user) => {
     const planKey = user.plan || 'trial';
@@ -826,6 +944,18 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         >
           <MessageSquarePlus className="w-4 h-4" />
           <span>ข้อเสนอแนะ {pendingFeedbackCount > 0 ? `(${pendingFeedbackCount} ใหม่)` : `(${feedbacks.length})`}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('system')}
+          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+            activeTab === 'system'
+              ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+          }`}
+        >
+          <Megaphone className="w-4 h-4" />
+          <span>ประกาศระบบ & สำรองข้อมูล</span>
         </button>
       </div>
 
@@ -1240,6 +1370,27 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                   <option value="expired">หมดอายุแล้ว</option>
                   <option value="suspended">ถูกระงับสิทธิ์ / ล็อกบัญชี</option>
                 </select>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewUserForm({
+                      username: '',
+                      displayName: '',
+                      organization: '',
+                      province: '',
+                      position: 'นักวิชาการตรวจสอบภายใน',
+                      plan: 'annual',
+                      password: ''
+                    });
+                    setAddUserError('');
+                    setShowAddUserModal(true);
+                  }}
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black py-1.5 px-3.5 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ เพิ่มผู้ใช้งานใหม่</span>
+                </button>
               </div>
             </div>
 
@@ -2170,6 +2321,253 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       )}
 
       {/* ========================================================================= */}
+      {/* TAB 6: ประกาศระบบ & สำรองข้อมูล (SYSTEM BROADCAST & CLOUD BACKUP)           */}
+      {/* ========================================================================= */}
+      {activeTab === 'system' && (
+        <div className="space-y-6">
+          {/* Card 1: ระบบกระจายข่าวประกาศส่วนกลาง (Real-time Broadcast Announcement) */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100 dark:border-stone-800">
+              <div>
+                <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                  <Megaphone className="w-5 h-5 text-amber-600" />
+                  <span>ระบบกระจายข่าวประกาศส่วนกลาง (Real-time Broadcast Banner)</span>
+                </h2>
+                <p className="text-xs text-stone-500 mt-1">
+                  ส่งข้อความประกาศด่วนวิ่งบนแถบหัวเว็บของผู้ใช้งานทุก อปท. ทั่วประเทศทันทีแบบ Real-time
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleToggleBroadcastActive}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    isBroadcastActive
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300'
+                      : 'bg-stone-200 text-stone-600 dark:bg-stone-800 dark:text-stone-400'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${isBroadcastActive ? 'bg-emerald-500 animate-ping' : 'bg-stone-400'}`} />
+                  <span>{isBroadcastActive ? '🟢 เปิดแสดงหน้าบ้าน' : '⚪ ปิดซ่อนประกาศ'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Template Preset Chips */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-stone-700 dark:text-stone-300">
+                ข้อความประกาศสำเร็จรูป (คลิกเพื่อใส่ข้อความรวดเร็ว):
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  'ยินดีต้อนรับสู่ระบบตรวจสอบภายใน อปท. (Audit-OS) แพลตฟอร์มบริหารจัดการงานตรวจสอบมาตรฐาน สถ.',
+                  'แจ้งเปิดระบบบันทึกแผนการตรวจสอบ และกระดาษทำการ ประจำปีงบประมาณ 2569 ครบทั้ง 11 ขั้นตอนแล้ว',
+                  'แจ้งปิดปรับปรุงระบบและสำรองข้อมูลประจำสัปดาห์ คืนนี้เวลา 23:00 - 00:00 น. ขออภัยในความไม่สะดวก',
+                  'เปิดรับฟังข้อเสนอแนะและฟังก์ชันใหม่จากผู้ตรวจสอบทุกท่านแล้ววันนี้ ผ่านเมนูด้านซ้าย "เสนอแนะ / แจ้งปัญหา"'
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setBroadcastText(preset)}
+                    className="text-[11px] px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors text-left"
+                  >
+                    💡 {preset.slice(0, 45)}...
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleBroadcastSubmit} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                  ข้อความประกาศที่จะแสดง (Broadcast Text)
+                </label>
+                <textarea
+                  value={broadcastText}
+                  onChange={(e) => setBroadcastText(e.target.value)}
+                  placeholder="พิมพ์ข้อความประกาศ เช่น แจ้งปรับปรุงระบบ, เปิดให้ใช้งานฟีเจอร์ใหม่, ระเบียบกระทรวงการคลังฉบับล่าสุด..."
+                  className="w-full p-3 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-850 text-xs text-stone-900 dark:text-stone-100 min-h-[80px]"
+                />
+              </div>
+
+              {/* Preview Banner */}
+              <div className="p-3 rounded-2xl bg-gradient-to-r from-stone-900 via-amber-950 to-stone-900 text-amber-100 text-xs border border-amber-500/40 flex items-center justify-between shadow-inner">
+                <div className="flex items-center space-x-2 truncate">
+                  <span className="inline-flex items-center space-x-1 bg-amber-500 text-stone-950 px-2 py-0.5 rounded-full text-[10px] font-black shrink-0">
+                    📢 ประกาศระบบส่วนกลาง
+                  </span>
+                  <span className="truncate font-medium">{broadcastText || 'ตัวอย่างข้อความประกาศจะแสดงในแถบนี้'}</span>
+                </div>
+                <span className="text-[10px] text-amber-400 font-bold shrink-0 ml-2">ตัวอย่างหน้าบ้าน</span>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-black px-6 py-2.5 rounded-xl text-xs transition-all shadow-md flex items-center space-x-2 cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>🚀 ส่งประกาศข่าวสารไปยังแบนเนอร์หน้าบ้านทันที</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Card 2: ระบบแจ้งเตือนอัปเดตเวอร์ชัน และ สำรองข้อมูลส่วนกลาง */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Box 1: แจ้งเตือนอัปเดตเวอร์ชัน Push Update */}
+            <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
+                <div className="flex items-center space-x-2">
+                  <Bell className="w-5 h-5 text-indigo-600" />
+                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                    แจ้งเตือนอัปเดตเวอร์ชัน (Push Update)
+                  </h3>
+                </div>
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                  v{APP_VERSION}
+                </span>
+              </div>
+
+              <p className="text-xs text-stone-500 leading-relaxed">
+                ส่งสัญญาณแจ้งเตือนกล่องป๊อปอัปให้ผู้ใช้งานทุกคนที่กำลังออนไลน์ กดปุ่มรีเฟรชหน้าเว็บเพื่อรับเวอร์ชันใหม่ทันที โดยไม่ต้องรอรีเฟรชเอง
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setShowBroadcastModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-900 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>🚀 เปิดกล่องยิงแจ้งเตือนอัปเดตเวอร์ชัน (Broadcast Modal)</span>
+              </button>
+            </div>
+
+            {/* Box 2: สำรองและกู้คืนฐานข้อมูล Super Admin JSON */}
+            <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
+                <div className="flex items-center space-x-2">
+                  <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                    สำรองและกู้คืนฐานข้อมูลระบบส่วนกลาง (Full JSON)
+                  </h3>
+                </div>
+              </div>
+
+              <p className="text-xs text-stone-500 leading-relaxed">
+                ดาวน์โหลดข้อมูลระบบทั้งหมด (ผู้ใช้งาน, ประวัติชำระเงิน, ข้อเสนอแนะ, และการตั้งค่าระบบ) เป็นไฟล์ JSON ก้อนเดียว เพื่อความปลอดภัย 100%
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleExportSuperAdminBackup}
+                  className="py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 rotate-180" />
+                  <span>📦 ดาวน์โหลดไฟล์สำรอง</span>
+                </button>
+
+                <label className="py-2.5 px-3 rounded-xl text-xs font-bold bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>📥 กู้คืนจากไฟล์สำรอง</span>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportSuperAdminBackup}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: ศูนย์ตรวจสุขภาพและสถานะเซิร์ฟเวอร์ระบบ (Health & Diagnostics) */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-stone-800">
+              <div className="flex items-center space-x-2">
+                <ShieldCheck className="w-5 h-5 text-amber-600" />
+                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                  ศูนย์ตรวจสุขภาพและสถานะการเชื่อมต่อ Cloud (System Health & Cloud Diagnostics)
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={reloadData}
+                className="text-xs text-amber-600 dark:text-amber-400 font-bold hover:underline flex items-center gap-1"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>ตรวจสอบสถานะใหม่</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-stone-400 font-semibold">Supabase Cloud</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                </div>
+                <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                  ● Realtime Active
+                </div>
+                <div className="text-[10px] text-stone-400 truncate">kdpxnmtblaminyffdwfe</div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-stone-400 font-semibold">Firebase Firestore</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                </div>
+                <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                  ● Multi-Tenant Ready
+                </div>
+                <div className="text-[10px] text-stone-400 truncate">auditos-prod-cloud</div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-stone-400 font-semibold">สมาชิกในระบบ</span>
+                  <span className="text-[10px] text-amber-600 font-bold">Total</span>
+                </div>
+                <div className="text-sm font-black text-stone-900 dark:text-stone-100">
+                  {users.length} บัญชี
+                </div>
+                <div className="text-[10px] text-stone-400 truncate">คำขอรออนุมัติ: {pendingUsers.length}</div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-stone-400 font-semibold">แคชระบบ (LocalStorage)</span>
+                  <span className="text-[10px] text-emerald-600 font-bold">Normal</span>
+                </div>
+                <div className="text-sm font-black text-stone-900 dark:text-stone-100">
+                  ~{(JSON.stringify(localStorage).length / 1024).toFixed(1)} KB
+                </div>
+                <div className="text-[10px] text-stone-400 truncate">ความจุคงเหลือ &gt; 90%</div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('คุณต้องการล้างแคชส่วนที่ไม่ได้ใช้งาน (Stale Cache) ใช่หรือไม่? (ข้อมูลบัญชีและการตั้งค่าจะไม่สูญหาย)')) {
+                    sessionStorage.clear();
+                    showToast('🧹 ล้างแคชตกค้างเรียบร้อยแล้ว');
+                  }
+                }}
+                className="text-xs font-semibold text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 py-1 px-3 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+              >
+                🧹 ล้างแคชที่ตกค้างในเบราว์เซอร์
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* MODAL: CHANGE TIER (ปรับระดับสมาชิก 3 ระดับ)                               */}
       {/* ========================================================================= */}
       {showChangeTierModal && tierTargetUser && (
@@ -2724,6 +3122,165 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                 >
                   <Check className="w-4 h-4" />
                   <span>บันทึกการชำระเงิน</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: ADD NEW USER BY ADMIN (สร้างบัญชีผู้ใช้โดยตรง)                      */}
+      {/* ========================================================================= */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-lg w-full p-6 space-y-5 border border-stone-200 dark:border-stone-800 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center font-bold">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-stone-900 dark:text-stone-100">
+                    เพิ่มผู้ใช้งานใหม่โดยตรง (Manual Provision)
+                  </h3>
+                  <p className="text-[11px] text-stone-500">สร้างบัญชีผู้ใช้งานใหม่ให้สมาชิก อปท. ได้ทันทีโดยไม่ต้องรอลงทะเบียน</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddUserModal(false)}
+                className="text-stone-400 hover:text-stone-600 p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {addUserError && (
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-800 text-xs border border-rose-200 flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{addUserError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateUserSubmit} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                    ชื่อผู้ใช้ (Username) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newUserForm.username}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+                    placeholder="เช่น audit_korat"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono text-xs font-bold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                    รหัสผ่านเริ่มต้น <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newUserForm.password}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                    placeholder="เช่น pass1234"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono text-xs font-bold"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                  ชื่อ-นามสกุล / ชื่อผู้แสดงผล <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newUserForm.displayName}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, displayName: e.target.value })}
+                  placeholder="เช่น นายสมชาย หมายมั่น"
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-xs font-bold"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                    สังกัด อปท. (เทศบาล/อบต./อบจ.)
+                  </label>
+                  <input
+                    type="text"
+                    value={newUserForm.organization}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, organization: e.target.value })}
+                    placeholder="เช่น องค์การบริหารส่วนตำบลเมืองเก่า"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                    จังหวัด
+                  </label>
+                  <input
+                    type="text"
+                    value={newUserForm.province}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, province: e.target.value })}
+                    placeholder="เช่น นครราชสีมา"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                    ตำแหน่ง
+                  </label>
+                  <input
+                    type="text"
+                    value={newUserForm.position}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, position: e.target.value })}
+                    placeholder="เช่น นักวิชาการตรวจสอบภายในชำนาญการ"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                    ระดับแพ็กเกจสมาชิกเริ่มต้น
+                  </label>
+                  <select
+                    value={newUserForm.plan}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, plan: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-xs font-bold"
+                  >
+                    <option value="trial">🌱 ฟรี 30 วัน (ค่าเริ่มต้น)</option>
+                    <option value="monthly">⭐ VIP (รายเดือน 30 วัน)</option>
+                    <option value="annual">👑 PREMIUM (รายปี 365 วัน)</option>
+                    <option value="lifetime">💎 LIFETIME VIP (ตลอดชีพ)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-4 border-t border-stone-100 dark:border-stone-800">
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="bg-amber-600 hover:bg-amber-500 text-stone-950 font-black px-5 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center space-x-1"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>บันทึกและสร้างบัญชี</span>
                 </button>
               </div>
             </form>

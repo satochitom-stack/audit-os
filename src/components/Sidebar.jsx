@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldAlert,
   Calendar,
@@ -24,9 +24,17 @@ import {
   Lock,
   LayoutGrid,
   MessageSquarePlus,
-  CreditCard
+  CreditCard,
+  TrendingUp,
+  Megaphone,
+  Crown,
+  Shield,
+  ArrowRight,
+  Radio,
+  FileCode2
 } from 'lucide-react';
 import { MEMBERSHIP_PLANS, checkUserSubscription } from '../utils/auth';
+import { getUserFeedbacks } from '../utils/feedbackUtils';
 
 export default function Sidebar({
   currentTab,
@@ -38,17 +46,94 @@ export default function Sidebar({
   pendingCount = 0,
   onShowExpiredModal,
   onOpenFeedback,
-  onOpenPackageModal
+  onOpenPackageModal,
+  adminSubTab = 'overview',
+  setAdminSubTab,
+  adminWorkspaceMode = 'admin',
+  setAdminWorkspaceMode
 }) {
   const isAdmin = session?.role === 'admin';
   const subStatus = checkUserSubscription(session);
   const isExpired = subStatus.expired;
   const [toolkitSubmenuOpen, setToolkitSubmenuOpen] = useState(false);
 
+  // Real-time Feedbacks counter for Admin badge
+  const [feedbacks, setFeedbacks] = useState(() => getUserFeedbacks());
+  useEffect(() => {
+    const handleFbUpdate = () => setFeedbacks(getUserFeedbacks());
+    window.addEventListener('ia_feedbacks_updated', handleFbUpdate);
+    return () => window.removeEventListener('ia_feedbacks_updated', handleFbUpdate);
+  }, []);
+  const pendingFeedbackCount = feedbacks.filter((f) => f.status === 'pending').length;
+
   const planKey = session?.plan || 'annual';
   const planInfo = MEMBERSHIP_PLANS[planKey] || MEMBERSHIP_PLANS.annual;
 
-  // Navigation Menu Sections for Internal Auditors
+  // 7 Exclusive Super Admin Menu Sections (Dedicated Super Admin Console)
+  const ADMIN_STEPS = [
+    {
+      id: 'backoffice-overview',
+      subTab: 'overview',
+      targetTab: 'backoffice',
+      label: 'ภาพรวมระบบ (Platform Overview)',
+      icon: TrendingUp,
+      desc: 'สถิติสมาชิก รายรับสะสม และกิจกรรม'
+    },
+    {
+      id: 'backoffice-users',
+      subTab: 'users',
+      targetTab: 'backoffice',
+      label: 'จัดการสมาชิก & สิทธิ์ (User Hub)',
+      icon: Users,
+      badge: pendingCount > 0 ? `${pendingCount} คำขอ` : null,
+      badgeColor: 'bg-amber-500 text-stone-950 font-black',
+      desc: 'อนุมัติ ปรับระดับ VIP/PREMIUM จัดการรหัสผ่าน'
+    },
+    {
+      id: 'backoffice-pricing',
+      subTab: 'pricing_qr',
+      targetTab: 'backoffice',
+      label: 'ตั้งค่าแพ็กเกจ & บัญชีรับเงิน',
+      icon: Settings,
+      desc: 'ราคาแพ็กเกจ เลขบัญชี และ PromptPay QR'
+    },
+    {
+      id: 'backoffice-billing',
+      subTab: 'billing',
+      targetTab: 'backoffice',
+      label: 'ทะเบียนรายรับ & ประวัติชำระเงิน',
+      icon: DollarSign,
+      desc: 'บันทึกการรับเงิน ออกใบเสร็จ ตรวจสอบสลิป'
+    },
+    {
+      id: 'backoffice-feedbacks',
+      subTab: 'feedbacks',
+      targetTab: 'backoffice',
+      label: 'กล่องข้อเสนอแนะ & แจ้งต่ออายุ',
+      icon: MessageSquarePlus,
+      badge: pendingFeedbackCount > 0 ? `${pendingFeedbackCount} ใหม่` : null,
+      badgeColor: 'bg-emerald-500 text-white font-black',
+      desc: 'รับฟังความคิดเห็นจาก User เพื่อพัฒนาระบบ'
+    },
+    {
+      id: 'central-hub',
+      subTab: null,
+      targetTab: 'central-hub',
+      label: 'จัดการคลังเอกสารแม่แบบกลาง',
+      icon: BookOpen,
+      desc: 'อัปโหลดและจัดการเอกสารกลางสำหรับทุก อปท.'
+    },
+    {
+      id: 'backoffice-system',
+      subTab: 'system',
+      targetTab: 'backoffice',
+      label: 'ประกาศระบบ & สำรองข้อมูล',
+      icon: Megaphone,
+      desc: 'แบนเนอร์ประกาศ Realtime และ JSON Backup'
+    }
+  ];
+
+  // Navigation Menu Sections for Internal Auditors (11 Lifecycle Steps)
   const LIFECYCLE_STEPS = [
     {
       groupTitle: 'การวางแผนตรวจสอบ',
@@ -110,7 +195,7 @@ export default function Sidebar({
       <div className="p-4 border-b border-stone-200/70 dark:border-stone-800 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-wider uppercase">
-            {isAdmin ? '👑 SUPER ADMIN CONSOLE' : '🛡️ AUDITOR WORKSPACE'}
+            {isAdmin ? (adminWorkspaceMode === 'admin' ? '👑 SUPER ADMIN CONSOLE' : '🛡️ AUDITOR WORKSPACE (PREVIEW)') : '🛡️ AUDITOR WORKSPACE'}
           </span>
           {isAdmin ? (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 to-amber-600 text-stone-950 border border-amber-300 shadow-2xs">
@@ -161,7 +246,7 @@ export default function Sidebar({
             </div>
             <div className="pt-1">
               <span className="inline-block text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                สิทธิ์ระดับสูงสุด • ใช้งานตลอดชีพ (Lifetime)
+                สิทธิ์ระดับสูงสุด • บริหารจัดการทั้งระบบ
               </span>
             </div>
           </div>
@@ -187,8 +272,7 @@ export default function Sidebar({
           </div>
         )}
 
-
-        {/* Expired warning badge */}
+        {/* Expired warning badge for auditor */}
         {isExpired && !isAdmin && (
           <div className="mt-2 p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-[11px] text-rose-800 dark:text-rose-300 flex items-start gap-1.5">
             <Lock className="w-3.5 h-3.5 shrink-0 text-rose-600 mt-0.5" />
@@ -204,183 +288,299 @@ export default function Sidebar({
 
       {/* Navigation Scrollable Body */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
-        {/* Navigation to Welcome & Cockpit Dashboard */}
-        <div className="space-y-1.5">
-          <button
-            onClick={() => setCurrentTab('welcome')}
-            className={`w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer ${
-              currentTab === 'welcome'
-                ? 'bg-stone-800 text-amber-100 shadow-xs border-l-4 border-amber-500'
-                : 'bg-white dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 hover:text-amber-800 dark:hover:text-amber-300 border border-stone-200/80 dark:border-stone-800'
-            }`}
-          >
-            <span className="text-sm">🏠</span>
-            <span>หน้าแรก (ภาพรวมระบบ)</span>
-          </button>
-          <button
-            onClick={() => {
-              if (isExpired && !isAdmin) {
-                if (onShowExpiredModal) onShowExpiredModal();
-                else setCurrentTab('welcome');
-                return;
-              }
-              setCurrentTab('dashboard');
-            }}
-            className={`w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer ${
-              currentTab === 'dashboard'
-                ? 'bg-stone-800 text-amber-100 shadow-xs border-l-4 border-amber-500'
-                : 'bg-white dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 hover:text-amber-800 dark:hover:text-amber-300 border border-stone-200/80 dark:border-stone-800'
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4 text-amber-500 shrink-0" />
-            <span>แดชบอร์ดตรวจสอบ (Audit Cockpit)</span>
-          </button>
-        </div>
 
-        {/* Lifecycle & Knowledge Groups */}
-        {LIFECYCLE_STEPS.map((group, gIdx) => (
-          <div key={gIdx} className="space-y-1.5 pt-2 first:pt-0">
-            <div className="px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:via-amber-950/20 dark:to-transparent rounded-lg border-l-3 border-amber-500 text-[11px] font-black text-amber-950 dark:text-amber-200 tracking-wide uppercase flex items-center justify-between shadow-2xs">
-              <span>{group.groupTitle}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 dark:bg-amber-400/70 shrink-0"></span>
-            </div>
-
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentTab === item.id;
-
-                return (
-                  <div key={item.id} className="space-y-0.5">
-                    <button
-                      onClick={() => {
-                        if (isExpired && !isAdmin) {
-                          if (onShowExpiredModal) onShowExpiredModal();
-                          else setCurrentTab('welcome');
-                          return;
-                        }
-                        setCurrentTab(item.id);
-                        if (item.hasSubmenu) {
-                          setToolkitSubmenuOpen(!toolkitSubmenuOpen);
-                        }
-                      }}
-                      className={`w-full text-left p-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer ${
-                        isActive
-                          ? 'bg-stone-800 text-amber-100 shadow-xs font-bold border-l-4 border-amber-500'
-                          : isExpired && !isAdmin
-                          ? 'text-stone-400 dark:text-stone-600 opacity-60 hover:bg-stone-100 dark:hover:bg-stone-900'
-                          : 'text-stone-600 dark:text-stone-400 hover:bg-stone-200/60 dark:hover:bg-stone-800/80 hover:text-stone-900 dark:hover:text-stone-200'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2.5 truncate">
-                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : isExpired && !isAdmin ? 'text-stone-400' : 'text-stone-400 dark:text-stone-500'}`} />
-                        <span className="truncate">{item.label}</span>
-                      </div>
-
-                      {isExpired && !isAdmin ? (
-                        <Lock className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500 shrink-0 ml-1" />
-                      ) : item.hasSubmenu ? (
-                        <div className="p-0.5">
-                          {toolkitSubmenuOpen ? (
-                            <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
-                          ) : (
-                            <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                          )}
-                        </div>
-                      ) : null}
-                    </button>
-
-                    {/* Submenu for Technical Toolkits */}
-                    {item.hasSubmenu && toolkitSubmenuOpen && (
-                      <div className="pl-6 space-y-0.5 pt-0.5">
-                        {item.subItems.map((sub) => {
-                          const SubIcon = sub.icon;
-                          const isSubActive = isActive && activeToolkitTab === sub.toolId;
-
-                          return (
-                            <button
-                              key={sub.toolId}
-                              onClick={() => {
-                                if (isExpired && !isAdmin) {
-                                  if (onShowExpiredModal) onShowExpiredModal();
-                                  else setCurrentTab('welcome');
-                                  return;
-                                }
-                                setCurrentTab('audit-toolkits');
-                                if (setActiveToolkitTab) setActiveToolkitTab(sub.toolId);
-                              }}
-                              className={`w-full text-left py-1.5 px-2.5 rounded-lg text-[11px] font-medium transition-all flex items-center justify-between cursor-pointer ${
-                                isSubActive
-                                  ? 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-bold border-l-2 border-amber-600'
-                                  : isExpired && !isAdmin
-                                  ? 'text-stone-400 opacity-60'
-                                  : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/60'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-2 truncate">
-                                <SubIcon className="w-3 h-3 text-stone-400" />
-                                <span className="truncate">{sub.label}</span>
-                              </div>
-                              {isExpired && !isAdmin && <Lock className="w-2.5 h-2.5 text-stone-400 shrink-0 ml-1" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* User Feedback & Suggestions button */}
-        <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800">
-          <button
-            onClick={() => {
-              if (onOpenFeedback) onOpenFeedback();
-            }}
-            className="w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/20 hover:border-amber-500/40 shadow-2xs group"
-          >
-            <span className="p-1 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 group-hover:scale-110 transition-transform">
-              <MessageSquarePlus className="w-4 h-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="font-bold text-xs truncate">เสนอแนะ / แจ้งปัญหา</div>
-              <div className="text-[10px] text-stone-500 dark:text-stone-400 font-normal truncate">ส่งตรงถึง ADMIN เพื่อพัฒนาระบบ</div>
-            </div>
-          </button>
-        </div>
-
-        {/* Super Admin Backoffice Menu Item (Exclusive for Admin - Step 12 at bottom) */}
-        {isAdmin && (
-          <div className="space-y-1 pt-3 border-t border-stone-200/80 dark:border-stone-800">
-            <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 px-2 tracking-wider uppercase flex items-center justify-between">
-              <span>ส่วนผู้ดูแลระบบกลาง</span>
+        {/* ========================================================================= */}
+        {/* CASE 1: SUPER ADMIN IN ADMIN CONSOLE MODE (รูปแบบที่ 1 เฉพาะ ADMIN)      */}
+        {/* ========================================================================= */}
+        {isAdmin && adminWorkspaceMode === 'admin' ? (
+          <div className="space-y-3">
+            {/* Admin Header Title */}
+            <div className="px-2.5 py-1.5 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:via-amber-950/20 dark:to-transparent rounded-lg border-l-3 border-amber-500 text-[11px] font-black text-amber-950 dark:text-amber-200 tracking-wide uppercase flex items-center justify-between shadow-2xs">
+              <span className="flex items-center gap-1.5">
+                <Crown className="w-3.5 h-3.5 text-amber-600" />
+                <span>เมนูบริหารจัดการระบบ (ADMIN)</span>
+              </span>
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
             </div>
 
-            <button
-              onClick={() => setCurrentTab('backoffice')}
-              className={`w-full text-left p-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                currentTab === 'backoffice'
-                  ? 'bg-gradient-to-r from-amber-700 via-amber-800 to-stone-800 text-amber-100 shadow-md border-l-4 border-amber-400'
-                  : 'bg-amber-50/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 hover:bg-amber-100 border border-amber-200/80 dark:border-amber-800/60'
-              }`}
-            >
-              <div className="flex items-center space-x-2.5">
-                <Settings className="w-4 h-4 text-amber-700 dark:text-amber-300" />
-                <span>14. ระบบหลังบ้าน Super Admin</span>
+            {/* 7 Admin Dedicated Menu Items */}
+            <div className="space-y-1">
+              {ADMIN_STEPS.map((item) => {
+                const Icon = item.icon;
+                const isActive = item.targetTab === 'backoffice'
+                  ? (currentTab === 'backoffice' && adminSubTab === item.subTab)
+                  : (currentTab === item.targetTab);
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setCurrentTab(item.targetTab);
+                      if (item.subTab && setAdminSubTab) {
+                        setAdminSubTab(item.subTab);
+                      }
+                    }}
+                    className={`w-full text-left p-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer ${
+                      isActive
+                        ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-200 shadow-md font-bold border-l-4 border-amber-400 ring-1 ring-amber-500/30'
+                        : 'bg-white dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 hover:bg-amber-50/70 dark:hover:bg-amber-950/30 hover:text-amber-900 dark:hover:text-amber-200 border border-stone-200/80 dark:border-stone-800'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2.5 truncate">
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : 'text-stone-500 dark:text-stone-400'}`} />
+                      <div className="truncate">
+                        <div className="truncate font-bold text-xs">{item.label}</div>
+                      </div>
+                    </div>
+
+                    {item.badge && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ml-1 shrink-0 ${item.badgeColor || 'bg-amber-500 text-stone-950'}`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick Switch to Auditor Workspace button at bottom */}
+            <div className="pt-4 border-t border-stone-200/80 dark:border-stone-800 space-y-2">
+              <div className="px-1 text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">
+                พื้นที่ปฏิบัติงานตรวจสอบ (WORKSPACE)
               </div>
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (setAdminWorkspaceMode) setAdminWorkspaceMode('auditor');
+                  setCurrentTab('dashboard');
+                }}
+                className="w-full text-left p-3 rounded-2xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer bg-gradient-to-r from-stone-800 via-stone-900 to-amber-950 text-amber-200 hover:from-stone-700 hover:to-amber-900 border border-amber-500/30 shadow-md group"
+              >
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-black text-xs text-amber-100 truncate">
+                      🛡️ สลับไปพื้นที่ตรวจ (Auditor View)
+                    </div>
+                    <div className="text-[10px] text-stone-400 font-normal truncate">
+                      ดูและทดสอบ 11 ขั้นตอนของ อปท.
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-amber-400 shrink-0 ml-1 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
           </div>
+        ) : (
+          /* ========================================================================= */
+          /* CASE 2: AUDITOR WORKSPACE (REGULAR AUDITOR OR ADMIN IN PREVIEW MODE)     */
+          /* ========================================================================= */
+          <>
+            {/* Top Return to Admin Banner if Admin is in Auditor mode */}
+            {isAdmin && adminWorkspaceMode === 'auditor' && (
+              <div className="p-2.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-600/15 to-transparent border border-amber-500/40 space-y-2 mb-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-amber-900 dark:text-amber-200 uppercase tracking-wider flex items-center gap-1">
+                    <span>👁️ โหมดทดสอบพื้นที่ตรวจ</span>
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-200 font-mono font-bold border border-amber-500/30">
+                    AUDITOR VIEW
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (setAdminWorkspaceMode) setAdminWorkspaceMode('admin');
+                    setCurrentTab('backoffice');
+                  }}
+                  className="w-full py-2 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>👑 กลับสู่ศูนย์ควบคุม Super Admin</span>
+                </button>
+              </div>
+            )}
+
+            {/* Navigation to Welcome & Cockpit Dashboard */}
+            <div className="space-y-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentTab('welcome')}
+                className={`w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer ${
+                  currentTab === 'welcome'
+                    ? 'bg-stone-800 text-amber-100 shadow-xs border-l-4 border-amber-500'
+                    : 'bg-white dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 hover:text-amber-800 dark:hover:text-amber-300 border border-stone-200/80 dark:border-stone-800'
+                }`}
+              >
+                <span className="text-sm">🏠</span>
+                <span>หน้าแรก (ภาพรวมระบบ)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (isExpired && !isAdmin) {
+                    if (onShowExpiredModal) onShowExpiredModal();
+                    else setCurrentTab('welcome');
+                    return;
+                  }
+                  setCurrentTab('dashboard');
+                }}
+                className={`w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer ${
+                  currentTab === 'dashboard'
+                    ? 'bg-stone-800 text-amber-100 shadow-xs border-l-4 border-amber-500'
+                    : 'bg-white dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 hover:text-amber-800 dark:hover:text-amber-300 border border-stone-200/80 dark:border-stone-800'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>แดชบอร์ดตรวจสอบ (Audit Cockpit)</span>
+              </button>
+            </div>
+
+            {/* Lifecycle & Knowledge Groups (11 Steps) */}
+            {LIFECYCLE_STEPS.map((group, gIdx) => (
+              <div key={gIdx} className="space-y-1.5 pt-2 first:pt-0">
+                <div className="px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:via-amber-950/20 dark:to-transparent rounded-lg border-l-3 border-amber-500 text-[11px] font-black text-amber-950 dark:text-amber-200 tracking-wide uppercase flex items-center justify-between shadow-2xs">
+                  <span>{group.groupTitle}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 dark:bg-amber-400/70 shrink-0"></span>
+                </div>
+
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentTab === item.id;
+
+                    return (
+                      <div key={item.id} className="space-y-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isExpired && !isAdmin) {
+                              if (onShowExpiredModal) onShowExpiredModal();
+                              else setCurrentTab('welcome');
+                              return;
+                            }
+                            setCurrentTab(item.id);
+                            if (item.hasSubmenu) {
+                              setToolkitSubmenuOpen(!toolkitSubmenuOpen);
+                            }
+                          }}
+                          className={`w-full text-left p-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer ${
+                            isActive
+                              ? 'bg-stone-800 text-amber-100 shadow-xs font-bold border-l-4 border-amber-500'
+                              : isExpired && !isAdmin
+                              ? 'text-stone-400 dark:text-stone-600 opacity-60 hover:bg-stone-100 dark:hover:bg-stone-900'
+                              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-200/60 dark:hover:bg-stone-800/80 hover:text-stone-900 dark:hover:text-stone-200'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2.5 truncate">
+                            <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : isExpired && !isAdmin ? 'text-stone-400' : 'text-stone-400 dark:text-stone-500'}`} />
+                            <span className="truncate">{item.label}</span>
+                          </div>
+
+                          {isExpired && !isAdmin ? (
+                            <Lock className="w-3.5 h-3.5 text-stone-400 dark:text-stone-500 shrink-0 ml-1" />
+                          ) : item.hasSubmenu ? (
+                            <div className="p-0.5">
+                              {toolkitSubmenuOpen ? (
+                                <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
+                              ) : (
+                                <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
+                              )}
+                            </div>
+                          ) : null}
+                        </button>
+
+                        {/* Submenu for Technical Toolkits */}
+                        {item.hasSubmenu && toolkitSubmenuOpen && (
+                          <div className="pl-6 space-y-0.5 pt-0.5">
+                            {item.subItems.map((sub) => {
+                              const SubIcon = sub.icon;
+                              const isSubActive = isActive && activeToolkitTab === sub.toolId;
+
+                              return (
+                                <button
+                                  key={sub.toolId}
+                                  type="button"
+                                  onClick={() => {
+                                    if (isExpired && !isAdmin) {
+                                      if (onShowExpiredModal) onShowExpiredModal();
+                                      else setCurrentTab('welcome');
+                                      return;
+                                    }
+                                    setCurrentTab('audit-toolkits');
+                                    if (setActiveToolkitTab) setActiveToolkitTab(sub.toolId);
+                                  }}
+                                  className={`w-full text-left py-1.5 px-2.5 rounded-lg text-[11px] font-medium transition-all flex items-center justify-between cursor-pointer ${
+                                    isSubActive
+                                      ? 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-bold border-l-2 border-amber-600'
+                                      : isExpired && !isAdmin
+                                      ? 'text-stone-400 opacity-60'
+                                      : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/60'
+                                  }`}
+                                >
+                                  <div className="flex items-center space-x-2 truncate">
+                                    <SubIcon className="w-3 h-3 text-stone-400" />
+                                    <span className="truncate">{sub.label}</span>
+                                  </div>
+                                  {isExpired && !isAdmin && <Lock className="w-2.5 h-2.5 text-stone-400 shrink-0 ml-1" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* User Feedback & Suggestions button */}
+            <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenFeedback) onOpenFeedback();
+                }}
+                className="w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/20 hover:border-amber-500/40 shadow-2xs group"
+              >
+                <span className="p-1 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 group-hover:scale-110 transition-transform">
+                  <MessageSquarePlus className="w-4 h-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs truncate">เสนอแนะ / แจ้งปัญหา</div>
+                  <div className="text-[10px] text-stone-500 dark:text-stone-400 font-normal truncate">ส่งตรงถึง ADMIN เพื่อพัฒนาระบบ</div>
+                </div>
+              </button>
+            </div>
+
+            {/* Bottom Return to Super Admin Button for Admin */}
+            {isAdmin && adminWorkspaceMode === 'auditor' && (
+              <div className="pt-3 border-t border-stone-200/80 dark:border-stone-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (setAdminWorkspaceMode) setAdminWorkspaceMode('admin');
+                    setCurrentTab('backoffice');
+                  }}
+                  className="w-full py-2.5 px-3 rounded-2xl text-xs font-black bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 text-amber-100 shadow-md flex items-center justify-center gap-2 cursor-pointer hover:brightness-110 transition-all"
+                >
+                  <Crown className="w-4 h-4 text-amber-300" />
+                  <span>👑 กลับสู่ศูนย์ควบคุม Super Admin</span>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
       {/* Sidebar Footer */}
-      <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 text-center">
+      <div className="p-3 border-t border-stone-200/60 dark:border-stone-800 text-[10px] text-stone-400 text-center">
         <div>Audit-OS for Local Government</div>
-        <div className="text-[9px] text-slate-500">เวอร์ชัน 2.5 (SaaS Auditor Edition)</div>
+        <div className="text-[9px] text-stone-500">เวอร์ชัน 2.6 (SaaS Auditor & Admin Console)</div>
       </div>
     </aside>
   );

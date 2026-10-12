@@ -87,10 +87,10 @@ import {
 } from './data/initialData';
 
 // Run auto-repair of department linkages and user accounts synchronously before state initialization
-try {
-  autoRepairDataLinkages();
-} catch (e) {
-  console.error(e);
+// Helper: Default landing tab based on role (Admin -> backoffice, Auditor -> dashboard, None -> welcome)
+function getDefaultTabForUser(s) {
+  if (!s) return 'welcome';
+  return s.role === 'admin' ? 'backoffice' : 'dashboard';
 }
 
 export default function App() {
@@ -265,7 +265,12 @@ export default function App() {
 
   // Navigation & Fiscal Year State - defaults to current local gov fiscal year (1 Oct - 30 Sep)
   const [selectedYear, setSelectedYear] = useState(() => getCurrentFiscalYear());
-  const [currentTab, setCurrentTab] = useState(() => (getSession() ? 'dashboard' : 'welcome'));
+  const [currentTab, setCurrentTab] = useState(() => {
+    const sess = getSession();
+    return getDefaultTabForUser(sess);
+  });
+  const [adminSubTab, setAdminSubTab] = useState('overview');
+  const [adminWorkspaceMode, setAdminWorkspaceMode] = useState(() => (getSession()?.role === 'admin' ? 'admin' : 'auditor'));
   const [selectedWp, setSelectedWp] = useState(() => (parseInt(getCurrentFiscalYear(), 10) >= 2570 ? 'WP-PRICE-2570' : 'WP-KTB-01'));
   const [activeToolkitTab, setActiveToolkitTab] = useState('factor-f');
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -298,6 +303,11 @@ export default function App() {
   }, [currentTab]);
 
   const handleSelectTab = (tab) => {
+    if (tab === 'backoffice' || tab === 'users') {
+      if (session?.role === 'admin') {
+        setAdminWorkspaceMode('admin');
+      }
+    }
     setCurrentTab(tab);
     if (mainContentRef.current) {
       mainContentRef.current.scrollTop = 0;
@@ -1268,11 +1278,6 @@ export default function App() {
     else if (data.capaFindings) setCapaFindingsByYear({ [selectedYear]: data.capaFindings });
   };
 
-  // Helper: Default landing tab based on role (all users start on Dashboard)
-  const getDefaultTabForUser = (s) => {
-    return 'dashboard';
-  };
-
   // Route Guard: Ensure auditors and admin access appropriate tabs and check subscription
   useEffect(() => {
     if (!session) return;
@@ -1331,7 +1336,13 @@ export default function App() {
             if (sub.expired && s.role !== 'admin') {
               setCurrentTab('welcome');
             } else {
-              setCurrentTab('dashboard');
+              if (s?.role === 'admin') {
+                setAdminWorkspaceMode('admin');
+                setAdminSubTab('overview');
+                setCurrentTab('backoffice');
+              } else {
+                setCurrentTab('dashboard');
+              }
             }
           }}
           onEnterDashboard={() => {
@@ -1339,7 +1350,13 @@ export default function App() {
             if (sub.expired && session?.role !== 'admin') {
               setCurrentTab('welcome');
             } else {
-              setCurrentTab('dashboard');
+              if (session?.role === 'admin') {
+                setAdminWorkspaceMode('admin');
+                setAdminSubTab('overview');
+                setCurrentTab('backoffice');
+              } else {
+                setCurrentTab('dashboard');
+              }
             }
           }}
         />
@@ -1363,7 +1380,13 @@ export default function App() {
         onLogin={(sess) => {
           const s = sess || getSession();
           setSession(s);
-          setCurrentTab('dashboard');
+          if (s?.role === 'admin') {
+            setAdminWorkspaceMode('admin');
+            setAdminSubTab('overview');
+            setCurrentTab('backoffice');
+          } else {
+            setCurrentTab('dashboard');
+          }
         }}
         onBackToWelcome={() => setCurrentTab('welcome')}
       />
@@ -1424,6 +1447,10 @@ export default function App() {
         pendingCount={pendingCount}
         currentTab={currentTab}
         setCurrentTab={handleSelectTab}
+        adminWorkspaceMode={adminWorkspaceMode}
+        setAdminWorkspaceMode={setAdminWorkspaceMode}
+        adminSubTab={adminSubTab}
+        setAdminSubTab={setAdminSubTab}
       />
 
       {/* Real-time Broadcast Announcement Banner จาก Super Admin */}
@@ -1588,6 +1615,10 @@ export default function App() {
           onShowExpiredModal={() => setShowPackageModal(true)}
           onOpenFeedback={() => setShowFeedbackModal(true)}
           onOpenPackageModal={() => setShowPackageModal(true)}
+          adminSubTab={adminSubTab}
+          setAdminSubTab={setAdminSubTab}
+          adminWorkspaceMode={adminWorkspaceMode}
+          setAdminWorkspaceMode={setAdminWorkspaceMode}
         />
 
         <main ref={mainContentRef} className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 lg:p-8 bg-[#faf8f5] dark:bg-[#151413] custom-scrollbar print:p-0 print:m-0 print:bg-white print:overflow-visible">
@@ -1897,7 +1928,12 @@ export default function App() {
               <AdminBackofficeView
                 key={`backoffice-${session?.username}`}
                 currentSession={session}
-                onSwitchToWorkbench={() => handleSelectTab('audit-risk')}
+                activeTab={adminSubTab}
+                onTabChange={setAdminSubTab}
+                onSwitchToWorkbench={() => {
+                  setAdminWorkspaceMode('auditor');
+                  handleSelectTab('dashboard');
+                }}
                 onRefreshUser={() => {
                   setSession(getSession());
                   reloadDataFromStorage();
