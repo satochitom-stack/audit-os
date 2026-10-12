@@ -923,8 +923,8 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               ไม่พบรายการเอกสารในคลังกลาง
             </h3>
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-md mx-auto">
-              {searchTerm || selectedCategory
-                ? 'ไม่พบเอกสารที่ตรงกับเงื่อนไขการค้นหา ลองเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่อื่น'
+              {searchTerm
+                ? 'ไม่พบเอกสารที่ตรงกับเงื่อนไขการค้นหา ลองเปลี่ยนคำค้นหาใหม่'
                 : 'ขณะนี้ไม่มีเอกสารในคลังกลาง (เอกสารถูกลบออกแล้ว) สามารถอัปโหลดเอกสารใหม่ หรือให้ Admin กู้คืนเอกสารตัวอย่างตั้งต้นได้'}
             </p>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
