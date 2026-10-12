@@ -36,8 +36,11 @@ import {
   Clock,
   Layers,
   HelpCircle,
-  File
+  File,
+  RotateCcw
 } from 'lucide-react';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import {
   CENTRAL_DOC_CATEGORIES,
   INITIAL_CENTRAL_DOCUMENTS
@@ -52,6 +55,22 @@ import {
 import { luxuryConfirm, luxuryAlert } from './LuxuryModal';
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
+const DELETED_DOCS_KEY = 'ia_deleted_central_doc_ids';
+
+const getDeletedDocIds = () => {
+  try {
+    const saved = localStorage.getItem(DELETED_DOCS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch (_) {
+    return [];
+  }
+};
+
+const saveDeletedDocIds = (ids) => {
+  try {
+    localStorage.setItem(DELETED_DOCS_KEY, JSON.stringify(ids));
+  } catch (_) {}
+};
 
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return '0 B';
@@ -66,22 +85,26 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   const currentUserName = session?.user?.name || session?.username || 'ผู้ตรวจสอบภายใน';
   const isAdmin = session?.role === 'admin';
 
-  // Load documents metadata from localStorage
+  // Load documents metadata from localStorage with deleted blacklist protection
   const [documents, setDocuments] = useState(() => {
     try {
+      const deletedIds = new Set(getDeletedDocIds());
       const saved = localStorage.getItem('ia_central_documents');
-      if (saved) {
+      if (saved !== null) {
         let parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const cleaned = parsed.filter((d) => !d.id?.startsWith('DOC-V614-'));
-          if (cleaned.length !== parsed.length) {
-            localStorage.setItem('ia_central_documents', JSON.stringify(cleaned));
-          }
-          return cleaned.length > 0 ? cleaned : INITIAL_CENTRAL_DOCUMENTS;
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed
+            .filter((d) => !d.id?.startsWith('DOC-V614-'))
+            .filter((d) => !deletedIds.has(d.id));
+          return cleaned; // Strictly return cleaned, even if empty array! Never resurrect!
         }
       }
+      // First time initialization: filter defaults by blacklist
+      return INITIAL_CENTRAL_DOCUMENTS.filter(
+        (d) => !d.id?.startsWith('DOC-V614-') && !deletedIds.has(d.id)
+      );
     } catch (_) {}
-    return INITIAL_CENTRAL_DOCUMENTS;
+    return [];
   });
 
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -126,10 +149,70 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const saveDocumentsToStorage = (list) => {
+  // Sync with Cloud Firestore & localStorage
+  const saveDocumentsToStorage = async (list, newlyDeletedIds = []) => {
     setDocuments(list);
     localStorage.setItem('ia_central_documents', JSON.stringify(list));
+
+    let currentDeleted = getDeletedDocIds();
+    if (newlyDeletedIds && newlyDeletedIds.length > 0) {
+      const set = new Set([...currentDeleted, ...newlyDeletedIds]);
+      currentDeleted = Array.from(set);
+      saveDeletedDocIds(currentDeleted);
+    }
+
+    try {
+      const docRef = doc(db, 'system_settings', 'central_documents');
+      await setDoc(
+        docRef,
+        {
+          documents: list,
+          deletedIds: currentDeleted,
+          updatedAt: new Date().toISOString(),
+          updatedBy: currentUserName
+        },
+        { merge: true }
+      );
+    } catch (err) {
+      console.warn('Central documents sync to Firestore failed:', err);
+    }
   };
+
+  // Real-time synchronization from Firestore
+  useEffect(() => {
+    try {
+      const docRef = doc(db, 'system_settings', 'central_documents');
+      const unsubscribe = onSnapshot(
+        docRef,
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            const remoteDocs = data?.documents;
+            const remoteDeleted = data?.deletedIds || [];
+            if (Array.isArray(remoteDeleted) && remoteDeleted.length > 0) {
+              const currentDeleted = new Set(getDeletedDocIds());
+              remoteDeleted.forEach((id) => currentDeleted.add(id));
+              saveDeletedDocIds(Array.from(currentDeleted));
+            }
+            if (Array.isArray(remoteDocs)) {
+              const deletedIds = new Set(getDeletedDocIds());
+              const filtered = remoteDocs
+                .filter((d) => !d.id?.startsWith('DOC-V614-'))
+                .filter((d) => !deletedIds.has(d.id));
+              setDocuments(filtered);
+              localStorage.setItem('ia_central_documents', JSON.stringify(filtered));
+            }
+          }
+        },
+        (err) => {
+          console.warn('Firestore central_documents snapshot error:', err);
+        }
+      );
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Failed to listen to central_documents:', e);
+    }
+  }, []);
 
   // Fetch attached file from IndexedDB when a document is opened for preview
   useEffect(() => {
@@ -411,7 +494,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
       title: 'ยืนยันการลบเอกสารแม่แบบ',
       message: 'คุณต้องการลบเอกสารนี้ออกจากคลังเอกสารแม่แบบกลางหรือไม่?',
       itemTitle: doc.title,
-      subMessage: '⚠️ เอกสารและไฟล์แนบที่ถูกลบจะไม่สามารถกู้คืนได้ และผู้ใช้งานอื่นจะไม่สามารถเปิดดูหรือดาวน์โหลดได้อีก',
+      subMessage: '⚠️ เอกสารนี้จะถูกลบถาวรออกจากคลังกลาง และจะไม่ปรากฏในระบบอีกต่อไป',
       confirmText: 'ลบเอกสารทันที',
       cancelText: 'ยกเลิก',
       variant: 'danger'
@@ -425,11 +508,57 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     }
 
     const updated = documents.filter((d) => d.id !== doc.id);
-    saveDocumentsToStorage(updated);
+    await saveDocumentsToStorage(updated, [doc.id]);
     if (previewDoc?.id === doc.id) {
       setPreviewDoc(null);
     }
-    showToast(`ลบ "${doc.title}" เรียบร้อยแล้ว`);
+    showToast(`ลบ "${doc.title}" ออกจากคลังเรียบร้อยแล้ว`);
+  };
+
+  // Clear All Documents (Admin only - instant batch clean)
+  const handleClearAllDocs = async () => {
+    if (!isAdmin) return;
+    const count = documents.length;
+    const confirmed = await luxuryConfirm({
+      title: 'ยืนยันล้างคลังเอกสารทั้งหมด',
+      message: `คุณต้องการลบเอกสารทั้งหมด ${count} รายการออกจากคลังกลางหรือไม่?`,
+      subMessage: '⚠️ เอกสารทั้งหมดจะถูกลบถาวรออกจากคลังกลาง และจะไม่ถูกโหลดกลับมาซ้ำอีกเมื่อรีเฟรชหน้าเว็บ',
+      confirmText: 'ล้างข้อมูลทั้งหมดทันที',
+      cancelText: 'ยกเลิก',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
+
+    const allIds = documents.map((d) => d.id);
+    for (const doc of documents) {
+      if (doc.hasAttachment || doc.id?.startsWith('DOC-USER-')) {
+        try {
+          await deleteDocumentFile(doc.id);
+        } catch (_) {}
+      }
+    }
+
+    await saveDocumentsToStorage([], allIds);
+    setPreviewDoc(null);
+    showToast(`ล้างคลังเอกสารเรียบร้อยแล้ว (ลบทั้งหมด ${count} รายการ)`);
+  };
+
+  // Restore Default Sample Templates (Admin only)
+  const handleRestoreSampleDocs = async () => {
+    if (!isAdmin) return;
+    const confirmed = await luxuryConfirm({
+      title: 'คืนค่าเอกสารตัวอย่างตั้งต้น',
+      message: 'คุณต้องการโหลดเอกสารแม่แบบตัวอย่างตั้งต้นของระบบกลับมาหรือไม่?',
+      subMessage: 'ระบบจะคืนค่ารายการเอกสารแม่แบบกฎหมาย ระเบียบ และกระดาษทำการตัวอย่าง 28 รายการกลับมาในคลังกลาง',
+      confirmText: 'คืนค่าตัวอย่าง',
+      cancelText: 'ยกเลิก',
+      variant: 'info'
+    });
+    if (!confirmed) return;
+
+    saveDeletedDocIds([]);
+    await saveDocumentsToStorage(INITIAL_CENTRAL_DOCUMENTS, []);
+    showToast('คืนค่าเอกสารแม่แบบตัวอย่างเรียบร้อยแล้ว');
   };
 
   // Category badge styling helper
@@ -545,8 +674,19 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
             )}
           </div>
 
-          {/* Action Toolbar: Upload Button (All Users) + Contained Search Input */}
+          {/* Action Toolbar: Clear All (Admin), Upload Button (All Users) + Contained Search Input */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 max-w-full">
+            {isAdmin && documents.length > 0 && (
+              <button
+                onClick={handleClearAllDocs}
+                className="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold py-2.5 px-3.5 rounded-xl text-xs transition-all shadow-2xs flex items-center space-x-1.5 cursor-pointer shrink-0"
+                title="ล้างเอกสารทั้งหมดออกจากคลังกลาง (เฉพาะ Admin)"
+              >
+                <Trash2 className="w-4 h-4 text-rose-600" />
+                <span>ล้างคลังทั้งหมด</span>
+              </button>
+            )}
+
             <button
               onClick={() => setShowAddDocModal(true)}
               className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2 cursor-pointer shrink-0 border border-amber-500/30 active:scale-98 whitespace-nowrap"
@@ -695,7 +835,8 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   >
                     {/* View / Open Button (เปิดดู) */}
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setPreviewDoc(doc);
                         setPreviewTab('preview');
                       }}
@@ -708,7 +849,8 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
                     {/* Detail Button */}
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setPreviewDoc(doc);
                         setPreviewTab('summary');
                       }}
@@ -722,7 +864,10 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                     {/* Clone to Working Paper (if applicable) */}
                     {isWorkingPaper && (
                       <button
-                        onClick={() => handleCloneWorkingPaper(doc)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCloneWorkingPaper(doc);
+                        }}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-2.5 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer"
                         title="คัดลอกลงกระดาษทำการของฉัน"
                       >
@@ -733,7 +878,10 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
                     {/* Copy Text Button */}
                     <button
-                      onClick={() => handleCopyText(doc.id, doc.fullContent || doc.summary)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyText(doc.id, doc.fullContent || doc.summary);
+                      }}
                       className="p-1.5 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors cursor-pointer"
                       title="คัดลอกข้อความ"
                     >
@@ -747,7 +895,10 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                     {/* Delete Button (if authorized) */}
                     {canDelete && (
                       <button
-                        onClick={() => handleDeleteDoc(doc)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDoc(doc);
+                        }}
                         className="p-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-400 hover:text-rose-600 transition-colors cursor-pointer"
                         title="ลบเอกสาร"
                       >
@@ -761,13 +912,34 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
           </div>
         ) : (
           <div className="text-center py-16 px-4">
-            <BookOpen className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+            <BookOpen className="w-12 h-12 text-stone-300 dark:text-stone-700 mx-auto mb-3" />
             <h3 className="text-base font-bold text-stone-700 dark:text-stone-200">
-              ไม่พบรายการเอกสารที่ตรงกับเงื่อนไข
+              ไม่พบรายการเอกสารในคลังกลาง
             </h3>
-            <p className="text-xs text-stone-500 mt-1 max-w-md mx-auto">
-              ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่น หรือกดปุ่ม <strong>"+ อัปโหลด / เพิ่มเอกสารกลาง"</strong> เพื่อเพิ่มเอกสารใหม่เข้าสู่ระบบ
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-md mx-auto">
+              {searchTerm || selectedCategory
+                ? 'ไม่พบเอกสารที่ตรงกับเงื่อนไขการค้นหา ลองเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่อื่น'
+                : 'ขณะนี้ไม่มีเอกสารในคลังกลาง (เอกสารถูกลบออกแล้ว) สามารถอัปโหลดเอกสารใหม่ หรือให้ Admin กู้คืนเอกสารตัวอย่างตั้งต้นได้'}
             </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+              <button
+                onClick={() => setShowAddDocModal(true)}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileUp className="w-3.5 h-3.5" />
+                <span>+ อัปโหลดเอกสารใหม่</span>
+              </button>
+              {isAdmin && (
+                <button
+                  onClick={handleRestoreSampleDocs}
+                  className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold py-2 px-4 rounded-xl text-xs transition-all border border-stone-200 dark:border-stone-700 flex items-center gap-1.5 cursor-pointer"
+                  title="คืนค่าเอกสารแม่แบบตัวอย่างตั้งต้น 28 รายการ"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
+                  <span>กู้คืนเอกสารตัวอย่างตั้งต้น</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -1147,6 +1319,19 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               </div>
 
               <div className="flex items-center space-x-2">
+                {(isAdmin ||
+                  previewDoc.uploadedBy === currentUserName ||
+                  (previewDoc.id?.startsWith('DOC-USER-') && !previewDoc.isSystemProtected)) && (
+                  <button
+                    onClick={() => handleDeleteDoc(previewDoc)}
+                    className="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                    title="ลบเอกสารนี้ออกจากคลังกลาง"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                    <span>ลบเอกสาร</span>
+                  </button>
+                )}
+
                 {previewDoc.category === 'working-papers' && (
                   <button
                     onClick={() => {
