@@ -43,6 +43,7 @@ import AuditFollowUpView from './components/AuditFollowUpView';
 import AuditCommitteeView from './components/AuditCommitteeView';
 import SystemUpdateNotification from './components/SystemUpdateNotification';
 import UserFeedbackModal from './components/UserFeedbackModal';
+import PackageRenewalModal from './components/PackageRenewalModal';
 import { INITIAL_ENGAGEMENT_PLANS, createEngagementPlansForYear } from './data/engagementPlanTemplates';
 import { getCurrentFiscalYear, getStandardFiscalYears } from './utils/dateUtils';
 import {
@@ -104,6 +105,20 @@ export default function App() {
   const [pendingCount, setPendingCount] = useState(() => getPendingUsers().length);
   const [systemSettings, setSystemSettings] = useState(() => getSystemSettings());
   const [dismissedAnnouncement, setDismissedAnnouncement] = useState(false);
+  const [showPackageModal, setShowPackageModal] = useState(false);
+
+  // Listen to active session & users updates (e.g. tier changed by admin or renewal)
+  useEffect(() => {
+    const handleSessionUpdated = () => {
+      setSession(getSession());
+    };
+    window.addEventListener('ia-session-updated', handleSessionUpdated);
+    window.addEventListener('ia-users-changed', handleSessionUpdated);
+    return () => {
+      window.removeEventListener('ia-session-updated', handleSessionUpdated);
+      window.removeEventListener('ia-users-changed', handleSessionUpdated);
+    };
+  }, []);
 
   // Listen to system settings & broadcast announcements
   useEffect(() => {
@@ -1253,9 +1268,9 @@ export default function App() {
     else if (data.capaFindings) setCapaFindingsByYear({ [selectedYear]: data.capaFindings });
   };
 
-  // Helper: Default landing tab based on role (auditor and admin start on Step 1: Audit Risk)
+  // Helper: Default landing tab based on role (all users start on Dashboard)
   const getDefaultTabForUser = (s) => {
-    return 'audit-risk';
+    return 'dashboard';
   };
 
   // Route Guard: Ensure auditors and admin access appropriate tabs and check subscription
@@ -1266,14 +1281,16 @@ export default function App() {
     // Check expiration lockout (Trial 30 days or expired subscription)
     const sub = checkUserSubscription(session);
     if (sub.expired) {
-      if (currentTab !== 'welcome') {
-        setCurrentTab('welcome');
+      setShowPackageModal(true);
+      if (currentTab !== 'welcome' && currentTab !== 'dashboard') {
+        setCurrentTab('dashboard');
       }
       return;
     }
 
-    // All 11 lifecycle steps for auditors
+    // All allowed tabs for auditors (must include dashboard)
     const allowed = [
+      'dashboard',
       'audit-risk',
       'strategic-plan',
       'planning',
@@ -1283,6 +1300,7 @@ export default function App() {
       'closing-meeting',
       'reporting',
       'tracking-register',
+      'audit-committee',
       'central-hub',
       'audit-toolkits',
       'internal-control',
@@ -1294,7 +1312,7 @@ export default function App() {
     ];
 
     if (!allowed.includes(currentTab)) {
-      setCurrentTab('audit-risk');
+      setCurrentTab('dashboard');
     }
   }, [session, currentTab]);
 
@@ -1402,6 +1420,7 @@ export default function App() {
         onOpenOnboarding={() => setShowOnboarding(true)}
         onOpenDlaTemplates={() => setShowDlaTemplates(true)}
         onOpenFeedback={() => setShowFeedbackModal(true)}
+        onOpenPackageModal={() => setShowPackageModal(true)}
         pendingCount={pendingCount}
         currentTab={currentTab}
         setCurrentTab={handleSelectTab}
@@ -1509,6 +1528,16 @@ export default function App() {
         />
       )}
 
+      {showPackageModal && (
+        <PackageRenewalModal
+          isOpen={showPackageModal}
+          onClose={() => setShowPackageModal(false)}
+          session={session}
+          settings={systemSettings}
+          onOpenFeedback={() => setShowFeedbackModal(true)}
+        />
+      )}
+
       {/* Cloud Sync / Registration Toast Notification */}
       {cloudToast && (
         <div
@@ -1556,8 +1585,9 @@ export default function App() {
           activeToolkitTab={activeToolkitTab}
           setActiveToolkitTab={setActiveToolkitTab}
           pendingCount={pendingCount}
-          onShowExpiredModal={() => handleSelectTab('welcome')}
+          onShowExpiredModal={() => setShowPackageModal(true)}
           onOpenFeedback={() => setShowFeedbackModal(true)}
+          onOpenPackageModal={() => setShowPackageModal(true)}
         />
 
         <main ref={mainContentRef} className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 lg:p-8 bg-[#faf8f5] dark:bg-[#151413] custom-scrollbar print:p-0 print:m-0 print:bg-white print:overflow-visible">
@@ -1579,6 +1609,7 @@ export default function App() {
                 session={session}
                 onLogout={handleLogout}
                 onOpenFeedback={() => setShowFeedbackModal(true)}
+                onOpenPackageModal={() => setShowPackageModal(true)}
               />
             )}
 

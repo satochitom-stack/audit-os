@@ -23,7 +23,8 @@ import {
   DollarSign,
   Lock,
   LayoutGrid,
-  MessageSquarePlus
+  MessageSquarePlus,
+  CreditCard
 } from 'lucide-react';
 import { MEMBERSHIP_PLANS, checkUserSubscription } from '../utils/auth';
 
@@ -36,7 +37,8 @@ export default function Sidebar({
   setActiveToolkitTab,
   pendingCount = 0,
   onShowExpiredModal,
-  onOpenFeedback
+  onOpenFeedback,
+  onOpenPackageModal
 }) {
   const isAdmin = session?.role === 'admin';
   const subStatus = checkUserSubscription(session);
@@ -114,26 +116,35 @@ export default function Sidebar({
             <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 to-amber-600 text-stone-950 border border-amber-300 shadow-2xs">
               👑 ROOT ADMIN
             </span>
-          ) : isExpired ? (
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1">
-              <Lock className="w-2.5 h-2.5" /> หมดอายุ (ล็อค)
-            </span>
-          ) : subStatus.isTrial ? (
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 shadow-2xs inline-flex items-center space-x-1">
-              <span>🌱 ฟรี 30 วัน</span>
-            </span>
-          ) : subStatus.tier === 'VIP' ? (
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border border-blue-400/50 shadow-sm inline-flex items-center space-x-1">
-              <span>⭐ VIP</span>
-            </span>
-          ) : subStatus.tier === 'PREMIUM' ? (
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border border-amber-200 shadow-md inline-flex items-center space-x-1">
-              <span>👑 PREMIUM</span>
-            </span>
           ) : (
-            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${planInfo.badgeColor}`}>
-              {planInfo.name.split(' ')[0]} {subStatus.isLifetime ? '(ตลอดชีพ)' : ''}
-            </span>
+            <button
+              type="button"
+              onClick={onOpenPackageModal}
+              title="คลิกเพื่อดูแพ็กเกจ & ต่ออายุสมาชิก"
+              className="cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+            >
+              {isExpired ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1">
+                  <Lock className="w-2.5 h-2.5" /> หมดอายุ (ล็อค)
+                </span>
+              ) : subStatus.isTrial ? (
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 shadow-2xs inline-flex items-center space-x-1">
+                  <span>🌱 ฟรี 30 วัน</span>
+                </span>
+              ) : subStatus.tier === 'VIP' ? (
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border border-blue-400/50 shadow-sm inline-flex items-center space-x-1">
+                  <span>⭐ VIP</span>
+                </span>
+              ) : subStatus.tier === 'PREMIUM' ? (
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border border-amber-200 shadow-md inline-flex items-center space-x-1">
+                  <span>👑 PREMIUM</span>
+                </span>
+              ) : (
+                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${planInfo.badgeColor}`}>
+                  {planInfo.name.split(' ')[0]} {subStatus.isLifetime ? '(ตลอดชีพ)' : ''}
+                </span>
+              )}
+            </button>
           )}
         </div>
 
@@ -165,6 +176,14 @@ export default function Sidebar({
             <div className="text-[10px] text-stone-400 truncate">
               {session?.position || 'นักวิชาการตรวจสอบภายใน'}
             </div>
+            <button
+              type="button"
+              onClick={onOpenPackageModal}
+              className="mt-2 w-full py-1.5 px-2 rounded-xl text-[11px] font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-800 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>💳 สมัคร / ต่ออายุแพ็กเกจ</span>
+            </button>
           </div>
         )}
 

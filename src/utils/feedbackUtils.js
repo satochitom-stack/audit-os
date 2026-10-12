@@ -2,6 +2,7 @@
 // บันทึกและส่งต่อถึง ADMIN เพื่อพัฒนาและปรับปรุงระบบตามความต้องการของ อปท.
 
 export const FEEDBACK_CATEGORIES = [
+  { id: 'renewal', label: '💳 แจ้งชำระเงิน / ขอต่ออายุแพ็กเกจ', badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' },
   { id: 'feature', label: '🚀 เสนอแนะฟังก์ชัน/ฟีเจอร์ใหม่', badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' },
   { id: 'bug', label: '🐛 แจ้งปัญหาการใช้งาน / ข้อผิดพลาด', badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300' },
   { id: 'form', label: '📑 ปรับปรุงแบบฟอร์ม / ระเบียบ / กระดาษทำการ', badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300' },
@@ -142,3 +143,5 @@ export function deleteFeedback(feedbackId) {
   }
   return updated;
 }
+
+export const addFeedback = saveUserFeedback;

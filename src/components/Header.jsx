@@ -19,7 +19,8 @@ import {
   CloudOff,
   RefreshCw,
   Edit3,
-  Clock
+  Clock,
+  CreditCard
 } from 'lucide-react';
 import { cloudSyncService } from '../services/cloudSyncService';
 import { clearPendingUsers, getSubscriptionCountdown } from '../utils/auth';
@@ -42,6 +43,7 @@ export default function Header({
   onOpenOnboarding,
   onOpenDlaTemplates,
   onOpenFeedback,
+  onOpenPackageModal,
   pendingCount = 0,
   currentTab = 'audit-risk',
   setCurrentTab
@@ -209,20 +211,22 @@ export default function Header({
               </button>
             )}
 
-            {/* Live Membership Countdown Capsule for Auditor */}
+            {/* Live Membership Countdown Capsule for Auditor (Clickable to view/renew package) */}
             {!isAdmin && session && (
-              <div
-                title={`แพ็กเกจ: ${countdown.planLabel} | หมดอายุ: ${countdown.expiryText}`}
-                className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs shrink-0 ${
+              <button
+                type="button"
+                onClick={onOpenPackageModal}
+                title={`แพ็กเกจ: ${countdown.planLabel} | หมดอายุ: ${countdown.expiryText} (คลิกเพื่อดูแพ็กเกจ & ต่ออายุสมาชิก)`}
+                className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs shrink-0 cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
                   countdown.isExpired
-                    ? 'bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300'
-                    : 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-800 text-amber-900 dark:text-amber-200'
+                    ? 'bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100'
+                    : 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-800 text-amber-900 dark:text-amber-200 hover:bg-amber-100/90 dark:hover:bg-amber-900/50'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 animate-pulse" />
-                <span className="font-semibold text-stone-600 dark:text-stone-400 text-[11px]">สมาชิก:</span>
+                <span className="font-semibold text-stone-600 dark:text-stone-400 text-[11px]">{countdown.tier && countdown.tier !== 'FREE' ? `[${countdown.tier}]` : 'สมาชิก:'}</span>
                 <span className="font-mono font-bold tracking-tight">{countdown.shortText || countdown.text}</span>
-              </div>
+              </button>
             )}
 
             {/* Dark Mode Toggle */}
@@ -357,6 +361,19 @@ export default function Header({
                     <Building2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     <span>🏛️ แก้ไขข้อมูล อปท. และผู้ตรวจสอบ</span>
                   </button>
+
+                  {!isAdmin && (
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (onOpenPackageModal) onOpenPackageModal();
+                      }}
+                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-200 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800 text-left"
+                    >
+                      <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+                      <span>💳 แพ็กเกจ & ต่ออายุสมาชิก</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={() => {

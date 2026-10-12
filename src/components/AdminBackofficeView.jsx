@@ -407,15 +407,28 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     const p = user.plan || 'trial';
     setSelectedNewTier(p);
     const defaultDays = p === 'monthly' ? 30 : p === 'annual' ? 365 : 30;
+    
+    // Default to standard package duration from today
+    const d = new Date(Date.now() + defaultDays * 86400000);
     setTierDurationDays(defaultDays);
-    if (user.expiresAt) {
-      setCustomExpiryDate(user.expiresAt.split('T')[0]);
-    } else {
-      const d = new Date(Date.now() + defaultDays * 86400000);
-      setCustomExpiryDate(d.toISOString().split('T')[0]);
-    }
+    setCustomExpiryDate(d.toISOString().split('T')[0]);
+    
     setShowChangeTierModal(true);
     setOpenActionUsername(null);
+  };
+
+  // Helper when clicking a tier radio button in Change Tier modal
+  const handleSelectTier = (tier) => {
+    setSelectedNewTier(tier);
+    if (tier === 'lifetime') {
+      setTierDurationDays(9999);
+      setCustomExpiryDate('');
+      return;
+    }
+    const days = tier === 'monthly' ? 30 : tier === 'annual' ? 365 : (settings.trialDays || 30);
+    setTierDurationDays(days);
+    const d = new Date(Date.now() + days * 86400000);
+    setCustomExpiryDate(d.toISOString().split('T')[0]);
   };
 
   // Submit Change Tier
@@ -2200,10 +2213,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         name="tier"
                         value="trial"
                         checked={selectedNewTier === 'trial'}
-                        onChange={() => {
-                          setSelectedNewTier('trial');
-                          setTierDurationDays(30);
-                        }}
+                        onChange={() => handleSelectTier('trial')}
                       />
                       <div>
                         <div className="font-bold text-stone-900 dark:text-stone-100">🌱 {settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)'}</div>
@@ -2223,10 +2233,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         name="tier"
                         value="monthly"
                         checked={selectedNewTier === 'monthly'}
-                        onChange={() => {
-                          setSelectedNewTier('monthly');
-                          setTierDurationDays(30);
-                        }}
+                        onChange={() => handleSelectTier('monthly')}
                       />
                       <div>
                         <div className="font-bold text-indigo-700 dark:text-indigo-400">⭐ {settings.monthlyPlanName || 'VIP (รายเดือน)'}</div>
@@ -2246,10 +2253,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         name="tier"
                         value="annual"
                         checked={selectedNewTier === 'annual'}
-                        onChange={() => {
-                          setSelectedNewTier('annual');
-                          setTierDurationDays(365);
-                        }}
+                        onChange={() => handleSelectTier('annual')}
                       />
                       <div>
                         <div className="font-bold text-amber-600 dark:text-amber-400">👑 {settings.annualPlanName || 'PREMIUM (รายปี)'}</div>
@@ -2269,10 +2273,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         name="tier"
                         value="lifetime"
                         checked={selectedNewTier === 'lifetime'}
-                        onChange={() => {
-                          setSelectedNewTier('lifetime');
-                          setTierDurationDays(9999);
-                        }}
+                        onChange={() => handleSelectTier('lifetime')}
                       />
                       <div>
                         <div className="font-bold text-purple-700 dark:text-purple-400">💎 {settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'}</div>
@@ -2286,9 +2287,43 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
               {selectedNewTier !== 'lifetime' && (
                 <div className="space-y-3 pt-1">
                   <div>
-                    <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
-                      📅 กำหนดวันที่หมดอายุสมาชิก (เลือกวันที่ในปฏิทิน หรือระบุจำนวนวัน)
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="font-bold text-stone-700 dark:text-stone-300">
+                        📅 กำหนดวันที่หมดอายุสมาชิก
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const days = selectedNewTier === 'monthly' ? 30 : selectedNewTier === 'annual' ? 365 : (settings.trialDays || 30);
+                            setTierDurationDays(days);
+                            const d = new Date(Date.now() + days * 86400000);
+                            setCustomExpiryDate(d.toISOString().split('T')[0]);
+                          }}
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 border border-amber-300/80 cursor-pointer"
+                          title="คำนวณวันหมดอายุใหม่นับจากวันนี้ตามระยะเวลาของแพ็กเกจที่เลือก"
+                        >
+                          ⚡ รีเซ็ตเริ่มวันนี้ ({selectedNewTier === 'monthly' ? '30 วัน' : selectedNewTier === 'annual' ? '365 วัน' : '30 วัน'})
+                        </button>
+                        {tierTargetUser?.expiresAt && new Date(tierTargetUser.expiresAt).getTime() > Date.now() && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const extra = selectedNewTier === 'monthly' ? 30 : selectedNewTier === 'annual' ? 365 : 30;
+                              const curTime = new Date(tierTargetUser.expiresAt).getTime();
+                              const newTime = curTime + extra * 86400000;
+                              const totalDays = Math.ceil((newTime - Date.now()) / 86400000);
+                              setTierDurationDays(totalDays);
+                              setCustomExpiryDate(new Date(newTime).toISOString().split('T')[0]);
+                            }}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 hover:bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-300 cursor-pointer"
+                            title="บวกเวลาเพิ่มต่อจากวันหมดอายุเดิมของสมาชิก"
+                          >
+                            ➕ บวกต่อจากเดิม
+                          </button>
+                        )}
+                      </div>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
                         <span className="text-[11px] text-stone-500 dark:text-stone-400 mb-1 block">
@@ -2309,7 +2344,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                       </div>
                       <div>
                         <span className="text-[11px] text-stone-500 dark:text-stone-400 mb-1 block">
-                          หรือระบุจำนวนวัน (วัน):
+                          หรือระบุจำนวนวันคงเหลือ (วัน):
                         </span>
                         <input
                           type="number"
@@ -2327,7 +2362,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                   </div>
                   <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-300 flex items-center justify-between">
                     <span>⏱️ วันที่หมดอายุ: {customExpiryDate ? new Date(customExpiryDate).toLocaleDateString('th-TH') : '-'}</span>
-                    <span className="font-bold">({tierDurationDays} วัน)</span>
+                    <span className="font-bold">({tierDurationDays} วันคงเหลือ)</span>
                   </div>
                 </div>
               )}

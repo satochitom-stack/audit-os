@@ -29,7 +29,8 @@ import {
   FileCheck2,
   Shield,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  CreditCard
 } from 'lucide-react';
 import AuditLifecycleStepper from './AuditLifecycleStepper';
 
@@ -46,7 +47,8 @@ export default function DashboardView({
   onOpenSettings,
   session,
   onLogout,
-  onOpenFeedback
+  onOpenFeedback,
+  onOpenPackageModal
 }) {
   // Compute Annual Plans stats
   const completedPlans = annualPlans.filter((p) => p.status === 'completed').length;
@@ -663,7 +665,33 @@ export default function DashboardView({
             </div>
           </div>
 
-          {/* Box 3: USER FEEDBACK CALLOUT (ส่งข้อเสนอแนะถึง ADMIN) */}
+          {/* Box 3: MEMBERSHIP STATUS & RENEWAL (สำหรับผู้ใช้ตรวจสอบภายใน) */}
+          {session?.role !== 'admin' && (
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-stone-900 via-stone-850 to-amber-950 text-white border border-amber-600/30 space-y-3 shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-200 flex items-center gap-1.5">
+                  <CreditCard className="w-4 h-4 text-amber-400" />
+                  <span>สิทธิ์การใช้งาน & การต่ออายุสมาชิก</span>
+                </span>
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-400/40">
+                  {session?.plan === 'annual' ? '👑 PREMIUM' : session?.plan === 'monthly' ? '⭐ VIP' : session?.plan === 'lifetime' ? '💎 LIFETIME' : '🌱 ฟรี 30 วัน'}
+                </span>
+              </div>
+              <p className="text-[11px] text-stone-300 leading-relaxed">
+                ต่ออายุสมาชิก ปลดล็อกทุกกระดาษทำการ และเข้าถึงคลังเอกสารระเบียบปฏิบัติงาน อปท. ได้ตลอดเวลา
+              </p>
+              <button
+                type="button"
+                onClick={onOpenPackageModal}
+                className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-stone-950 font-black py-2.5 px-4 rounded-xl text-xs transition-all shadow-md shadow-amber-950/30 flex items-center justify-center space-x-1.5 cursor-pointer"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>💳 ดูแพ็กเกจ & ต่ออายุสมาชิก</span>
+              </button>
+            </div>
+          )}
+
+          {/* Box 4: USER FEEDBACK CALLOUT (ส่งข้อเสนอแนะถึง ADMIN) */}
           <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-yellow-500/10 border border-amber-500/30 space-y-3 shadow-xs">
             <div className="flex items-center space-x-2">
               <span className="p-1.5 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300">

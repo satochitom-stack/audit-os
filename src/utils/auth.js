@@ -683,7 +683,13 @@ export async function updateUser(username, updates) {
   const cur = getSession();
   if (cur?.username?.toLowerCase() === username.toLowerCase()) {
     startSession(user, cur.remember);
+    try {
+      window.dispatchEvent(new CustomEvent('ia-session-updated', { detail: user }));
+    } catch (_) {}
   }
+  try {
+    window.dispatchEvent(new CustomEvent('ia-users-changed', { detail: users }));
+  } catch (_) {}
 
   return user;
 }
@@ -702,26 +708,110 @@ export function deleteUser(username) {
 // Subscription & Member Management Functions & Live Countdown
 // -------------------------------------------------------------
 export function getSubscriptionCountdown(user, referenceNow = Date.now()) {
-  if (!user) return { isExpired: false, text: '-', shortText: '-', days: 0, hours: 0, minutes: 0, seconds: 0 };
-  
+  if (!user) {
+    return {
+      isExpired: false,
+      text: '-',
+      shortText: '-',
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      planLabel: 'ทั่วไป',
+      tier: 'FREE',
+      expiryText: '-'
+    };
+  }
+
+  const planKey = user.plan || 'trial';
+  const planLabel = planKey === 'annual'
+    ? 'PREMIUM (รายปี)'
+    : planKey === 'monthly'
+    ? 'VIP (รายเดือน)'
+    : planKey === 'lifetime'
+    ? 'LIFETIME VIP'
+    : 'ฟรี 30 วัน (ทดลองใช้)';
+  const tier = planKey === 'annual' ? 'PREMIUM' : planKey === 'monthly' ? 'VIP' : planKey === 'lifetime' ? 'LIFETIME' : 'FREE';
+
   if (user.role === 'admin' || user.username?.toLowerCase() === 'admin' || user.plan === 'admin') {
-    return { isLifetime: true, isExpired: false, text: 'ไม่จำกัดเวลา (Admin)', shortText: 'ถาวร (Admin)', days: 9999, hours: 0, minutes: 0, seconds: 0 };
+    return {
+      isLifetime: true,
+      isExpired: false,
+      text: 'ไม่จำกัดเวลา (Admin)',
+      shortText: 'ถาวร (Admin)',
+      days: 9999,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      planLabel: 'Super Admin',
+      tier: 'ROOT',
+      expiryText: 'ตลอดชีพ'
+    };
   }
   if (user.plan === 'lifetime') {
-    return { isLifetime: true, isExpired: false, text: 'ตลอดชีพ (ถาวร)', shortText: 'ตลอดชีพ', days: 9999, hours: 0, minutes: 0, seconds: 0 };
+    return {
+      isLifetime: true,
+      isExpired: false,
+      text: 'ตลอดชีพ (ถาวร)',
+      shortText: 'ตลอดชีพ',
+      days: 9999,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      planLabel: 'LIFETIME VIP',
+      tier: 'LIFETIME',
+      expiryText: 'ตลอดชีพ'
+    };
   }
   if (user.status === 'suspended') {
-    return { isSuspended: true, isExpired: true, text: 'ระงับการใช้งาน', shortText: 'ระงับสิทธิ์', days: 0, hours: 0, minutes: 0, seconds: 0 };
+    return {
+      isSuspended: true,
+      isExpired: true,
+      text: 'ระงับการใช้งาน',
+      shortText: 'ระงับสิทธิ์',
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      planLabel: 'ระงับสิทธิ์',
+      tier: 'SUSPENDED',
+      expiryText: '-'
+    };
   }
   if (!user.expiresAt) {
-    return { isExpired: false, text: '30 วัน (ค่าเริ่มต้น)', shortText: '30 วัน', days: 30, hours: 0, minutes: 0, seconds: 0 };
+    return {
+      isExpired: false,
+      text: '30 วัน (ค่าเริ่มต้น)',
+      shortText: '30 วัน',
+      days: 30,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      planLabel,
+      tier,
+      expiryText: '-'
+    };
   }
 
   const expiryTime = new Date(user.expiresAt).getTime();
   const diff = expiryTime - referenceNow;
+  const expiryText = new Date(user.expiresAt).toLocaleDateString('th-TH');
 
   if (diff <= 0) {
-    return { isExpired: true, text: 'หมดอายุการใช้งานแล้ว', shortText: 'หมดอายุแล้ว', days: 0, hours: 0, minutes: 0, seconds: 0, diff: 0, expiryDate: user.expiresAt };
+    return {
+      isExpired: true,
+      text: 'หมดอายุการใช้งานแล้ว',
+      shortText: 'หมดอายุแล้ว',
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      diff: 0,
+      expiryDate: user.expiresAt,
+      expiryText,
+      planLabel,
+      tier
+    };
   }
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -746,7 +836,10 @@ export function getSubscriptionCountdown(user, referenceNow = Date.now()) {
     minutes,
     seconds,
     diff,
-    expiryDate: user.expiresAt
+    expiryDate: user.expiresAt,
+    expiryText,
+    planLabel,
+    tier
   };
 }
 
@@ -766,6 +859,18 @@ export function setMemberExactExpiryDate(username, exactDateIsoString, planId) {
   users[idx] = updated;
   saveUsers(users);
   syncUserToCloud(updated);
+
+  const cur = getSession();
+  if (cur?.username?.toLowerCase() === username.toLowerCase()) {
+    startSession(updated, cur.remember);
+    try {
+      window.dispatchEvent(new CustomEvent('ia-session-updated', { detail: updated }));
+    } catch (_) {}
+  }
+  try {
+    window.dispatchEvent(new CustomEvent('ia-users-changed', { detail: users }));
+  } catch (_) {}
+
   return updated;
 }
 
@@ -825,6 +930,17 @@ export function extendMemberSubscription(username, extraDays = 30, planId = 'mon
       expiresAt: null
     };
     saveUsers(users);
+    syncUserToCloud(users[idx]);
+    const cur = getSession();
+    if (cur?.username?.toLowerCase() === username.toLowerCase()) {
+      startSession(users[idx], cur.remember);
+      try {
+        window.dispatchEvent(new CustomEvent('ia-session-updated', { detail: users[idx] }));
+      } catch (_) {}
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('ia-users-changed', { detail: users }));
+    } catch (_) {}
     return users[idx];
   }
 
@@ -845,6 +961,18 @@ export function extendMemberSubscription(username, extraDays = 30, planId = 'mon
 
   saveUsers(users);
   syncUserToCloud(users[idx]);
+
+  const cur = getSession();
+  if (cur?.username?.toLowerCase() === username.toLowerCase()) {
+    startSession(users[idx], cur.remember);
+    try {
+      window.dispatchEvent(new CustomEvent('ia-session-updated', { detail: users[idx] }));
+    } catch (_) {}
+  }
+  try {
+    window.dispatchEvent(new CustomEvent('ia-users-changed', { detail: users }));
+  } catch (_) {}
+
   return users[idx];
 }
 
