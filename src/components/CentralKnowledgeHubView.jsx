@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageHeaderBanner from './PageHeaderBanner';
 import {
   BookOpen,
-  Award,
   Calendar,
   Search,
   FileText,
@@ -10,7 +9,6 @@ import {
   Check,
   FolderOpen,
   ExternalLink,
-  Download,
   Eye,
   X,
   Plus,
@@ -24,9 +22,21 @@ import {
   Building,
   CheckCircle2,
   ArrowRight,
-  Layers,
   Filter,
-  Printer
+  Printer,
+  UploadCloud,
+  FileUp,
+  User,
+  HardDrive,
+  Info,
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
+  Clock,
+  Layers,
+  HelpCircle,
+  File
 } from 'lucide-react';
 import {
   CENTRAL_DOC_CATEGORIES,
@@ -34,15 +44,34 @@ import {
 } from '../data/centralKnowledgeData';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { exportDocumentToWord } from '../utils/documentExportUtils';
+import {
+  saveDocumentFile,
+  getDocumentFile,
+  deleteDocumentFile
+} from '../utils/indexedDbUtils';
+
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
 
 export default function CentralKnowledgeHubView({ session, onCloneToWorkingPapers }) {
+  // Current user info
+  const currentUserName = session?.user?.name || session?.username || 'ผู้ตรวจสอบภายใน';
+  const isAdmin = session?.role === 'admin';
+
+  // Load documents metadata from localStorage
   const [documents, setDocuments] = useState(() => {
     try {
       const saved = localStorage.getItem('ia_central_documents');
       if (saved) {
         let parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Clean out any V614 items from central hub storage
           const cleaned = parsed.filter((d) => !d.id?.startsWith('DOC-V614-'));
           if (cleaned.length !== parsed.length) {
             localStorage.setItem('ia_central_documents', JSON.stringify(cleaned));
@@ -57,14 +86,24 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
+  
+  // Preview Modal state
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [previewTab, setPreviewTab] = useState('preview'); // 'preview' | 'summary' | 'details'
+  const [attachedFile, setAttachedFile] = useState(null);
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
+  const [readerFontSize, setReaderFontSize] = useState(14); // px
+
   const [copiedId, setCopiedId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Upload / Add Modal state
   const [showAddDocModal, setShowAddDocModal] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadFileDataUrl, setUploadFileDataUrl] = useState('');
+  const [fileError, setFileError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isAdmin = session?.role === 'admin';
-
-  // New Document state for Admin
   const [newDocForm, setNewDocForm] = useState({
     category: 'regulations',
     code: '',
@@ -73,7 +112,8 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     organization: 'สถ. / กรมบัญชีกลาง',
     year: '2569',
     fileType: 'PDF',
-    fileSize: '1.2 MB',
+    fileSize: '',
+    externalUrl: '',
     summary: '',
     keyPoints: '',
     fullContent: '',
@@ -82,7 +122,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const saveDocumentsToStorage = (list) => {
@@ -90,13 +130,37 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     localStorage.setItem('ia_central_documents', JSON.stringify(list));
   };
 
+  // Fetch attached file from IndexedDB when a document is opened for preview
+  useEffect(() => {
+    let isMounted = true;
+    if (previewDoc) {
+      setAttachedFile(null);
+      if (previewDoc.hasAttachment || previewDoc.id?.startsWith('DOC-USER-')) {
+        setIsLoadingFile(true);
+        getDocumentFile(previewDoc.id)
+          .then((file) => {
+            if (isMounted) {
+              setAttachedFile(file);
+              setIsLoadingFile(false);
+            }
+          })
+          .catch(() => {
+            if (isMounted) setIsLoadingFile(false);
+          });
+      }
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [previewDoc]);
+
   // Filtered documents
   const filteredDocs = useMemo(() => {
     return documents.filter((doc) => {
       if (selectedCategory !== 'all' && doc.category !== selectedCategory) return false;
       if (selectedTag && !doc.tags?.includes(selectedTag)) return false;
 
-      const q = searchTerm.toLowerCase();
+      const q = searchTerm.trim().toLowerCase();
       if (!q) return true;
 
       return (
@@ -104,12 +168,13 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         (doc.code || '').toLowerCase().includes(q) ||
         (doc.topic || '').toLowerCase().includes(q) ||
         (doc.summary || '').toLowerCase().includes(q) ||
+        (doc.organization || '').toLowerCase().includes(q) ||
         (doc.tags || []).some((t) => t.toLowerCase().includes(q))
       );
     });
   }, [documents, selectedCategory, searchTerm, selectedTag]);
 
-  // All unique tags
+  // Top tags for quick filtering
   const allTags = useMemo(() => {
     const set = new Set();
     documents.forEach((d) => (d.tags || []).forEach((t) => set.add(t)));
@@ -117,9 +182,10 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   }, [documents]);
 
   const handleCopyText = (id, text) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    showToast('คัดลอกข้อความเรียบร้อยแล้ว');
+    showToast('คัดลอกข้อความลงคลิปบอร์ดแล้ว');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -129,7 +195,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
       onCloneToWorkingPapers(doc);
       showToast(`คัดลอก "${doc.title}" ไปยังกระดาษทำการของคุณเรียบร้อยแล้ว!`);
     } else {
-      showToast('ระบบได้บันทึกต้นแบบไปยังกระดาษทำการเรียบร้อยแล้ว');
+      showToast('บันทึกต้นแบบไปยังกระดาษทำการเรียบร้อยแล้ว');
     }
   };
 
@@ -160,14 +226,14 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         </head>
         <body>
           <div class="header-meta">
-            <div><strong>${doc.code}</strong> | ${doc.organization} (พ.ศ. ${doc.year})</div>
-            <div>ประเภท: ${doc.fileType}</div>
+            <div><strong>${doc.code || ''}</strong> | ${doc.organization || ''} (พ.ศ. ${doc.year || ''})</div>
+            <div>ประเภท: ${doc.fileType || 'เอกสาร'}</div>
           </div>
           <h2>${doc.title}</h2>
           <div class="summary-box">
-            <strong>สาระสำคัญ:</strong> ${doc.summary}
+            <strong>สาระสำคัญ:</strong> ${doc.summary || ''}
           </div>
-          <div class="content">${doc.fullContent || doc.summary}</div>
+          <div class="content">${doc.fullContent || doc.summary || ''}</div>
         </body>
       </html>
     `);
@@ -197,50 +263,207 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     exportDocumentToWord(bodyContent, `${doc.title || 'เอกสารคลังความรู้'}.doc`, doc.title);
   };
 
-  // Add Document Submit
-  const handleAddDocSubmit = (e) => {
-    e.preventDefault();
-    if (!newDocForm.title || !newDocForm.summary) {
-      alert('กรุณาระบุชื่อเรื่องและคำอธิบายสรุป');
+  // File selection & validation handler
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    setFileError('');
+    if (!file) {
+      setUploadFile(null);
+      setUploadFileDataUrl('');
       return;
     }
 
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setFileError(`⚠️ ไฟล์มีขนาด ${formatBytes(file.size)} ซึ่งเกินขีดจำกัดสูงสุด 10 MB กรุณาเลือกไฟล์ที่ขนาดไม่เกิน 10 MB เพื่อประหยัดพื้นที่จัดเก็บ หรือใช้การระบุลิงก์เอกสารออนไลน์`);
+      setUploadFile(null);
+      setUploadFileDataUrl('');
+      return;
+    }
+
+    setUploadFile(file);
+
+    // Auto deduce file type & size
+    const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+    let fileType = ext;
+    if (['DOC', 'DOCX'].includes(ext)) fileType = 'Word';
+    if (['XLS', 'XLSX'].includes(ext)) fileType = 'Excel';
+    if (['JPG', 'JPEG', 'PNG'].includes(ext)) fileType = 'รูปภาพ';
+
+    // Auto fill title if empty
+    const fileNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+    setNewDocForm((prev) => ({
+      ...prev,
+      title: prev.title || fileNameWithoutExt,
+      fileType: fileType,
+      fileSize: formatBytes(file.size)
+    }));
+
+    // Read as Data URL
+    const reader = new FileReader();
+    reader.onload = () => {
+      setUploadFileDataUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Add / Upload Document Submit (available for all users)
+  const handleAddDocSubmit = async (e) => {
+    e.preventDefault();
+    if (!newDocForm.title.trim()) {
+      alert('กรุณาระบุชื่อเรื่องเอกสาร');
+      return;
+    }
+    if (!newDocForm.summary.trim()) {
+      alert('กรุณาระบุสรุปสาระสำคัญของเอกสาร');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const docId = `DOC-USER-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+
+    // Prepare arrays
     const tagsArray = newDocForm.tags
       ? newDocForm.tags.split(',').map((t) => t.trim()).filter(Boolean)
-      : ['ระเบียบใหม่'];
+      : ['เอกสารส่วนกลาง'];
 
     const keyPointsArray = newDocForm.keyPoints
-      ? newDocForm.keyPoints.split('\n').filter(Boolean)
+      ? newDocForm.keyPoints.split('\n').map((k) => k.trim()).filter(Boolean)
       : [];
 
+    // Save attachment in IndexedDB if provided
+    let hasAttachment = false;
+    if (uploadFile && uploadFileDataUrl) {
+      try {
+        await saveDocumentFile(docId, {
+          fileName: uploadFile.name,
+          fileType: newDocForm.fileType,
+          fileSize: formatBytes(uploadFile.size),
+          mimeType: uploadFile.type,
+          dataUrl: uploadFileDataUrl
+        });
+        hasAttachment = true;
+      } catch (err) {
+        console.error('Failed to save file to IndexedDB', err);
+      }
+    }
+
     const newDoc = {
-      id: `DOC-CUSTOM-${Date.now().toString().slice(-4)}`,
+      id: docId,
       category: newDocForm.category,
-      code: newDocForm.code || 'DOC-CUSTOM',
-      title: newDocForm.title,
-      topic: newDocForm.topic || newDocForm.title,
-      organization: newDocForm.organization,
-      year: newDocForm.year,
-      fileType: newDocForm.fileType,
-      fileSize: newDocForm.fileSize,
-      summary: newDocForm.summary,
+      code: newDocForm.code.trim() || 'เอกสารเผยแพร่',
+      title: newDocForm.title.trim(),
+      topic: newDocForm.topic.trim() || newDocForm.title.trim(),
+      organization: newDocForm.organization.trim() || 'อปท. / สถ.',
+      year: newDocForm.year.trim() || '2569',
+      fileType: newDocForm.fileType || (hasAttachment ? 'PDF' : 'เอกสารข้อความ'),
+      fileSize: newDocForm.fileSize || (uploadFile ? formatBytes(uploadFile.size) : 'ข้อความ'),
+      externalUrl: newDocForm.externalUrl.trim(),
+      hasAttachment: hasAttachment,
+      summary: newDocForm.summary.trim(),
       keyPoints: keyPointsArray,
-      fullContent: newDocForm.fullContent || newDocForm.summary,
-      tags: tagsArray
+      fullContent: newDocForm.fullContent.trim() || newDocForm.summary.trim(),
+      tags: tagsArray,
+      uploadedBy: currentUserName,
+      uploadedAt: new Date().toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
     };
 
     const updated = [newDoc, ...documents];
     saveDocumentsToStorage(updated);
+
+    // Reset Form
+    setNewDocForm({
+      category: 'regulations',
+      code: '',
+      title: '',
+      topic: '',
+      organization: 'สถ. / กรมบัญชีกลาง',
+      year: '2569',
+      fileType: 'PDF',
+      fileSize: '',
+      externalUrl: '',
+      summary: '',
+      keyPoints: '',
+      fullContent: '',
+      tags: ''
+    });
+    setUploadFile(null);
+    setUploadFileDataUrl('');
+    setFileError('');
+    setIsSubmitting(false);
     setShowAddDocModal(false);
-    showToast(`เพิ่ม "${newDoc.title}" ลงในคลังกลางเรียบร้อยแล้ว!`);
+
+    showToast(`อัปโหลดเอกสาร "${newDoc.title}" เข้าสู่คลังกลางเรียบร้อยแล้ว ทุกคนสามารถเปิดดูได้ทันที`);
   };
 
-  // Delete Document (Admin Only)
-  const handleDeleteDoc = (id, title) => {
-    if (!window.confirm(`ต้องการลบ "${title}" ออกจากคลังเอกสารกลางหรือไม่?`)) return;
-    const updated = documents.filter((d) => d.id !== id);
+  // Delete Document (Admin or Uploader only)
+  const handleDeleteDoc = async (doc) => {
+    if (!window.confirm(`ต้องการลบ "${doc.title}" ออกจากคลังเอกสารกลางหรือไม่?`)) return;
+
+    if (doc.hasAttachment || doc.id?.startsWith('DOC-USER-')) {
+      try {
+        await deleteDocumentFile(doc.id);
+      } catch (_) {}
+    }
+
+    const updated = documents.filter((d) => d.id !== doc.id);
     saveDocumentsToStorage(updated);
-    showToast(`ลบ "${title}" เรียบร้อยแล้ว`);
+    if (previewDoc?.id === doc.id) {
+      setPreviewDoc(null);
+    }
+    showToast(`ลบ "${doc.title}" เรียบร้อยแล้ว`);
+  };
+
+  // Category badge styling helper
+  const getCategoryBadge = (catId) => {
+    const cat = CENTRAL_DOC_CATEGORIES.find((c) => c.id === catId);
+    const label = cat ? cat.label : catId;
+    switch (catId) {
+      case 'regulations':
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60">
+            <BookOpen className="w-3 h-3 text-blue-600" />
+            <span>กฎหมาย & ระเบียบ</span>
+          </span>
+        );
+      case 'working-papers':
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60">
+            <ClipboardCheck className="w-3 h-3 text-emerald-600" />
+            <span>ต้นแบบกระดาษทำการ</span>
+          </span>
+        );
+      case 'curriculum-2569':
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60">
+            <GraduationCap className="w-3 h-3 text-purple-600" />
+            <span>หลักสูตรทอง 2569</span>
+          </span>
+        );
+      case 'qa-findings':
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/60">
+            <AlertTriangle className="w-3 h-3 text-rose-600" />
+            <span>ปัญหา & ข้อทักท้วง</span>
+          </span>
+        );
+      case 'forms-templates':
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60">
+            <FileText className="w-3 h-3 text-amber-600" />
+            <span>แบบฟอร์มมาตรฐาน</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300">
+            <span>{label}</span>
+          </span>
+        );
+    }
   };
 
   return (
@@ -253,14 +476,15 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         </div>
       )}
 
+      {/* Page Header Banner (Strictly no buttons inside, respecting UI guardrails) */}
       <PageHeaderBanner
         title="คลังเอกสารกลาง & ฐานความรู้ผู้ตรวจสอบภายใน อปท."
-        orgName="คลังเอกสารและคู่มือมาตรฐาน"
-        auditorName="ระเบียบ • คู่มือ สถ. • มาตรฐานสากล"
-        badges={['แชร์ใช้งานร่วมกันทุก อปท.']}
+        orgName="ศูนย์แลกเปลี่ยนเอกสารและระเบียบปฏิบัติงานกลาง"
+        auditorName="กฎหมาย • หนังสือสั่งการ ว • ต้นแบบกระดาษทำการ • สถ."
+        badges={['ระบบคลังข้อมูลกลางใช้ร่วมกันทุก User']}
       />
 
-      {/* Category Pills & Search Bar */}
+      {/* Control Bar: Categories, Upload Button & Search */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Category Tabs */}
@@ -300,43 +524,42 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
             })}
           </div>
 
-          {/* Search Box */}
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <button
-                onClick={() => setShowAddDocModal(true)}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-3.5 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0 border border-amber-500/30"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ เพิ่มเอกสาร (ADMIN)</span>
-              </button>
-            )}
-            <div className="relative min-w-[220px]">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
-            <input
-              type="text"
-              placeholder="ค้นหาชื่อเรื่อง, ระเบียบ, รหัส..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-800 dark:text-stone-100"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-600"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          {/* Action Toolbar: Upload Button (All Users) + Search Input */}
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setShowAddDocModal(true)}
+              className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2 cursor-pointer shrink-0 border border-amber-500/30 active:scale-98"
+            >
+              <FileUp className="w-4 h-4" />
+              <span>+ อัปโหลด / เพิ่มเอกสารกลาง</span>
+            </button>
+
+            <div className="relative min-w-[240px]">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+              <input
+                type="text"
+                placeholder="ค้นหาชื่อเรื่อง, ระเบียบ, รหัส..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-8 py-2.5 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-800 dark:text-stone-100"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Quick Tags */}
+        {/* Quick Tags Bar */}
         <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-stone-100 dark:border-stone-800 text-[11px]">
           <span className="text-stone-400 font-semibold flex items-center space-x-1 mr-1">
             <Tag className="w-3 h-3 text-amber-700 dark:text-amber-400" />
-            <span>แท็กยอดนิยม:</span>
+            <span>แท็กค้นหา:</span>
           </span>
           {allTags.map((tag) => (
             <button
@@ -354,7 +577,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
           {selectedTag && (
             <button
               onClick={() => setSelectedTag('')}
-              className="text-rose-500 hover:underline text-[10px] ml-2 font-semibold"
+              className="text-rose-500 hover:underline text-[10px] ml-2 font-semibold cursor-pointer"
             >
               ล้างตัวกรองแท็ก
             </button>
@@ -362,37 +585,179 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         </div>
       </div>
 
-      {/* Documents Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredDocs.map((doc) => {
-          const isWorkingPaper = doc.category === 'working-papers';
-          const isCurriculum = doc.category === 'curriculum-2569';
-          const isQA = doc.category === 'qa-findings';
+      {/* Summary Count Bar */}
+      <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 px-1 font-medium">
+        <div className="flex items-center space-x-2">
+          <span>พบทั้งหมด <strong className="text-stone-800 dark:text-stone-200 font-bold">{filteredDocs.length}</strong> รายการ</span>
+          {(selectedCategory !== 'all' || selectedTag || searchTerm) && (
+            <span className="text-amber-700 dark:text-amber-400 text-[11px] bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200/80 dark:border-amber-900/40">
+              (กรองผลลัพธ์)
+            </span>
+          )}
+        </div>
+        <div className="text-[11px] text-stone-400 flex items-center gap-1">
+          <Info className="w-3.5 h-3.5 text-amber-600" />
+          <span>คลิกที่รายการเพื่อเปิดดูรายละเอียดและอ่านเอกสารได้ทันทีโดยไม่ต้องดาวน์โหลด</span>
+        </div>
+      </div>
 
-          let cardAccent = 'border-stone-200/80 dark:border-stone-800 hover:border-amber-500';
-          if (isWorkingPaper) cardAccent = 'border-amber-200/80 dark:border-amber-900/60 hover:border-amber-500';
-          if (isCurriculum) cardAccent = 'border-stone-300 dark:border-stone-700 hover:border-amber-500';
-          if (isQA) cardAccent = 'border-amber-300/80 dark:border-amber-800/60 hover:border-amber-500';
+      {/* CLEAN NUMBERED LIST VIEW (แสดงเฉพาะหัวข้อเรื่อง เป็นรายการมีลำดับ) */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs overflow-hidden">
+        {filteredDocs.length > 0 ? (
+          <div className="divide-y divide-stone-100 dark:divide-stone-800/80">
+            {filteredDocs.map((doc, index) => {
+              const canDelete =
+                isAdmin ||
+                doc.uploadedBy === currentUserName ||
+                (doc.id?.startsWith('DOC-USER-') && !doc.isSystemProtected);
+              const isWorkingPaper = doc.category === 'working-papers';
 
-          return (
-            <div
-              key={doc.id}
-              className={`bg-white dark:bg-stone-900 rounded-3xl p-5 border ${cardAccent} shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4`}
-            >
-              <div className="space-y-3">
-                {/* Card Top: Code & FileType */}
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
-                    {doc.code}
-                  </span>
-                  <div className="flex items-center space-x-1.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/40">
-                      {doc.fileType} {doc.fileSize ? `(${doc.fileSize})` : ''}
-                    </span>
-                    {isAdmin && (
+              return (
+                <div
+                  key={doc.id}
+                  onClick={() => {
+                    setPreviewDoc(doc);
+                    setPreviewTab('preview');
+                  }}
+                  className="group p-4 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-all flex items-center justify-between gap-4 cursor-pointer"
+                >
+                  {/* Left: Number + Main Title */}
+                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                    {/* Number Badge (1, 2, 3...) */}
+                    <div className="shrink-0 w-8 h-8 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 font-mono font-bold text-xs flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-2xs">
+                      {index + 1}
+                    </div>
+
+                    {/* Title & Metadata (Focused on Title as requested) */}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Topic / Document Title */}
+                        <h3 className="font-bold text-sm text-stone-900 dark:text-stone-100 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors leading-snug">
+                          {doc.title}
+                        </h3>
+
+                        {/* File Type & Size Badge */}
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
+                          {doc.fileType || 'เอกสาร'} {doc.fileSize ? `(${doc.fileSize})` : ''}
+                        </span>
+
+                        {/* Has Attachment indicator */}
+                        {doc.hasAttachment && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/60 flex items-center gap-0.5">
+                            <File className="w-2.5 h-2.5" />
+                            <span>มีไฟล์แนบ</span>
+                          </span>
+                        )}
+
+                        {/* External link indicator */}
+                        {doc.externalUrl && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200/80 dark:border-sky-900/60 flex items-center gap-0.5">
+                            <ExternalLink className="w-2.5 h-2.5" />
+                            <span>ลิงก์ออนไลน์</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Sub-line: Code, Organization, Year & Category */}
+                      <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 flex-wrap">
+                        {doc.code && (
+                          <span className="font-mono text-stone-700 dark:text-stone-300 font-semibold bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 rounded text-[11px]">
+                            {doc.code}
+                          </span>
+                        )}
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Building className="w-3 h-3 text-stone-400" />
+                          <span>{doc.organization || 'อปท. / สถ.'}</span>
+                        </span>
+                        {doc.year && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-stone-400" />
+                              <span>ปี พ.ศ. {doc.year}</span>
+                            </span>
+                          </>
+                        )}
+                        {doc.uploadedBy && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1 text-stone-400">
+                              <User className="w-3 h-3 text-stone-400" />
+                              <span>โดย: {doc.uploadedBy}</span>
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Middle: Category Pill */}
+                  <div className="hidden md:flex shrink-0 items-center">
+                    {getCategoryBadge(doc.category)}
+                  </div>
+
+                  {/* Right: Quick Action Buttons */}
+                  <div
+                    className="flex items-center space-x-1.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* View / Open Button (เปิดดู) */}
+                    <button
+                      onClick={() => {
+                        setPreviewDoc(doc);
+                        setPreviewTab('preview');
+                      }}
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+                      title="เปิดดูเอกสารทันที"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>เปิดดู</span>
+                    </button>
+
+                    {/* Detail Button */}
+                    <button
+                      onClick={() => {
+                        setPreviewDoc(doc);
+                        setPreviewTab('summary');
+                      }}
+                      className="hidden sm:flex bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-semibold py-1.5 px-2.5 rounded-xl text-xs transition-all items-center space-x-1 cursor-pointer"
+                      title="ดูรายละเอียดและสาระสำคัญ"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                      <span>รายละเอียด</span>
+                    </button>
+
+                    {/* Clone to Working Paper (if applicable) */}
+                    {isWorkingPaper && (
                       <button
-                        onClick={() => handleDeleteDoc(doc.id, doc.title)}
-                        className="text-stone-400 hover:text-rose-500 p-1 rounded-md transition-colors"
+                        onClick={() => handleCloneWorkingPaper(doc)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-2.5 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer"
+                        title="คัดลอกลงกระดาษทำการของฉัน"
+                      >
+                        <ClipboardCheck className="w-3.5 h-3.5" />
+                        <span className="hidden lg:inline">นำไปใช้</span>
+                      </button>
+                    )}
+
+                    {/* Copy Text Button */}
+                    <button
+                      onClick={() => handleCopyText(doc.id, doc.fullContent || doc.summary)}
+                      className="p-1.5 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors cursor-pointer"
+                      title="คัดลอกข้อความ"
+                    >
+                      {copiedId === doc.id ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+
+                    {/* Delete Button (if authorized) */}
+                    {canDelete && (
+                      <button
+                        onClick={() => handleDeleteDoc(doc)}
+                        className="p-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-400 hover:text-rose-600 transition-colors cursor-pointer"
                         title="ลบเอกสาร"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -400,156 +765,393 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                     )}
                   </div>
                 </div>
-
-                {/* Title & Topic */}
-                <div className="space-y-1">
-                  <h3 className="font-bold text-sm text-stone-900 dark:text-stone-100 line-clamp-2 leading-snug">
-                    {doc.title}
-                  </h3>
-                  <div className="text-xs text-amber-800 dark:text-amber-400 font-medium line-clamp-1">
-                    {doc.topic}
-                  </div>
-                  <div className="text-[11px] text-stone-400 flex items-center space-x-1">
-                    <Building className="w-3 h-3" />
-                    <span>{doc.organization}</span>
-                    {doc.year && <span>({doc.year})</span>}
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <p className="text-xs text-stone-600 dark:text-stone-300 line-clamp-3 leading-relaxed">
-                  {doc.summary}
-                </p>
-
-                {/* Tags */}
-                {doc.tags && doc.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {doc.tags.slice(0, 3).map((t) => (
-                      <span
-                        key={t}
-                        className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-500 px-2 py-0.5 rounded-md"
-                      >
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Card Footer Actions */}
-              <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center space-x-2">
-                <button
-                  onClick={() => setPreviewDoc(doc)}
-                  className="flex-1 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5 text-stone-500" />
-                  <span>ดูเนื้อหา</span>
-                </button>
-
-                {isWorkingPaper && (
-                  <button
-                    onClick={() => handleCloneWorkingPaper(doc)}
-                    className="bg-amber-700 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center space-x-1 cursor-pointer shadow-xs"
-                    title="คัดลอกลงในกระดาษทำการของฉัน"
-                  >
-                    <ClipboardCheck className="w-3.5 h-3.5" />
-                    <span>นำไปใช้</span>
-                  </button>
-                )}
-
-                <button
-                  onClick={() => handleCopyText(doc.id, doc.fullContent || doc.summary)}
-                  className="p-2 rounded-xl border border-stone-200/80 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-all cursor-pointer"
-                  title="คัดลอกเนื้อหา"
-                >
-                  {copiedId === doc.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-16 px-4">
+            <BookOpen className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-stone-700 dark:text-stone-200">
+              ไม่พบรายการเอกสารที่ตรงกับเงื่อนไข
+            </h3>
+            <p className="text-xs text-stone-500 mt-1 max-w-md mx-auto">
+              ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่น หรือกดปุ่ม <strong>"+ อัปโหลด / เพิ่มเอกสารกลาง"</strong> เพื่อเพิ่มเอกสารใหม่เข้าสู่ระบบ
+            </p>
+          </div>
+        )}
       </div>
 
-      {filteredDocs.length === 0 && (
-        <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
-          <BookOpen className="w-12 h-12 text-stone-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-stone-700 dark:text-stone-200">ไม่พบเอกสารที่ตรงกับคำค้นหา</h3>
-          <p className="text-xs text-stone-500 mt-1">ลองเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่อื่น</p>
-        </div>
-      )}
-
-      {/* FULL PREVIEW MODAL */}
+      {/* FULL IN-APP PREVIEW & DETAIL MODAL (เปิดดูได้ทันทีโดยไม่ต้องโหลดลงเครื่อง) */}
       {previewDoc && (
-        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-stone-200/80 dark:border-stone-800 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-stone-200/80 dark:border-stone-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="p-6 border-b border-stone-100 dark:border-stone-800 flex items-start justify-between gap-4 bg-stone-50/50 dark:bg-stone-850/50">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300">
-                    {previewDoc.code}
+            <div className="p-5 border-b border-stone-100 dark:border-stone-800 flex items-start justify-between gap-4 bg-stone-50/70 dark:bg-stone-850/70">
+              <div className="space-y-1.5 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800">
+                    {previewDoc.code || 'DOC-REF'}
                   </span>
-                  <span className="text-xs text-stone-400">{previewDoc.organization} ({previewDoc.year})</span>
+                  {getCategoryBadge(previewDoc.category)}
+                  <span className="text-xs text-stone-500 flex items-center gap-1">
+                    <Building className="w-3 h-3 text-stone-400" />
+                    <span>{previewDoc.organization}</span>
+                    {previewDoc.year && <span>(พ.ศ. {previewDoc.year})</span>}
+                  </span>
                 </div>
-                <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 leading-snug">
+
+                <h2 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 leading-snug">
                   {previewDoc.title}
                 </h2>
-                <div className="text-xs text-amber-800 dark:text-amber-400 font-medium">
-                  {previewDoc.topic}
-                </div>
+
+                {previewDoc.topic && previewDoc.topic !== previewDoc.title && (
+                  <div className="text-xs text-amber-800 dark:text-amber-400 font-medium">
+                    {previewDoc.topic}
+                  </div>
+                )}
               </div>
 
               <button
                 onClick={() => setPreviewDoc(null)}
-                className="text-stone-400 hover:text-stone-600 p-1.5 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800"
+                className="text-stone-400 hover:text-stone-600 p-1.5 rounded-xl hover:bg-stone-200/80 dark:hover:bg-stone-800 transition-colors shrink-0 cursor-pointer"
+                title="ปิดหน้าต่าง"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-5 text-xs text-stone-700 dark:text-stone-300 custom-scrollbar leading-relaxed">
-              <div className="space-y-2">
-                <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">สาระสำคัญโดยสรุป</h4>
-                <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-stone-800 dark:text-stone-200">
-                  {previewDoc.summary}
-                </div>
+            {/* Modal Tab Switcher */}
+            <div className="flex items-center justify-between px-6 pt-3 pb-2 border-b border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900 text-xs">
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={() => setPreviewTab('preview')}
+                  className={`py-1.5 px-3.5 rounded-xl font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    previewTab === 'preview'
+                      ? 'bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 shadow-2xs'
+                      : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
+                  }`}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>👁️ เปิดอ่านเอกสาร (In-app Preview)</span>
+                </button>
+
+                <button
+                  onClick={() => setPreviewTab('summary')}
+                  className={`py-1.5 px-3.5 rounded-xl font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    previewTab === 'summary'
+                      ? 'bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 shadow-2xs'
+                      : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>📋 สาระสำคัญ & จุดตรวจ</span>
+                </button>
+
+                <button
+                  onClick={() => setPreviewTab('details')}
+                  className={`py-1.5 px-3.5 rounded-xl font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    previewTab === 'details'
+                      ? 'bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 shadow-2xs'
+                      : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
+                  }`}
+                >
+                  <Info className="w-3.5 h-3.5" />
+                  <span>ℹ️ ข้อมูลเอกสาร & แท็ก</span>
+                </button>
               </div>
 
-              {previewDoc.keyPoints && previewDoc.keyPoints.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">ประเด็นสำคัญที่ต้องตรวจสอบ (Key Checkpoints)</h4>
-                  <ul className="space-y-1.5 list-disc list-inside bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700">
-                    {previewDoc.keyPoints.map((point, idx) => (
-                      <li key={idx} className="leading-relaxed">{point}</li>
-                    ))}
-                  </ul>
+              {/* Font Resizer (Available when reading text content) */}
+              {previewTab === 'preview' && !attachedFile?.dataUrl && (
+                <div className="flex items-center space-x-1 text-stone-500">
+                  <span className="text-[11px] mr-1 hidden sm:inline">ขนาดตัวอักษร:</span>
+                  <button
+                    onClick={() => setReaderFontSize((s) => Math.max(12, s - 1))}
+                    className="p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-800 text-xs font-bold"
+                    title="ลดขนาดตัวอักษร"
+                  >
+                    A-
+                  </button>
+                  <span className="font-mono text-[11px] px-1">{readerFontSize}px</span>
+                  <button
+                    onClick={() => setReaderFontSize((s) => Math.min(22, s + 1))}
+                    className="p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-800 text-xs font-bold"
+                    title="เพิ่มขนาดตัวอักษร"
+                  >
+                    A+
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-5 text-xs text-stone-700 dark:text-stone-300 custom-scrollbar">
+              {/* TAB 1: IN-APP PREVIEW / DOCUMENT READER (ไม่ต้องโหลดลงเครื่อง) */}
+              {previewTab === 'preview' && (
+                <div className="space-y-4">
+                  {/* Loading indicator */}
+                  {isLoadingFile && (
+                    <div className="text-center py-12 text-stone-500 flex flex-col items-center justify-center space-y-2">
+                      <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                      <span>กำลังโหลดเอกสารแนบ...</span>
+                    </div>
+                  )}
+
+                  {/* Case 1: Uploaded File with Data URL (PDF or image) */}
+                  {!isLoadingFile && attachedFile?.dataUrl && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between bg-stone-100 dark:bg-stone-800 p-3 rounded-xl text-xs">
+                        <div className="flex items-center space-x-2">
+                          <File className="w-4 h-4 text-amber-600" />
+                          <span className="font-bold text-stone-800 dark:text-stone-200">{attachedFile.fileName}</span>
+                          <span className="text-stone-400">({attachedFile.fileSize})</span>
+                        </div>
+                        <a
+                          href={attachedFile.dataUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-amber-700 hover:underline flex items-center space-x-1 font-semibold"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>เปิดในหน้าต่างใหม่</span>
+                        </a>
+                      </div>
+
+                      {/* PDF Iframe viewer - Reads directly without downloading */}
+                      {attachedFile.dataUrl.startsWith('data:application/pdf') || attachedFile.fileName?.endsWith('.pdf') ? (
+                        <div className="border border-stone-200 dark:border-stone-700 rounded-2xl overflow-hidden shadow-inner bg-stone-100 dark:bg-stone-950">
+                          <iframe
+                            src={attachedFile.dataUrl}
+                            title={previewDoc.title}
+                            className="w-full h-[62vh] border-0"
+                          />
+                        </div>
+                      ) : attachedFile.dataUrl.startsWith('data:image/') ? (
+                        <div className="flex justify-center p-4 bg-stone-100 dark:bg-stone-800 rounded-2xl">
+                          <img
+                            src={attachedFile.dataUrl}
+                            alt={previewDoc.title}
+                            className="max-h-[60vh] object-contain rounded-xl shadow-md"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-6 text-center bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-2">
+                          <FileText className="w-10 h-10 text-stone-400 mx-auto" />
+                          <p className="font-bold">เอกสารแนบ: {attachedFile.fileName}</p>
+                          <p className="text-stone-500">คลิกปุ่มด้านบนเพื่อเปิดดูในหน้าต่างใหม่</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Case 2: External Link Provided */}
+                  {previewDoc.externalUrl && !attachedFile?.dataUrl && (
+                    <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-900/60 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="font-bold text-sky-900 dark:text-sky-200 flex items-center gap-1.5">
+                          <ExternalLink className="w-4 h-4 text-sky-600" />
+                          <span>เอกสารต้นทางออนไลน์ (Direct Source Link)</span>
+                        </div>
+                        <p className="text-[11px] text-sky-700 dark:text-sky-300 truncate max-w-xl">
+                          {previewDoc.externalUrl}
+                        </p>
+                      </div>
+                      <a
+                        href={previewDoc.externalUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1 shrink-0 shadow-xs"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>เปิดอ่านออนไลน์</span>
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Case 3: Official Document Reader View (Text / Regulatory Content) */}
+                  {!attachedFile?.dataUrl && (
+                    <div className="bg-stone-50/70 dark:bg-stone-850/50 p-6 sm:p-8 rounded-2xl border border-stone-200/80 dark:border-stone-800 space-y-6 shadow-xs">
+                      {/* Paper Document Header */}
+                      <div className="border-b border-stone-200 dark:border-stone-700 pb-4 text-center space-y-1">
+                        <div className="font-mono text-xs text-stone-500">
+                          {previewDoc.code} • {previewDoc.organization}
+                        </div>
+                        <h1 className="text-base sm:text-xl font-bold text-stone-900 dark:text-stone-100 font-serif leading-snug">
+                          {previewDoc.title}
+                        </h1>
+                        <div className="text-xs text-stone-500">
+                          รอบปี พ.ศ. {previewDoc.year}
+                        </div>
+                      </div>
+
+                      {/* Highlight summary ribbon */}
+                      <div className="p-4 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border-l-4 border-amber-600 text-stone-800 dark:text-stone-200 text-xs leading-relaxed">
+                        <strong className="block text-amber-900 dark:text-amber-300 font-bold mb-1">
+                          📌 สาระสำคัญโดยสรุป:
+                        </strong>
+                        {previewDoc.summary}
+                      </div>
+
+                      {/* Full Content with customizable font size */}
+                      <div
+                        className="font-sans leading-relaxed text-stone-800 dark:text-stone-200 whitespace-pre-line space-y-4"
+                        style={{ fontSize: `${readerFontSize}px` }}
+                      >
+                        {previewDoc.fullContent || previewDoc.summary}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div className="space-y-2">
-                <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm">เนื้อหา / แนวทางปฏิบัติงานฉบับเต็ม</h4>
-                <div className="p-4 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 font-sans whitespace-pre-line leading-relaxed text-stone-700 dark:text-stone-300">
-                  {previewDoc.fullContent || previewDoc.summary}
+              {/* TAB 2: SUMMARY & CHECKPOINTS */}
+              {previewTab === 'summary' && (
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm flex items-center space-x-1.5">
+                      <Sparkles className="w-4 h-4 text-amber-600" />
+                      <span>สาระสำคัญโดยสรุป (Executive Summary)</span>
+                    </h4>
+                    <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-stone-800 dark:text-stone-200 leading-relaxed text-xs">
+                      {previewDoc.summary}
+                    </div>
+                  </div>
+
+                  {previewDoc.keyPoints && previewDoc.keyPoints.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-stone-900 dark:text-stone-100 text-sm flex items-center space-x-1.5">
+                        <ClipboardCheck className="w-4 h-4 text-emerald-600" />
+                        <span>ประเด็นสำคัญที่ต้องตรวจสอบ (Key Checkpoints)</span>
+                      </h4>
+                      <ul className="space-y-2 bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700">
+                        {previewDoc.keyPoints.map((point, idx) => (
+                          <li key={idx} className="flex items-start space-x-2 text-xs leading-relaxed">
+                            <span className="shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 font-bold text-[11px] flex items-center justify-center mt-0.5">
+                              {idx + 1}
+                            </span>
+                            <span className="text-stone-800 dark:text-stone-200">{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {previewDoc.category === 'working-papers' && (
+                    <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-emerald-900 dark:text-emerald-200">
+                          💡 ต้นแบบกระดาษทำการนี้พร้อมใช้งาน
+                        </span>
+                        <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                          คุณสามารถคัดลอกต้นแบบนี้ไปยังกระดาษทำการส่วนตัวของคุณเพื่อเริ่มตรวจได้ทันที
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          handleCloneWorkingPaper(previewDoc);
+                          setPreviewDoc(null);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0"
+                      >
+                        <ClipboardCheck className="w-4 h-4" />
+                        <span>คัดลอกไปใช้งาน</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* TAB 3: DETAILS & METADATA */}
+              {previewTab === 'details' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700 space-y-2">
+                      <span className="text-stone-400 font-semibold block text-[11px]">รหัสเอกสาร / เลขที่ระเบียบ</span>
+                      <p className="font-mono font-bold text-stone-800 dark:text-stone-100 text-sm">
+                        {previewDoc.code || '-'}
+                      </p>
+                    </div>
+
+                    <div className="bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700 space-y-2">
+                      <span className="text-stone-400 font-semibold block text-[11px]">หน่วยงานเจ้าของเรื่อง</span>
+                      <p className="font-bold text-stone-800 dark:text-stone-100 text-sm">
+                        {previewDoc.organization || '-'}
+                      </p>
+                    </div>
+
+                    <div className="bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700 space-y-2">
+                      <span className="text-stone-400 font-semibold block text-[11px]">ปี พ.ศ. ที่ประกาศ / รอบงบประมาณ</span>
+                      <p className="font-bold text-stone-800 dark:text-stone-100 text-sm">
+                        {previewDoc.year || '-'}
+                      </p>
+                    </div>
+
+                    <div className="bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700 space-y-2">
+                      <span className="text-stone-400 font-semibold block text-[11px]">ประเภทไฟล์และขนาด</span>
+                      <p className="font-bold text-stone-800 dark:text-stone-100 text-sm">
+                        {previewDoc.fileType} {previewDoc.fileSize ? `(${previewDoc.fileSize})` : ''}
+                      </p>
+                    </div>
+
+                    <div className="bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700 space-y-2">
+                      <span className="text-stone-400 font-semibold block text-[11px]">ผู้อัปโหลดเข้าสู่คลังกลาง</span>
+                      <p className="font-bold text-stone-800 dark:text-stone-100 text-sm flex items-center space-x-1">
+                        <User className="w-3.5 h-3.5 text-stone-400" />
+                        <span>{previewDoc.uploadedBy || 'ระบบมาตรฐาน (System)'}</span>
+                      </p>
+                    </div>
+
+                    <div className="bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700 space-y-2">
+                      <span className="text-stone-400 font-semibold block text-[11px]">วันที่บันทึกเข้าสู่ระบบ</span>
+                      <p className="font-bold text-stone-800 dark:text-stone-100 text-sm flex items-center space-x-1">
+                        <Clock className="w-3.5 h-3.5 text-stone-400" />
+                        <span>{previewDoc.uploadedAt || 'ฐานข้อมูลตั้งต้น'}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  {previewDoc.tags && previewDoc.tags.length > 0 && (
+                    <div className="bg-stone-50 dark:bg-stone-800/60 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-700 space-y-2">
+                      <span className="text-stone-400 font-semibold block text-[11px] flex items-center space-x-1">
+                        <Tag className="w-3 h-3 text-amber-600" />
+                        <span>แท็กคำค้นหาที่เกี่ยวข้อง:</span>
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {previewDoc.tags.map((t) => (
+                          <span
+                            key={t}
+                            className="text-xs bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 px-2.5 py-1 rounded-lg border border-stone-200 dark:border-stone-700 font-medium"
+                          >
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-850/50 flex flex-wrap items-center justify-between gap-3">
+            {/* Modal Footer Toolbar */}
+            <div className="p-4 border-t border-stone-100 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-850/80 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => handleCopyText(previewDoc.id, previewDoc.fullContent || previewDoc.summary)}
-                  className="bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 text-stone-800 dark:text-stone-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                  className="bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  {copiedId === previewDoc.id ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
                   <span>คัดลอกข้อความ</span>
                 </button>
+
                 <OfficialDocActionToolbar
                   onDownloadWord={() => handleDownloadWord(previewDoc)}
                   onPrint={() => handlePrintDocument(previewDoc)}
-                  wordTooltip={`ดาวน์โหลด ${previewDoc.title} เป็นไฟล์ Word (.doc)`}
-                  printTooltip={`พิมพ์ ${previewDoc.title} / บันทึกเป็น PDF`}
+                  wordTooltip={`ส่งออก ${previewDoc.title} เป็นไฟล์ Word (.doc)`}
+                  printTooltip={`พิมพ์ ${previewDoc.title} / ส่งออกเป็น PDF`}
                 />
               </div>
 
@@ -560,12 +1162,13 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                       handleCloneWorkingPaper(previewDoc);
                       setPreviewDoc(null);
                     }}
-                    className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md flex items-center space-x-1.5 cursor-pointer"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md flex items-center space-x-1.5 cursor-pointer"
                   >
                     <ClipboardCheck className="w-4 h-4" />
-                    <span>นำเข้ากระดาษทำการของฉันทันที</span>
+                    <span>นำเข้ากระดาษทำการ</span>
                   </button>
                 )}
+
                 <button
                   onClick={() => setPreviewDoc(null)}
                   className="bg-stone-800 text-white hover:bg-stone-700 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer"
@@ -578,31 +1181,117 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         </div>
       )}
 
-      {/* MODAL: ADD DOCUMENT (ADMIN ONLY) */}
+      {/* MODAL: UPLOAD / ADD DOCUMENT (สำหรับ User ทุกคน สามารถแชร์ข้อมูลร่วมกันได้) */}
       {showAddDocModal && (
-        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-2xl w-full p-6 space-y-4 border border-stone-200 dark:border-stone-800 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div className="fixed inset-0 z-50 bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-2xl w-full p-6 space-y-4 border border-stone-200 dark:border-stone-800 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
-              <h3 className="text-base font-bold text-stone-800 dark:text-stone-100 flex items-center space-x-2">
-                <Plus className="w-5 h-5 text-amber-600" />
-                <span>เพิ่มเอกสาร / แนวทางใหม่ในคลังกลาง (ADMIN)</span>
-              </h3>
+              <div className="space-y-0.5">
+                <h3 className="text-base font-bold text-stone-800 dark:text-stone-100 flex items-center space-x-2">
+                  <UploadCloud className="w-5 h-5 text-amber-600" />
+                  <span>อัปโหลด / เพิ่มเอกสารใหม่ในคลังกลาง</span>
+                </h3>
+                <p className="text-[11px] text-stone-400">
+                  แชร์เอกสาร ระเบียบ หรือแนวทางปฏิบัติให้ผู้ตรวจสอบภายในทุกคนในระบบใช้งานร่วมกัน
+                </p>
+              </div>
               <button
                 onClick={() => setShowAddDocModal(false)}
-                className="text-stone-400 hover:text-stone-600 p-1"
+                className="text-stone-400 hover:text-stone-600 p-1 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddDocSubmit} className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+            {/* Central Hub Notice */}
+            <div className="p-3 bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 rounded-xl text-xs text-amber-900 dark:text-amber-300 flex items-start space-x-2">
+              <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="leading-relaxed">
+                <strong>ข้อมูลส่วนกลาง (Shared Hub):</strong> เอกสารที่คุณเพิ่มจะถูกบันทึกในคลังกลางเพื่อให้ผู้ตรวจสอบภายในทุกคนเปิดอ่านและค้นหาได้ทันที จำกัดขนาดไฟล์ไม่เกิน 10 MB ต่อไฟล์ เพื่อประหยัดพื้นที่จัดเก็บของเครื่อง
+              </div>
+            </div>
+
+            <form onSubmit={handleAddDocSubmit} className="space-y-4 text-xs">
+              {/* FILE UPLOAD INPUT SECTION */}
+              <div className="space-y-1.5">
+                <label className="block font-semibold text-stone-800 dark:text-stone-200">
+                  📁 เลือกไฟล์เอกสารเพื่ออัปโหลด (PDF, Word, Excel, รูปภาพ)
+                </label>
+                <div className="border-2 border-dashed border-stone-300 dark:border-stone-700 hover:border-amber-500 rounded-2xl p-4 text-center bg-stone-50/60 dark:bg-stone-800/40 transition-colors">
+                  <input
+                    type="file"
+                    id="central-doc-file-input"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="central-doc-file-input"
+                    className="cursor-pointer flex flex-col items-center justify-center space-y-1.5"
+                  >
+                    <UploadCloud className="w-8 h-8 text-amber-600" />
+                    <span className="font-bold text-amber-700 dark:text-amber-400 hover:underline">
+                      คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่
+                    </span>
+                    <span className="text-[11px] text-stone-400">
+                      รองรับไฟล์ .PDF, .DOCX, .XLSX, รูปภาพ (ขนาดสูงสุดไม่เกิน 10 MB)
+                    </span>
+                  </label>
+                </div>
+
+                {/* Selected File Badge */}
+                {uploadFile && (
+                  <div className="flex items-center justify-between p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-emerald-900 dark:text-emerald-200">
+                    <div className="flex items-center space-x-2 truncate">
+                      <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-bold truncate">{uploadFile.name}</span>
+                      <span className="text-stone-400 text-[11px]">({formatBytes(uploadFile.size)})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadFile(null);
+                        setUploadFileDataUrl('');
+                      }}
+                      className="text-stone-400 hover:text-rose-500 p-1"
+                      title="ยกเลิกไฟล์นี้"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* File Error Notice */}
+                {fileError && (
+                  <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-700 dark:text-rose-300 font-semibold text-[11px]">
+                    {fileError}
+                  </div>
+                )}
+              </div>
+
+              {/* Online External URL (Alternative or addition) */}
+              <div>
+                <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">
+                  🔗 หรือแนบลิงก์เอกสารออนไลน์ (URL จากเว็บ สถ. / กรมบัญชีกลาง - ไม่กินพื้นที่จัดเก็บ)
+                </label>
+                <input
+                  type="url"
+                  value={newDocForm.externalUrl}
+                  onChange={(e) => setNewDocForm({ ...newDocForm, externalUrl: e.target.value })}
+                  placeholder="เช่น https://www.dla.go.th/... หรือ https://www.cgd.go.th/..."
+                  className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
+                />
+              </div>
+
+              {/* Metadata Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1">หมวดหมู่เอกสาร</label>
+                  <label className="block font-semibold mb-1">หมวดหมู่เอกสาร *</label>
                   <select
                     value={newDocForm.category}
                     onChange={(e) => setNewDocForm({ ...newDocForm, category: e.target.value })}
-                    className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
                   >
                     <option value="regulations">กฎหมาย & ระเบียบการเงินการคลัง</option>
                     <option value="working-papers">ต้นแบบกระดาษทำการ & เช็คลิสต์</option>
@@ -618,19 +1307,19 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                     type="text"
                     value={newDocForm.code}
                     onChange={(e) => setNewDocForm({ ...newDocForm, code: e.target.value })}
-                    placeholder="เช่น ว 23, พ.ร.บ. พัสดุฯ"
-                    className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-bold"
+                    placeholder="เช่น ว 23, พ.ร.บ. พัสดุฯ, มท 0808..."
+                    className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-bold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">ชื่อเรื่องเอกสาร *</label>
+                <label className="block font-semibold mb-1">ชื่อเรื่องเอกสาร / หัวข้อเรื่อง *</label>
                 <input
                   type="text"
                   value={newDocForm.title}
                   onChange={(e) => setNewDocForm({ ...newDocForm, title: e.target.value })}
-                  placeholder="เช่น ระเบียบกระทรวงมหาดไทยว่าด้วย..."
+                  placeholder="เช่น แนวทางปฏิบัติการตรวจรับพัสดุและการควบคุมภายใน พ.ศ. 2569"
                   className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
                   required
                 />
@@ -642,12 +1331,12 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   type="text"
                   value={newDocForm.topic}
                   onChange={(e) => setNewDocForm({ ...newDocForm, topic: e.target.value })}
-                  placeholder="เช่น การเบิกจ่ายเงิน, งานก่อสร้าง, ค่าเช่าบ้าน"
+                  placeholder="เช่น การจัดซื้อจัดจ้าง, ค่าเช่าบ้าน, การเบิกจ่ายเงิน"
                   className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold mb-1">หน่วยงานเจ้าของเรื่อง</label>
                   <input
@@ -674,7 +1363,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                   rows={2}
                   value={newDocForm.summary}
                   onChange={(e) => setNewDocForm({ ...newDocForm, summary: e.target.value })}
-                  placeholder="คำอธิบายสรุปสาระสำคัญ..."
+                  placeholder="คำอธิบายสรุปสาระสำคัญโดยสังเขป..."
                   className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                   required
                 />
@@ -683,10 +1372,10 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               <div>
                 <label className="block font-semibold mb-1">ประเด็นสำคัญที่ต้องตรวจสอบ (บรรทัดละ 1 ข้อ)</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={newDocForm.keyPoints}
                   onChange={(e) => setNewDocForm({ ...newDocForm, keyPoints: e.target.value })}
-                  placeholder="ข้อ 1: ...&#10;ข้อ 2: ..."
+                  placeholder="ข้อ 1: ตรวจสอบความถูกต้องของเอกสาร&#10;ข้อ 2: ตรวจสอบการอนุมัติฎีกา..."
                   className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                 />
               </div>
@@ -694,21 +1383,21 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               <div>
                 <label className="block font-semibold mb-1">เนื้อหา / คำชี้แจงฉบับเต็ม</label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={newDocForm.fullContent}
                   onChange={(e) => setNewDocForm({ ...newDocForm, fullContent: e.target.value })}
-                  placeholder="รายละเอียดคำอธิบายฉบับเต็ม..."
-                  className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono text-xs"
+                  placeholder="รายละเอียดคำอธิบายฉบับเต็ม (หากไม่มีไฟล์แนบ)..."
+                  className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-sans text-xs"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">แท็ก (คั่นด้วยจุลภาค ,)</label>
+                <label className="block font-semibold mb-1">แท็กคำค้นหา (คั่นด้วยเครื่องหมายจุลภาค ,)</label>
                 <input
                   type="text"
                   value={newDocForm.tags}
                   onChange={(e) => setNewDocForm({ ...newDocForm, tags: e.target.value })}
-                  placeholder="เช่น กฎหมาย, เบิกจ่าย, ค่าเช่าบ้าน"
+                  placeholder="เช่น กฎหมาย, เบิกจ่าย, ค่าเช่าบ้าน, สถ."
                   className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                 />
               </div>
@@ -717,16 +1406,17 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                 <button
                   type="button"
                   onClick={() => setShowAddDocModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800 cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center space-x-1"
+                  disabled={isSubmitting}
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center space-x-1.5 disabled:opacity-50"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>บันทึกลงคลังกลาง</span>
+                  <span>{isSubmitting ? 'กำลังบันทึก...' : 'บันทึกลงคลังกลาง'}</span>
                 </button>
               </div>
             </form>
