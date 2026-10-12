@@ -21,7 +21,8 @@ import {
   Award,
   ShieldCheck,
   DollarSign,
-  Lock
+  Lock,
+  LayoutGrid
 } from 'lucide-react';
 import { MEMBERSHIP_PLANS, checkUserSubscription, getSubscriptionCountdown } from '../utils/auth';
 
@@ -76,6 +77,14 @@ export default function Sidebar({
         { id: 'reporting', stepNum: '8', label: '8. รายงานผลการตรวจสอบ (Audit Reporting)', icon: FileSpreadsheet, desc: 'รายงาน 5 องค์ประกอบ และบันทึกข้อความเสนอนายก' },
         { id: 'tracking-register', stepNum: '9', label: '9. การติดตามผลการตรวจสอบ (Audit Follow-up)', icon: Clock, desc: 'ทะเบียนคุมข้อเสนอแนะ และบันทึกเตือน 30/60 วัน' },
         { id: 'audit-committee', stepNum: '10', label: '10. คณะกรรมการตรวจสอบ (Audit Committee)', icon: Award, desc: 'กฎบัตร ปฏิทิน 4 ไตรมาส ประเมิน 11 ด้าน & QAIP' }
+      ]
+    },
+    {
+      groupTitle: 'งานควบคุมภายใน & บริหารความเสี่ยง (อปท.)',
+      items: [
+        { id: 'internal-control', stepNum: 'ปย', label: 'การควบคุมภายใน (แบบ ปย. 1, 4, 5)', icon: ShieldCheck, desc: 'แบบประเมินและรายงานการควบคุมภายใน ตามมาตรฐานกระทรวงการคลัง' },
+        { id: 'risk-management', stepNum: 'บส', label: 'การบริหารความเสี่ยง (แบบ บส. 1 - 5)', icon: Layers, desc: 'แบบ บส. 1 - 5 ตามหนังสือสั่งการ ว 3482 (5 สำนัก/กอง)' },
+        { id: 'lpa', stepNum: 'LPA', label: 'การประเมินประสิทธิภาพ LPA ด้าน 1', icon: Award, desc: 'เกณฑ์ชี้วัดมาตรฐานความโปร่งใสและตรวจสอบภายใน อปท.' }
       ]
     },
     {
@@ -207,8 +216,8 @@ export default function Sidebar({
 
       {/* Navigation Scrollable Body */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
-        {/* Navigation to Welcome Page (หน้าแรก) */}
-        <div>
+        {/* Navigation to Welcome & Cockpit Dashboard */}
+        <div className="space-y-1.5">
           <button
             onClick={() => setCurrentTab('welcome')}
             className={`w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer ${
@@ -219,6 +228,24 @@ export default function Sidebar({
           >
             <span className="text-sm">🏠</span>
             <span>หน้าแรก (ภาพรวมระบบ)</span>
+          </button>
+          <button
+            onClick={() => {
+              if (isExpired && !isAdmin) {
+                if (onShowExpiredModal) onShowExpiredModal();
+                else setCurrentTab('welcome');
+                return;
+              }
+              setCurrentTab('dashboard');
+            }}
+            className={`w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer ${
+              currentTab === 'dashboard'
+                ? 'bg-stone-800 text-amber-100 shadow-xs border-l-4 border-amber-500'
+                : 'bg-white dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 hover:text-amber-800 dark:hover:text-amber-300 border border-stone-200/80 dark:border-stone-800'
+            }`}
+          >
+            <LayoutGrid className="w-4 h-4 text-amber-500 shrink-0" />
+            <span>แดชบอร์ดตรวจสอบ (Audit Cockpit)</span>
           </button>
         </div>
 
