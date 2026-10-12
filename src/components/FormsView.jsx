@@ -21,7 +21,8 @@ import {
   ArrowRight,
   ShieldCheck,
   FileCheck2,
-  BookOpen
+  BookOpen,
+  Info
 } from 'lucide-react';
 import {
   V614_CATEGORIES,
@@ -30,6 +31,14 @@ import {
 import OfficialThaiMemo from './OfficialThaiMemo';
 import OfficialThaiOrder from './OfficialThaiOrder';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+
+const cleanCategoryLabel = (label) => {
+  if (!label) return '';
+  return label
+    .replace(/^\d+\.\s*/, '')
+    .replace(/\s*\(\d+\s*รายการ\)/, '')
+    .trim();
+};
 
 export default function FormsView({
   formsBase = [],
@@ -44,6 +53,7 @@ export default function FormsView({
   const [selectedDocType, setSelectedDocType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [previewTab, setPreviewTab] = useState('a4'); // 'a4' | 'summary'
   const [copiedId, setCopiedId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -440,43 +450,60 @@ export default function FormsView({
         year={selectedYear}
       />
 
-      {/* Filter Tabs & Search Controls */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Stage Tabs (ตาม 4 ขั้นตอนการตรวจสอบ) */}
-          <div className="flex flex-wrap gap-1.5">
+      {/* Control Bar: Stages, Types & Search (Cleaned & Contained like Central Knowledge Hub) */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-3.5">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
+          {/* Stage Tabs (ตามขั้นตอนการตรวจสอบ พร้อมตัวนับรายการ) */}
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             {V614_CATEGORIES.map((cat) => {
+              const count =
+                cat.id === 'all'
+                  ? V614_OFFICIAL_TEMPLATES.length
+                  : V614_OFFICIAL_TEMPLATES.filter((d) => d.stage === cat.id).length;
               const isSelected = selectedStage === cat.id;
+              const displayLabel = cleanCategoryLabel(cat.label);
+
               return (
                 <button
                   key={cat.id}
-                  onClick={() => setSelectedStage(cat.id)}
+                  onClick={() => {
+                    setSelectedStage(isSelected && cat.id !== 'all' ? 'all' : cat.id);
+                  }}
                   className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                     isSelected
-                      ? 'bg-amber-600 text-white shadow-xs'
+                      ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
                       : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200/80 border border-transparent'
                   }`}
                 >
-                  <span>{cat.label}</span>
+                  <span>{displayLabel}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                      isSelected
+                        ? 'bg-amber-500/20 text-amber-900 dark:text-amber-200 font-bold'
+                        : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300'
+                    }`}
+                  >
+                    {count}
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Search Box */}
-          <div className="relative min-w-[260px]">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
+          {/* Search Box (Contained) */}
+          <div className="relative w-full sm:w-64 md:w-72 max-w-full shrink-0">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-stone-400 pointer-events-none" />
             <input
               type="text"
               placeholder="ค้นหาชื่อบันทึก, เรื่อง, รหัส..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-800 dark:text-stone-100"
+              className="w-full pl-8 pr-7 py-2.5 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-800 dark:text-stone-100 transition-all box-border"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-600"
+                className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -497,9 +524,9 @@ export default function FormsView({
             <button
               key={type.id}
               onClick={() => setSelectedDocType(type.id)}
-              className={`px-2.5 py-0.5 rounded-lg border transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg border transition-all cursor-pointer font-medium ${
                 selectedDocType === type.id
-                  ? 'bg-stone-800 text-white font-bold border-stone-900 dark:bg-stone-700'
+                  ? 'bg-stone-800 text-white font-bold border-stone-900 dark:bg-stone-700 dark:border-stone-600 shadow-2xs'
                   : 'bg-stone-50 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 border-stone-200/80 dark:border-stone-700 hover:border-amber-400'
               }`}
             >
@@ -509,261 +536,535 @@ export default function FormsView({
         </div>
       </div>
 
-      {/* Templates Grid (20 รายการ) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredTemplates.map((doc) => {
-          const isMemo = doc.docType === 'memo';
-          const isOrder = doc.docType === 'order';
+      {/* Guide Note Above List */}
+      <div className="flex items-center justify-between text-xs text-stone-400 px-1 font-medium">
+        <div>
+          {selectedStage !== 'all' && (
+            <span className="text-amber-700 dark:text-amber-400 text-[11px] bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200/80 dark:border-amber-900/40">
+              หมวดหมู่: {cleanCategoryLabel(V614_CATEGORIES.find((c) => c.id === selectedStage)?.label || '')}
+            </span>
+          )}
+        </div>
+        <div className="text-[11px] text-stone-400 flex items-center gap-1">
+          <Info className="w-3.5 h-3.5 text-amber-600" />
+          <span>คลิกที่รายการเพื่อเปิดดูบันทึกข้อความและคำสั่ง (ระเบียบงานสารบรรณ A4) ได้ทันทีโดยไม่ต้องดาวน์โหลด</span>
+        </div>
+      </div>
 
-          return (
-            <div
-              key={doc.id}
-              className="bg-white dark:bg-stone-900 rounded-3xl p-5 border border-stone-200/90 dark:border-stone-800 hover:border-amber-500/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
-            >
-              <div className="space-y-3">
-                {/* Card Top: Code & Type Badges */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300/60 dark:border-amber-800/50">
-                      {doc.code}
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        isOrder
-                          ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200'
-                          : isMemo
-                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200'
-                          : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300'
-                      }`}
-                    >
-                      {isOrder
-                        ? 'คำสั่ง (แบบ ๑๔)'
-                        : isMemo
-                        ? 'บันทึกข้อความ (แบบ ๒)'
-                        : doc.docType === 'charter'
-                        ? 'กฎบัตร/ประกาศ'
-                        : 'แผนปฏิบัติงาน'}
+      {/* CLEAN NUMBERED LIST VIEW (แสดงเป็นรายการมีลำดับเหมือนคลังเอกสารกลาง) */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs overflow-hidden">
+        {filteredTemplates.length > 0 ? (
+          <div className="divide-y divide-stone-100 dark:divide-stone-800/80">
+            {filteredTemplates.map((doc, index) => {
+              const isMemo = doc.docType === 'memo';
+              const isOrder = doc.docType === 'order';
+              const isCharter = doc.docType === 'charter';
+              const isPlan = doc.docType === 'plan';
+
+              return (
+                <div
+                  key={doc.id}
+                  onClick={() => {
+                    setPreviewDoc(doc);
+                    setPreviewTab('a4');
+                  }}
+                  className="group p-4 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-all flex items-center justify-between gap-4 cursor-pointer"
+                >
+                  {/* Left: Number + Main Title */}
+                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                    {/* Number Badge (1, 2, 3...) */}
+                    <div className="shrink-0 w-8 h-8 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 font-mono font-bold text-xs flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-2xs">
+                      {index + 1}
+                    </div>
+
+                    {/* Title & Metadata */}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Title */}
+                        <h3 className="font-bold text-sm text-stone-900 dark:text-stone-100 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors leading-snug">
+                          {doc.title}
+                        </h3>
+
+                        {/* Document Type Badge */}
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                            isOrder
+                              ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-900/60'
+                              : isMemo
+                              ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60'
+                              : isCharter
+                              ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/80 dark:border-purple-900/60'
+                              : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/60'
+                          }`}
+                        >
+                          {isOrder
+                            ? 'คำสั่ง (แบบ ๑๔)'
+                            : isMemo
+                            ? 'บันทึกข้อความ (แบบ ๒)'
+                            : isCharter
+                            ? 'กฎบัตร/ประกาศ'
+                            : 'แผนปฏิบัติงาน'}
+                        </span>
+
+                        {/* Code Badge */}
+                        {doc.code && (
+                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
+                            {doc.code}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Sub-line: Subject, Stage, & Link */}
+                      <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 flex-wrap">
+                        {doc.subject && (
+                          <span className="text-amber-850 dark:text-amber-300/90 font-medium">
+                            เรื่อง: {doc.subject}
+                          </span>
+                        )}
+                        <span>•</span>
+                        <span className="flex items-center gap-1 text-stone-400">
+                          <Layers className="w-3 h-3 text-stone-400" />
+                          <span>{doc.stageName}</span>
+                        </span>
+                        {doc.linkedTabName && (
+                          <>
+                            <span>•</span>
+                            <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>เชื่อมโยง: {doc.linkedTabName}</span>
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Middle: Stage Pill */}
+                  <div className="hidden lg:flex shrink-0 items-center">
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/60 dark:border-stone-700/60">
+                      {doc.stageName}
                     </span>
                   </div>
 
-                  <span className="text-[10px] font-semibold text-stone-400">
-                    {doc.stageName}
+                  {/* Right: Quick Action Buttons */}
+                  <div
+                    className="flex items-center space-x-1.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* View / Open Button (เปิดดู สารบรรณ A4) */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewDoc(doc);
+                        setPreviewTab('a4');
+                      }}
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1 cursor-pointer"
+                      title="เปิดดูหนังสือสารบรรณ A4 ทันที"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>เปิดดู</span>
+                    </button>
+
+                    {/* Detail / Summary Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewDoc(doc);
+                        setPreviewTab('summary');
+                      }}
+                      className="hidden sm:flex bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-semibold py-1.5 px-2.5 rounded-xl text-xs transition-all items-center space-x-1 cursor-pointer"
+                      title="ดูสาระสำคัญและข้อเสนอ"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>รายละเอียด</span>
+                    </button>
+
+                    {/* Download Word & Print Toolbar */}
+                    <OfficialDocActionToolbar
+                      compact={true}
+                      onDownloadWord={() => handleDownloadWord(doc)}
+                      onPrint={() => handlePrintDocument(doc)}
+                      wordTooltip={`ส่งออก ${doc.title} เป็นไฟล์ Word (.doc)`}
+                      printTooltip={`พิมพ์ ${doc.title} / ส่งออกเป็น PDF`}
+                    />
+
+                    {/* Copy Text Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyText(
+                          doc.id,
+                          doc.fullContent ||
+                            `${doc.title}\nเรื่อง: ${doc.subject}\n\nข้อความ:\n${doc.part1_background || ''}\n${doc.part2_facts || ''}\n${doc.part3_proposal || ''}`
+                        );
+                      }}
+                      className="p-1.5 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors cursor-pointer"
+                      title="คัดลอกข้อความ"
+                    >
+                      {copiedId === doc.id ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+
+                    {/* Direct Link to System (if linkedTab) */}
+                    {doc.linkedTab && setCurrentTab && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentTab(doc.linkedTab);
+                        }}
+                        className="hidden xl:flex p-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 transition-colors cursor-pointer"
+                        title={`ไปยังระบบ: ${doc.linkedTabName}`}
+                      >
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-16 px-4">
+            <FileText className="w-12 h-12 text-stone-300 dark:text-stone-700 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-stone-700 dark:text-stone-200">
+              ไม่พบบันทึกข้อความหรือคำสั่งที่ตรงกับเงื่อนไข
+            </h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-md mx-auto">
+              ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่น
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* FULL IN-APP PREVIEW & DETAIL MODAL (เหมือนคลังเอกสารกลาง) */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-stone-200/80 dark:border-stone-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-stone-100 dark:border-stone-800 flex items-start justify-between gap-4 bg-stone-50/70 dark:bg-stone-850/70">
+              <div className="space-y-1.5 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800">
+                    {previewDoc.code}
+                  </span>
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
+                    {previewDoc.stageName}
+                  </span>
+                  <span className="text-xs text-stone-500 flex items-center gap-1">
+                    <Building className="w-3 h-3 text-stone-400" />
+                    <span>{orgName}</span>
                   </span>
                 </div>
 
-                {/* Title & Subject */}
-                <div className="space-y-1">
-                  <h3 className="font-bold text-sm text-stone-900 dark:text-stone-100 line-clamp-2 leading-snug">
-                    {doc.title}
-                  </h3>
-                  <div className="text-xs text-amber-800 dark:text-amber-400 font-medium line-clamp-2">
-                    เรื่อง: {doc.subject}
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <p className="text-xs text-stone-600 dark:text-stone-300 line-clamp-3 leading-relaxed">
-                  {doc.summary}
-                </p>
-              </div>
-
-              {/* Card Footer Actions */}
-              <div className="pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => setPreviewDoc(doc)}
-                    className="flex-1 bg-amber-50 hover:bg-amber-100 dark:bg-stone-800 dark:hover:bg-stone-750 text-amber-900 dark:text-amber-200 font-bold py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center space-x-1 cursor-pointer border border-amber-200/80 dark:border-stone-700"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                    <span>ดูสารบรรณ A4</span>
-                  </button>
-
-                  <OfficialDocActionToolbar
-                    compact={true}
-                    onDownloadWord={() => handleDownloadWord(doc)}
-                    onPrint={() => handlePrintDocument(doc)}
-                    wordTooltip={`ดาวน์โหลด ${doc.title} เป็นไฟล์ Word (.doc)`}
-                    printTooltip={`พิมพ์ ${doc.title} / บันทึกเป็น PDF`}
-                  />
-                </div>
-
-                {doc.linkedTab && setCurrentTab && (
-                  <button
-                    onClick={() => setCurrentTab(doc.linkedTab)}
-                    className="w-full text-left py-1 px-2 rounded-lg text-[11px] font-bold text-stone-500 hover:text-amber-800 dark:hover:text-amber-300 flex items-center justify-between transition-colors cursor-pointer"
-                  >
-                    <span className="truncate">เชื่อมโยง: {doc.linkedTabName}</span>
-                    <ArrowRight className="w-3 h-3 shrink-0" />
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {filteredTemplates.length === 0 && (
-        <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
-          <FileText className="w-12 h-12 text-stone-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-stone-700 dark:text-stone-200">ไม่พบบันทึกข้อความหรือคำสั่งที่ตรงกับเงื่อนไข</h3>
-          <p className="text-xs text-stone-500 mt-1">ลองเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่อื่น</p>
-        </div>
-      )}
-
-      {/* FULL A4 SARABAN PREVIEW MODAL */}
-      {previewDoc && (
-        <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-stone-100 dark:bg-stone-900 rounded-3xl max-w-4xl w-full max-h-[95vh] flex flex-col border border-stone-300 dark:border-stone-800 shadow-2xl overflow-hidden">
-            {/* Modal Control Header */}
-            <div className="p-4 bg-white dark:bg-stone-850 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between gap-4">
-              <div className="flex items-center space-x-2 truncate">
-                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                  {previewDoc.code}
-                </span>
-                <span className="font-bold text-sm text-stone-800 dark:text-stone-100 truncate">
+                <h2 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 leading-snug">
                   {previewDoc.title}
-                </span>
+                </h2>
+
+                {previewDoc.subject && (
+                  <div className="text-xs text-amber-800 dark:text-amber-400 font-medium">
+                    เรื่อง: {previewDoc.subject}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center space-x-2 shrink-0">
-                <OfficialDocActionToolbar
-                  onDownloadWord={() => handleDownloadWord(previewDoc)}
-                  onPrint={() => handlePrintDocument(previewDoc)}
-                  wordTooltip={`ดาวน์โหลด ${previewDoc.title} เป็นไฟล์ Word (.doc)`}
-                  printTooltip={`พิมพ์ ${previewDoc.title} / บันทึกเป็น PDF`}
-                />
-
                 <button
                   onClick={() => setPreviewDoc(null)}
-                  className="text-stone-400 hover:text-stone-600 p-1.5 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800"
+                  className="text-stone-400 hover:text-stone-600 p-1.5 rounded-xl hover:bg-stone-200/80 dark:hover:bg-stone-800 transition-colors shrink-0 cursor-pointer"
+                  title="ปิดหน้าต่าง"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            {/* Modal Body: Realistic Thai Saraban Sheet */}
-            <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar flex justify-center bg-stone-200/60 dark:bg-stone-950">
-              {previewDoc.docType === 'order' ? (
-                <OfficialThaiOrder
-                  orderHeader={previewDoc.title || `คำสั่ง${orgName}`}
-                  orderNumber={previewDoc.docNumber || 'ที่ ........./๒๕๖๙'}
-                  orderSubject={previewDoc.subject || previewDoc.title}
-                  preamble={(previewDoc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
-                  clauses={(previewDoc.orderClauses || []).map((c) =>
-                    c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
-                  )}
-                  effectiveDate={(previewDoc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
-                  issuedDate={previewDoc.docDate || ''}
-                  signatory={{
-                    name: previewDoc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])',
-                    position: previewDoc.orderSignatoryPosition
-                      ? previewDoc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
-                      : `นายก${orgName}`
-                  }}
+            {/* Modal Tab Switcher */}
+            <div className="flex items-center justify-between px-6 pt-3 pb-2 border-b border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900 text-xs">
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={() => setPreviewTab('a4')}
+                  className={`py-1.5 px-3.5 rounded-xl font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    previewTab === 'a4'
+                      ? 'bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 shadow-2xs'
+                      : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
+                  }`}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>👁️ ดูหนังสือสารบรรณ A4 (In-app Preview)</span>
+                </button>
+
+                <button
+                  onClick={() => setPreviewTab('summary')}
+                  className={`py-1.5 px-3.5 rounded-xl font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    previewTab === 'summary'
+                      ? 'bg-amber-500/15 text-amber-900 dark:text-amber-300 border border-amber-500/30 shadow-2xs'
+                      : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>📋 สาระสำคัญ & รายละเอียด</span>
+                </button>
+              </div>
+
+              <div className="hidden sm:flex items-center space-x-2">
+                <OfficialDocActionToolbar
+                  compact={true}
+                  onDownloadWord={() => handleDownloadWord(previewDoc)}
+                  onPrint={() => handlePrintDocument(previewDoc)}
+                  wordTooltip={`ส่งออกเป็น Word (.doc)`}
+                  printTooltip={`พิมพ์ / PDF`}
                 />
-              ) : previewDoc.docType === 'charter' || previewDoc.docType === 'plan' ? (
-                <div
-                  className="bg-white text-black p-8 sm:p-14 max-w-4xl w-full mx-auto shadow-md border border-stone-300"
-                  style={{
-                    fontFamily: "'Sarabun', 'TH Sarabun New', Tahoma, sans-serif",
-                    lineHeight: 1.6,
-                    fontSize: '15px'
-                  }}
-                >
-                  <div className="text-center pb-4">
-                    <div className="font-bold text-lg mb-1">(ตราครุฑ)</div>
-                    <h1 className="font-bold text-xl text-black">
-                      {previewDoc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
-                    </h1>
-                    <div className="font-bold text-sm text-stone-600 mt-1">{previewDoc.docNumber}</div>
-                  </div>
-                  <hr className="border-stone-400 my-4" />
-                  <div className="space-y-4 py-2 text-justify text-[15px] leading-relaxed whitespace-pre-line">
-                    {(previewDoc.fullContent || previewDoc.summary).replace(
-                      /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
-                      orgName
-                    )}
-                  </div>
-                  <div className="pt-8 flex justify-end">
-                    <div className="w-64 text-center space-y-4">
-                      <div>(ลงชื่อ)........................................................</div>
-                      <div className="font-bold">
-                        {previewDoc.signatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}
-                      </div>
-                      <div className="text-sm">นายก{orgName}</div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <OfficialThaiMemo
-                  agency={
-                    previewDoc.agency
-                      ? previewDoc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
-                      : `หน่วยตรวจสอบภายใน ${orgName}`
-                  }
-                  phone={previewDoc.phone || '๐-xxxx-xxxx'}
-                  docNumber={previewDoc.docNumber || 'อบ ........./๒๕๖๙'}
-                  date={previewDoc.docDate || '...... เดือน ................... พ.ศ. .........'}
-                  subject={previewDoc.subject || previewDoc.title}
-                  to={
-                    previewDoc.to
-                      ? previewDoc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
-                      : `นายก${orgName} (ผ่าน ปลัด${orgName})`
-                  }
-                  signatory={{
-                    name: previewDoc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])',
-                    position: previewDoc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
-                    role: previewDoc.signatoryRole || 'ผู้ตรวจสอบภายใน'
-                  }}
-                  palatReview={{
-                    name: '........................................................',
-                    position: `ปลัด${orgName}`
-                  }}
-                  executiveOrder={{
-                    name: '........................................................',
-                    position: `นายก${orgName}`
-                  }}
-                  showReviewBoxes={true}
-                >
-                  <p className="indent-10">
-                    {(previewDoc.part1_background || '').replace(
-                      /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
-                      orgName
-                    )}
-                  </p>
-                  <p className="indent-10">
-                    {(previewDoc.part2_facts || '').replace(
-                      /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
-                      orgName
-                    )}
-                  </p>
-                  <p className="indent-10">
-                    {(previewDoc.part3_proposal || '').replace(
-                      /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
-                      orgName
-                    )}
-                  </p>
-                </OfficialThaiMemo>
-              )}
+              </div>
             </div>
 
-            {/* Modal Footer Controls */}
-            <div className="p-4 bg-white dark:bg-stone-850 border-t border-stone-200 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3">
+            {/* Modal Body */}
+            {previewTab === 'a4' ? (
+              <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar flex justify-center bg-stone-200/60 dark:bg-stone-950 flex-1">
+                {previewDoc.docType === 'order' ? (
+                  <OfficialThaiOrder
+                    orderHeader={previewDoc.title || `คำสั่ง${orgName}`}
+                    orderNumber={previewDoc.docNumber || 'ที่ ........./๒๕๖๙'}
+                    orderSubject={previewDoc.subject || previewDoc.title}
+                    preamble={(previewDoc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                    clauses={(previewDoc.orderClauses || []).map((c) =>
+                      c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
+                    )}
+                    effectiveDate={(previewDoc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                    issuedDate={previewDoc.docDate || ''}
+                    signatory={{
+                      name: previewDoc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])',
+                      position: previewDoc.orderSignatoryPosition
+                        ? previewDoc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
+                        : `นายก${orgName}`
+                    }}
+                  />
+                ) : previewDoc.docType === 'charter' || previewDoc.docType === 'plan' ? (
+                  <div
+                    className="bg-white text-black p-8 sm:p-14 max-w-4xl w-full mx-auto shadow-md border border-stone-300"
+                    style={{
+                      fontFamily: "'Sarabun', 'TH Sarabun New', Tahoma, sans-serif",
+                      lineHeight: 1.6,
+                      fontSize: '15px'
+                    }}
+                  >
+                    <div className="text-center pb-4">
+                      <div className="font-bold text-lg mb-1">(ตราครุฑ)</div>
+                      <h1 className="font-bold text-xl text-black">
+                        {previewDoc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                      </h1>
+                      <div className="font-bold text-sm text-stone-600 mt-1">{previewDoc.docNumber}</div>
+                    </div>
+                    <hr className="border-stone-400 my-4" />
+                    <div className="space-y-4 py-2 text-justify text-[15px] leading-relaxed whitespace-pre-line">
+                      {(previewDoc.fullContent || previewDoc.summary).replace(
+                        /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                        orgName
+                      )}
+                    </div>
+                    <div className="pt-8 flex justify-end">
+                      <div className="w-64 text-center space-y-4">
+                        <div>(ลงชื่อ)........................................................</div>
+                        <div className="font-bold">
+                          {previewDoc.signatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}
+                        </div>
+                        <div className="text-sm">นายก{orgName}</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <OfficialThaiMemo
+                    agency={
+                      previewDoc.agency
+                        ? previewDoc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
+                        : `หน่วยตรวจสอบภายใน ${orgName}`
+                    }
+                    phone={previewDoc.phone || '๐-xxxx-xxxx'}
+                    docNumber={previewDoc.docNumber || 'อบ ........./๒๕๖๙'}
+                    date={previewDoc.docDate || '...... เดือน ................... พ.ศ. .........'}
+                    subject={previewDoc.subject || previewDoc.title}
+                    to={
+                      previewDoc.to
+                        ? previewDoc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)
+                        : `นายก${orgName} (ผ่าน ปลัด${orgName})`
+                    }
+                    signatory={{
+                      name: previewDoc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])',
+                      position: previewDoc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+                      role: previewDoc.signatoryRole || 'ผู้ตรวจสอบภายใน'
+                    }}
+                    palatReview={{
+                      name: '........................................................',
+                      position: `ปลัด${orgName}`
+                    }}
+                    executiveOrder={{
+                      name: '........................................................',
+                      position: `นายก${orgName}`
+                    }}
+                    showReviewBoxes={true}
+                  >
+                    <p className="indent-10">
+                      {(previewDoc.part1_background || '').replace(
+                        /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                        orgName
+                      )}
+                    </p>
+                    <p className="indent-10">
+                      {(previewDoc.part2_facts || '').replace(
+                        /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                        orgName
+                      )}
+                    </p>
+                    <p className="indent-10">
+                      {(previewDoc.part3_proposal || '').replace(
+                        /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                        orgName
+                      )}
+                    </p>
+                  </OfficialThaiMemo>
+                )}
+              </div>
+            ) : (
+              /* TAB: SUMMARY & DETAILS */
+              <div className="p-6 overflow-y-auto flex-1 space-y-4 text-xs text-stone-700 dark:text-stone-300 custom-scrollbar">
+                {/* Subject & Summary */}
+                <div className="bg-amber-50/60 dark:bg-amber-950/20 p-4 rounded-2xl border border-amber-200/80 dark:border-amber-900/40 space-y-2">
+                  <div className="font-bold text-amber-900 dark:text-amber-200 text-sm flex items-center space-x-1.5">
+                    <FileText className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                    <span>สรุปสาระสำคัญของเอกสาร</span>
+                  </div>
+                  <p className="text-stone-700 dark:text-stone-300 leading-relaxed text-xs">
+                    {previewDoc.summary}
+                  </p>
+                </div>
+
+                {/* Metadata Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-xl border border-stone-200/80 dark:border-stone-700 space-y-1">
+                    <span className="text-stone-400 font-semibold block text-[11px]">รหัส / ลำดับที่</span>
+                    <p className="font-mono font-bold text-stone-800 dark:text-stone-100 text-xs">
+                      {previewDoc.code}
+                    </p>
+                  </div>
+
+                  <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-xl border border-stone-200/80 dark:border-stone-700 space-y-1">
+                    <span className="text-stone-400 font-semibold block text-[11px]">ประเภทหนังสือสารบรรณ</span>
+                    <p className="font-bold text-stone-800 dark:text-stone-100 text-xs">
+                      {previewDoc.docType === 'order'
+                        ? 'คำสั่ง (แบบ ๑๔)'
+                        : previewDoc.docType === 'memo'
+                        ? 'บันทึกข้อความ (แบบ ๒)'
+                        : previewDoc.docType === 'charter'
+                        ? 'กฎบัตร / ประกาศ'
+                        : 'แผนปฏิบัติงาน'}
+                    </p>
+                  </div>
+
+                  <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-xl border border-stone-200/80 dark:border-stone-700 space-y-1">
+                    <span className="text-stone-400 font-semibold block text-[11px]">ขั้นตอนการตรวจสอบ</span>
+                    <p className="font-bold text-stone-800 dark:text-stone-100 text-xs">
+                      {previewDoc.stageName}
+                    </p>
+                  </div>
+
+                  <div className="bg-stone-50 dark:bg-stone-800/60 p-3.5 rounded-xl border border-stone-200/80 dark:border-stone-700 space-y-1">
+                    <span className="text-stone-400 font-semibold block text-[11px]">ผู้ลงนามตามระเบียบ</span>
+                    <p className="font-bold text-stone-800 dark:text-stone-100 text-xs">
+                      {previewDoc.signatoryName || previewDoc.orderSignatoryName || 'ผู้ตรวจสอบภายใน / นายก อปท.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Structure / Content Breakdown */}
+                {previewDoc.part1_background && (
+                  <div className="space-y-3 pt-2">
+                    <h4 className="font-bold text-stone-900 dark:text-stone-100 text-xs flex items-center space-x-1.5">
+                      <Layers className="w-3.5 h-3.5 text-amber-600" />
+                      <span>โครงสร้างเนื้อหาตามระเบียบงานสารบรรณ</span>
+                    </h4>
+
+                    <div className="space-y-2">
+                      <div className="bg-stone-50 dark:bg-stone-800/50 p-3 rounded-xl border border-stone-200/70 dark:border-stone-700">
+                        <span className="font-bold text-stone-800 dark:text-stone-200 block mb-1">๑. ต้นเรื่อง / ความเป็นมา:</span>
+                        <p className="text-stone-600 dark:text-stone-300 leading-relaxed text-xs">
+                          {previewDoc.part1_background.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                        </p>
+                      </div>
+
+                      <div className="bg-stone-50 dark:bg-stone-800/50 p-3 rounded-xl border border-stone-200/70 dark:border-stone-700">
+                        <span className="font-bold text-stone-800 dark:text-stone-200 block mb-1">๒. ข้อเท็จจริงและข้อพิจารณา:</span>
+                        <p className="text-stone-600 dark:text-stone-300 leading-relaxed text-xs whitespace-pre-line">
+                          {previewDoc.part2_facts.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                        </p>
+                      </div>
+
+                      <div className="bg-stone-50 dark:bg-stone-800/50 p-3 rounded-xl border border-stone-200/70 dark:border-stone-700">
+                        <span className="font-bold text-stone-800 dark:text-stone-200 block mb-1">๓. ข้อเสนอ:</span>
+                        <p className="text-stone-600 dark:text-stone-300 leading-relaxed text-xs whitespace-pre-line">
+                          {previewDoc.part3_proposal.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Linked Tab Box */}
+                {previewDoc.linkedTab && (
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-emerald-900 dark:text-emerald-200 text-xs">
+                        🔗 เอกสารนี้เชื่อมโยงกับระบบ: {previewDoc.linkedTabName}
+                      </span>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                        คุณสามารถเปิดใช้งานระบบที่เกี่ยวข้องได้ทันที
+                      </p>
+                    </div>
+                    {setCurrentTab && (
+                      <button
+                        onClick={() => {
+                          setCurrentTab(previewDoc.linkedTab);
+                          setPreviewDoc(null);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>เปิดใช้งาน</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-stone-50/80 dark:bg-stone-850/80 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() =>
                     handleCopyText(
                       previewDoc.id,
                       previewDoc.fullContent ||
-                        `${previewDoc.title}\n\n${previewDoc.part1_background}\n\n${previewDoc.part2_facts}\n\n${previewDoc.part3_proposal}`
+                        `${previewDoc.title}\nเรื่อง: ${previewDoc.subject}\n\n${previewDoc.part1_background || ''}\n\n${previewDoc.part2_facts || ''}\n\n${previewDoc.part3_proposal || ''}`
                     )
                   }
-                  className="bg-stone-100 hover:bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                  className="bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  {copiedId === previewDoc.id ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
                   <span>คัดลอกข้อความ</span>
                 </button>
+
+                <OfficialDocActionToolbar
+                  onDownloadWord={() => handleDownloadWord(previewDoc)}
+                  onPrint={() => handlePrintDocument(previewDoc)}
+                  wordTooltip={`ส่งออกเป็นไฟล์ Word (.doc)`}
+                  printTooltip={`พิมพ์ / ส่งออกเป็น PDF`}
+                />
               </div>
 
               <div className="flex items-center space-x-2">
@@ -776,7 +1077,7 @@ export default function FormsView({
                     className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    <span>เปิดใช้งานในระบบ ({previewDoc.linkedTabName})</span>
+                    <span>เปิดใช้งาน ({previewDoc.linkedTabName})</span>
                   </button>
                 )}
 
