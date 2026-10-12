@@ -23,12 +23,13 @@ import {
 } from 'lucide-react';
 import { cloudSyncService } from '../services/cloudSyncService';
 import { clearPendingUsers, getSubscriptionCountdown } from '../utils/auth';
+import { getCurrentFiscalYear, getStandardFiscalYears } from '../utils/dateUtils';
 
 export default function Header({
   orgProfile,
-  selectedYear,
+  selectedYear = getCurrentFiscalYear(),
   setSelectedYear,
-  fiscalYears = ['2569', '2570'],
+  fiscalYears = getStandardFiscalYears(),
   darkMode,
   onToggleDarkMode,
   session,

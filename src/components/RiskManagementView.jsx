@@ -890,18 +890,19 @@ export default function RiskManagementView({
     setTimeout(() => setCascadeSuccessMsg(''), 4000);
   };
 
-  // Copy risk management data from year 2569 to current year
+  // Copy risk management data from previous year to current year
   const handleCopyFromPreviousYear = () => {
     try {
+      const prevYear = String(parseInt(selectedYear, 10) - 1);
       const raw = localStorage.getItem('ia_risk_management_by_year');
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      const sourceData = parsed['2569'];
+      const sourceData = parsed[prevYear] || parsed['2569'];
       if (!sourceData || !sourceData.bs1 || sourceData.bs1.length === 0) return;
 
       openConfirmModal({
-        title: 'คัดลอกข้อมูลความเสี่ยงจากปี พ.ศ. 2569',
-        message: `ต้องการคัดลอกชุดข้อมูลความเสี่ยง (แบบ บส. 1 ถึง บส. 5) จากปีงบประมาณ 2569 มาเริ่มต้นเป็นข้อมูลของปีงบประมาณ ${selectedYear} หรือไม่?`,
+        title: `คัดลอกข้อมูลความเสี่ยงจากปี พ.ศ. ${prevYear}`,
+        message: `ต้องการคัดลอกชุดข้อมูลความเสี่ยง (แบบ บส. 1 ถึง บส. 5) จากปีงบประมาณ ${prevYear} มาเริ่มต้นเป็นข้อมูลของปีงบประมาณ ${selectedYear} หรือไม่?`,
         confirmText: 'คัดลอกข้อมูล',
         type: 'info',
         onConfirm: () => {
@@ -909,7 +910,7 @@ export default function RiskManagementView({
           if (setRiskManagement) {
             setRiskManagement(copied);
           }
-          setCascadeSuccessMsg(`📋 คัดลอกข้อมูลความเสี่ยงจากปี 2569 มายังปี ${selectedYear} เรียบร้อยแล้ว`);
+          setCascadeSuccessMsg(`📋 คัดลอกข้อมูลความเสี่ยงจากปี ${prevYear} มายังปี ${selectedYear} เรียบร้อยแล้ว`);
           setTimeout(() => setCascadeSuccessMsg(''), 4000);
         }
       });
@@ -2886,7 +2887,7 @@ export default function RiskManagementView({
                                 onClick={handleCopyFromPreviousYear}
                                 className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5"
                               >
-                                <span>📥</span> คัดลอกข้อมูลจากปี 2569
+                                <span>📥</span> คัดลอกข้อมูลจากปีก่อนหน้า ({parseInt(selectedYear, 10) - 1})
                               </button>
                             )}
                           </div>

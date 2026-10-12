@@ -25,6 +25,8 @@ import { initialCentralCalendarEvents } from '../data/initialData';
 export default function CentralCalendarView({
   session,
   orgProfile = {},
+  selectedYear = '2569',
+  annualPlans = [],
   setCurrentTab
 }) {
   const [events, setEvents] = useState(() => {
@@ -158,6 +160,7 @@ export default function CentralCalendarView({
         title="ปฏิทินกิจกรรมการตรวจสอบและกรอบเวลาราชการ"
         orgName={orgProfile?.name}
         auditorName="ปฏิทินปฏิบัติงาน & แผนการตรวจสอบส่วนกลาง"
+        year={selectedYear}
         badges={[`กำหนดการทั้งหมด ${events.length} รายการ`]}
       />
 

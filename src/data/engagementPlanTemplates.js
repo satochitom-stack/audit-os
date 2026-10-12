@@ -756,3 +756,33 @@ function getMonthName(m) {
   const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
   return months[(m - 1) % 12] || 'มกราคม';
 }
+
+/**
+ * สร้างชุดแผนปฏิบัติการตรวจสอบ (ว 614) ให้ตรงตามปีงบประมาณที่ระบุ
+ * ปรับปรุงรหัสแผน ห้วงเวลา และขอบเขต ให้ตรงตามปีงบประมาณนั้นๆ
+ * @param {string|number} year ปีงบประมาณ พ.ศ.
+ * @returns {Array} รายการแผนปฏิบัติการตรวจสอบที่ปรับแต่งตามปีแล้ว
+ */
+export function createEngagementPlansForYear(year = '2569') {
+  const yrStr = String(year);
+  const yrNum = parseInt(yrStr, 10) || 2569;
+  const prevYrStr = String(yrNum - 1);
+
+  return INITIAL_ENGAGEMENT_PLANS.map((plan) => ({
+    ...plan,
+    fiscalYear: yrStr,
+    planCode: (plan.planCode || '').replace(/2569/g, yrStr),
+    period: (plan.period || '')
+      .replace(/2569/g, yrStr)
+      .replace(/2568/g, prevYrStr),
+    fieldworkPeriod: (plan.fieldworkPeriod || '')
+      .replace(/2569/g, yrStr)
+      .replace(/2568/g, prevYrStr),
+    scope: plan.scope
+      ? {
+          ...plan.scope,
+          timeframe: (plan.scope.timeframe || '').replace(/2569/g, yrStr)
+        }
+      : plan.scope
+  }));
+}

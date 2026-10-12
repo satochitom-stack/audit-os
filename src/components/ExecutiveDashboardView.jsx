@@ -34,6 +34,7 @@ export default function ExecutiveDashboardView({
   session,
   setCurrentTab,
   orgProfile = {},
+  selectedYear = '2569',
   capaFindings = [],
   annualPlans = [],
   workingPapers = []
@@ -251,7 +252,7 @@ export default function ExecutiveDashboardView({
         title={`แดชบอร์ดผู้บริหาร ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`}
         orgName={orgProfile?.name}
         auditorName="Executive Governance Cockpit"
-        year="2569"
+        year={selectedYear}
       />
 
       {/* Executive Command Strip */}

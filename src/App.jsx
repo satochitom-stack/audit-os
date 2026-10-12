@@ -42,7 +42,8 @@ import ClosingMeetingView from './components/ClosingMeetingView';
 import AuditFollowUpView from './components/AuditFollowUpView';
 import AuditCommitteeView from './components/AuditCommitteeView';
 import SystemUpdateNotification from './components/SystemUpdateNotification';
-import { INITIAL_ENGAGEMENT_PLANS } from './data/engagementPlanTemplates';
+import { INITIAL_ENGAGEMENT_PLANS, createEngagementPlansForYear } from './data/engagementPlanTemplates';
+import { getCurrentFiscalYear, getStandardFiscalYears } from './utils/dateUtils';
 import {
   getSession,
   checkUserSubscription,
@@ -220,28 +221,25 @@ export default function App() {
     localStorage.setItem('ia_dark_mode', darkMode ? '1' : '0');
   }, [darkMode]);
 
-  // Migration: Synchronously ensure sample data from D:\ drive is completely purged
+  // Dynamic Local Government Fiscal Year (1 Oct - 30 Sep)
   const [fiscalYears, setFiscalYears] = useState(() => {
     try {
+      const currentFY = getCurrentFiscalYear();
+      const standardYears = getStandardFiscalYears(currentFY);
       const saved = localStorage.getItem('ia_fiscal_years');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // If stored fiscal years contain 2567 or only 2568, migrate to default ['2569', '2570']
-          if (
-            parsed.includes('2567') ||
-            (parsed.length === 2 && parsed.includes('2567') && parsed.includes('2568')) ||
-            (parsed.length === 1 && parsed[0] === '2568') ||
-            (parsed.length === 4 && parsed.includes('2569') && parsed.includes('2570'))
-          ) {
-            return initialFiscalYears;
-          }
-          return parsed;
+          // Merge with standard years to guarantee current fiscal year is selectable
+          const merged = Array.from(new Set([...parsed, ...standardYears]))
+            .filter((y) => y !== '2567')
+            .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+          return merged;
         }
       }
-      return initialFiscalYears;
+      return standardYears;
     } catch {
-      return initialFiscalYears;
+      return getStandardFiscalYears();
     }
   });
 
@@ -249,10 +247,10 @@ export default function App() {
     localStorage.setItem('ia_fiscal_years', JSON.stringify(fiscalYears));
   }, [fiscalYears]);
 
-  // Navigation & Fiscal Year State
-  const [selectedYear, setSelectedYear] = useState('2569');
+  // Navigation & Fiscal Year State - defaults to current local gov fiscal year (1 Oct - 30 Sep)
+  const [selectedYear, setSelectedYear] = useState(() => getCurrentFiscalYear());
   const [currentTab, setCurrentTab] = useState('welcome');
-  const [selectedWp, setSelectedWp] = useState('WP-KTB-01');
+  const [selectedWp, setSelectedWp] = useState(() => (parseInt(getCurrentFiscalYear(), 10) >= 2570 ? 'WP-PRICE-2570' : 'WP-KTB-01'));
   const [activeToolkitTab, setActiveToolkitTab] = useState('factor-f');
   const mainContentRef = useRef(null);
 
@@ -578,14 +576,29 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (!parsed['2569']) {
-          parsed['2569'] = parsed['2568'] || INITIAL_ENGAGEMENT_PLANS;
+          parsed['2569'] = createEngagementPlansForYear('2569');
+        }
+        if (!parsed['2570']) {
+          parsed['2570'] = createEngagementPlansForYear('2570');
+        } else if (Array.isArray(parsed['2570'])) {
+          // Fix any 2570 engagement plans that had old '2569' fiscalYear
+          parsed['2570'] = parsed['2570'].map((p) => ({
+            ...p,
+            fiscalYear: p.fiscalYear === '2569' ? '2570' : (p.fiscalYear || '2570')
+          }));
         }
         return parsed;
       }
-      return { '2569': INITIAL_ENGAGEMENT_PLANS, '2570': INITIAL_ENGAGEMENT_PLANS };
+      return {
+        '2569': createEngagementPlansForYear('2569'),
+        '2570': createEngagementPlansForYear('2570')
+      };
     } catch (e) {
       console.error(e);
-      return { '2569': INITIAL_ENGAGEMENT_PLANS, '2570': INITIAL_ENGAGEMENT_PLANS };
+      return {
+        '2569': createEngagementPlansForYear('2569'),
+        '2570': createEngagementPlansForYear('2570')
+      };
     }
   });
 
@@ -922,10 +935,11 @@ export default function App() {
     });
   };
 
-  const engagementPlans = engagementPlansByYear[selectedYear] || INITIAL_ENGAGEMENT_PLANS;
+  const defaultEngPlansForYear = createEngagementPlansForYear(selectedYear);
+  const engagementPlans = engagementPlansByYear[selectedYear] || defaultEngPlansForYear;
   const setEngagementPlans = (updaterOrValue) => {
     setEngagementPlansByYear((prev) => {
-      const current = prev[selectedYear] || INITIAL_ENGAGEMENT_PLANS;
+      const current = prev[selectedYear] || defaultEngPlansForYear;
       const updated = typeof updaterOrValue === 'function' ? updaterOrValue(current) : updaterOrValue;
       return { ...prev, [selectedYear]: updated };
     });
@@ -940,7 +954,7 @@ export default function App() {
     });
   };
 
-  const defaultWpForYear = selectedYear === '2570' ? initialWorkingPapers2570 : initialWorkingPapers;
+  const defaultWpForYear = parseInt(selectedYear, 10) >= 2570 ? initialWorkingPapers2570 : initialWorkingPapers;
   const workingPapers = workingPapersByYear[selectedYear] || defaultWpForYear;
   const setWorkingPapers = (updaterOrValue) => {
     setWorkingPapersByYear((prev) => {
@@ -1095,7 +1109,7 @@ export default function App() {
 
   const handleAddYear = (newYear) => {
     if (!fiscalYears.includes(newYear)) {
-      const updated = [...fiscalYears, newYear].sort();
+      const updated = [...fiscalYears, newYear].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
       setFiscalYears(updated);
       setSelectedYear(newYear);
       // Pre-seed clean empty structures for new fiscal year
@@ -1112,6 +1126,26 @@ export default function App() {
         [newYear]: []
       }));
       setRiskAssessmentsByYear((prev) => ({
+        ...prev,
+        [newYear]: []
+      }));
+      setAuditUniverseByYear((prev) => ({
+        ...prev,
+        [newYear]: defaultAuditUniverse
+      }));
+      setEngagementPlansByYear((prev) => ({
+        ...prev,
+        [newYear]: createEngagementPlansForYear(newYear)
+      }));
+      setWorkingPapersByYear((prev) => ({
+        ...prev,
+        [newYear]: parseInt(newYear, 10) >= 2570 ? initialWorkingPapers2570 : initialWorkingPapers
+      }));
+      setAuditCharterByYear((prev) => ({
+        ...prev,
+        [newYear]: { ...initialAuditCharter, year: newYear }
+      }));
+      setCapaFindingsByYear((prev) => ({
         ...prev,
         [newYear]: []
       }));

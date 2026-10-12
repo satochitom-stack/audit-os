@@ -1,7 +1,9 @@
 // ฐานข้อมูลระบบงานตรวจสอบภายใน (อปท.) - Clean Template Version
 // โครงสร้างมาตรฐานตามระเบียบกระทรวงการคลัง และมาตรฐานการตรวจสอบภายในภาครัฐ
 
-export const initialFiscalYears = ['2569', '2570'];
+import { getCurrentFiscalYear, getStandardFiscalYears } from '../utils/dateUtils';
+
+export const initialFiscalYears = getStandardFiscalYears();
 
 export const initialOrgProfile = {
   id: '',
@@ -10,7 +12,7 @@ export const initialOrgProfile = {
   orgType: 'องค์การบริหารส่วนตำบล',
   district: 'อำเภอเมือง',
   province: 'จังหวัดอุบลราชธานี',
-  fiscalYear: '2569',
+  fiscalYear: getCurrentFiscalYear(),
   auditorName: 'ผู้ตรวจสอบภายใน',
   auditorPosition: 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
   approverName: 'นายกองค์กรปกครองส่วนท้องถิ่น',

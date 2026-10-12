@@ -26,6 +26,7 @@ export default function KnowledgeView({
   knowledgeBase = [],
   onUpdateKnowledgeBase,
   orgProfile,
+  selectedYear = '2569',
   session
 }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -176,6 +177,7 @@ export default function KnowledgeView({
         title="สืบค้นข้อระเบียบและแนวทางปฏิบัติงานตรวจสอบภายใน"
         orgName={orgProfile?.name}
         auditorName="คลังระเบียบ กฎหมาย และหนังสือสั่งการ"
+        year={selectedYear}
         badges={[`เอกสารในระบบ ${knowledgeBase.length} ฉบับ`]}
       />
 

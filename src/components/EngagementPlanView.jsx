@@ -77,9 +77,9 @@ export default function EngagementPlanView({
 
   const selectedPlan = engagementPlans.find((p) => p.id === selectedPlanId) || engagementPlans[0] || null;
 
-  // Filtered Plans by Year, Service Type, Dimension, and Search
+  // Filtered Plans by Service Type, Dimension, and Search (engagementPlans is partitioned by selectedYear)
   const filteredPlans = engagementPlans.filter((p) => {
-    const matchYear = !p.fiscalYear || p.fiscalYear === selectedYear;
+    const matchYear = !p.fiscalYear || p.fiscalYear === selectedYear || true;
     const matchType = serviceTypeFilter === 'all' || p.serviceType === serviceTypeFilter;
     const matchDimension =
       dimensionFilter === 'all' ||
