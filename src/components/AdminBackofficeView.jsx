@@ -77,6 +77,8 @@ import {
   getUserFeedbacks,
   updateFeedbackStatus,
   deleteFeedback,
+  clearAllFeedbacks,
+  subscribeToFeedbacks,
   FEEDBACK_CATEGORIES,
   FEEDBACK_STATUSES
 } from '../utils/feedbackUtils';
@@ -137,10 +139,31 @@ export default function AdminBackofficeView({
   useEffect(() => {
     const handleFbUpdate = () => setFeedbacks(getUserFeedbacks());
     window.addEventListener('ia_feedbacks_updated', handleFbUpdate);
-    return () => window.removeEventListener('ia_feedbacks_updated', handleFbUpdate);
+    const unsubscribe = subscribeToFeedbacks((latest) => {
+      setFeedbacks(latest);
+    });
+    return () => {
+      window.removeEventListener('ia_feedbacks_updated', handleFbUpdate);
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, []);
 
   const pendingFeedbackCount = feedbacks.filter((f) => f.status === 'pending').length;
+
+  const filteredFeedbacks = useMemo(() => {
+    return feedbacks.filter((f) => {
+      if (feedbackStatusFilter !== 'all' && f.status !== feedbackStatusFilter) return false;
+      if (feedbackCategoryFilter !== 'all' && f.category !== feedbackCategoryFilter) return false;
+      if (!feedbackSearch.trim()) return true;
+      const q = feedbackSearch.toLowerCase();
+      return (
+        (f.title || '').toLowerCase().includes(q) ||
+        (f.description || '').toLowerCase().includes(q) ||
+        (f.userName || '').toLowerCase().includes(q) ||
+        (f.orgName || '').toLowerCase().includes(q)
+      );
+    });
+  }, [feedbacks, feedbackStatusFilter, feedbackCategoryFilter, feedbackSearch]);
 
   // Pinned Users stored in localStorage
   const [pinnedUsernames, setPinnedUsernames] = useState(() => {
@@ -2201,6 +2224,31 @@ export default function AdminBackofficeView({
                     <option key={c.id} value={c.id}>{c.label}</option>
                   ))}
                 </select>
+
+                {feedbacks.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const confirmed = await luxuryConfirm({
+                        title: 'ยืนยันล้างข้อเสนอแนะทั้งหมด',
+                        message: `คุณต้องการลบข้อเสนอแนะทั้งหมด ${feedbacks.length} รายการออกจากระบบหรือไม่?`,
+                        subMessage: '⚠️ ข้อมูลข้อเสนอแนะทั้งหมดจะถูกลบถาวรออกจากระบบส่วนกลาง และจะไม่ถูกโหลดกลับมาซ้ำอีก',
+                        confirmText: 'ล้างข้อมูลทั้งหมดทันที',
+                        cancelText: 'ยกเลิก',
+                        variant: 'danger'
+                      });
+                      if (!confirmed) return;
+                      const remaining = await clearAllFeedbacks();
+                      setFeedbacks(remaining);
+                      showToast(`ล้างข้อเสนอแนะทั้งหมดเรียบร้อยแล้ว`);
+                    }}
+                    className="py-2 px-3 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                    title="ล้างข้อเสนอแนะทั้งหมด"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                    <span>ล้างทั้งหมด</span>
+                  </button>
+                )}
               </div>
 
               <div className="relative w-full sm:w-64">
@@ -2218,148 +2266,140 @@ export default function AdminBackofficeView({
 
           {/* Feedbacks Cards List */}
           <div className="space-y-4">
-            {feedbacks
-              .filter((f) => {
-                if (feedbackStatusFilter !== 'all' && f.status !== feedbackStatusFilter) return false;
-                if (feedbackCategoryFilter !== 'all' && f.category !== feedbackCategoryFilter) return false;
-                if (!feedbackSearch.trim()) return true;
-                const q = feedbackSearch.toLowerCase();
-                return (
-                  (f.title || '').toLowerCase().includes(q) ||
-                  (f.description || '').toLowerCase().includes(q) ||
-                  (f.userName || '').toLowerCase().includes(q) ||
-                  (f.orgName || '').toLowerCase().includes(q)
-                );
-              })
-              .map((item) => {
-                const catObj = FEEDBACK_CATEGORIES.find((c) => c.id === item.category);
-                const stObj = FEEDBACK_STATUSES.find((s) => s.id === item.status) || FEEDBACK_STATUSES[0];
+            {filteredFeedbacks.map((item) => {
+              const catObj = FEEDBACK_CATEGORIES.find((c) => c.id === item.category);
+              const stObj = FEEDBACK_STATUSES.find((s) => s.id === item.status) || FEEDBACK_STATUSES[0];
 
-                return (
-                  <div
-                    key={item.id}
-                    className="bg-white dark:bg-stone-900 rounded-3xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4"
-                  >
-                    {/* Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-100 dark:border-stone-800">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md ${catObj?.badgeColor || 'bg-stone-100'}`}>
-                          {catObj?.label || item.category}
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white dark:bg-stone-900 rounded-3xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4"
+                >
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-100 dark:border-stone-800">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md ${catObj?.badgeColor || 'bg-stone-100'}`}>
+                        {catObj?.label || item.category}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${stObj.badgeColor}`}>
+                        {stObj.label}
+                      </span>
+                      {item.priority === 'urgent' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
+                          🔴 เร่งด่วน
                         </span>
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${stObj.badgeColor}`}>
-                          {stObj.label}
-                        </span>
-                        {item.priority === 'urgent' && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
-                            🔴 เร่งด่วน
-                          </span>
-                        )}
-                        <span className="text-[11px] text-stone-400 font-mono">
-                          {item.createdDateTh}
-                        </span>
-                      </div>
-
-                      <div className="text-xs text-stone-500 flex items-center space-x-2">
-                        <span className="font-bold text-stone-800 dark:text-stone-200">{item.userName}</span>
-                        <span>•</span>
-                        <span>{item.orgName}</span>
-                        <button
-                          onClick={async () => {
-                            const confirmed = await luxuryConfirm({
-                              title: 'ยืนยันการลบข้อเสนอแนะ',
-                              message: 'คุณต้องการลบรายการข้อเสนอแนะนี้ออกจากระบบหรือไม่?',
-                              itemTitle: item.title,
-                              confirmText: 'ลบข้อเสนอแนะ',
-                              variant: 'danger'
-                            });
-                            if (!confirmed) return;
-                            deleteFeedback(item.id);
-                            setFeedbacks(getUserFeedbacks());
-                            showToast('ลบข้อเสนอแนะเรียบร้อยแล้ว');
-                          }}
-                          className="text-stone-400 hover:text-rose-500 p-1 cursor-pointer"
-                          title="ลบข้อเสนอแนะ"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      )}
+                      <span className="text-[11px] text-stone-400 font-mono">
+                        {item.createdDateTh}
+                      </span>
                     </div>
 
-                    {/* Content */}
-                    <div className="space-y-2">
-                      <h3 className="font-bold text-base text-stone-900 dark:text-stone-100 leading-snug">
-                        {item.title}
-                      </h3>
-                      <div className="p-4 rounded-2xl bg-stone-50/60 dark:bg-stone-850/60 border border-stone-200/60 dark:border-stone-800 text-xs text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line">
-                        {item.description}
-                      </div>
-                      {item.expectedBenefit && (
-                        <div className="text-xs text-stone-500 dark:text-stone-400">
-                          <strong>💡 ประโยชน์ที่คาดหวัง:</strong> {item.expectedBenefit}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Admin Response Box & Status Controls */}
-                    <div className="p-4 rounded-2xl bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                          <MessageCircle className="w-4 h-4 text-amber-600" />
-                          <span>การพิจารณา & ตอบกลับจาก ADMIN:</span>
-                        </span>
-
-                        {/* Status Select */}
-                        <div className="flex items-center space-x-2">
-                          <span className="text-[11px] text-stone-500 font-semibold">ปรับสถานะ:</span>
-                          <select
-                            value={item.status}
-                            onChange={(e) => {
-                              updateFeedbackStatus(item.id, e.target.value, item.adminNote);
-                              setFeedbacks(getUserFeedbacks());
-                              showToast('อัปเดตสถานะข้อเสนอแนะเรียบร้อยแล้ว');
-                            }}
-                            className="p-1.5 rounded-xl text-xs border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-bold text-amber-950 dark:text-amber-200"
-                          >
-                            {FEEDBACK_STATUSES.map((s) => (
-                              <option key={s.id} value={s.id}>{s.label}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Reply Note Textarea */}
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={adminReplyTexts[item.id] !== undefined ? adminReplyTexts[item.id] : (item.adminNote || '')}
-                          onChange={(e) => setAdminReplyTexts({ ...adminReplyTexts, [item.id]: e.target.value })}
-                          placeholder="พิมพ์ข้อความตอบกลับ หรือผลการพิจารณาให้ผู้ใช้เห็น..."
-                          className="flex-1 p-2 text-xs rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800"
-                        />
-                        <button
-                          onClick={() => {
-                            const note = adminReplyTexts[item.id] !== undefined ? adminReplyTexts[item.id] : item.adminNote;
-                            updateFeedbackStatus(item.id, item.status, note);
-                            setFeedbacks(getUserFeedbacks());
-                            showToast('บันทึกการตอบกลับเรียบร้อยแล้ว ผู้ใช้จะเห็นทันที');
-                          }}
-                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-xs shrink-0 cursor-pointer"
-                        >
-                          บันทึกตอบกลับ
-                        </button>
-                      </div>
-
-                      {item.adminRepliedAt && (
-                        <div className="text-[10px] text-stone-400">
-                          ตอบกลับล่าสุดเมื่อ: {item.adminRepliedAt}
-                        </div>
-                      )}
+                    <div className="text-xs text-stone-500 flex items-center space-x-2">
+                      <span className="font-bold text-stone-800 dark:text-stone-200">{item.userName}</span>
+                      <span>•</span>
+                      <span>{item.orgName}</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const confirmed = await luxuryConfirm({
+                            title: 'ยืนยันการลบข้อเสนอแนะ',
+                            message: 'คุณต้องการลบรายการข้อเสนอแนะนี้ออกจากระบบหรือไม่?',
+                            itemTitle: item.title,
+                            subMessage: '⚠️ ข้อเสนอแนะนี้จะถูกลบถาวรออกจากระบบส่วนกลาง และจะไม่ถูกโหลดกลับมาซ้ำอีก',
+                            confirmText: 'ลบข้อเสนอแนะทันที',
+                            cancelText: 'ยกเลิก',
+                            variant: 'danger'
+                          });
+                          if (!confirmed) return;
+                          const remaining = await deleteFeedback(item.id);
+                          setFeedbacks(remaining);
+                          showToast('ลบข้อเสนอแนะเรียบร้อยแล้ว');
+                        }}
+                        className="text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200/80 dark:border-rose-900/60 px-2.5 py-1 rounded-xl flex items-center gap-1 text-xs font-bold transition-all shadow-xs cursor-pointer ml-1"
+                        title="ลบข้อเสนอแนะนี้ออกจากระบบ"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                        <span>ลบ</span>
+                      </button>
                     </div>
                   </div>
-                );
-              })}
 
-            {feedbacks.length === 0 && (
+                  {/* Content */}
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-base text-stone-900 dark:text-stone-100 leading-snug">
+                      {item.title}
+                    </h3>
+                    <div className="p-4 rounded-2xl bg-stone-50/60 dark:bg-stone-850/60 border border-stone-200/60 dark:border-stone-800 text-xs text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line">
+                      {item.description}
+                    </div>
+                    {item.expectedBenefit && (
+                      <div className="text-xs text-stone-500 dark:text-stone-400">
+                        <strong>💡 ประโยชน์ที่คาดหวัง:</strong> {item.expectedBenefit}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Admin Response Box & Status Controls */}
+                  <div className="p-4 rounded-2xl bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                        <MessageCircle className="w-4 h-4 text-amber-600" />
+                        <span>การพิจารณา & ตอบกลับจาก ADMIN:</span>
+                      </span>
+
+                      {/* Status Select */}
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[11px] text-stone-500 font-semibold">ปรับสถานะ:</span>
+                        <select
+                          value={item.status}
+                          onChange={async (e) => {
+                            const updated = await updateFeedbackStatus(item.id, e.target.value, item.adminNote);
+                            setFeedbacks(updated);
+                            showToast('อัปเดตสถานะข้อเสนอแนะเรียบร้อยแล้ว');
+                          }}
+                          className="p-1.5 rounded-xl text-xs border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-bold text-amber-950 dark:text-amber-200"
+                        >
+                          {FEEDBACK_STATUSES.map((s) => (
+                            <option key={s.id} value={s.id}>{s.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Reply Note Textarea */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={adminReplyTexts[item.id] !== undefined ? adminReplyTexts[item.id] : (item.adminNote || '')}
+                        onChange={(e) => setAdminReplyTexts({ ...adminReplyTexts, [item.id]: e.target.value })}
+                        placeholder="พิมพ์ข้อความตอบกลับ หรือผลการพิจารณาให้ผู้ใช้เห็น..."
+                        className="flex-1 p-2 text-xs rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800"
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const note = adminReplyTexts[item.id] !== undefined ? adminReplyTexts[item.id] : item.adminNote;
+                          const updated = await updateFeedbackStatus(item.id, item.status, note);
+                          setFeedbacks(updated);
+                          showToast('บันทึกการตอบกลับเรียบร้อยแล้ว ผู้ใช้จะเห็นทันที');
+                        }}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-xs shrink-0 cursor-pointer"
+                      >
+                        บันทึกตอบกลับ
+                      </button>
+                    </div>
+
+                    {item.adminRepliedAt && (
+                      <div className="text-[10px] text-stone-400">
+                        ตอบกลับล่าสุดเมื่อ: {item.adminRepliedAt}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {feedbacks.length === 0 ? (
               <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
                 <MessageSquarePlus className="w-12 h-12 text-stone-300 mx-auto mb-3" />
                 <h3 className="text-base font-bold text-stone-700 dark:text-stone-200">
@@ -2369,7 +2409,17 @@ export default function AdminBackofficeView({
                   เมื่อสมาชิกผู้ตรวจสอบส่งความคิดเห็น จะปรากฏในหน้านี้ทันที
                 </p>
               </div>
-            )}
+            ) : filteredFeedbacks.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
+                <Search className="w-10 h-10 text-stone-300 mx-auto mb-2" />
+                <h3 className="text-sm font-bold text-stone-700 dark:text-stone-200">
+                  ไม่พบข้อเสนอแนะที่ตรงกับเงื่อนไขการค้นหา
+                </h3>
+                <p className="text-xs text-stone-500 mt-1">
+                  ลองปรับเปลี่ยนคำค้นหาหรือเลือกตัวกรองสถานะอื่น
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       )}

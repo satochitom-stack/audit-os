@@ -1,5 +1,7 @@
 // ระบบจัดการข้อเสนอแนะและความคิดเห็นจากผู้ใช้งาน (User Feedback & Suggestions)
 // บันทึกและส่งต่อถึง ADMIN เพื่อพัฒนาและปรับปรุงระบบตามความต้องการของ อปท.
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 export const FEEDBACK_CATEGORIES = [
   { id: 'renewal', label: '💳 แจ้งชำระเงิน / ขอต่ออายุแพ็กเกจ', badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' },
@@ -18,41 +20,124 @@ export const FEEDBACK_STATUSES = [
   { id: 'declined', label: '❌ ไม่สามารถดำเนินการได้', badgeColor: 'bg-stone-100 text-stone-600 border-stone-300 dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700' }
 ];
 
-const INITIAL_FEEDBACKS = [
-  {
-    id: 'FB-INIT-01',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    createdDateTh: '10 ต.ค. 2569 14:30',
-    userId: 'auditor01',
-    userName: 'นายกฤษณมงคล ธรรมพิทักษ์',
-    userRole: 'auditor',
-    orgName: 'อบต.ฝางคำ',
-    category: 'feature',
-    categoryLabel: '🚀 เสนอแนะฟังก์ชัน/ฟีเจอร์ใหม่',
-    title: 'ขอให้เพิ่มระบบนับเวลาถอยหลังอายุสมาชิก และคลังเอกสารกลางที่ผู้ใช้ทุกคนสามารถอัปโหลดร่วมกันได้',
-    description: 'อยากให้ผู้ตรวจสอบภายในของแต่ละ อปท. สามารถช่วยกันอัปโหลดหนังสือสั่งการ ว ต่างๆ และแบบฟอร์มตรวจสอบเข้าสู่ระบบกลางร่วมกันได้ เพื่อไม่ต้องรอให้ Admin เพิ่มคนเดียว',
-    expectedBenefit: 'ช่วยให้ฐานข้อมูลระเบียบและแนวทางการตรวจสอบมีความสดใหม่และครอบคลุมทั่วประเทศ',
-    priority: 'important',
-    status: 'completed',
-    adminNote: 'ดำเนินการพัฒนาเสร็จสิ้นแล้วในเวอร์ชัน 2.5.6 (ระบบคลังเอกสารกลางแบบแชร์ใช้งานร่วมกัน พร้อมระบบ In-app Document Viewer)',
-    adminRepliedAt: '12 ต.ค. 2569 11:50'
-  }
-];
+// No initial sample feedbacks - starts clean
+const INITIAL_FEEDBACKS = [];
+
+const DELETED_FEEDBACKS_KEY = 'ia_deleted_feedback_ids';
+const FEEDBACKS_STORAGE_KEY = 'ia_user_feedbacks';
+
+export function getDeletedFeedbackIds() {
+  try {
+    const saved = localStorage.getItem(DELETED_FEEDBACKS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (_) {}
+  return [];
+}
+
+export function saveDeletedFeedbackIds(ids) {
+  try {
+    localStorage.setItem(DELETED_FEEDBACKS_KEY, JSON.stringify(ids));
+  } catch (_) {}
+}
 
 export function getUserFeedbacks() {
   try {
-    const saved = localStorage.getItem('ia_user_feedbacks');
-    if (saved) {
+    const deletedIds = new Set([
+      ...getDeletedFeedbackIds(),
+      'FB-INIT-01' // Blacklist sample mock feedback permanently
+    ]);
+
+    const saved = localStorage.getItem(FEEDBACKS_STORAGE_KEY);
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(
+          (f) => !f.id?.startsWith('FB-INIT-') && !deletedIds.has(f.id)
+        );
+        // If stale sample feedback was present, clean it up immediately
+        if (cleaned.length !== parsed.length) {
+          localStorage.setItem(FEEDBACKS_STORAGE_KEY, JSON.stringify(cleaned));
+        }
+        return cleaned;
+      }
     }
   } catch (e) {
     console.error('Failed to load feedbacks:', e);
   }
-  return INITIAL_FEEDBACKS;
+  return [];
 }
 
-export function saveUserFeedback({
+// Sync with Cloud Firestore
+export async function syncFeedbacksToCloud(list, newlyDeletedIds = []) {
+  try {
+    let currentDeleted = getDeletedFeedbackIds();
+    if (newlyDeletedIds && newlyDeletedIds.length > 0) {
+      const set = new Set([...currentDeleted, ...newlyDeletedIds, 'FB-INIT-01']);
+      currentDeleted = Array.from(set);
+      saveDeletedFeedbackIds(currentDeleted);
+    }
+
+    const docRef = doc(db, 'system_settings', 'user_feedbacks');
+    await setDoc(
+      docRef,
+      {
+        feedbacks: list,
+        deletedIds: currentDeleted,
+        updatedAt: new Date().toISOString()
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn('Sync feedbacks to Firestore failed (offline or denied):', err);
+  }
+}
+
+// Subscribe to real-time updates from Cloud Firestore
+export function subscribeToFeedbacks(callback) {
+  try {
+    const docRef = doc(db, 'system_settings', 'user_feedbacks');
+    return onSnapshot(
+      docRef,
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          const remoteList = data?.feedbacks;
+          const remoteDeleted = data?.deletedIds || [];
+
+          if (Array.isArray(remoteDeleted) && remoteDeleted.length > 0) {
+            const currentDeleted = new Set(getDeletedFeedbackIds());
+            remoteDeleted.forEach((id) => currentDeleted.add(id));
+            saveDeletedFeedbackIds(Array.from(currentDeleted));
+          }
+
+          if (Array.isArray(remoteList)) {
+            const deletedIds = new Set([
+              ...getDeletedFeedbackIds(),
+              'FB-INIT-01'
+            ]);
+            const filtered = remoteList.filter(
+              (f) => !f.id?.startsWith('FB-INIT-') && !deletedIds.has(f.id)
+            );
+            localStorage.setItem(FEEDBACKS_STORAGE_KEY, JSON.stringify(filtered));
+            window.dispatchEvent(new CustomEvent('ia_feedbacks_updated', { detail: filtered }));
+            if (callback) callback(filtered);
+          }
+        }
+      },
+      (err) => {
+        console.warn('Feedbacks real-time snapshot error:', err);
+      }
+    );
+  } catch (e) {
+    console.warn('Failed to subscribe to feedbacks:', e);
+    return () => {};
+  }
+}
+
+export async function saveUserFeedback({
   title,
   category = 'feature',
   priority = 'normal',
@@ -62,7 +147,6 @@ export function saveUserFeedback({
   orgProfile
 }) {
   const currentFeedbacks = getUserFeedbacks();
-
   const catObj = FEEDBACK_CATEGORIES.find((c) => c.id === category);
   const now = new Date();
 
@@ -77,7 +161,7 @@ export function saveUserFeedback({
       minute: '2-digit'
     }),
     userId: session?.user?.id || session?.username || 'user',
-    userName: session?.user?.name || session?.username || 'ผู้ตรวจสอบภายใน',
+    userName: session?.user?.name || session?.displayName || session?.username || 'ผู้ตรวจสอบภายใน',
     userRole: session?.role || 'auditor',
     orgName: orgProfile?.name || 'อปท.',
     category,
@@ -93,16 +177,17 @@ export function saveUserFeedback({
 
   const updated = [newFeedback, ...currentFeedbacks];
   try {
-    localStorage.setItem('ia_user_feedbacks', JSON.stringify(updated));
+    localStorage.setItem(FEEDBACKS_STORAGE_KEY, JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('ia_feedbacks_updated', { detail: updated }));
   } catch (e) {
-    console.error('Failed to save feedback:', e);
+    console.error('Failed to save feedback to localStorage:', e);
   }
 
+  await syncFeedbacksToCloud(updated);
   return newFeedback;
 }
 
-export function updateFeedbackStatus(feedbackId, newStatus, adminNote = '') {
+export async function updateFeedbackStatus(feedbackId, newStatus, adminNote = '') {
   const currentFeedbacks = getUserFeedbacks();
   const updated = currentFeedbacks.map((f) => {
     if (f.id === feedbackId) {
@@ -123,25 +208,50 @@ export function updateFeedbackStatus(feedbackId, newStatus, adminNote = '') {
   });
 
   try {
-    localStorage.setItem('ia_user_feedbacks', JSON.stringify(updated));
+    localStorage.setItem(FEEDBACKS_STORAGE_KEY, JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('ia_feedbacks_updated', { detail: updated }));
   } catch (e) {
     console.error('Failed to update feedback status:', e);
   }
 
+  await syncFeedbacksToCloud(updated);
   return updated;
 }
 
-export function deleteFeedback(feedbackId) {
+export async function deleteFeedback(feedbackId) {
+  // Add to deleted blacklist permanently
+  const deletedIds = new Set([...getDeletedFeedbackIds(), feedbackId, 'FB-INIT-01']);
+  saveDeletedFeedbackIds(Array.from(deletedIds));
+
   const currentFeedbacks = getUserFeedbacks();
-  const updated = currentFeedbacks.filter((f) => f.id !== feedbackId);
+  const updated = currentFeedbacks.filter((f) => f.id !== feedbackId && !f.id?.startsWith('FB-INIT-'));
+
   try {
-    localStorage.setItem('ia_user_feedbacks', JSON.stringify(updated));
+    localStorage.setItem(FEEDBACKS_STORAGE_KEY, JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('ia_feedbacks_updated', { detail: updated }));
   } catch (e) {
     console.error('Failed to delete feedback:', e);
   }
+
+  await syncFeedbacksToCloud(updated, [feedbackId]);
   return updated;
+}
+
+export async function clearAllFeedbacks() {
+  const currentFeedbacks = getUserFeedbacks();
+  const allIds = currentFeedbacks.map((f) => f.id);
+  const deletedIds = new Set([...getDeletedFeedbackIds(), ...allIds, 'FB-INIT-01']);
+  saveDeletedFeedbackIds(Array.from(deletedIds));
+
+  try {
+    localStorage.setItem(FEEDBACKS_STORAGE_KEY, JSON.stringify([]));
+    window.dispatchEvent(new CustomEvent('ia_feedbacks_updated', { detail: [] }));
+  } catch (e) {
+    console.error('Failed to clear all feedbacks:', e);
+  }
+
+  await syncFeedbacksToCloud([], allIds);
+  return [];
 }
 
 export const addFeedback = saveUserFeedback;

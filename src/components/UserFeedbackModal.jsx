@@ -84,7 +84,7 @@ export default function UserFeedbackModal({ isOpen, onClose, session, orgProfile
     }
 
     setIsSubmitting(true);
-    saveUserFeedback({
+    await saveUserFeedback({
       title: form.title,
       category: form.category,
       priority: form.priority,
