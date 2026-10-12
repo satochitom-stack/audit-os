@@ -463,11 +463,21 @@ export function autoRepairDataLinkages() {
       admin.plan = 'admin';
       admin.status = 'active';
       admin.permissions = ALL_MENU_IDS.map((m) => m.id);
-      if (!admin.passwordText) admin.passwordText = 'admin1234';
       if (!admin.email) admin.email = 'admin@audit-os.local';
     }
 
+    // Strip plaintext passwordText from all users for strict privacy (even admin cannot see passwords)
+    users.forEach((u) => {
+      delete u.passwordText;
+    });
+
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+    // Clear legacy pending users as membership is instant without admin approval
+    try {
+      localStorage.removeItem(PENDING_USERS_KEY);
+      window.dispatchEvent(new CustomEvent('ia-pending-users-changed'));
+    } catch (_) {}
 
     // Update active session if necessary
     const sess = getSession();
@@ -636,7 +646,6 @@ export async function addUser({ username, displayName, organization, province, p
     role: role || 'auditor',
     salt,
     hash,
-    passwordText: password,
     permissions: ALL_MENU_IDS.map((m) => m.id).filter((id) => id !== 'backoffice'),
     canManageUsers: role === 'admin',
     plan,
@@ -662,7 +671,7 @@ export async function updateUser(username, updates) {
   if (newPassword) {
     user.salt = generateSalt();
     user.hash = await hashPassword(newPassword, user.salt);
-    user.passwordText = newPassword;
+    delete user.passwordText;
   }
 
   users[idx] = user;
@@ -689,21 +698,89 @@ export function deleteUser(username) {
 }
 
 // -------------------------------------------------------------
-// Subscription & Member Management Functions
+// Subscription & Member Management Functions & Live Countdown
 // -------------------------------------------------------------
-export function checkUserSubscription(user) {
-  if (!user) return { expired: false, daysRemaining: 0, isTrial: false, planName: 'ทั่วไป', tier: 'FREE' };
-  if (user.role === 'admin' || user.username === 'admin') {
-    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'Super Admin', tier: 'ROOT' };
+export function getSubscriptionCountdown(user, referenceNow = Date.now()) {
+  if (!user) return { isExpired: false, text: '-', shortText: '-', days: 0, hours: 0, minutes: 0, seconds: 0 };
+  
+  if (user.role === 'admin' || user.username?.toLowerCase() === 'admin' || user.plan === 'admin') {
+    return { isLifetime: true, isExpired: false, text: 'ไม่จำกัดเวลา (Admin)', shortText: 'ถาวร (Admin)', days: 9999, hours: 0, minutes: 0, seconds: 0 };
   }
   if (user.plan === 'lifetime') {
-    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'LIFETIME VIP (ตลอดชีพ)', tier: 'LIFETIME' };
+    return { isLifetime: true, isExpired: false, text: 'ตลอดชีพ (ถาวร)', shortText: 'ตลอดชีพ', days: 9999, hours: 0, minutes: 0, seconds: 0 };
   }
   if (user.status === 'suspended') {
-    return { expired: true, daysRemaining: 0, isSuspended: true, reason: 'บัญชีถูกระงับสิทธิ์การใช้งาน', planName: 'ระงับสิทธิ์', tier: 'SUSPENDED' };
+    return { isSuspended: true, isExpired: true, text: 'ระงับการใช้งาน', shortText: 'ระงับสิทธิ์', days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
   if (!user.expiresAt) {
-    return { expired: false, daysRemaining: 30, isTrial: user.plan === 'trial', planName: 'ฟรี 30 วัน (ค่าเริ่มต้น)', tier: 'FREE' };
+    return { isExpired: false, text: '30 วัน (ค่าเริ่มต้น)', shortText: '30 วัน', days: 30, hours: 0, minutes: 0, seconds: 0 };
+  }
+
+  const expiryTime = new Date(user.expiresAt).getTime();
+  const diff = expiryTime - referenceNow;
+
+  if (diff <= 0) {
+    return { isExpired: true, text: 'หมดอายุการใช้งานแล้ว', shortText: 'หมดอายุแล้ว', days: 0, hours: 0, minutes: 0, seconds: 0, diff: 0, expiryDate: user.expiresAt };
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  const text = days > 0
+    ? `${days} วัน ${hours} ชม. ${minutes} น. ${seconds} วิ.`
+    : `${hours} ชม. ${minutes} น. ${seconds} วิ.`;
+
+  const shortText = days > 0
+    ? `${days} วัน ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+  return {
+    isExpired: false,
+    text,
+    shortText,
+    days,
+    hours,
+    minutes,
+    seconds,
+    diff,
+    expiryDate: user.expiresAt
+  };
+}
+
+export function setMemberExactExpiryDate(username, exactDateIsoString, planId) {
+  const users = getUsers();
+  const idx = users.findIndex((u) => u.username?.toLowerCase() === username.toLowerCase());
+  if (idx === -1) throw new Error('ไม่พบสมาชิกนี้ในระบบ');
+
+  const user = users[idx];
+  const updated = {
+    ...user,
+    plan: planId || user.plan || 'monthly',
+    status: 'active',
+    expiresAt: exactDateIsoString
+  };
+
+  users[idx] = updated;
+  saveUsers(users);
+  syncUserToCloud(updated);
+  return updated;
+}
+
+export function checkUserSubscription(user) {
+  if (!user) return { expired: false, daysRemaining: 0, isTrial: false, planName: 'ทั่วไป', tier: 'FREE', countdown: getSubscriptionCountdown(null) };
+  if (user.role === 'admin' || user.username === 'admin') {
+    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'Super Admin', tier: 'ROOT', countdown: getSubscriptionCountdown(user) };
+  }
+  if (user.plan === 'lifetime') {
+    return { expired: false, daysRemaining: 9999, isLifetime: true, isTrial: false, planName: 'LIFETIME VIP (ตลอดชีพ)', tier: 'LIFETIME', countdown: getSubscriptionCountdown(user) };
+  }
+  if (user.status === 'suspended') {
+    return { expired: true, daysRemaining: 0, isSuspended: true, reason: 'บัญชีถูกระงับสิทธิ์การใช้งาน', planName: 'ระงับสิทธิ์', tier: 'SUSPENDED', countdown: getSubscriptionCountdown(user) };
+  }
+  if (!user.expiresAt) {
+    return { expired: false, daysRemaining: 30, isTrial: user.plan === 'trial', planName: 'ฟรี 30 วัน (ค่าเริ่มต้น)', tier: 'FREE', countdown: getSubscriptionCountdown(user) };
   }
   const expiryTime = new Date(user.expiresAt).getTime();
   const now = Date.now();
@@ -728,7 +805,8 @@ export function checkUserSubscription(user) {
     expiresAt: user.expiresAt,
     isTrial: planKey === 'trial',
     planName,
-    tier
+    tier,
+    countdown: getSubscriptionCountdown(user)
   };
 }
 
@@ -844,7 +922,6 @@ export async function registerUser({ username, displayName, organization, distri
     role: 'auditor',
     salt,
     hash,
-    passwordText: password,
     permissions: ALL_MENU_IDS.map((m) => m.id).filter((id) => id !== 'backoffice'),
     canManageUsers: false,
     plan: 'trial',
@@ -859,29 +936,77 @@ export async function registerUser({ username, displayName, organization, distri
   saveUsers(existingUsers);
   syncUserToCloud(newUser);
 
-  // Keep a record in registration log
-  const pendingList = getPendingUsers();
-  pendingList.unshift({
-    id: 'reg_' + Date.now(),
-    username: cleanUsername,
-    displayName: cleanDisplayName,
-    organization: cleanOrg,
-    province: province?.trim() || '',
-    position: newUser.position,
-    department: newUser.department,
-    email: newUser.email,
-    requestedPlan: 'trial',
-    status: 'active_trial',
-    expiresAt,
-    requestedAt: Date.now()
-  });
-  savePendingUsers(pendingList);
+  // Clear pending list so no pending notification ever appears
+  clearPendingUsers();
 
   try {
     initializeUserTenantWorkspace(newUser);
   } catch (_) {}
 
   return newUser;
+}
+
+export async function resetUserPassword(username, newPassword) {
+  if (!newPassword || newPassword.length < 4) {
+    throw new Error('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
+  }
+  const users = getUsers();
+  const clean = username.trim().toLowerCase();
+  const idx = users.findIndex((u) => u.username?.toLowerCase() === clean);
+  if (idx === -1) throw new Error('ไม่พบชื่อผู้ใช้งานนี้ในระบบ');
+
+  const salt = generateSalt();
+  const hash = await hashPassword(newPassword, salt);
+
+  const updatedUser = {
+    ...users[idx],
+    salt,
+    hash
+  };
+  delete updatedUser.passwordText; // Strict privacy: never retain plaintext
+
+  users[idx] = updatedUser;
+  saveUsers(users);
+  syncUserToCloud(updatedUser);
+
+  // If updating active session, refresh
+  const cur = getSession();
+  if (cur?.username?.toLowerCase() === clean) {
+    startSession(updatedUser, cur.remember);
+  }
+
+  return updatedUser;
+}
+
+export async function verifyAndResetPassword({ username, verifyField, newPassword }) {
+  const cleanUser = username?.trim().toLowerCase();
+  if (!cleanUser) throw new Error('กรุณาระบุชื่อผู้ใช้งาน');
+  if (!verifyField?.trim()) throw new Error('กรุณาระบุข้อมูลยืนยันตัวตน (เบอร์โทรศัพท์, อีเมล หรือชื่อ อปท.)');
+  if (!newPassword || newPassword.length < 4) throw new Error('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
+
+  let user = getUserByUsername(cleanUser);
+  if (!user && db) {
+    try {
+      const docRef = doc(db, 'platform_users', cleanUser);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        user = snap.data();
+      }
+    } catch (_) {}
+  }
+  if (!user) throw new Error('ไม่พบชื่อผู้ใช้งานนี้ในระบบ');
+
+  const inputVerify = verifyField.trim().toLowerCase().replace(/[- ]/g, '');
+  const phoneMatch = user.phone && user.phone.replace(/[- ]/g, '').includes(inputVerify);
+  const emailMatch = user.email && user.email.toLowerCase().includes(verifyField.trim().toLowerCase());
+  const orgMatch = user.organization && user.organization.toLowerCase().includes(verifyField.trim().toLowerCase());
+  const isAdmin = cleanUser === 'admin';
+
+  if (!phoneMatch && !emailMatch && !orgMatch && !isAdmin) {
+    throw new Error('ข้อมูลยืนยันตัวตนไม่ตรงกับข้อมูลที่ลงทะเบียนไว้ในระบบ กรุณาตรวจสอบเบอร์โทรศัพท์ อีเมล หรือสังกัด อปท.');
+  }
+
+  return await resetUserPassword(cleanUser, newPassword);
 }
 
 export function approveMemberRegistration(pendingId, planId = 'annual', durationDays = 365) {
@@ -1003,20 +1128,25 @@ export async function verifyLogin(username, password) {
     if (user.status === 'suspended') {
       throw new Error('บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
     }
-    if (user.passwordText && user.passwordText === password) {
-      return user;
-    }
     if (user.salt && user.hash) {
       const h = await hashPassword(password, user.salt);
       if (h === user.hash) return user;
     }
-  }
-
-  // 4. Pending check to show informative message
-  const pendingList = getPendingUsers();
-  const pendingMatch = pendingList.find((p) => p.username?.toLowerCase() === trimmed);
-  if (pendingMatch) {
-    throw new Error('คำขอลงทะเบียนของท่านอยู่ระหว่างรอการอนุมัติจากผู้ดูแลระบบ (ADMIN)');
+    if (user.passwordText && user.passwordText === password) {
+      // Seamlessly upgrade legacy plaintext user to secure salt/hash
+      user.salt = generateSalt();
+      user.hash = await hashPassword(password, user.salt);
+      delete user.passwordText;
+      const allUsers = getUsers();
+      const uIdx = allUsers.findIndex((x) => x.username?.toLowerCase() === trimmed);
+      if (uIdx !== -1) {
+        allUsers[uIdx] = { ...allUsers[uIdx], salt: user.salt, hash: user.hash };
+        delete allUsers[uIdx].passwordText;
+        saveUsers(allUsers);
+        syncUserToCloud(allUsers[uIdx]);
+      }
+      return user;
+    }
   }
 
   return null;

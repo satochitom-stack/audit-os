@@ -18,10 +18,11 @@ import {
   Cloud,
   CloudOff,
   RefreshCw,
-  Edit3
+  Edit3,
+  Clock
 } from 'lucide-react';
 import { cloudSyncService } from '../services/cloudSyncService';
-import { clearPendingUsers } from '../utils/auth';
+import { clearPendingUsers, getSubscriptionCountdown } from '../utils/auth';
 
 export default function Header({
   orgProfile,
@@ -44,6 +45,12 @@ export default function Header({
   setCurrentTab
 }) {
   const [syncStatus, setSyncStatus] = useState(() => cloudSyncService.getSyncStatus());
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const unsub = cloudSyncService.onSyncStatusChange((st) => setSyncStatus(st));
@@ -63,6 +70,7 @@ export default function Header({
   }, []);
 
   const isAdmin = session?.role === 'admin';
+  const countdown = getSubscriptionCountdown(session, now);
   const userTitle = isAdmin
     ? 'ผู้ดูแลระบบส่วนกลาง'
     : (session?.displayName || orgProfile?.auditorName || session?.username || 'ผู้ตรวจสอบภายใน');
@@ -196,12 +204,23 @@ export default function Header({
                   <Settings className="w-3.5 h-3.5 text-amber-300" />
                 )}
                 <span>{currentTab === 'backoffice' ? 'สลับไปหน้าตรวจ' : 'หลังบ้าน Admin'}</span>
-                {pendingCount > 0 && currentTab !== 'backoffice' && (
-                  <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
-                    {pendingCount}
-                  </span>
-                )}
               </button>
+            )}
+
+            {/* Live Membership Countdown Capsule for Auditor */}
+            {!isAdmin && session && (
+              <div
+                title={`แพ็กเกจ: ${countdown.planLabel} | หมดอายุ: ${countdown.expiryText}`}
+                className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs shrink-0 ${
+                  countdown.isExpired
+                    ? 'bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                    : 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-800 text-amber-900 dark:text-amber-200'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 animate-pulse" />
+                <span className="font-semibold text-stone-600 dark:text-stone-400 text-[11px]">สมาชิก:</span>
+                <span className="font-mono font-bold tracking-tight">{countdown.shortText || countdown.text}</span>
+              </div>
             )}
 
             {/* Dark Mode Toggle */}
@@ -229,14 +248,6 @@ export default function Header({
                   >
                     {isAdmin ? '👑' : '🛡️'}
                   </div>
-                  {isAdmin && pendingCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 text-[9px] font-black text-white items-center justify-center">
-                        {pendingCount}
-                      </span>
-                    </span>
-                  )}
                 </div>
                 <div className="hidden lg:block text-left max-w-[140px]">
                   <div className="text-xs font-bold text-stone-800 dark:text-stone-100 truncate">
@@ -259,38 +270,37 @@ export default function Header({
                     </div>
                   </div>
 
-                  {isAdmin && (
-                    <div className="w-full flex items-center justify-between px-3.5 py-2.5 text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 font-bold border-b border-stone-100 dark:border-stone-800">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMenuOpen(false);
-                          if (setCurrentTab) setCurrentTab('backoffice');
-                        }}
-                        className="flex items-center space-x-2 cursor-pointer flex-1 text-left"
-                      >
-                        <Settings className="w-3.5 h-3.5 text-amber-700" />
-                        <span>⚙️ 12. ระบบหลังบ้าน Super Admin</span>
-                      </button>
-                      {pendingCount > 0 && (
-                        <div className="flex items-center space-x-1.5 shrink-0">
-                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
-                            {pendingCount} คำขอใหม่
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              clearPendingUsers();
-                            }}
-                            title="ล้างการแจ้งเตือนทั้งหมด"
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 hover:bg-rose-200 border border-rose-300 dark:border-rose-800 transition-colors cursor-pointer"
-                          >
-                            ล้าง
-                          </button>
-                        </div>
-                      )}
+                  {/* Auditor Membership Live Countdown Summary in Dropdown */}
+                  {!isAdmin && session && (
+                    <div className="px-3.5 py-2.5 bg-amber-50/50 dark:bg-amber-950/20 border-b border-stone-100 dark:border-stone-800">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-amber-900 dark:text-amber-200 mb-1">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+                          <span>เวลาสมาชิกคงเหลือ:</span>
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-200/80 dark:bg-amber-900/60 font-bold">{countdown.planLabel}</span>
+                      </div>
+                      <div className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300">
+                        ⏳ {countdown.text}
+                      </div>
+                      <div className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5">
+                        หมดอายุ: {countdown.expiryText}
+                      </div>
                     </div>
+                  )}
+
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (setCurrentTab) setCurrentTab('backoffice');
+                      }}
+                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 font-bold border-b border-stone-100 dark:border-stone-800 cursor-pointer text-left"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-amber-700" />
+                      <span>⚙️ 12. ระบบหลังบ้าน Super Admin</span>
+                    </button>
                   )}
 
                   <button

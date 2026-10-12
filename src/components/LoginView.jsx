@@ -19,6 +19,7 @@ import {
   Clock,
   ShieldCheck,
   HelpCircle,
+  KeyRound,
   X
 } from 'lucide-react';
 import {
@@ -27,6 +28,7 @@ import {
   getLastUsername,
   setLastUsername,
   registerUser,
+  verifyAndResetPassword,
   MEMBERSHIP_PLANS,
   getMembershipPlans,
   getSystemSettings
@@ -67,6 +69,59 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
   const [regError, setRegError] = useState('');
   const [regSuccess, setRegSuccess] = useState('');
   const [regBusy, setRegBusy] = useState(false);
+
+  // Forgot Password Modal States
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotUsername, setForgotUsername] = useState('');
+  const [forgotVerifyField, setForgotVerifyField] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
+
+  const handleForgotPasswordSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setForgotError('');
+    setForgotSuccess('');
+
+    if (!forgotUsername.trim()) {
+      setForgotError('กรุณากรอกชื่อผู้ใช้งาน');
+      return;
+    }
+    if (!forgotVerifyField.trim()) {
+      setForgotError('กรุณากรอกเบอร์โทรศัพท์ อีเมล หรือสังกัด อปท. เพื่อยืนยันตัวตน');
+      return;
+    }
+    if (!forgotNewPassword) {
+      setForgotError('กรุณากรอกรหัสผ่านใหม่');
+      return;
+    }
+    if (forgotNewPassword.length < 4) {
+      setForgotError('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+      return;
+    }
+
+    setForgotBusy(true);
+    try {
+      await verifyAndResetPassword({
+        username: forgotUsername.trim(),
+        verifyField: forgotVerifyField.trim(),
+        newPassword: forgotNewPassword
+      });
+      setForgotSuccess('รีเซ็ตรหัสผ่านใหม่สำเร็จเรียบร้อยแล้ว! ท่านสามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้ทันที');
+      setUsername(forgotUsername.trim());
+      setPassword(forgotNewPassword);
+    } catch (err) {
+      setForgotError(err.message || 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล');
+    } finally {
+      setForgotBusy(false);
+    }
+  };
 
   const handleLoginSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -222,6 +277,21 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                 />
                 <span>จดจำการเข้าสู่ระบบ</span>
               </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPasswordModal(true);
+                  setForgotUsername(username || '');
+                  setForgotVerifyField('');
+                  setForgotNewPassword('');
+                  setForgotConfirmPassword('');
+                  setForgotError('');
+                  setForgotSuccess('');
+                }}
+                className="text-amber-400 hover:text-amber-300 font-bold hover:underline cursor-pointer"
+              >
+                ลืมรหัสผ่าน?
+              </button>
             </div>
 
             <button
@@ -491,6 +561,162 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                     className="bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer disabled:opacity-50"
                   >
                     {regBusy ? 'กำลังสร้างบัญชี...' : 'เปิดใช้งาน & ทดลองใช้ฟรี 30 วัน'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password / Self-Service Reset Modal */}
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-[#1a1e28] border border-amber-600/40 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scrollbar text-stone-200">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-600 to-stone-800 flex items-center justify-center text-amber-200 shadow-md border border-amber-500/30">
+                  <KeyRound className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                    <span>ลืมรหัสผ่าน?</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">ตั้งค่าด้วยตนเอง</span>
+                  </h3>
+                  <p className="text-[11px] text-stone-400">ยืนยันตัวตนเพื่อกำหนดรหัสผ่านใหม่ทันที</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowForgotPasswordModal(false);
+                  setForgotError('');
+                  setForgotSuccess('');
+                }}
+                className="w-8 h-8 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {forgotSuccess ? (
+              <div className="space-y-4 py-3">
+                <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-600/40 text-emerald-200 text-xs space-y-2 text-center">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+                  <p className="font-bold text-sm text-emerald-300">{forgotSuccess}</p>
+                  <p className="text-[11px] text-emerald-400/80">ระบบได้กรอกชื่อผู้ใช้และรหัสผ่านใหม่ในหน้าเข้าสู่ระบบให้ท่านเรียบร้อยแล้ว</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPasswordModal(false);
+                    setForgotSuccess('');
+                  }}
+                  className="w-full bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 font-bold py-2.5 rounded-xl text-xs shadow-md transition-all cursor-pointer"
+                >
+                  เข้าสู่ระบบทันที
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPasswordSubmit} className="space-y-3.5 text-xs">
+                {forgotError && (
+                  <div className="p-3 rounded-xl bg-rose-950/50 border border-rose-600/50 text-rose-300 text-xs flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>{forgotError}</span>
+                  </div>
+                )}
+
+                <div className="p-3 rounded-xl bg-stone-900/60 border border-stone-800 text-[11px] text-stone-400 space-y-1">
+                  <p className="font-semibold text-amber-300">🔒 มาตรการความเป็นส่วนตัวและความปลอดภัย:</p>
+                  <p>ระบบรักษาความปลอดภัยแบบเข้ารหัสทางเดียว (One-way Hash) แม้แต่ Admin ก็ไม่สามารถดูรหัสผ่านเดิมของท่านได้ จึงต้องยืนยันตัวตนด้วยข้อมูลที่เคยลงทะเบียนไว้</p>
+                </div>
+
+                <div>
+                  <label className="block text-stone-300 text-[11px] font-semibold mb-1">
+                    ชื่อผู้ใช้งาน (Username) <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      required
+                      value={forgotUsername}
+                      onChange={(e) => setForgotUsername(e.target.value)}
+                      placeholder="เช่น auditor_cm, somsri"
+                      className="w-full bg-stone-900/90 border border-stone-700 rounded-xl pl-9 pr-3 py-2 text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-stone-300 text-[11px] font-semibold mb-1">
+                    ข้อมูลยืนยันตัวตน (เบอร์โทรศัพท์ / สังกัด อปท.) <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={forgotVerifyField}
+                    onChange={(e) => setForgotVerifyField(e.target.value)}
+                    placeholder="กรอกเบอร์โทร หรือชื่อ อปท. ที่เคยระบุตอนสมัคร"
+                    className="w-full bg-stone-900/90 border border-stone-700 rounded-xl px-3 py-2 text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 text-xs"
+                  />
+                  <span className="text-[10px] text-stone-500 mt-0.5 block">
+                    * ระบุอย่างใดอย่างหนึ่งให้ตรงกับข้อมูลในบัญชี
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-stone-300 text-[11px] font-semibold mb-1">
+                      รหัสผ่านใหม่ <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+                      <input
+                        type="password"
+                        required
+                        value={forgotNewPassword}
+                        onChange={(e) => setForgotNewPassword(e.target.value)}
+                        placeholder="อย่างน้อย 4 ตัวอักษร"
+                        className="w-full bg-stone-900/90 border border-stone-700 rounded-xl pl-9 pr-3 py-2 text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-stone-300 text-[11px] font-semibold mb-1">
+                      ยืนยันรหัสผ่านใหม่ <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+                      <input
+                        type="password"
+                        required
+                        value={forgotConfirmPassword}
+                        onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                        placeholder="พิมพ์ซ้ำอีกครั้ง"
+                        className="w-full bg-stone-900/90 border border-stone-700 rounded-xl pl-9 pr-3 py-2 text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-stone-800 flex items-center justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPasswordModal(false);
+                      setForgotError('');
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-400 hover:text-white cursor-pointer"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={forgotBusy}
+                    className="bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 hover:from-amber-500 hover:to-stone-700 text-amber-50 font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer disabled:opacity-50"
+                  >
+                    {forgotBusy ? 'กำลังตรวจสอบ...' : 'บันทึกรหัสผ่านใหม่'}
                   </button>
                 </div>
               </form>

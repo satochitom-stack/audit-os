@@ -41,6 +41,7 @@ import {
   ChevronUp,
   Megaphone,
   Bell,
+  KeyRound,
   Image as ImageIcon
 } from 'lucide-react';
 import {
@@ -62,6 +63,9 @@ import {
   approveMemberRegistration,
   rejectMemberRegistration,
   extendMemberSubscription,
+  setMemberExactExpiryDate,
+  getSubscriptionCountdown,
+  resetUserPassword,
   updateUser,
   deleteUser
 } from '../utils/auth';
@@ -111,6 +115,21 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
   const [tierTargetUser, setTierTargetUser] = useState(null);
   const [selectedNewTier, setSelectedNewTier] = useState('monthly');
   const [tierDurationDays, setTierDurationDays] = useState(30);
+  const [customExpiryDate, setCustomExpiryDate] = useState('');
+
+  // Live Membership Countdown Timer (ticks every second)
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Admin Reset Password Modal
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [resetPasswordTargetUser, setResetPasswordTargetUser] = useState(null);
+  const [adminNewPassword, setAdminNewPassword] = useState('');
+  const [adminConfirmPassword, setAdminConfirmPassword] = useState('');
+  const [resetPasswordError, setResetPasswordError] = useState('');
 
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
@@ -363,7 +382,14 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     setTierTargetUser(user);
     const p = user.plan || 'trial';
     setSelectedNewTier(p);
-    setTierDurationDays(p === 'monthly' ? 30 : p === 'annual' ? 365 : 30);
+    const defaultDays = p === 'monthly' ? 30 : p === 'annual' ? 365 : 30;
+    setTierDurationDays(defaultDays);
+    if (user.expiresAt) {
+      setCustomExpiryDate(user.expiresAt.split('T')[0]);
+    } else {
+      const d = new Date(Date.now() + defaultDays * 86400000);
+      setCustomExpiryDate(d.toISOString().split('T')[0]);
+    }
     setShowChangeTierModal(true);
     setOpenActionUsername(null);
   };
@@ -379,7 +405,12 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
           expiresAt: null
         });
       } else {
-        const newExpiry = new Date(Date.now() + tierDurationDays * 86400000).toISOString();
+        let newExpiry;
+        if (customExpiryDate) {
+          newExpiry = new Date(`${customExpiryDate}T23:59:59.999Z`).toISOString();
+        } else {
+          newExpiry = new Date(Date.now() + tierDurationDays * 86400000).toISOString();
+        }
         updateUser(tierTargetUser.username, {
           plan: selectedNewTier,
           status: 'active',
@@ -392,6 +423,47 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       showToast(`ปรับระดับสมาชิกของ @${tierTargetUser.username} เป็น ${MEMBERSHIP_PLANS[selectedNewTier]?.name || selectedNewTier} เรียบร้อยแล้ว!`);
     } catch (err) {
       alert(err.message);
+    }
+  };
+
+  // Admin Reset Password Handlers
+  const handleOpenResetPassword = (user) => {
+    setResetPasswordTargetUser(user);
+    setAdminNewPassword('');
+    setAdminConfirmPassword('');
+    setResetPasswordError('');
+    setShowResetPasswordModal(true);
+    setOpenActionUsername(null);
+  };
+
+  const handleSaveResetPassword = async (e) => {
+    if (e) e.preventDefault();
+    if (!resetPasswordTargetUser) return;
+    setResetPasswordError('');
+
+    if (!adminNewPassword) {
+      setResetPasswordError('กรุณากรอกรหัสผ่านใหม่');
+      return;
+    }
+    if (adminNewPassword.length < 4) {
+      setResetPasswordError('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
+      return;
+    }
+    if (adminNewPassword !== adminConfirmPassword) {
+      setResetPasswordError('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+      return;
+    }
+
+    try {
+      await resetUserPassword(resetPasswordTargetUser.username, adminNewPassword);
+      setShowResetPasswordModal(false);
+      setResetPasswordTargetUser(null);
+      setAdminNewPassword('');
+      setAdminConfirmPassword('');
+      reloadData();
+      showToast(`🔑 รีเซ็ตรหัสผ่านใหม่ให้กับ @${resetPasswordTargetUser.username} เรียบร้อยแล้ว`);
+    } catch (err) {
+      setResetPasswordError(err.message || 'เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน');
     }
   };
 
@@ -513,14 +585,11 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     showToast(`บันทึกการชำระเงิน ${Number(paymentForm.amount).toLocaleString()} บาท เรียบร้อยแล้ว`);
   };
 
-  // Helper to render luxury badges based on the 3 tiers
+  // Helper to render luxury badges based on the 3 tiers with LIVE COUNTDOWN
   const renderLuxuryTierBadge = (user) => {
     const planKey = user.plan || 'trial';
-    const now = Date.now();
-    const isExpired = user.expiresAt && new Date(user.expiresAt).getTime() <= now;
-    const daysLeft = user.expiresAt
-      ? Math.max(0, Math.ceil((new Date(user.expiresAt).getTime() - now) / 86400000))
-      : 0;
+    const countdown = getSubscriptionCountdown(user, currentTime);
+    const expiryFormatted = user.expiresAt ? new Date(user.expiresAt).toLocaleDateString('th-TH') : '-';
 
     if (user.role === 'admin' || user.username?.toLowerCase() === 'admin' || user.plan === 'admin') {
       return (
@@ -545,11 +614,16 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       );
     }
 
-    if (isExpired) {
+    if (countdown.isExpired) {
       return (
-        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
-          <span>▲</span>
-          <span>หมดอายุแล้ว</span>
+        <div className="inline-flex flex-col items-start gap-1">
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+            <span>▲</span>
+            <span>หมดอายุแล้ว</span>
+          </div>
+          <span className="text-[10px] text-rose-600 dark:text-rose-400 font-medium ml-1">
+            สิ้นสุดเมื่อ {expiryFormatted}
+          </span>
         </div>
       );
     }
@@ -561,9 +635,10 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
             <span>👑</span>
             <span>{settings.annualPlanName || 'PREMIUM ★ (รายปี)'}</span>
           </div>
-          <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1">
-            เหลืออีก {daysLeft} วัน
-          </span>
+          <div className="inline-flex items-center space-x-1 text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1" title={`วันหมดอายุ: ${user.expiresAt ? new Date(user.expiresAt).toLocaleString('th-TH') : '-'}`}>
+            <Clock className="w-3 h-3 text-amber-600 shrink-0 animate-pulse" />
+            <span>⏱️ เหลือ: {countdown.text}</span>
+          </div>
         </div>
       );
     }
@@ -575,9 +650,10 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
             <span className="text-yellow-300 text-xs">⭐</span>
             <span>{settings.monthlyPlanName || 'VIP (รายเดือน)'}</span>
           </div>
-          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold ml-1">
-            เหลืออีก {daysLeft} วัน
-          </span>
+          <div className="inline-flex items-center space-x-1 text-[10px] text-indigo-600 dark:text-indigo-400 font-bold ml-1" title={`วันหมดอายุ: ${user.expiresAt ? new Date(user.expiresAt).toLocaleString('th-TH') : '-'}`}>
+            <Clock className="w-3 h-3 text-indigo-500 shrink-0 animate-pulse" />
+            <span>⏱️ เหลือ: {countdown.text}</span>
+          </div>
         </div>
       );
     }
@@ -598,9 +674,10 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
           <span className="text-emerald-500">🌱</span>
           <span>{settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)'}</span>
         </div>
-        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium ml-1">
-          Trial เหลือ {daysLeft} วัน ({user.expiresAt ? new Date(user.expiresAt).toLocaleDateString('th-TH') : '-'})
-        </span>
+        <div className="inline-flex items-center space-x-1 text-[10px] text-emerald-700 dark:text-emerald-400 font-medium ml-1" title={`วันหมดอายุ: ${user.expiresAt ? new Date(user.expiresAt).toLocaleString('th-TH') : '-'}`}>
+          <Clock className="w-3 h-3 text-emerald-600 shrink-0 animate-pulse" />
+          <span>⏱️ เหลือ: {countdown.text}</span>
+        </div>
       </div>
     );
   };
@@ -652,44 +729,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         </div>
       </div>
 
-      {/* Alert Banner: แจ้งเตือนเมื่อมีคำขอลงทะเบียนสมาชิกใหม่ */}
-      {pendingUsers.length > 0 && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-rose-500/10 border border-rose-300 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center font-black shrink-0 animate-bounce">
-              <Bell className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="font-black text-sm text-stone-900 dark:text-stone-100 flex items-center space-x-2">
-                <span>มีคำขอลงทะเบียนสมาชิกใหม่ ({pendingUsers.length} รายการ)</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">คำขอใหม่</span>
-              </div>
-              <p className="text-xs text-stone-500 dark:text-stone-400">
-                ผู้ใช้งานได้ลงทะเบียนเข้าสู่ระบบ และได้รับสิทธิ์ทดลองใช้เบื้องต้นแล้ว คุณสามารถตรวจสอบ ปรับแพ็กเกจ หรือล้างการแจ้งเตือนได้ทันที
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setActiveTab('requests')}
-              className="px-3.5 py-2 rounded-xl text-xs font-black bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:opacity-90 transition-all cursor-pointer shadow-xs"
-            >
-              ตรวจสอบคำขอ ({pendingUsers.length})
-            </button>
-            <button
-              type="button"
-              onClick={handleClearAllPending}
-              className="px-3.5 py-2 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-700 text-white transition-all cursor-pointer shadow-xs flex items-center space-x-1"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>รับทราบและล้างการแจ้งเตือน</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Sub-tab Navigation (Matching user's screenshots 1, 2, 3) */}
+      {/* Sub-tab Navigation (Overview, Users, Pricing & QR, Billing) */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-1.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap gap-1.5">
         <button
           onClick={() => setActiveTab('overview')}
@@ -713,23 +753,6 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         >
           <Users className="w-4 h-4" />
           <span>จัดการผู้ใช้งาน ({filteredMembers.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('requests')}
-          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
-            activeTab === 'requests'
-              ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
-              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
-          }`}
-        >
-          <Bell className="w-4 h-4" />
-          <span>คำขอลงทะเบียน</span>
-          {pendingUsers.length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
-              {pendingUsers.length}
-            </span>
-          )}
         </button>
 
         <button
@@ -1222,9 +1245,6 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                                 <span className={isAdmin ? 'text-amber-900 dark:text-amber-200 font-black' : ''}>
                                   @{u.username}
                                 </span>
-                                {u.passwordText && (
-                                  <span className="text-[10px] text-stone-400 font-mono">(รหัส: {u.passwordText})</span>
-                                )}
                               </div>
                               <div className={`text-[11px] font-semibold ${isAdmin ? 'text-amber-900 dark:text-amber-300 font-bold' : 'text-amber-800 dark:text-amber-400'}`}>
                                 {u.displayName}
@@ -1394,6 +1414,15 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
 
                                     <button
                                       type="button"
+                                      onClick={() => handleOpenResetPassword(u)}
+                                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-amber-300 cursor-pointer"
+                                    >
+                                      <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                                      <span>รีเซ็ตรหัสผ่านใหม่ (Reset)</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
                                       onClick={() => {
                                         setEditingMember(u);
                                         setShowEditMemberModal(true);
@@ -1402,7 +1431,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                                       className="w-full px-3 py-2 text-xs rounded-xl hover:bg-stone-800 flex items-center space-x-2 text-stone-200 cursor-pointer"
                                     >
                                       <Edit3 className="w-3.5 h-3.5 text-stone-400" />
-                                      <span>แก้ไขข้อมูล / รหัสผ่าน</span>
+                                      <span>แก้ไขข้อมูลสมาชิก</span>
                                     </button>
 
                                     <button
@@ -1426,148 +1455,6 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
               </table>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB: คำขอลงทะเบียนสมาชิกใหม่ (PENDING REGISTRATION REQUESTS)             */}
-      {/* ========================================================================= */}
-      {activeTab === 'requests' && (
-        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100 dark:border-stone-800">
-            <div>
-              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
-                <span>คำขอลงทะเบียนสมาชิกใหม่</span>
-                <span className="text-xs bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 px-2.5 py-0.5 rounded-full font-bold">
-                  {pendingUsers.length} รายการ
-                </span>
-              </h2>
-              <p className="text-xs text-stone-500">
-                รายการผู้ใช้งานที่ลงทะเบียนผ่านหน้าสมัครสมาชิก คุณสามารถรับทราบ ล้างการแจ้งเตือน หรือปรับระดับสิทธิ์สมาชิกได้ที่นี่
-              </p>
-            </div>
-
-            {pendingUsers.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  onClick={handleClearAllPending}
-                  className="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-rose-600" />
-                  <span>ล้างการแจ้งเตือนทั้งหมด ({pendingUsers.length})</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {pendingUsers.length === 0 ? (
-            <div className="text-center py-12 space-y-3">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-2xl shadow-inner">
-                ✓
-              </div>
-              <div className="font-bold text-sm text-stone-800 dark:text-stone-200">
-                ไม่มีคำขอลงทะเบียนค้างอยู่
-              </div>
-              <p className="text-xs text-stone-400 max-w-md mx-auto">
-                การแจ้งเตือนทั้งหมดได้รับการตรวจสอบและล้างเรียบร้อยแล้ว หากมีผู้ใช้งานลงทะเบียนใหม่จะแสดงที่นี่โดยอัตโนมัติ
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-2xl border border-stone-200 dark:border-stone-800">
-              <table className="w-full text-left text-xs text-stone-600 dark:text-stone-300">
-                <thead className="bg-stone-50 dark:bg-stone-800/80 uppercase font-black text-stone-500 border-b border-stone-200 dark:border-stone-800">
-                  <tr>
-                    <th className="p-3.5">ลำดับ / วันที่ขอ</th>
-                    <th className="p-3.5">ผู้สมัคร / ชื่อผู้ใช้</th>
-                    <th className="p-3.5">หน่วยงาน (อปท.) / ตำแหน่ง</th>
-                    <th className="p-3.5">แพ็กเกจที่เลือก</th>
-                    <th className="p-3.5 text-right">การจัดการ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60 font-medium">
-                  {pendingUsers.map((req, idx) => (
-                    <tr key={req.id || idx} className="hover:bg-stone-50/60 dark:hover:bg-stone-800/30 transition-colors">
-                      <td className="p-3.5 font-mono text-[11px] text-stone-500">
-                        <div>#{idx + 1}</div>
-                        <div className="text-[10px] text-stone-400">
-                          {req.requestedAt ? new Date(req.requestedAt).toLocaleString('th-TH') : '-'}
-                        </div>
-                      </td>
-                      <td className="p-3.5">
-                        <div className="font-bold text-stone-900 dark:text-stone-100">{req.displayName || req.username}</div>
-                        <div className="text-[11px] font-mono text-amber-600 dark:text-amber-400 font-bold">@{req.username}</div>
-                        {req.email && <div className="text-[10px] text-stone-400">{req.email}</div>}
-                      </td>
-                      <td className="p-3.5">
-                        <div className="font-semibold text-stone-800 dark:text-stone-200">{req.organization || '-'}</div>
-                        <div className="text-[11px] text-stone-400">
-                          {req.position || '-'} {req.province ? `• จ.${req.province}` : ''}
-                        </div>
-                      </td>
-                      <td className="p-3.5">
-                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                          <span>🌱</span>
-                          <span>
-                            {req.requestedPlan === 'annual'
-                              ? (settings.annualPlanName || 'PREMIUM (รายปี)')
-                              : req.requestedPlan === 'monthly'
-                              ? (settings.monthlyPlanName || 'VIP (รายเดือน)')
-                              : req.requestedPlan === 'lifetime'
-                              ? (settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)')
-                              : (settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)')}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="p-3.5 text-right">
-                        <div className="inline-flex items-center space-x-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleDismissPending(req.id, req.displayName)}
-                            title="รับทราบและปิดการแจ้งเตือน"
-                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 cursor-pointer transition-all border border-emerald-200 dark:border-emerald-800"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                            <span>รับทราบ</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const found = users.find((u) => u.username === req.username);
-                              if (found) {
-                                setTierTargetUser(found);
-                                setSelectedNewTier(req.requestedPlan || 'annual');
-                                setShowChangeTierModal(true);
-                              } else {
-                                handleQuickUpgradePending(req, 'annual');
-                              }
-                            }}
-                            title="ปรับระดับสมาชิก"
-                            className="bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 cursor-pointer transition-all border border-amber-200 dark:border-amber-800"
-                          >
-                            <Crown className="w-3.5 h-3.5" />
-                            <span>ปรับแพ็กเกจ</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`คุณต้องการลบคำขอของ @${req.username} หรือไม่?`)) {
-                                handleDismissPending(req.id, req.displayName);
-                              }
-                            }}
-                            title="ลบคำขอนี้"
-                            className="p-1.5 hover:bg-rose-100 text-rose-600 dark:hover:bg-rose-950/60 rounded-xl transition-all cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       )}
 
@@ -2121,19 +2008,51 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
               </div>
 
               {selectedNewTier !== 'lifetime' && (
-                <div>
-                  <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
-                    จำนวนวันอายุการใช้งานนับจากวันนี้ (วัน)
-                  </label>
-                  <input
-                    type="number"
-                    value={tierDurationDays}
-                    onChange={(e) => setTierDurationDays(parseInt(e.target.value) || 30)}
-                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-bold"
-                  />
-                  <span className="text-[11px] text-stone-400 mt-1 block">
-                    หมดอายุประมาณ: {new Date(Date.now() + tierDurationDays * 86400000).toLocaleDateString('th-TH')}
-                  </span>
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="block font-bold mb-1 text-stone-700 dark:text-stone-300">
+                      📅 กำหนดวันที่หมดอายุสมาชิก (เลือกวันที่ในปฏิทิน หรือระบุจำนวนวัน)
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <span className="text-[11px] text-stone-500 dark:text-stone-400 mb-1 block">
+                          เลือกวันที่หมดอายุโดยตรง:
+                        </span>
+                        <input
+                          type="date"
+                          value={customExpiryDate}
+                          onChange={(e) => {
+                            setCustomExpiryDate(e.target.value);
+                            if (e.target.value) {
+                              const diff = new Date(e.target.value + 'T23:59:59').getTime() - Date.now();
+                              setTierDurationDays(Math.max(1, Math.ceil(diff / 86400000)));
+                            }
+                          }}
+                          className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-bold text-amber-900 dark:text-amber-200"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-stone-500 dark:text-stone-400 mb-1 block">
+                          หรือระบุจำนวนวัน (วัน):
+                        </span>
+                        <input
+                          type="number"
+                          value={tierDurationDays}
+                          onChange={(e) => {
+                            const days = parseInt(e.target.value) || 1;
+                            setTierDurationDays(days);
+                            const d = new Date(Date.now() + days * 86400000);
+                            setCustomExpiryDate(d.toISOString().split('T')[0]);
+                          }}
+                          className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono font-bold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-300 flex items-center justify-between">
+                    <span>⏱️ วันที่หมดอายุ: {customExpiryDate ? new Date(customExpiryDate).toLocaleDateString('th-TH') : '-'}</span>
+                    <span className="font-bold">({tierDurationDays} วัน)</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -2224,10 +2143,31 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                 />
               </div>
 
+              {editingMember.role !== 'admin' && (
+                <div>
+                  <label className="block font-bold mb-1">📅 กำหนดวันหมดอายุสมาชิก (เลือกวันที่ในปฏิทิน)</label>
+                  <input
+                    type="date"
+                    value={editingMember.expiresAt ? editingMember.expiresAt.split('T')[0] : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditingMember({
+                        ...editingMember,
+                        expiresAt: val ? new Date(`${val}T23:59:59.999Z`).toISOString() : null
+                      });
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                  />
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">
+                    {editingMember.expiresAt ? `หมดอายุ: ${new Date(editingMember.expiresAt).toLocaleDateString('th-TH')}` : 'ไม่จำกัดเวลา (ตลอดชีพ)'}
+                  </span>
+                </div>
+              )}
+
               <div>
                 <label className="block font-bold mb-1">รหัสผ่านใหม่ (ระบุเมื่อต้องการเปลี่ยน)</label>
                 <input
-                  type="text"
+                  type="password"
                   value={editingMember.newPassword || ''}
                   onChange={(e) => setEditingMember({ ...editingMember, newPassword: e.target.value })}
                   placeholder="เว้นว่างไว้หากไม่ต้องการเปลี่ยน"
@@ -2248,6 +2188,87 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                   className="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer"
                 >
                   บันทึกข้อมูล
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: ADMIN RESET USER PASSWORD                                         */}
+      {/* ========================================================================= */}
+      {showResetPasswordModal && resetPasswordTargetUser && (
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-md w-full p-6 space-y-4 border border-stone-200 dark:border-stone-800 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+              <h3 className="text-base font-black text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                <KeyRound className="w-4 h-4 text-amber-500" />
+                <span>รีเซ็ตรหัสผ่านใหม่: @{resetPasswordTargetUser.username}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowResetPasswordModal(false)}
+                className="text-stone-400 hover:text-stone-600 p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">
+              <p className="font-bold flex items-center space-x-1">
+                <span>🔒 ความเป็นส่วนตัวและความปลอดภัย</span>
+              </p>
+              <p className="mt-1 text-[11px] text-amber-800 dark:text-amber-300">
+                ระบบจะไม่แสดงรหัสผ่านเดิมของผู้ใช้งาน (ผู้ดูแลระบบไม่สามารถเห็นรหัสผ่านเดิมได้) ท่านสามารถตั้งรหัสผ่านใหม่เพื่อส่งมอบให้ผู้ใช้งานได้ทันที
+              </p>
+            </div>
+
+            {resetPasswordError && (
+              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-300 text-xs">
+                {resetPasswordError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveResetPassword} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold mb-1">รหัสผ่านใหม่ *</label>
+                <input
+                  type="password"
+                  value={adminNewPassword}
+                  onChange={(e) => setAdminNewPassword(e.target.value)}
+                  placeholder="กำหนดรหัสผ่านใหม่อย่างน้อย 4 ตัวอักษร"
+                  className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1">ยืนยันรหัสผ่านใหม่ *</label>
+                <input
+                  type="password"
+                  value={adminConfirmPassword}
+                  onChange={(e) => setAdminConfirmPassword(e.target.value)}
+                  placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
+                  className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-mono"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-stone-100 dark:border-stone-800">
+                <button
+                  type="button"
+                  onClick={() => setShowResetPasswordModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100 cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer flex items-center space-x-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>บันทึกรหัสผ่านใหม่</span>
                 </button>
               </div>
             </form>
