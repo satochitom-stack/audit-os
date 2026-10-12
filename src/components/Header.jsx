@@ -21,6 +21,7 @@ import {
   Edit3
 } from 'lucide-react';
 import { cloudSyncService } from '../services/cloudSyncService';
+import { clearPendingUsers } from '../utils/auth';
 
 export default function Header({
   orgProfile,
@@ -259,23 +260,37 @@ export default function Header({
                   </div>
 
                   {isAdmin && (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        if (setCurrentTab) setCurrentTab('backoffice');
-                      }}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800"
-                    >
-                      <div className="flex items-center space-x-2">
+                    <div className="w-full flex items-center justify-between px-3.5 py-2.5 text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 font-bold border-b border-stone-100 dark:border-stone-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          if (setCurrentTab) setCurrentTab('backoffice');
+                        }}
+                        className="flex items-center space-x-2 cursor-pointer flex-1 text-left"
+                      >
                         <Settings className="w-3.5 h-3.5 text-amber-700" />
                         <span>⚙️ 12. ระบบหลังบ้าน Super Admin</span>
-                      </div>
+                      </button>
                       {pendingCount > 0 && (
-                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
-                          {pendingCount} คำขอใหม่
-                        </span>
+                        <div className="flex items-center space-x-1.5 shrink-0">
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                            {pendingCount} คำขอใหม่
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearPendingUsers();
+                            }}
+                            title="ล้างการแจ้งเตือนทั้งหมด"
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 hover:bg-rose-200 border border-rose-300 dark:border-rose-800 transition-colors cursor-pointer"
+                          >
+                            ล้าง
+                          </button>
+                        </div>
                       )}
-                    </button>
+                    </div>
                   )}
 
                   <button

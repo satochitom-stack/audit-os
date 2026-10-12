@@ -28,6 +28,7 @@ import {
   setLastUsername,
   registerUser,
   MEMBERSHIP_PLANS,
+  getMembershipPlans,
   getSystemSettings
 } from '../utils/auth';
 
@@ -41,7 +42,16 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
   const passwordInputRef = useRef(null);
 
   // System settings for bank and pricing info
-  const settings = getSystemSettings();
+  const [settings, setSettings] = useState(() => getSystemSettings());
+
+  useEffect(() => {
+    const handleSettingsChanged = (e) => {
+      if (e.detail) setSettings(e.detail);
+      else setSettings(getSystemSettings());
+    };
+    window.addEventListener('ia-settings-changed', handleSettingsChanged);
+    return () => window.removeEventListener('ia-settings-changed', handleSettingsChanged);
+  }, []);
 
   // Registration Modal States
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -413,7 +423,7 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                     เลือกแพ็กเกจสมาชิกที่ต้องการสมัคร
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {Object.values(MEMBERSHIP_PLANS)
+                    {Object.values(getMembershipPlans(settings))
                       .filter((p) => p.id !== 'lifetime')
                       .map((p) => (
                         <button

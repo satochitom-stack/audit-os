@@ -33,70 +33,107 @@ export const ENTERPRISE_ROLES = [
   { id: 'auditor', label: 'ผู้ตรวจสอบภายใน อปท. (Internal Auditor)', desc: 'เข้าใช้งานเครื่องมือปฏิบัติงานตรวจสอบภายใน 12 ขั้นตอนครบวงจร' }
 ];
 
-export const MEMBERSHIP_PLANS = {
-  trial: {
-    id: 'trial',
-    name: 'ฟรี 30 วัน (ค่าเริ่มต้น)',
-    tier: 'FREE',
-    price: 0,
-    priceLabel: 'ฟรี 30 วัน',
-    durationDays: 30,
-    badgeColor: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
-    description: 'ทดลองใช้งานเครื่องมือตรวจสอบภายใน อปท. ครบทุกฟังก์ชันฟรี 30 วัน'
-  },
-  monthly: {
-    id: 'monthly',
-    name: 'VIP (รายเดือน)',
-    tier: 'VIP',
-    price: 299,
-    priceLabel: '฿299 / เดือน',
-    durationDays: 30,
-    badgeColor: 'bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border-blue-400/60 shadow-md shadow-indigo-600/30',
-    description: 'สมาชิก VIP สำหรับปฏิบัติงานตรวจสอบภายใน อปท. ต่อเนื่อง ปลดล็อกทุกกระดาษทำการ'
-  },
-  annual: {
-    id: 'annual',
-    name: 'PREMIUM (รายปี)',
-    tier: 'PREMIUM',
-    price: 2990,
-    priceLabel: '฿2,990 / ปี',
-    durationDays: 365,
-    badgeColor: 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border-amber-200 shadow-lg shadow-amber-500/35 font-black',
-    description: 'สมาชิก PREMIUM สูงสุด ประหยัด คุ้มค่าที่สุด พร้อมคลังเอกสารและระเบียบทอง 2569 ตลอดปี'
-  },
-  lifetime: {
-    id: 'lifetime',
-    name: 'LIFETIME VIP (ตลอดชีพ)',
-    tier: 'LIFETIME',
-    price: 9900,
-    priceLabel: 'ตลอดชีพ',
-    durationDays: 9999,
-    badgeColor: 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-900 text-white border-purple-300 shadow-md font-black',
-    description: 'สมาชิกตลอดชีพ ปลดล็อกถาวร'
-  }
-};
-
 export function getSystemSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  return {
+  const defaults = {
     trialDays: 30,
+    trialPlanName: 'ฟรี 30 วัน (ค่าเริ่มต้น)',
+    monthlyPlanName: 'VIP (รายเดือน)',
+    annualPlanName: 'PREMIUM (รายปี)',
+    lifetimePlanName: 'LIFETIME VIP (ตลอดชีพ)',
     monthlyPrice: 299,
     annualPrice: 2990,
+    lifetimePrice: 9900,
     bankName: 'ธนาคารกสิกรไทย / กรุงไทย',
     bankAccountNo: '061-9-61495-3',
     bankAccountName: 'นายทุมมงคล ธรรมพิทักษ์',
     promptPayNo: '0619614953',
     qrCodeImage: '',
+    trialBenefits: 'ทดลองใช้งานเครื่องมือตรวจสอบภายใน อปท. ครบทุกฟังก์ชันฟรี 30 วัน\nบันทึกกระดาษทำการ และออกรายงานตัวอย่าง\nทดลองใช้เครื่องมือคำนวณและสุ่มตัวอย่าง',
     vipBenefits: 'บันทึกกระดาษทำการ 6 ภารกิจ & ช่างไม่จำกัด\nเข้าถึงเครื่องมือคำนวณงานช่างและสุ่มตัวอย่างพัสดุ\nออกรายงานสรุปผลการตรวจสอบภายในและหนังสือราชการอัตโนมัติ\nสำรองข้อมูลบนคลาวด์ปลอดภัย แยกฐานข้อมูล อปท. เป็นเอกเทศ',
     premiumBenefits: 'สิทธิ์ใช้งานระบบครบวงจร 12 ขั้นตอนตลอดปี\nคลังระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 ครบชุด\nกระดาษทำการ 6 ภารกิจ & ช่างมาตรฐาน ว 614 สมบูรณ์แบบ\nระบบทะเบียนคุมและติดตามผล CAPA ข้อทักท้วง 30 วัน\nอัปเดตระบบและเกณฑ์มาตรฐานกระทรวงการคลังฟรีตลอดปี',
+    lifetimeBenefits: 'สิทธิ์ใช้งานตลอดชีพ ไม่ต้องต่ออายุ\nเข้าถึงทุกฟังก์ชันและฟีเจอร์ใหม่ในอนาคตทั้งหมด\nบริการให้คำปรึกษาและทีมซัพพอร์ตระดับพรีเมียมพิเศษ\nอัปเดตระเบียบและเทมเพลตมาตรฐานตลอดอายุการใช้งาน',
     announcement: 'ยินดีต้อนรับสู่ Audit-OS แพลตฟอร์มบริหารงานตรวจสอบภายใน อปท. ประจำปีงบประมาณ พ.ศ. 2569',
     broadcastActive: true,
     broadcastDate: new Date().toISOString()
   };
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { ...defaults, ...parsed };
+    }
+  } catch (_) {}
+  return defaults;
 }
+
+export function getMembershipPlans(customSettings) {
+  const settings = customSettings || getSystemSettings();
+  return {
+    trial: {
+      id: 'trial',
+      name: settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)',
+      tier: 'FREE',
+      price: 0,
+      priceLabel: `ฟรี ${settings.trialDays || 30} วัน`,
+      durationDays: Number(settings.trialDays) || 30,
+      badgeColor: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+      description: settings.trialBenefits || 'ทดลองใช้งานเครื่องมือตรวจสอบภายใน อปท. ครบทุกฟังก์ชันฟรี 30 วัน'
+    },
+    monthly: {
+      id: 'monthly',
+      name: settings.monthlyPlanName || 'VIP (รายเดือน)',
+      tier: 'VIP',
+      price: Number(settings.monthlyPrice) || 299,
+      priceLabel: `฿${(Number(settings.monthlyPrice) || 299).toLocaleString()} / เดือน`,
+      durationDays: 30,
+      badgeColor: 'bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border-blue-400/60 shadow-md shadow-indigo-600/30',
+      description: settings.vipBenefits || 'สมาชิก VIP สำหรับปฏิบัติงานตรวจสอบภายใน อปท. ต่อเนื่อง ปลดล็อกทุกกระดาษทำการ'
+    },
+    annual: {
+      id: 'annual',
+      name: settings.annualPlanName || 'PREMIUM (รายปี)',
+      tier: 'PREMIUM',
+      price: Number(settings.annualPrice) || 2990,
+      priceLabel: `฿${(Number(settings.annualPrice) || 2990).toLocaleString()} / ปี`,
+      durationDays: 365,
+      badgeColor: 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border-amber-200 shadow-lg shadow-amber-500/35 font-black',
+      description: settings.premiumBenefits || 'สมาชิก PREMIUM สูงสุด ประหยัด คุ้มค่าที่สุด พร้อมคลังเอกสารและระเบียบทอง 2569 ตลอดปี'
+    },
+    lifetime: {
+      id: 'lifetime',
+      name: settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)',
+      tier: 'LIFETIME',
+      price: Number(settings.lifetimePrice) || 9900,
+      priceLabel: `฿${(Number(settings.lifetimePrice) || 9900).toLocaleString()} (ตลอดชีพ)`,
+      durationDays: 9999,
+      badgeColor: 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-900 text-white border-purple-300 shadow-md font-black',
+      description: settings.lifetimeBenefits || 'สมาชิกตลอดชีพ ปลดล็อกถาวร'
+    }
+  };
+}
+
+export const MEMBERSHIP_PLANS = new Proxy({}, {
+  get(target, prop) {
+    const plans = getMembershipPlans();
+    if (prop in plans) return plans[prop];
+    return target[prop];
+  },
+  ownKeys() {
+    return ['trial', 'monthly', 'annual', 'lifetime'];
+  },
+  getOwnPropertyDescriptor(target, prop) {
+    const plans = getMembershipPlans();
+    if (prop in plans) {
+      return {
+        value: plans[prop],
+        writable: true,
+        enumerable: true,
+        configurable: true
+      };
+    }
+    return undefined;
+  }
+});
 
 export function saveSystemSettings(settings) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -755,6 +792,17 @@ export function savePendingUsers(list) {
   } catch (e) {
     console.error(e);
   }
+}
+
+export function clearPendingUsers() {
+  savePendingUsers([]);
+}
+
+export function dismissPendingUser(pendingId) {
+  const pendingList = getPendingUsers();
+  const filtered = pendingList.filter((p) => p.id !== pendingId && p.username !== pendingId);
+  savePendingUsers(filtered);
+  return filtered;
 }
 
 export async function pullPendingUsersFromCloud() {

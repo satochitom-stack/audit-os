@@ -50,6 +50,9 @@ import {
   subscribeToCloudUsers,
   getPendingUsers,
   savePendingUsers,
+  clearPendingUsers,
+  dismissPendingUser,
+  getMembershipPlans,
   MEMBERSHIP_PLANS,
   getPaymentRecords,
   savePaymentRecords,
@@ -162,6 +165,23 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       if (cloudUsers) setUsers(cloudUsers);
     });
     return () => unsub();
+  }, []);
+
+  // Sync pending users and system settings when changed
+  useEffect(() => {
+    const handlePendingChanged = () => {
+      setPendingUsers(getPendingUsers());
+    };
+    const handleSettingsChanged = (e) => {
+      if (e.detail) setSettings(e.detail);
+      else setSettings(getSystemSettings());
+    };
+    window.addEventListener('ia-pending-users-changed', handlePendingChanged);
+    window.addEventListener('ia-settings-changed', handleSettingsChanged);
+    return () => {
+      window.removeEventListener('ia-pending-users-changed', handlePendingChanged);
+      window.removeEventListener('ia-settings-changed', handleSettingsChanged);
+    };
   }, []);
 
   // Close 3-dots action menu when clicking outside
@@ -375,6 +395,33 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     }
   };
 
+  // Pending User Management Handlers
+  const handleClearAllPending = () => {
+    if (window.confirm('คุณต้องการรับทราบและล้างการแจ้งเตือนคำขอลงทะเบียนทั้งหมดใช่หรือไม่?')) {
+      clearPendingUsers();
+      setPendingUsers([]);
+      showToast('🧹 ล้างการแจ้งเตือนคำขอลงทะเบียนทั้งหมดเรียบร้อยแล้ว');
+    }
+  };
+
+  const handleDismissPending = (id, displayName) => {
+    dismissPendingUser(id);
+    setPendingUsers(getPendingUsers());
+    showToast(`รับทราบคำขอของ ${displayName || id} และปิดการแจ้งเตือนแล้ว`);
+  };
+
+  const handleQuickUpgradePending = (pendingUser, tier = 'annual') => {
+    try {
+      const days = tier === 'annual' ? 365 : tier === 'monthly' ? 30 : 9999;
+      approveMemberRegistration(pendingUser.id, tier, days);
+      setPendingUsers(getPendingUsers());
+      setUsers(getUsers());
+      showToast(`อนุมัติและปรับระดับสมาชิก ${pendingUser.displayName || pendingUser.username} เรียบร้อยแล้ว!`);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   // Submit Broadcast Announcement
   const handleBroadcastSubmit = (e) => {
     e.preventDefault();
@@ -457,7 +504,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
     savePaymentRecords(updated);
 
     if (paymentForm.autoExtend) {
-      const days = paymentForm.plan === 'monthly' ? 30 : 365;
+      const days = paymentForm.plan === 'monthly' ? 30 : paymentForm.plan === 'lifetime' ? 9999 : 365;
       extendMemberSubscription(paymentForm.username, days, paymentForm.plan);
     }
 
@@ -512,7 +559,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         <div className="inline-flex flex-col items-start gap-1">
           <div className="inline-flex items-center space-x-1.5 px-3.5 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border border-amber-200 shadow-md shadow-amber-500/35 tracking-wider">
             <span>👑</span>
-            <span>PREMIUM ★ (รายปี)</span>
+            <span>{settings.annualPlanName || 'PREMIUM ★ (รายปี)'}</span>
           </div>
           <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold ml-1">
             เหลืออีก {daysLeft} วัน
@@ -526,7 +573,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         <div className="inline-flex flex-col items-start gap-1">
           <div className="inline-flex items-center space-x-1.5 px-3.5 py-1 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border border-blue-400/60 shadow-md shadow-indigo-600/30 tracking-wide">
             <span className="text-yellow-300 text-xs">⭐</span>
-            <span>VIP (รายเดือน)</span>
+            <span>{settings.monthlyPlanName || 'VIP (รายเดือน)'}</span>
           </div>
           <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold ml-1">
             เหลืออีก {daysLeft} วัน
@@ -539,7 +586,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       return (
         <div className="inline-flex items-center space-x-1.5 px-3.5 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-purple-700 via-pink-600 to-purple-800 text-white border border-purple-300 shadow-md">
           <span>💎</span>
-          <span>LIFETIME VIP (ตลอดชีพ)</span>
+          <span>{settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'}</span>
         </div>
       );
     }
@@ -549,7 +596,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       <div className="inline-flex flex-col items-start gap-1">
         <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 shadow-2xs">
           <span className="text-emerald-500">🌱</span>
-          <span>ฟรี 30 วัน (ค่าเริ่มต้น)</span>
+          <span>{settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)'}</span>
         </div>
         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium ml-1">
           Trial เหลือ {daysLeft} วัน ({user.expiresAt ? new Date(user.expiresAt).toLocaleDateString('th-TH') : '-'})
@@ -605,11 +652,48 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         </div>
       </div>
 
+      {/* Alert Banner: แจ้งเตือนเมื่อมีคำขอลงทะเบียนสมาชิกใหม่ */}
+      {pendingUsers.length > 0 && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-rose-500/10 border border-rose-300 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center font-black shrink-0 animate-bounce">
+              <Bell className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-black text-sm text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                <span>มีคำขอลงทะเบียนสมาชิกใหม่ ({pendingUsers.length} รายการ)</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">คำขอใหม่</span>
+              </div>
+              <p className="text-xs text-stone-500 dark:text-stone-400">
+                ผู้ใช้งานได้ลงทะเบียนเข้าสู่ระบบ และได้รับสิทธิ์ทดลองใช้เบื้องต้นแล้ว คุณสามารถตรวจสอบ ปรับแพ็กเกจ หรือล้างการแจ้งเตือนได้ทันที
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('requests')}
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:opacity-90 transition-all cursor-pointer shadow-xs"
+            >
+              ตรวจสอบคำขอ ({pendingUsers.length})
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAllPending}
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-700 text-white transition-all cursor-pointer shadow-xs flex items-center space-x-1"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>รับทราบและล้างการแจ้งเตือน</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sub-tab Navigation (Matching user's screenshots 1, 2, 3) */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-1.5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-wrap gap-1.5">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'overview'
               ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
               : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -621,7 +705,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
 
         <button
           onClick={() => setActiveTab('users')}
-          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'users'
               ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
               : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -632,8 +716,25 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         </button>
 
         <button
+          onClick={() => setActiveTab('requests')}
+          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+            activeTab === 'requests'
+              ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+          }`}
+        >
+          <Bell className="w-4 h-4" />
+          <span>คำขอลงทะเบียน</span>
+          {pendingUsers.length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+              {pendingUsers.length}
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab('pricing_qr')}
-          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'pricing_qr'
               ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
               : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -645,7 +746,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
 
         <button
           onClick={() => setActiveTab('billing')}
-          className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'billing'
               ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
               : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -1329,6 +1430,148 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
       )}
 
       {/* ========================================================================= */}
+      {/* TAB: คำขอลงทะเบียนสมาชิกใหม่ (PENDING REGISTRATION REQUESTS)             */}
+      {/* ========================================================================= */}
+      {activeTab === 'requests' && (
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100 dark:border-stone-800">
+            <div>
+              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                <span>คำขอลงทะเบียนสมาชิกใหม่</span>
+                <span className="text-xs bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 px-2.5 py-0.5 rounded-full font-bold">
+                  {pendingUsers.length} รายการ
+                </span>
+              </h2>
+              <p className="text-xs text-stone-500">
+                รายการผู้ใช้งานที่ลงทะเบียนผ่านหน้าสมัครสมาชิก คุณสามารถรับทราบ ล้างการแจ้งเตือน หรือปรับระดับสิทธิ์สมาชิกได้ที่นี่
+              </p>
+            </div>
+
+            {pendingUsers.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={handleClearAllPending}
+                  className="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-rose-600" />
+                  <span>ล้างการแจ้งเตือนทั้งหมด ({pendingUsers.length})</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {pendingUsers.length === 0 ? (
+            <div className="text-center py-12 space-y-3">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-2xl shadow-inner">
+                ✓
+              </div>
+              <div className="font-bold text-sm text-stone-800 dark:text-stone-200">
+                ไม่มีคำขอลงทะเบียนค้างอยู่
+              </div>
+              <p className="text-xs text-stone-400 max-w-md mx-auto">
+                การแจ้งเตือนทั้งหมดได้รับการตรวจสอบและล้างเรียบร้อยแล้ว หากมีผู้ใช้งานลงทะเบียนใหม่จะแสดงที่นี่โดยอัตโนมัติ
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-stone-200 dark:border-stone-800">
+              <table className="w-full text-left text-xs text-stone-600 dark:text-stone-300">
+                <thead className="bg-stone-50 dark:bg-stone-800/80 uppercase font-black text-stone-500 border-b border-stone-200 dark:border-stone-800">
+                  <tr>
+                    <th className="p-3.5">ลำดับ / วันที่ขอ</th>
+                    <th className="p-3.5">ผู้สมัคร / ชื่อผู้ใช้</th>
+                    <th className="p-3.5">หน่วยงาน (อปท.) / ตำแหน่ง</th>
+                    <th className="p-3.5">แพ็กเกจที่เลือก</th>
+                    <th className="p-3.5 text-right">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60 font-medium">
+                  {pendingUsers.map((req, idx) => (
+                    <tr key={req.id || idx} className="hover:bg-stone-50/60 dark:hover:bg-stone-800/30 transition-colors">
+                      <td className="p-3.5 font-mono text-[11px] text-stone-500">
+                        <div>#{idx + 1}</div>
+                        <div className="text-[10px] text-stone-400">
+                          {req.requestedAt ? new Date(req.requestedAt).toLocaleString('th-TH') : '-'}
+                        </div>
+                      </td>
+                      <td className="p-3.5">
+                        <div className="font-bold text-stone-900 dark:text-stone-100">{req.displayName || req.username}</div>
+                        <div className="text-[11px] font-mono text-amber-600 dark:text-amber-400 font-bold">@{req.username}</div>
+                        {req.email && <div className="text-[10px] text-stone-400">{req.email}</div>}
+                      </td>
+                      <td className="p-3.5">
+                        <div className="font-semibold text-stone-800 dark:text-stone-200">{req.organization || '-'}</div>
+                        <div className="text-[11px] text-stone-400">
+                          {req.position || '-'} {req.province ? `• จ.${req.province}` : ''}
+                        </div>
+                      </td>
+                      <td className="p-3.5">
+                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                          <span>🌱</span>
+                          <span>
+                            {req.requestedPlan === 'annual'
+                              ? (settings.annualPlanName || 'PREMIUM (รายปี)')
+                              : req.requestedPlan === 'monthly'
+                              ? (settings.monthlyPlanName || 'VIP (รายเดือน)')
+                              : req.requestedPlan === 'lifetime'
+                              ? (settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)')
+                              : (settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)')}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-right">
+                        <div className="inline-flex items-center space-x-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleDismissPending(req.id, req.displayName)}
+                            title="รับทราบและปิดการแจ้งเตือน"
+                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 cursor-pointer transition-all border border-emerald-200 dark:border-emerald-800"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>รับทราบ</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const found = users.find((u) => u.username === req.username);
+                              if (found) {
+                                setTierTargetUser(found);
+                                setSelectedNewTier(req.requestedPlan || 'annual');
+                                setShowChangeTierModal(true);
+                              } else {
+                                handleQuickUpgradePending(req, 'annual');
+                              }
+                            }}
+                            title="ปรับระดับสมาชิก"
+                            className="bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 cursor-pointer transition-all border border-amber-200 dark:border-amber-800"
+                          >
+                            <Crown className="w-3.5 h-3.5" />
+                            <span>ปรับแพ็กเกจ</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`คุณต้องการลบคำขอของ @${req.username} หรือไม่?`)) {
+                                handleDismissPending(req.id, req.displayName);
+                              }
+                            }}
+                            title="ลบคำขอนี้"
+                            className="p-1.5 hover:bg-rose-100 text-rose-600 dark:hover:bg-rose-950/60 rounded-xl transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* TAB 3: ตั้งค่าแพ็กเกจและ QR (PACKAGES & QR SETTINGS - Image 3)            */}
       {/* ========================================================================= */}
       {activeTab === 'pricing_qr' && (
@@ -1467,15 +1710,50 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
 
               <div className="space-y-4 text-xs">
                 {/* 1. สมาชิกฟรี 30 วัน */}
-                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 space-y-2">
+                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
-                      <span>🌱</span> <span>ฟรี 30 วัน (ค่าเริ่มต้น)</span>
+                      <span>🌱</span> <span>{settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)'}</span>
                     </span>
-                    <span className="text-xs font-black text-emerald-600">ฟรี 30 วัน</span>
+                    <span className="text-xs font-black text-emerald-600">ฟรี {settings.trialDays || 30} วัน</span>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจทดลองใช้</label>
+                      <input
+                        type="text"
+                        value={settings.trialPlanName || ''}
+                        onChange={(e) => setSettings({ ...settings, trialPlanName: e.target.value })}
+                        placeholder="เช่น ฟรี 30 วัน (ค่าเริ่มต้น)"
+                        className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-stone-800 dark:text-stone-200"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ระยะเวลาทดลอง (วัน)</label>
+                      <input
+                        type="number"
+                        value={settings.trialDays || 30}
+                        onChange={(e) => setSettings({ ...settings, trialDays: parseInt(e.target.value) || 30 })}
+                        className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-emerald-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
+                      รายละเอียดสิทธิประโยชน์ (หนึ่งรายการต่อหนึ่งบรรทัด)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={settings.trialBenefits || ''}
+                      onChange={(e) => setSettings({ ...settings, trialBenefits: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
+                    />
+                  </div>
+
                   <p className="text-[11px] text-stone-500">
-                    ผู้ตรวจสอบภายในทุกคนที่ลงทะเบียนใหม่จะได้รับสิทธิ์ทดลองใช้งาน 30 วันนี้อัตโนมัติ โดยไม่ต้องรอการอนุมัติ
+                    ผู้ตรวจสอบภายในทุกคนที่ลงทะเบียนใหม่จะได้รับสิทธิ์ทดลองใช้งานนี้อัตโนมัติ โดยไม่ต้องรอการอนุมัติ
                   </p>
                 </div>
 
@@ -1483,7 +1761,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                 <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-xs">
-                      <span>⭐</span> <span>แพ็กเกจรายเดือน (MONTHLY VIP)</span>
+                      <span>⭐</span> <span>{settings.monthlyPlanName || 'แพ็กเกจรายเดือน (MONTHLY VIP)'}</span>
                     </span>
                   </div>
 
@@ -1492,9 +1770,10 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจ</label>
                       <input
                         type="text"
-                        value="Monthly VIP"
-                        disabled
-                        className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-500"
+                        value={settings.monthlyPlanName || ''}
+                        onChange={(e) => setSettings({ ...settings, monthlyPlanName: e.target.value })}
+                        placeholder="เช่น VIP (รายเดือน)"
+                        className="w-full p-2 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-stone-800 font-bold text-blue-700 dark:text-blue-300"
                       />
                     </div>
                     <div>
@@ -1526,7 +1805,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                 <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 shadow-xs">
-                      <span>👑</span> <span>แพ็กเกจรายปี (ANNUAL PREMIUM)</span>
+                      <span>👑</span> <span>{settings.annualPlanName || 'แพ็กเกจรายปี (ANNUAL PREMIUM)'}</span>
                     </span>
                   </div>
 
@@ -1535,9 +1814,10 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจ</label>
                       <input
                         type="text"
-                        value="Annual Premium"
-                        disabled
-                        className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-500"
+                        value={settings.annualPlanName || ''}
+                        onChange={(e) => setSettings({ ...settings, annualPlanName: e.target.value })}
+                        placeholder="เช่น PREMIUM (รายปี)"
+                        className="w-full p-2 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-bold text-amber-700 dark:text-amber-300"
                       />
                     </div>
                     <div>
@@ -1560,6 +1840,50 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                       rows={3}
                       value={settings.premiumBenefits || ''}
                       onChange={(e) => setSettings({ ...settings, premiumBenefits: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
+                    />
+                  </div>
+                </div>
+
+                {/* 4. แพ็กเกจตลอดชีพ (LIFETIME VIP) */}
+                <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-purple-700 to-pink-700 text-white shadow-xs">
+                      <span>💎</span> <span>{settings.lifetimePlanName || 'แพ็กเกจตลอดชีพ (LIFETIME VIP)'}</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจ</label>
+                      <input
+                        type="text"
+                        value={settings.lifetimePlanName || ''}
+                        onChange={(e) => setSettings({ ...settings, lifetimePlanName: e.target.value })}
+                        placeholder="เช่น LIFETIME VIP (ตลอดชีพ)"
+                        className="w-full p-2 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-stone-800 font-bold text-purple-700 dark:text-purple-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ราคา (บาท)</label>
+                      <input
+                        type="number"
+                        value={settings.lifetimePrice || 9900}
+                        onChange={(e) => setSettings({ ...settings, lifetimePrice: parseFloat(e.target.value) || 9900 })}
+                        className="w-full p-2 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-stone-800 font-black text-purple-600"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
+                      รายละเอียดสิทธิประโยชน์ (หนึ่งรายการต่อหนึ่งบรรทัด)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={settings.lifetimeBenefits || ''}
+                      onChange={(e) => setSettings({ ...settings, lifetimeBenefits: e.target.value })}
                       className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
                     />
                   </div>
@@ -1719,8 +2043,8 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         }}
                       />
                       <div>
-                        <div className="font-bold text-stone-900 dark:text-stone-100">🌱 ฟรี 30 วัน (ค่าเริ่มต้น)</div>
-                        <div className="text-[11px] text-stone-500">ทดลองใช้งานฟรี 30 วัน</div>
+                        <div className="font-bold text-stone-900 dark:text-stone-100">🌱 {settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)'}</div>
+                        <div className="text-[11px] text-stone-500">ทดลองใช้งานฟรี {settings.trialDays || 30} วัน</div>
                       </div>
                     </div>
                   </label>
@@ -1742,8 +2066,8 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         }}
                       />
                       <div>
-                        <div className="font-bold text-indigo-700 dark:text-indigo-400">⭐ VIP (รายเดือน)</div>
-                        <div className="text-[11px] text-stone-500">ปลดล็อกทุกกระดาษทำการ (30 วัน)</div>
+                        <div className="font-bold text-indigo-700 dark:text-indigo-400">⭐ {settings.monthlyPlanName || 'VIP (รายเดือน)'}</div>
+                        <div className="text-[11px] text-stone-500">ปลดล็อกทุกกระดาษทำการ (30 วัน) • ฿{Number(settings.monthlyPrice || 299).toLocaleString()}</div>
                       </div>
                     </div>
                   </label>
@@ -1765,8 +2089,8 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         }}
                       />
                       <div>
-                        <div className="font-bold text-amber-600 dark:text-amber-400">👑 PREMIUM (รายปี)</div>
-                        <div className="text-[11px] text-stone-500">ระดับสูงสุด พร้อมคลังระเบียบทอง 2569 (365 วัน)</div>
+                        <div className="font-bold text-amber-600 dark:text-amber-400">👑 {settings.annualPlanName || 'PREMIUM (รายปี)'}</div>
+                        <div className="text-[11px] text-stone-500">ระดับสูงสุด พร้อมคลังระเบียบทอง 2569 (365 วัน) • ฿{Number(settings.annualPrice || 2990).toLocaleString()}</div>
                       </div>
                     </div>
                   </label>
@@ -1788,8 +2112,8 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         }}
                       />
                       <div>
-                        <div className="font-bold text-purple-700 dark:text-purple-400">💎 LIFETIME VIP (ตลอดชีพ)</div>
-                        <div className="text-[11px] text-stone-500">ไม่จำกัดวันหมดอายุ (ถาวร)</div>
+                        <div className="font-bold text-purple-700 dark:text-purple-400">💎 {settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'}</div>
+                        <div className="text-[11px] text-stone-500">ไม่จำกัดวันหมดอายุ (ถาวร) • ฿{Number(settings.lifetimePrice || 9900).toLocaleString()}</div>
                       </div>
                     </div>
                   </label>
@@ -1978,16 +2302,20 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                     value={paymentForm.plan}
                     onChange={(e) => {
                       const p = e.target.value;
+                      let amt = (settings.annualPrice || 2990).toString();
+                      if (p === 'monthly') amt = (settings.monthlyPrice || 299).toString();
+                      else if (p === 'lifetime') amt = (settings.lifetimePrice || 9900).toString();
                       setPaymentForm({
                         ...paymentForm,
                         plan: p,
-                        amount: p === 'monthly' ? (settings.monthlyPrice || 299).toString() : (settings.annualPrice || 2990).toString()
+                        amount: amt
                       });
                     }}
                     className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                   >
-                    <option value="annual">PREMIUM รายปี (฿{settings.annualPrice || 2990})</option>
-                    <option value="monthly">VIP รายเดือน (฿{settings.monthlyPrice || 299})</option>
+                    <option value="annual">{settings.annualPlanName || 'PREMIUM (รายปี)'} (฿{Number(settings.annualPrice || 2990).toLocaleString()})</option>
+                    <option value="monthly">{settings.monthlyPlanName || 'VIP (รายเดือน)'} (฿{Number(settings.monthlyPrice || 299).toLocaleString()})</option>
+                    <option value="lifetime">{settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'} (฿{Number(settings.lifetimePrice || 9900).toLocaleString()})</option>
                   </select>
                 </div>
 
