@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ShieldAlert,
   Calendar,
@@ -25,7 +25,7 @@ import {
   LayoutGrid,
   MessageSquarePlus
 } from 'lucide-react';
-import { MEMBERSHIP_PLANS, checkUserSubscription, getSubscriptionCountdown } from '../utils/auth';
+import { MEMBERSHIP_PLANS, checkUserSubscription } from '../utils/auth';
 
 export default function Sidebar({
   currentTab,
@@ -42,14 +42,6 @@ export default function Sidebar({
   const subStatus = checkUserSubscription(session);
   const isExpired = subStatus.expired;
   const [toolkitSubmenuOpen, setToolkitSubmenuOpen] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const countdown = getSubscriptionCountdown(session, now);
 
   const planKey = session?.plan || 'annual';
   const planInfo = MEMBERSHIP_PLANS[planKey] || MEMBERSHIP_PLANS.annual;
@@ -176,30 +168,6 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* Live Membership Countdown Card for Auditor */}
-        {!isAdmin && session && (
-          <div className={`mt-2 p-2.5 rounded-xl border text-[11px] transition-all shadow-2xs ${
-            countdown.isExpired
-              ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900 text-rose-800 dark:text-rose-300'
-              : 'bg-amber-500/10 dark:bg-amber-950/30 border-amber-300/80 dark:border-amber-800/60 text-amber-950 dark:text-amber-200'
-          }`}>
-            <div className="flex items-center justify-between text-[10px] font-semibold text-stone-500 dark:text-stone-400">
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
-                <span>เวลาสมาชิกคงเหลือ</span>
-              </span>
-              <span className="font-bold text-amber-800 dark:text-amber-400">
-                {countdown.planLabel}
-              </span>
-            </div>
-            <div className="mt-1 font-mono font-black text-xs text-amber-900 dark:text-amber-200 tracking-tight">
-              ⏳ {countdown.text}
-            </div>
-            <div className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5 truncate">
-              หมดอายุ: {countdown.expiryText}
-            </div>
-          </div>
-        )}
 
         {/* Expired warning badge */}
         {isExpired && !isAdmin && (
