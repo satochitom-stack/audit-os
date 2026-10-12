@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PageHeaderBanner from './PageHeaderBanner';
 import {
   ClipboardCheck,
   CheckCircle,
@@ -521,27 +522,12 @@ export default function ExecutionView({
   return (
     <div className="space-y-6">
       {/* Top Header & Topic Selector */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="space-y-2.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-              <span>{orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</span>
-            </span>
-            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-              <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || currentWp.auditor || 'หน่วยตรวจสอบภายใน'}</span>
-            </span>
-            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-              <Calendar className="w-3.5 h-3.5 text-stone-500" />
-              <span>ปีงบประมาณ พ.ศ. {selectedYear}</span>
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-            กระดาษทำการการตรวจสอบ (Audit Working Papers)
-          </h1>
-        </div>
-      </div>
+      <PageHeaderBanner
+        title="กระดาษทำการและการปฏิบัติงานตรวจสอบ (Audit Execution & Working Papers)"
+        orgName={orgProfile?.name}
+        auditorName={`ผู้ตรวจสอบ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        year={selectedYear}
+      />
 
       {/* Working Paper Selector Bar & Actions */}
       <div className="bg-white dark:bg-stone-900 p-4 sm:p-5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">

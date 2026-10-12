@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "deploy": "vite build && firebase deploy --only hosting",
+    "verify:guardrails": "node scripts/verify-guardrails.cjs",
+    "build": "node scripts/verify-guardrails.cjs && vite build",
+    "deploy": "node scripts/verify-guardrails.cjs && vite build && firebase deploy --only hosting",
     "lint": "oxlint",
     "preview": "vite preview"
   },

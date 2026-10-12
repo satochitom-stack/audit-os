@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import PageHeaderBanner from './PageHeaderBanner';
 import {
   Users,
   Award,
@@ -627,28 +628,12 @@ export default function UserManagementView({ currentSession, onSwitchSession, on
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs">
-        <div className="space-y-2.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 rounded-full px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200">
-              <Building className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-              <span>การบริหารจัดการผู้ใช้งาน</span>
-            </span>
-            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-              <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-              <span>ระบบกำหนดสิทธิ์การเข้าถึงเมนู (RBAC)</span>
-            </span>
-            <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-              <Users className="w-3.5 h-3.5 text-stone-500" />
-              <span>ผู้ใช้งานทั่วไป: {users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin').length} บัญชี (ไม่รวม Admin)</span>
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-            จัดการผู้ใช้งาน & กำหนดสิทธิ์เมนูรายกอง
-          </h1>
-        </div>
-      </div>
+      <PageHeaderBanner
+        title="จัดการผู้ใช้งาน & กำหนดสิทธิ์เมนูรายกอง"
+        orgName="การบริหารจัดการผู้ใช้งาน"
+        auditorName="ระบบกำหนดสิทธิ์การเข้าถึงเมนู (RBAC)"
+        badges={[`ผู้ใช้งานทั่วไป: ${users.filter((u) => u.role !== 'admin' && u.username?.toLowerCase() !== 'admin').length} บัญชี (ไม่รวม Admin)`]}
+      />
 
       {/* User Management Action Strip */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-stone-900/80 p-3 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-xs">
