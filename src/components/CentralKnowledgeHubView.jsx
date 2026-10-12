@@ -82,8 +82,43 @@ function formatBytes(bytes) {
 
 export default function CentralKnowledgeHubView({ session, onCloneToWorkingPapers }) {
   // Current user info
-  const currentUserName = session?.user?.name || session?.username || 'ผู้ตรวจสอบภายใน';
-  const isAdmin = session?.role === 'admin';
+  const currentUserName = session?.user?.name || session?.displayName || session?.username || 'ผู้ตรวจสอบภายใน';
+  const currentUsername = session?.username || session?.user?.username || '';
+  const isAdmin = session?.role === 'admin' || session?.username === 'admin';
+
+  // Check if current user has permission to delete this document:
+  // Admin OR the user who uploaded the document
+  const canDeleteDoc = (doc) => {
+    if (!doc) return false;
+    if (isAdmin) return true;
+
+    // 1. Check uploader username
+    if (currentUsername && doc.uploaderUsername && doc.uploaderUsername.toLowerCase() === currentUsername.toLowerCase()) {
+      return true;
+    }
+
+    // 2. Check all possible identifiers of the current logged-in user
+    const userIdentifiers = [
+      session?.username,
+      session?.displayName,
+      session?.user?.name,
+      session?.user?.username,
+      currentUserName
+    ].filter(Boolean).map((s) => s.trim().toLowerCase());
+
+    if (doc.uploadedBy && userIdentifiers.includes(doc.uploadedBy.trim().toLowerCase())) {
+      return true;
+    }
+
+    // 3. User-uploaded document fallback
+    if (doc.id?.startsWith('DOC-USER-')) {
+      if (!doc.uploadedBy || userIdentifiers.includes(doc.uploadedBy?.trim()?.toLowerCase())) {
+        return true;
+      }
+    }
+
+    return false;
+  };
 
   // Load documents metadata from localStorage with deleted blacklist protection
   const [documents, setDocuments] = useState(() => {
@@ -107,9 +142,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     return [];
   });
 
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTag, setSelectedTag] = useState('');
   
   // Preview Modal state
   const [previewDoc, setPreviewDoc] = useState(null);
@@ -241,9 +274,6 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   // Filtered documents
   const filteredDocs = useMemo(() => {
     return documents.filter((doc) => {
-      if (selectedCategory && selectedCategory !== 'all' && doc.category !== selectedCategory) return false;
-      if (selectedTag && !doc.tags?.includes(selectedTag)) return false;
-
       const q = searchTerm.trim().toLowerCase();
       if (!q) return true;
 
@@ -253,10 +283,11 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         (doc.topic || '').toLowerCase().includes(q) ||
         (doc.summary || '').toLowerCase().includes(q) ||
         (doc.organization || '').toLowerCase().includes(q) ||
+        (doc.uploadedBy || '').toLowerCase().includes(q) ||
         (doc.tags || []).some((t) => t.toLowerCase().includes(q))
       );
     });
-  }, [documents, selectedCategory, searchTerm, selectedTag]);
+  }, [documents, searchTerm]);
 
   const handleCopyText = (id, text) => {
     if (!text) return;
@@ -453,6 +484,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
       fullContent: newDocForm.fullContent.trim() || newDocForm.summary.trim(),
       tags: tagsArray,
       uploadedBy: currentUserName,
+      uploaderUsername: currentUsername,
       uploadedAt: new Date().toLocaleDateString('th-TH', {
         year: 'numeric',
         month: 'short',
@@ -490,11 +522,27 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
 
   // Delete Document (Admin or Uploader only)
   const handleDeleteDoc = async (doc) => {
+    if (!canDeleteDoc(doc)) {
+      await luxuryAlert({
+        title: 'ไม่มีสิทธิ์ลบเอกสารนี้',
+        message: 'คุณสามารถลบได้เฉพาะเอกสารที่คุณเป็นผู้อัปโหลดเท่านั้น หรือติดต่อผู้ดูแลระบบ (Admin) เพื่อดำเนินการ',
+        variant: 'warning'
+      });
+      return;
+    }
+
+    const isUploader =
+      !isAdmin &&
+      (doc.uploadedBy === currentUserName ||
+        (doc.uploaderUsername && doc.uploaderUsername.toLowerCase() === currentUsername.toLowerCase()));
+
     const confirmed = await luxuryConfirm({
-      title: 'ยืนยันการลบเอกสารแม่แบบ',
+      title: 'ยืนยันการลบเอกสาร',
       message: 'คุณต้องการลบเอกสารนี้ออกจากคลังเอกสารแม่แบบกลางหรือไม่?',
       itemTitle: doc.title,
-      subMessage: '⚠️ เอกสารนี้จะถูกลบถาวรออกจากคลังกลาง และจะไม่ปรากฏในระบบอีกต่อไป',
+      subMessage: isUploader
+        ? `⚠️ คุณกำลังลบเอกสารที่คุณเป็นผู้อัปโหลด ("${doc.uploadedBy || currentUserName}") เอกสารนี้จะถูกลบถาวรออกจากระบบส่วนกลาง`
+        : '⚠️ เอกสารนี้จะถูกลบถาวรออกจากคลังกลาง และจะไม่ปรากฏในระบบอีกต่อไป',
       confirmText: 'ลบเอกสารทันที',
       cancelText: 'ยกเลิก',
       variant: 'danger'
@@ -628,50 +676,18 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         badges={['ระบบคลังข้อมูลกลางใช้ร่วมกันทุก User']}
       />
 
-      {/* Control Bar: Categories, Upload Button & Search (Cleaned & Contained) */}
+      {/* Control Bar: Summary Info, Clear All (Admin), Upload Button & Contained Search Input */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs">
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
-          {/* Category Tabs (Removed 'ทั้งหมด' as requested) */}
-          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            {CENTRAL_DOC_CATEGORIES.filter((cat) => cat.id !== 'all').map((cat) => {
-              const count = documents.filter((d) => d.category === cat.id).length;
-              const isSelected = selectedCategory === cat.id;
-
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => {
-                    setSelectedCategory(isSelected ? '' : cat.id);
-                    setSelectedTag('');
-                  }}
-                  className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    isSelected
-                      ? 'bg-amber-500/15 text-amber-950 dark:text-amber-200 border border-amber-500/30 shadow-xs'
-                      : 'bg-stone-100/80 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200/80 border border-transparent'
-                  }`}
-                >
-                  <span>{cat.label}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isSelected
-                        ? 'bg-amber-500/20 text-amber-900 dark:text-amber-200 font-bold'
-                        : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-
-            {selectedCategory && (
-              <button
-                onClick={() => setSelectedCategory('')}
-                className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-bold px-2 py-1 cursor-pointer"
-              >
-                แสดงทุกหมวด
-              </button>
-            )}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+          {/* Left: Total Documents Info Badge */}
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-xs text-stone-700 dark:text-stone-200 flex items-center gap-1.5">
+              <FolderOpen className="w-4 h-4 text-amber-600" />
+              <span>รายการเอกสารทั้งหมดในคลังกลาง</span>
+            </span>
+            <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200/80 dark:border-stone-700">
+              {documents.length} รายการ
+            </span>
           </div>
 
           {/* Action Toolbar: Clear All (Admin), Upload Button (All Users) + Contained Search Input */}
@@ -717,15 +733,8 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         </div>
       </div>
 
-      {/* Guide Note Above Table (Removed 'พบทั้งหมด 0 รายการ' header text) */}
-      <div className="flex items-center justify-between text-xs text-stone-400 px-1 font-medium">
-        <div>
-          {selectedCategory && (
-            <span className="text-amber-700 dark:text-amber-400 text-[11px] bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200/80 dark:border-amber-900/40">
-              หมวดหมู่: {CENTRAL_DOC_CATEGORIES.find((c) => c.id === selectedCategory)?.label}
-            </span>
-          )}
-        </div>
+      {/* Guide Note Above Table */}
+      <div className="flex items-center justify-end text-xs text-stone-400 px-1 font-medium">
         <div className="text-[11px] text-stone-400 flex items-center gap-1">
           <Info className="w-3.5 h-3.5 text-amber-600" />
           <span>คลิกที่รายการเพื่อเปิดดูรายละเอียดและอ่านเอกสารได้ทันทีโดยไม่ต้องดาวน์โหลด</span>
@@ -737,10 +746,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         {filteredDocs.length > 0 ? (
           <div className="divide-y divide-stone-100 dark:divide-stone-800/80">
             {filteredDocs.map((doc, index) => {
-              const canDelete =
-                isAdmin ||
-                doc.uploadedBy === currentUserName ||
-                (doc.id?.startsWith('DOC-USER-') && !doc.isSystemProtected);
+              const canDelete = canDeleteDoc(doc);
               const isWorkingPaper = doc.category === 'working-papers';
 
               return (
@@ -1319,13 +1325,11 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
               </div>
 
               <div className="flex items-center space-x-2">
-                {(isAdmin ||
-                  previewDoc.uploadedBy === currentUserName ||
-                  (previewDoc.id?.startsWith('DOC-USER-') && !previewDoc.isSystemProtected)) && (
+                {canDeleteDoc(previewDoc) && (
                   <button
                     onClick={() => handleDeleteDoc(previewDoc)}
                     className="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
-                    title="ลบเอกสารนี้ออกจากคลังกลาง"
+                    title={isAdmin ? "ลบเอกสารนี้ออกจากคลังกลาง (สิทธิ์ Admin)" : "ลบเอกสารนี้ออกจากคลังกลาง (สิทธิ์ผู้อัปโหลด)"}
                   >
                     <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                     <span>ลบเอกสาร</span>
