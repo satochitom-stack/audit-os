@@ -42,7 +42,9 @@ import {
   Megaphone,
   Bell,
   KeyRound,
-  Image as ImageIcon
+  Image as ImageIcon,
+  MessageSquarePlus,
+  MessageCircle
 } from 'lucide-react';
 import {
   getUsers,
@@ -70,6 +72,13 @@ import {
   deleteUser
 } from '../utils/auth';
 import { broadcastSystemUpdate, APP_VERSION } from '../utils/versionCheck';
+import {
+  getUserFeedbacks,
+  updateFeedbackStatus,
+  deleteFeedback,
+  FEEDBACK_CATEGORIES,
+  FEEDBACK_STATUSES
+} from '../utils/feedbackUtils';
 
 export default function AdminBackofficeView({ currentSession, session, onSwitchToWorkbench, onRefreshUser }) {
   const activeSession = session || currentSession;
@@ -88,6 +97,21 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [toastMessage, setToastMessage] = useState(null);
+
+  // User Feedbacks State
+  const [feedbacks, setFeedbacks] = useState(() => getUserFeedbacks());
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState('all');
+  const [feedbackCategoryFilter, setFeedbackCategoryFilter] = useState('all');
+  const [feedbackSearch, setFeedbackSearch] = useState('');
+  const [adminReplyTexts, setAdminReplyTexts] = useState({});
+
+  useEffect(() => {
+    const handleFbUpdate = () => setFeedbacks(getUserFeedbacks());
+    window.addEventListener('ia_feedbacks_updated', handleFbUpdate);
+    return () => window.removeEventListener('ia_feedbacks_updated', handleFbUpdate);
+  }, []);
+
+  const pendingFeedbackCount = feedbacks.filter((f) => f.status === 'pending').length;
 
   // Pinned Users stored in localStorage
   const [pinnedUsernames, setPinnedUsernames] = useState(() => {
@@ -777,6 +801,18 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
         >
           <CreditCard className="w-4 h-4" />
           <span>ประวัติชำระเงิน ({payments.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('feedbacks')}
+          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+            activeTab === 'feedbacks'
+              ? 'bg-gradient-to-r from-stone-900 to-amber-950 text-amber-300 border border-amber-500/40 shadow-sm'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
+          }`}
+        >
+          <MessageSquarePlus className="w-4 h-4" />
+          <span>ข้อเสนอแนะ {pendingFeedbackCount > 0 ? `(${pendingFeedbackCount} ใหม่)` : `(${feedbacks.length})`}</span>
         </button>
       </div>
 
@@ -1870,6 +1906,252 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 5: ข้อเสนอแนะจากผู้ใช้งาน (USER FEEDBACK & SUGGESTIONS)                */}
+      {/* ========================================================================= */}
+      {activeTab === 'feedbacks' && (
+        <div className="space-y-6">
+          {/* Top Header Card */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100 dark:border-stone-800">
+              <div>
+                <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                  <MessageSquarePlus className="w-5 h-5 text-amber-600" />
+                  <span>ข้อเสนอแนะ & ความคิดเห็นจากผู้ใช้งาน อปท.</span>
+                  <span className="text-xs bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 px-2.5 py-0.5 rounded-full font-bold">
+                    ทั้งหมด {feedbacks.length} รายการ
+                  </span>
+                </h2>
+                <p className="text-xs text-stone-500 mt-1">
+                  รับฟังเสียงจากผู้ตรวจสอบภายในทั่วประเทศ เพื่อนำมาพัฒนาฟีเจอร์และปรับปรุงระบบให้ตรงจุด
+                </p>
+              </div>
+
+              {pendingFeedbackCount > 0 && (
+                <div className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center space-x-1.5 shrink-0">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                  <span>มี {pendingFeedbackCount} ข้อเสนอแนะรอการตรวจสอบ</span>
+                </div>
+              )}
+            </div>
+
+            {/* KPI Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-700 space-y-1">
+                <span className="text-[11px] text-stone-400 font-semibold">ข้อเสนอแนะทั้งหมด</span>
+                <div className="text-xl font-black text-stone-900 dark:text-stone-100">{feedbacks.length}</div>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 space-y-1">
+                <span className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold">รอดำเนินการ</span>
+                <div className="text-xl font-black text-amber-800 dark:text-amber-300">
+                  {feedbacks.filter((f) => f.status === 'pending').length}
+                </div>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 space-y-1">
+                <span className="text-[11px] text-blue-700 dark:text-blue-400 font-semibold">กำลังพิจารณา / พัฒนา</span>
+                <div className="text-xl font-black text-blue-800 dark:text-blue-300">
+                  {feedbacks.filter((f) => f.status === 'reviewing' || f.status === 'developing').length}
+                </div>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 space-y-1">
+                <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">ดำเนินการแล้ว</span>
+                <div className="text-xl font-black text-emerald-800 dark:text-emerald-300">
+                  {feedbacks.filter((f) => f.status === 'completed').length}
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <select
+                  value={feedbackStatusFilter}
+                  onChange={(e) => setFeedbackStatusFilter(e.target.value)}
+                  className="p-2 rounded-xl text-xs border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                >
+                  <option value="all">ทุกสถานะ</option>
+                  {FEEDBACK_STATUSES.map((s) => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={feedbackCategoryFilter}
+                  onChange={(e) => setFeedbackCategoryFilter(e.target.value)}
+                  className="p-2 rounded-xl text-xs border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold"
+                >
+                  <option value="all">ทุกหมวดหมู่</option>
+                  {FEEDBACK_CATEGORIES.map((c) => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="ค้นหาข้อเสนอแนะ, ผู้ส่ง, อปท..."
+                  value={feedbackSearch}
+                  onChange={(e) => setFeedbackSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Feedbacks Cards List */}
+          <div className="space-y-4">
+            {feedbacks
+              .filter((f) => {
+                if (feedbackStatusFilter !== 'all' && f.status !== feedbackStatusFilter) return false;
+                if (feedbackCategoryFilter !== 'all' && f.category !== feedbackCategoryFilter) return false;
+                if (!feedbackSearch.trim()) return true;
+                const q = feedbackSearch.toLowerCase();
+                return (
+                  (f.title || '').toLowerCase().includes(q) ||
+                  (f.description || '').toLowerCase().includes(q) ||
+                  (f.userName || '').toLowerCase().includes(q) ||
+                  (f.orgName || '').toLowerCase().includes(q)
+                );
+              })
+              .map((item) => {
+                const catObj = FEEDBACK_CATEGORIES.find((c) => c.id === item.category);
+                const stObj = FEEDBACK_STATUSES.find((s) => s.id === item.status) || FEEDBACK_STATUSES[0];
+
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white dark:bg-stone-900 rounded-3xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4"
+                  >
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-100 dark:border-stone-800">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md ${catObj?.badgeColor || 'bg-stone-100'}`}>
+                          {catObj?.label || item.category}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${stObj.badgeColor}`}>
+                          {stObj.label}
+                        </span>
+                        {item.priority === 'urgent' && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
+                            🔴 เร่งด่วน
+                          </span>
+                        )}
+                        <span className="text-[11px] text-stone-400 font-mono">
+                          {item.createdDateTh}
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-stone-500 flex items-center space-x-2">
+                        <span className="font-bold text-stone-800 dark:text-stone-200">{item.userName}</span>
+                        <span>•</span>
+                        <span>{item.orgName}</span>
+                        <button
+                          onClick={() => {
+                            if (window.confirm('ต้องการลบข้อเสนอแนะนี้หรือไม่?')) {
+                              deleteFeedback(item.id);
+                              setFeedbacks(getUserFeedbacks());
+                              showToast('ลบข้อเสนอแนะเรียบร้อยแล้ว');
+                            }
+                          }}
+                          className="text-stone-400 hover:text-rose-500 p-1 cursor-pointer"
+                          title="ลบข้อเสนอแนะ"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="space-y-2">
+                      <h3 className="font-bold text-base text-stone-900 dark:text-stone-100 leading-snug">
+                        {item.title}
+                      </h3>
+                      <div className="p-4 rounded-2xl bg-stone-50/60 dark:bg-stone-850/60 border border-stone-200/60 dark:border-stone-800 text-xs text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line">
+                        {item.description}
+                      </div>
+                      {item.expectedBenefit && (
+                        <div className="text-xs text-stone-500 dark:text-stone-400">
+                          <strong>💡 ประโยชน์ที่คาดหวัง:</strong> {item.expectedBenefit}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Admin Response Box & Status Controls */}
+                    <div className="p-4 rounded-2xl bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                          <MessageCircle className="w-4 h-4 text-amber-600" />
+                          <span>การพิจารณา & ตอบกลับจาก ADMIN:</span>
+                        </span>
+
+                        {/* Status Select */}
+                        <div className="flex items-center space-x-2">
+                          <span className="text-[11px] text-stone-500 font-semibold">ปรับสถานะ:</span>
+                          <select
+                            value={item.status}
+                            onChange={(e) => {
+                              updateFeedbackStatus(item.id, e.target.value, item.adminNote);
+                              setFeedbacks(getUserFeedbacks());
+                              showToast('อัปเดตสถานะข้อเสนอแนะเรียบร้อยแล้ว');
+                            }}
+                            className="p-1.5 rounded-xl text-xs border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-bold text-amber-950 dark:text-amber-200"
+                          >
+                            {FEEDBACK_STATUSES.map((s) => (
+                              <option key={s.id} value={s.id}>{s.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Reply Note Textarea */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={adminReplyTexts[item.id] !== undefined ? adminReplyTexts[item.id] : (item.adminNote || '')}
+                          onChange={(e) => setAdminReplyTexts({ ...adminReplyTexts, [item.id]: e.target.value })}
+                          placeholder="พิมพ์ข้อความตอบกลับ หรือผลการพิจารณาให้ผู้ใช้เห็น..."
+                          className="flex-1 p-2 text-xs rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800"
+                        />
+                        <button
+                          onClick={() => {
+                            const note = adminReplyTexts[item.id] !== undefined ? adminReplyTexts[item.id] : item.adminNote;
+                            updateFeedbackStatus(item.id, item.status, note);
+                            setFeedbacks(getUserFeedbacks());
+                            showToast('บันทึกการตอบกลับเรียบร้อยแล้ว ผู้ใช้จะเห็นทันที');
+                          }}
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-xs shrink-0 cursor-pointer"
+                        >
+                          บันทึกตอบกลับ
+                        </button>
+                      </div>
+
+                      {item.adminRepliedAt && (
+                        <div className="text-[10px] text-stone-400">
+                          ตอบกลับล่าสุดเมื่อ: {item.adminRepliedAt}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {feedbacks.length === 0 && (
+              <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
+                <MessageSquarePlus className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-stone-700 dark:text-stone-200">
+                  ยังไม่มีข้อเสนอแนะจากผู้ใช้งาน
+                </h3>
+                <p className="text-xs text-stone-500 mt-1">
+                  เมื่อสมาชิกผู้ตรวจสอบส่งความคิดเห็น จะปรากฏในหน้านี้ทันที
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -42,6 +42,7 @@ import ClosingMeetingView from './components/ClosingMeetingView';
 import AuditFollowUpView from './components/AuditFollowUpView';
 import AuditCommitteeView from './components/AuditCommitteeView';
 import SystemUpdateNotification from './components/SystemUpdateNotification';
+import UserFeedbackModal from './components/UserFeedbackModal';
 import { INITIAL_ENGAGEMENT_PLANS, createEngagementPlansForYear } from './data/engagementPlanTemplates';
 import { getCurrentFiscalYear, getStandardFiscalYears } from './utils/dateUtils';
 import {
@@ -249,9 +250,10 @@ export default function App() {
 
   // Navigation & Fiscal Year State - defaults to current local gov fiscal year (1 Oct - 30 Sep)
   const [selectedYear, setSelectedYear] = useState(() => getCurrentFiscalYear());
-  const [currentTab, setCurrentTab] = useState('welcome');
+  const [currentTab, setCurrentTab] = useState(() => (getSession() ? 'dashboard' : 'welcome'));
   const [selectedWp, setSelectedWp] = useState(() => (parseInt(getCurrentFiscalYear(), 10) >= 2570 ? 'WP-PRICE-2570' : 'WP-KTB-01'));
   const [activeToolkitTab, setActiveToolkitTab] = useState('factor-f');
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const mainContentRef = useRef(null);
 
   // บังคับให้การโหลดหน้าเว็บหรือรีเฟรช (F5) กลับไปเริ่มต้นที่จุดบนสุดของหน้าเสมอ
@@ -1311,7 +1313,7 @@ export default function App() {
             if (sub.expired && s.role !== 'admin') {
               setCurrentTab('welcome');
             } else {
-              setCurrentTab('audit-risk');
+              setCurrentTab('dashboard');
             }
           }}
           onEnterDashboard={() => {
@@ -1319,7 +1321,7 @@ export default function App() {
             if (sub.expired && session?.role !== 'admin') {
               setCurrentTab('welcome');
             } else {
-              setCurrentTab('audit-risk');
+              setCurrentTab('dashboard');
             }
           }}
         />
@@ -1343,7 +1345,7 @@ export default function App() {
         onLogin={(sess) => {
           const s = sess || getSession();
           setSession(s);
-          setCurrentTab('audit-risk');
+          setCurrentTab('dashboard');
         }}
         onBackToWelcome={() => setCurrentTab('welcome')}
       />
@@ -1399,6 +1401,7 @@ export default function App() {
         onOpenCloudSync={() => setShowCloudSyncModal(true)}
         onOpenOnboarding={() => setShowOnboarding(true)}
         onOpenDlaTemplates={() => setShowDlaTemplates(true)}
+        onOpenFeedback={() => setShowFeedbackModal(true)}
         pendingCount={pendingCount}
         currentTab={currentTab}
         setCurrentTab={handleSelectTab}
@@ -1497,6 +1500,15 @@ export default function App() {
         />
       )}
 
+      {showFeedbackModal && (
+        <UserFeedbackModal
+          isOpen={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          session={session}
+          orgProfile={orgProfile}
+        />
+      )}
+
       {/* Cloud Sync / Registration Toast Notification */}
       {cloudToast && (
         <div
@@ -1545,6 +1557,7 @@ export default function App() {
           setActiveToolkitTab={setActiveToolkitTab}
           pendingCount={pendingCount}
           onShowExpiredModal={() => handleSelectTab('welcome')}
+          onOpenFeedback={() => setShowFeedbackModal(true)}
         />
 
         <main ref={mainContentRef} className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 lg:p-8 bg-[#faf8f5] dark:bg-[#151413] custom-scrollbar print:p-0 print:m-0 print:bg-white print:overflow-visible">
@@ -1559,11 +1572,13 @@ export default function App() {
                 workingPapers={workingPapers}
                 lpaIndicators={lpaIndicators}
                 riskAssessments={riskAssessments}
-                setCurrentTab={setCurrentTab}
+                auditUniverse={auditUniverse}
+                setCurrentTab={handleSelectTab}
                 setSelectedWp={setSelectedWp}
                 onOpenSettings={() => setShowSettings(true)}
                 session={session}
                 onLogout={handleLogout}
+                onOpenFeedback={() => setShowFeedbackModal(true)}
               />
             )}
 

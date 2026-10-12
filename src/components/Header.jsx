@@ -41,6 +41,7 @@ export default function Header({
   onOpenCloudSync,
   onOpenOnboarding,
   onOpenDlaTemplates,
+  onOpenFeedback,
   pendingCount = 0,
   currentTab = 'audit-risk',
   setCurrentTab
@@ -355,6 +356,16 @@ export default function Header({
                   >
                     <Building2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     <span>🏛️ แก้ไขข้อมูล อปท. และผู้ตรวจสอบ</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (onOpenFeedback) onOpenFeedback();
+                    }}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800"
+                  >
+                    <span>💡 เสนอความคิดเห็นถึง ADMIN</span>
                   </button>
 
                   <button

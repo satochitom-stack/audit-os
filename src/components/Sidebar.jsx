@@ -22,7 +22,8 @@ import {
   ShieldCheck,
   DollarSign,
   Lock,
-  LayoutGrid
+  LayoutGrid,
+  MessageSquarePlus
 } from 'lucide-react';
 import { MEMBERSHIP_PLANS, checkUserSubscription, getSubscriptionCountdown } from '../utils/auth';
 
@@ -34,7 +35,8 @@ export default function Sidebar({
   activeToolkitTab = 'factor-f',
   setActiveToolkitTab,
   pendingCount = 0,
-  onShowExpiredModal
+  onShowExpiredModal,
+  onOpenFeedback
 }) {
   const isAdmin = session?.role === 'admin';
   const subStatus = checkUserSubscription(session);
@@ -126,19 +128,19 @@ export default function Sidebar({
             </span>
           ) : subStatus.isTrial ? (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 shadow-2xs inline-flex items-center space-x-1">
-              <span>🌱 ฟรี 30 วัน</span> <span>({subStatus.daysRemaining} วัน)</span>
+              <span>🌱 ฟรี 30 วัน</span>
             </span>
           ) : subStatus.tier === 'VIP' ? (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border border-blue-400/50 shadow-sm inline-flex items-center space-x-1">
-              <span>⭐ VIP</span> <span>({subStatus.daysRemaining} วัน)</span>
+              <span>⭐ VIP</span>
             </span>
           ) : subStatus.tier === 'PREMIUM' ? (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border border-amber-200 shadow-md inline-flex items-center space-x-1">
-              <span>👑 PREMIUM</span> <span>({subStatus.daysRemaining} วัน)</span>
+              <span>👑 PREMIUM</span>
             </span>
           ) : (
             <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${planInfo.badgeColor}`}>
-              {planInfo.name.split(' ')[0]} {subStatus.isLifetime ? '(ตลอดชีพ)' : `(${subStatus.daysRemaining} วัน)`}
+              {planInfo.name.split(' ')[0]} {subStatus.isLifetime ? '(ตลอดชีพ)' : ''}
             </span>
           )}
         </div>
@@ -344,6 +346,24 @@ export default function Sidebar({
             </div>
           </div>
         ))}
+
+        {/* User Feedback & Suggestions button */}
+        <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800">
+          <button
+            onClick={() => {
+              if (onOpenFeedback) onOpenFeedback();
+            }}
+            className="w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 text-amber-950 dark:text-amber-200 border border-amber-500/20 hover:border-amber-500/40 shadow-2xs group"
+          >
+            <span className="p-1 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 group-hover:scale-110 transition-transform">
+              <MessageSquarePlus className="w-4 h-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-xs truncate">เสนอแนะ / แจ้งปัญหา</div>
+              <div className="text-[10px] text-stone-500 dark:text-stone-400 font-normal truncate">ส่งตรงถึง ADMIN เพื่อพัฒนาระบบ</div>
+            </div>
+          </button>
+        </div>
 
         {/* Super Admin Backoffice Menu Item (Exclusive for Admin - Step 12 at bottom) */}
         {isAdmin && (
