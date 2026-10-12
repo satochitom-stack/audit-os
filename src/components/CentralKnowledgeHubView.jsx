@@ -84,7 +84,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
     return INITIAL_CENTRAL_DOCUMENTS;
   });
 
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   
@@ -158,7 +158,7 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
   // Filtered documents
   const filteredDocs = useMemo(() => {
     return documents.filter((doc) => {
-      if (selectedCategory !== 'all' && doc.category !== selectedCategory) return false;
+      if (selectedCategory && selectedCategory !== 'all' && doc.category !== selectedCategory) return false;
       if (selectedTag && !doc.tags?.includes(selectedTag)) return false;
 
       const q = searchTerm.trim().toLowerCase();
@@ -174,13 +174,6 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
       );
     });
   }, [documents, selectedCategory, searchTerm, selectedTag]);
-
-  // Top tags for quick filtering
-  const allTags = useMemo(() => {
-    const set = new Set();
-    documents.forEach((d) => (d.tags || []).forEach((t) => set.add(t)));
-    return Array.from(set).slice(0, 15);
-  }, [documents]);
 
   const handleCopyText = (id, text) => {
     if (!text) return;
@@ -506,23 +499,20 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
         badges={['ระบบคลังข้อมูลกลางใช้ร่วมกันทุก User']}
       />
 
-      {/* Control Bar: Categories, Upload Button & Search */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Category Tabs */}
-          <div className="flex flex-wrap gap-1.5">
-            {CENTRAL_DOC_CATEGORIES.map((cat) => {
-              const count =
-                cat.id === 'all'
-                  ? documents.length
-                  : documents.filter((d) => d.category === cat.id).length;
+      {/* Control Bar: Categories, Upload Button & Search (Cleaned & Contained) */}
+      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
+          {/* Category Tabs (Removed 'ทั้งหมด' as requested) */}
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+            {CENTRAL_DOC_CATEGORIES.filter((cat) => cat.id !== 'all').map((cat) => {
+              const count = documents.filter((d) => d.category === cat.id).length;
               const isSelected = selectedCategory === cat.id;
 
               return (
                 <button
                   key={cat.id}
                   onClick={() => {
-                    setSelectedCategory(cat.id);
+                    setSelectedCategory(isSelected ? '' : cat.id);
                     setSelectedTag('');
                   }}
                   className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
@@ -544,31 +534,40 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
                 </button>
               );
             })}
+
+            {selectedCategory && (
+              <button
+                onClick={() => setSelectedCategory('')}
+                className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-bold px-2 py-1 cursor-pointer"
+              >
+                แสดงทุกหมวด
+              </button>
+            )}
           </div>
 
-          {/* Action Toolbar: Upload Button (All Users) + Search Input */}
-          <div className="flex items-center gap-2.5">
+          {/* Action Toolbar: Upload Button (All Users) + Contained Search Input */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 max-w-full">
             <button
               onClick={() => setShowAddDocModal(true)}
-              className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2 cursor-pointer shrink-0 border border-amber-500/30 active:scale-98"
+              className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-sm flex items-center space-x-2 cursor-pointer shrink-0 border border-amber-500/30 active:scale-98 whitespace-nowrap"
             >
               <FileUp className="w-4 h-4" />
               <span>+ อัปโหลด / เพิ่มเอกสารกลาง</span>
             </button>
 
-            <div className="relative min-w-[240px]">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+            <div className="relative w-full sm:w-56 md:w-64 max-w-full">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-3.5 text-stone-400 pointer-events-none" />
               <input
                 type="text"
                 placeholder="ค้นหาชื่อเรื่อง, ระเบียบ, รหัส..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-8 py-2.5 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-800 dark:text-stone-100"
+                className="w-full pl-8 pr-7 py-2.5 text-xs bg-stone-50 dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 text-stone-800 dark:text-stone-100 transition-all box-border"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-600"
+                  className="absolute right-2.5 top-3 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -576,44 +575,14 @@ export default function CentralKnowledgeHubView({ session, onCloneToWorkingPaper
             </div>
           </div>
         </div>
-
-        {/* Quick Tags Bar */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-stone-100 dark:border-stone-800 text-[11px]">
-          <span className="text-stone-400 font-semibold flex items-center space-x-1 mr-1">
-            <Tag className="w-3 h-3 text-amber-700 dark:text-amber-400" />
-            <span>แท็กค้นหา:</span>
-          </span>
-          {allTags.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)}
-              className={`px-2.5 py-0.5 rounded-lg border transition-all cursor-pointer ${
-                selectedTag === tag
-                  ? 'bg-amber-700 text-white border-amber-800 font-bold'
-                  : 'bg-stone-50 dark:bg-stone-800/80 text-stone-600 dark:text-stone-400 border-stone-200/80 dark:border-stone-700 hover:border-amber-400'
-              }`}
-            >
-              #{tag}
-            </button>
-          ))}
-          {selectedTag && (
-            <button
-              onClick={() => setSelectedTag('')}
-              className="text-rose-500 hover:underline text-[10px] ml-2 font-semibold cursor-pointer"
-            >
-              ล้างตัวกรองแท็ก
-            </button>
-          )}
-        </div>
       </div>
 
-      {/* Summary Count Bar */}
-      <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 px-1 font-medium">
-        <div className="flex items-center space-x-2">
-          <span>พบทั้งหมด <strong className="text-stone-800 dark:text-stone-200 font-bold">{filteredDocs.length}</strong> รายการ</span>
-          {(selectedCategory !== 'all' || selectedTag || searchTerm) && (
+      {/* Guide Note Above Table (Removed 'พบทั้งหมด 0 รายการ' header text) */}
+      <div className="flex items-center justify-between text-xs text-stone-400 px-1 font-medium">
+        <div>
+          {selectedCategory && (
             <span className="text-amber-700 dark:text-amber-400 text-[11px] bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200/80 dark:border-amber-900/40">
-              (กรองผลลัพธ์)
+              หมวดหมู่: {CENTRAL_DOC_CATEGORIES.find((c) => c.id === selectedCategory)?.label}
             </span>
           )}
         </div>
