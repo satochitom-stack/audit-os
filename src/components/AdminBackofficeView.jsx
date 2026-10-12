@@ -1590,22 +1590,61 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
             <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-5">
               <div className="flex items-center space-x-2 border-b border-stone-100 dark:border-stone-800 pb-3">
                 <Award className="w-5 h-5 text-amber-600" />
-                <h3 className="text-base font-black text-stone-900 dark:text-stone-100">
-                  ระบบจัดการข้อมูลแพ็กเกจราคาหน้าบ้าน
-                </h3>
+                <div>
+                  <h3 className="text-base font-black text-stone-900 dark:text-stone-100">
+                    ระบบจัดการข้อมูลแพ็กเกจราคาหน้าบ้าน
+                  </h3>
+                  <p className="text-[11px] text-stone-500">
+                    กำหนดรายละเอียดสิทธิประโยชน์ส่วนกลาง และปรับแต่งชื่อ-ราคาของแต่ละแพ็กเกจ
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-4 text-xs">
+              {/* 1 กรอบรายละเอียดสิทธิประโยชน์รวมด้านบนสุด */}
+              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-300/80 dark:border-amber-850/60 space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black text-amber-900 dark:text-amber-200 flex items-center space-x-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span>รายละเอียดสิทธิประโยชน์ของระบบ (หนึ่งรายการต่อหนึ่งบรรทัด)</span>
+                  </label>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold">
+                    กรอบรายละเอียดส่วนกลาง
+                  </span>
+                </div>
+                <textarea
+                  rows={4}
+                  value={settings.platformBenefits || settings.trialBenefits || settings.premiumBenefits || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSettings({
+                      ...settings,
+                      platformBenefits: val,
+                      trialBenefits: val,
+                      vipBenefits: val,
+                      premiumBenefits: val,
+                      lifetimeBenefits: val
+                    });
+                  }}
+                  placeholder="เช่น:&#10;• สิทธิ์ใช้งานระบบตรวจสอบภายใน อปท. ครบวงจร 12 ขั้นตอน&#10;• บันทึกกระดาษทำการ 6 ภารกิจ และงานช่างมาตรฐาน ว 614&#10;• เครื่องมือช่วยคำนวณ Factor F, ค่าปรับจัดซื้อจัดจ้าง และการสุ่มตัวอย่างพัสดุ&#10;• ส่งออกรายงานผลการตรวจสอบเป็นไฟล์ Word / Excel พร้อมใช้งานทันที&#10;• คลังระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 และตัวอย่างกระดาษทำการครบชุด&#10;• สำรองข้อมูลบน Cloud ปลอดภัย แยกฐานข้อมูลเฉพาะ อปท. ของท่านเป็นเอกเทศ"
+                  className="w-full p-3 rounded-xl border border-amber-300 dark:border-amber-800 bg-white dark:bg-stone-850 text-xs text-stone-800 dark:text-stone-200 leading-relaxed font-sans focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-inner"
+                />
+                <p className="text-[10px] text-amber-800/80 dark:text-amber-400/80">
+                  * ข้อความในกรอบนี้จะถูกใช้เป็นรายละเอียดสิทธิประโยชน์หลักของระบบสำหรับทุกแพ็กเกจ ทำให้การบริหารจัดการง่ายและไม่ซ้ำซ้อน
+                </p>
+              </div>
+
+              {/* รายการแพ็กเกจ เรียงต่อลงมา โดยไม่มีกรอบรายละเอียดซ้ำอีก */}
+              <div className="space-y-3 text-xs">
                 {/* 1. สมาชิกฟรี 30 วัน */}
-                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 space-y-3">
+                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                       <span>🌱</span> <span>{settings.trialPlanName || 'ฟรี 30 วัน (ค่าเริ่มต้น)'}</span>
                     </span>
-                    <span className="text-xs font-black text-emerald-600">ฟรี {settings.trialDays || 30} วัน</span>
+                    <span className="text-xs font-black text-emerald-600">ฟรี {settings.trialDays || 30} วัน (อัตโนมัติ)</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจทดลองใช้</label>
                       <input
@@ -1613,7 +1652,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         value={settings.trialPlanName || ''}
                         onChange={(e) => setSettings({ ...settings, trialPlanName: e.target.value })}
                         placeholder="เช่น ฟรี 30 วัน (ค่าเริ่มต้น)"
-                        className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-stone-800 dark:text-stone-200"
+                        className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-stone-800 dark:text-stone-200 text-xs"
                       />
                     </div>
                     <div>
@@ -1622,37 +1661,26 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         type="number"
                         value={settings.trialDays || 30}
                         onChange={(e) => setSettings({ ...settings, trialDays: parseInt(e.target.value) || 30 })}
-                        className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-emerald-600"
+                        className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-emerald-600 text-xs"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                      รายละเอียดสิทธิประโยชน์ (หนึ่งรายการต่อหนึ่งบรรทัด)
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={settings.trialBenefits || ''}
-                      onChange={(e) => setSettings({ ...settings, trialBenefits: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
-                    />
-                  </div>
-
-                  <p className="text-[11px] text-stone-500">
-                    ผู้ตรวจสอบภายในทุกคนที่ลงทะเบียนใหม่จะได้รับสิทธิ์ทดลองใช้งานนี้อัตโนมัติ โดยไม่ต้องรอการอนุมัติ
+                  <p className="text-[10px] text-stone-500">
+                    ผู้ตรวจสอบภายในทุกคนที่ลงทะเบียนใหม่จะได้รับสิทธิ์ทดลองใช้งานนี้อัตโนมัติทันที 30 วัน โดยไม่ต้องรอการอนุมัติ
                   </p>
                 </div>
 
-                {/* 2. แพ็กเกจรายเดือน (MONTHLY VIP) */}
-                <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 space-y-3">
+                {/* 2. แพ็กเกจรายเดือน (VIP) */}
+                <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-xs">
-                      <span>⭐</span> <span>{settings.monthlyPlanName || 'แพ็กเกจรายเดือน (MONTHLY VIP)'}</span>
+                      <span>⭐</span> <span>{settings.monthlyPlanName || 'VIP (รายเดือน)'}</span>
                     </span>
+                    <span className="text-xs font-bold text-blue-600">ต่ออายุทุก 30 วัน</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจ</label>
                       <input
@@ -1660,7 +1688,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         value={settings.monthlyPlanName || ''}
                         onChange={(e) => setSettings({ ...settings, monthlyPlanName: e.target.value })}
                         placeholder="เช่น VIP (รายเดือน)"
-                        className="w-full p-2 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-stone-800 font-bold text-blue-700 dark:text-blue-300"
+                        className="w-full p-2.5 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-stone-800 font-bold text-blue-700 dark:text-blue-300 text-xs"
                       />
                     </div>
                     <div>
@@ -1669,34 +1697,23 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         type="number"
                         value={settings.monthlyPrice || 299}
                         onChange={(e) => setSettings({ ...settings, monthlyPrice: parseFloat(e.target.value) || 299 })}
-                        className="w-full p-2 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-stone-800 font-bold text-blue-600"
+                        className="w-full p-2.5 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-stone-800 font-bold text-blue-600 text-xs"
                         required
                       />
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                      รายละเอียดสิทธิประโยชน์ (หนึ่งรายการต่อหนึ่งบรรทัด)
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={settings.vipBenefits || ''}
-                      onChange={(e) => setSettings({ ...settings, vipBenefits: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
-                    />
-                  </div>
                 </div>
 
-                {/* 3. แพ็กเกจรายปี (ANNUAL PREMIUM) */}
-                <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 space-y-3">
+                {/* 3. แพ็กเกจรายปี (PREMIUM) */}
+                <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 shadow-xs">
-                      <span>👑</span> <span>{settings.annualPlanName || 'แพ็กเกจรายปี (ANNUAL PREMIUM)'}</span>
+                      <span>👑</span> <span>{settings.annualPlanName || 'PREMIUM (รายปี)'}</span>
                     </span>
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400">คุ้มค่าที่สุด (365 วัน)</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจ</label>
                       <input
@@ -1704,7 +1721,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         value={settings.annualPlanName || ''}
                         onChange={(e) => setSettings({ ...settings, annualPlanName: e.target.value })}
                         placeholder="เช่น PREMIUM (รายปี)"
-                        className="w-full p-2 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-bold text-amber-700 dark:text-amber-300"
+                        className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-bold text-amber-700 dark:text-amber-300 text-xs"
                       />
                     </div>
                     <div>
@@ -1713,34 +1730,23 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         type="number"
                         value={settings.annualPrice || 2990}
                         onChange={(e) => setSettings({ ...settings, annualPrice: parseFloat(e.target.value) || 2990 })}
-                        className="w-full p-2 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-black text-amber-600"
+                        className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-black text-amber-600 text-xs"
                         required
                       />
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                      รายละเอียดสิทธิประโยชน์ (หนึ่งรายการต่อหนึ่งบรรทัด)
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={settings.premiumBenefits || ''}
-                      onChange={(e) => setSettings({ ...settings, premiumBenefits: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
-                    />
-                  </div>
                 </div>
 
                 {/* 4. แพ็กเกจตลอดชีพ (LIFETIME VIP) */}
-                <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900 space-y-3">
+                <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-purple-700 to-pink-700 text-white shadow-xs">
-                      <span>💎</span> <span>{settings.lifetimePlanName || 'แพ็กเกจตลอดชีพ (LIFETIME VIP)'}</span>
+                      <span>💎</span> <span>{settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'}</span>
                     </span>
+                    <span className="text-xs font-bold text-purple-600">ไม่มีวันหมดอายุ (ถาวร)</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ชื่อแพ็กเกจ</label>
                       <input
@@ -1748,7 +1754,7 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         value={settings.lifetimePlanName || ''}
                         onChange={(e) => setSettings({ ...settings, lifetimePlanName: e.target.value })}
                         placeholder="เช่น LIFETIME VIP (ตลอดชีพ)"
-                        className="w-full p-2 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-stone-800 font-bold text-purple-700 dark:text-purple-300"
+                        className="w-full p-2.5 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-stone-800 font-bold text-purple-700 dark:text-purple-300 text-xs"
                       />
                     </div>
                     <div>
@@ -1757,22 +1763,10 @@ export default function AdminBackofficeView({ currentSession, session, onSwitchT
                         type="number"
                         value={settings.lifetimePrice || 9900}
                         onChange={(e) => setSettings({ ...settings, lifetimePrice: parseFloat(e.target.value) || 9900 })}
-                        className="w-full p-2 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-stone-800 font-black text-purple-600"
+                        className="w-full p-2.5 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-stone-800 font-black text-purple-600 text-xs"
                         required
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                      รายละเอียดสิทธิประโยชน์ (หนึ่งรายการต่อหนึ่งบรรทัด)
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={settings.lifetimeBenefits || ''}
-                      onChange={(e) => setSettings({ ...settings, lifetimeBenefits: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 leading-relaxed font-sans"
-                    />
                   </div>
                 </div>
               </div>
