@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.8';
+const appVersion = '2.7.9';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.8: ปรับโฉมหน้าแดชบอร์ดตรวจสอบภายในใหม่ (Executive Audit Cockpit & Visual Progress Charts)',
-        description: 'ยกเครื่องหน้าแดชบอร์ดให้เป็นศูนย์สรุปผลการปฏิบัติงานตรวจสอบภายในที่สะอาดตา นำเมนูปุ่มทางลัดที่ซ้ำซ้อนออก เพิ่มกราฟแท่งความคืบหน้ารายไตรมาส Q1-Q4 โดนัทชาร์ตสัดส่วนสถานะการตรวจ และเส้นทางความก้าวหน้า 3 ระยะ',
-        changeSummary: 'Redesign DashboardView with Quarterly Bar Chart, Donut Status Chart, Risk Coverage Progress, Streamlined 3-Stage Lifecycle Tracker, and Project Execution Table'
+        title: 'Audit-OS v2.7.9: ย้ายกราฟสรุปและสัดส่วนขึ้นด้านบนของกรอบแผนการตรวจ (Visual Charts Above Audit Plan)',
+        description: 'ปรับตำแหน่งการแสดงผลหน้าแดชบอร์ดตรวจสอบภายใน โดยยกแผงกราฟแท่งความคืบหน้ารายไตรมาสและโดนัทชาร์ตสัดส่วนสถานะการตรวจขึ้นไปอยู่ด้านบนของกรอบแผนการตรวจและตัวชี้วัด',
+        changeSummary: 'Position Visual Analytics Charts (Quarterly Progress Bar Chart & Donut Status Chart) directly above the Annual Audit Plan KPI metrics section'
       };
       try {
         if (!fs.existsSync('./public')) {

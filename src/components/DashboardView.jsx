@@ -263,7 +263,317 @@ export default function DashboardView({
         </div>
       </div>
 
-      {/* CORE 4 AUDIT EXECUTIVE SUMMARY METRICS */}
+      {/* VISUAL CHARTS & ANALYTICS SECTION (นำกราฟและสัดส่วนขึ้นมาอยู่ด้านบนของกรอบแผนการตรวจ) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Chart 1: Quarterly Audit Progress Bar Chart (Col span 7) */}
+        <div className="lg:col-span-7 bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold">
+                <BarChart3 className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                  ความคืบหน้าการตรวจสอบรายไตรมาส (Quarterly Audit Progress)
+                </h3>
+                <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                  เปรียบเทียบผลงานการเข้าตรวจจริงเทียบกับแผนทั้ง 4 ไตรมาส
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 text-[11px]">
+              <span className="flex items-center gap-1 font-medium text-stone-600 dark:text-stone-400">
+                <span className="w-2.5 h-2.5 rounded-sm bg-amber-600"></span> ก้าวหน้า %
+              </span>
+              <span className="flex items-center gap-1 font-medium text-stone-600 dark:text-stone-400">
+                <span className="w-2.5 h-2.5 rounded-sm bg-stone-200 dark:bg-stone-700"></span> เป้าหมาย
+              </span>
+            </div>
+          </div>
+
+          {/* SVG Bar Chart */}
+          <div className="pt-2">
+            <div className="h-56 w-full">
+              <svg className="w-full h-full overflow-visible" viewBox="0 0 500 200" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="barGradCurrent" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#d97706" />
+                    <stop offset="100%" stopColor="#b45309" />
+                  </linearGradient>
+                  <linearGradient id="barGradCompleted" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#059669" />
+                  </linearGradient>
+                </defs>
+
+                {/* Horizontal Guide Lines */}
+                <line x1="40" y1="20" x2="480" y2="20" stroke="#e5e7eb" strokeDasharray="3 3" opacity="0.6" />
+                <text x="32" y="24" fill="#9ca3af" fontSize="10" textAnchor="end">100%</text>
+
+                <line x1="40" y1="80" x2="480" y2="80" stroke="#e5e7eb" strokeDasharray="3 3" opacity="0.6" />
+                <text x="32" y="84" fill="#9ca3af" fontSize="10" textAnchor="end">50%</text>
+
+                <line x1="40" y1="140" x2="480" y2="140" stroke="#e5e7eb" strokeDasharray="3 3" opacity="0.6" />
+                <text x="32" y="144" fill="#9ca3af" fontSize="10" textAnchor="end">0%</text>
+
+                {/* 4 Quarterly Bars */}
+                {quarterlyData.map((qd, idx) => {
+                  const x = 70 + idx * 105;
+                  const barWidth = 48;
+                  const maxHeight = 120; // 20 to 140
+                  const barHeight = Math.max(8, (qd.progress / 100) * maxHeight);
+                  const barY = 140 - barHeight;
+                  const isFinished = qd.progress === 100;
+
+                  return (
+                    <g key={qd.q} className="transition-all duration-500">
+                      {/* Background Placeholder Bar */}
+                      <rect
+                        x={x}
+                        y="20"
+                        width={barWidth}
+                        height={maxHeight}
+                        rx="6"
+                        fill="currentColor"
+                        className="text-stone-100 dark:text-stone-800"
+                        opacity="0.8"
+                      />
+
+                      {/* Actual Progress Bar */}
+                      <rect
+                        x={x}
+                        y={barY}
+                        width={barWidth}
+                        height={barHeight}
+                        rx="6"
+                        fill={isFinished ? 'url(#barGradCompleted)' : (qd.isCurrent ? 'url(#barGradCurrent)' : '#d97706')}
+                        opacity={qd.progress > 0 ? '1' : '0.2'}
+                      />
+
+                      {/* Percentage Badge on top */}
+                      <text
+                        x={x + barWidth / 2}
+                        y={barY - 6}
+                        fill={qd.progress > 0 ? '#b45309' : '#9ca3af'}
+                        fontSize="11"
+                        fontWeight="bold"
+                        textAnchor="middle"
+                      >
+                        {qd.progress}%
+                      </text>
+
+                      {/* Quarter Label */}
+                      <text
+                        x={x + barWidth / 2}
+                        y="160"
+                        fill="currentColor"
+                        className="text-stone-800 dark:text-stone-200"
+                        fontSize="11"
+                        fontWeight="bold"
+                        textAnchor="middle"
+                      >
+                        {qd.label}
+                      </text>
+
+                      {/* Month range and projects count */}
+                      <text
+                        x={x + barWidth / 2}
+                        y="176"
+                        fill="#9ca3af"
+                        fontSize="9"
+                        textAnchor="middle"
+                      >
+                        {qd.months}
+                      </text>
+
+                      {/* Current Quarter Marker */}
+                      {qd.isCurrent && (
+                        <text
+                          x={x + barWidth / 2}
+                          y="192"
+                          fill="#d97706"
+                          fontSize="9"
+                          fontWeight="bold"
+                          textAnchor="middle"
+                        >
+                          ● ไตรมาสปัจจุบัน
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* Quarterly Summary Footer */}
+            <div className="grid grid-cols-4 gap-2 pt-3 border-t border-stone-100 dark:border-stone-800 text-center text-xs">
+              {quarterlyData.map((qd) => (
+                <div key={qd.q} className={`p-2 rounded-xl ${qd.isCurrent ? 'bg-amber-500/10 dark:bg-amber-500/20' : 'bg-stone-50 dark:bg-stone-850'}`}>
+                  <div className="font-bold text-stone-700 dark:text-stone-300">
+                    {qd.total} โครงการ
+                  </div>
+                  <div className="text-[10px] text-stone-500">
+                    เสร็จ {qd.completed} / กำลังตรวจ {qd.inProgress}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Chart 2: Status Donut & Risk Coverage (Col span 5) */}
+        <div className="lg:col-span-5 bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
+                <PieChart className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                  สัดส่วนสถานะโครงการตรวจสอบ
+                </h3>
+                <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                  โครงสร้างความคืบหน้าของโครงการทั้งหมด
+                </p>
+              </div>
+            </div>
+
+            {/* Donut Chart & Legend */}
+            <div className="flex flex-col sm:flex-row items-center justify-around gap-4 pt-4">
+              {/* SVG Donut */}
+              <div className="relative w-36 h-36 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
+                  {/* Background Track */}
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="65"
+                    stroke="currentColor"
+                    strokeWidth="16"
+                    fill="transparent"
+                    className="text-stone-100 dark:text-stone-800"
+                  />
+
+                  {/* Completed Arc (Emerald) */}
+                  {completedPlans > 0 && (
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="65"
+                      stroke="#10b981"
+                      strokeWidth="16"
+                      fill="transparent"
+                      strokeDasharray={strokeDashCompleted}
+                      strokeDashoffset="0"
+                      className="transition-all duration-700"
+                    />
+                  )}
+
+                  {/* In Progress Arc (Amber) */}
+                  {inProgressPlans > 0 && (
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="65"
+                      stroke="#f59e0b"
+                      strokeWidth="16"
+                      fill="transparent"
+                      strokeDasharray={strokeDashInProgress}
+                      strokeDashoffset={strokeOffsetInProgress}
+                      className="transition-all duration-700"
+                    />
+                  )}
+
+                  {/* Pending Arc (Stone/Slate) */}
+                  {pendingPlans > 0 && (
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="65"
+                      stroke="#9ca3af"
+                      strokeWidth="16"
+                      fill="transparent"
+                      strokeDasharray={strokeDashPending}
+                      strokeDashoffset={strokeOffsetPending}
+                      className="transition-all duration-700"
+                    />
+                  )}
+                </svg>
+
+                {/* Center Stats */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-xl font-black text-stone-900 dark:text-stone-100">
+                    {avgProgress}%
+                  </span>
+                  <span className="text-[10px] text-stone-500 dark:text-stone-400 font-medium">
+                    ความสำเร็จเฉลี่ย
+                  </span>
+                </div>
+              </div>
+
+              {/* Legends */}
+              <div className="space-y-2 text-xs w-full sm:w-auto">
+                <div className="flex items-center justify-between sm:justify-start space-x-3 p-1.5 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span className="font-bold text-stone-700 dark:text-stone-300">ตรวจเสร็จแล้ว:</span>
+                  </div>
+                  <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                    {completedPlans} ({totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0}%)
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between sm:justify-start space-x-3 p-1.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/20">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                    <span className="font-bold text-stone-700 dark:text-stone-300">กำลังตรวจ:</span>
+                  </div>
+                  <span className="font-mono font-bold text-amber-700 dark:text-amber-400">
+                    {inProgressPlans} ({totalPlans > 0 ? Math.round((inProgressPlans / totalPlans) * 100) : 0}%)
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between sm:justify-start space-x-3 p-1.5 rounded-lg bg-stone-50 dark:bg-stone-850">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-stone-400"></span>
+                    <span className="font-bold text-stone-700 dark:text-stone-300">รอเข้าตรวจ:</span>
+                  </div>
+                  <span className="font-mono font-bold text-stone-600 dark:text-stone-400">
+                    {pendingPlans} ({totalPlans > 0 ? Math.round((pendingPlans / totalPlans) * 100) : 0}%)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Risk Profile & Plan Coverage Progress */}
+          <div className="pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                <span>การครอบคลุมจุดเสี่ยงสูงในแผน (Risk Coverage)</span>
+              </span>
+              <span className="font-mono font-bold text-rose-600">
+                {highRiskCovered}/{highRisks} เรื่อง ({highRiskCoveragePercent}%)
+              </span>
+            </div>
+            <div className="w-full bg-stone-100 dark:bg-stone-800 h-2 rounded-full overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-rose-500 to-amber-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${highRiskCoveragePercent}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-stone-500">
+              {highRiskCoveragePercent === 100
+                ? '✓ ครอบคลุมกิจกรรมความเสี่ยงสูงครบถ้วน 100% ตามหลักเกณฑ์กระทรวงการคลัง'
+                : `ยังมีกิจกรรมความเสี่ยงสูงอีก ${highRisks - highRiskCovered} กิจกรรมที่ยังไม่ได้บรรจุในแผน`}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* CORE 4 AUDIT EXECUTIVE SUMMARY METRICS (กรอบแผนการตรวจ และตัวชี้วัดสำคัญ) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Annual Plans Execution */}
         <div
@@ -584,316 +894,6 @@ export default function DashboardView({
                 style={{ width: `${stage3Progress}%` }}
               />
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* VISUAL CHARTS & ANALYTICS SECTION (โซนภาพกราฟสรุปการทำงาน - จุดสำคัญที่ผู้ใช้ขอ) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Chart 1: Quarterly Audit Progress Bar Chart (Col span 7) */}
-        <div className="lg:col-span-7 bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold">
-                <BarChart3 className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                  ความคืบหน้าการตรวจสอบรายไตรมาส (Quarterly Audit Progress)
-                </h3>
-                <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                  เปรียบเทียบผลงานการเข้าตรวจจริงเทียบกับแผนทั้ง 4 ไตรมาส
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2 text-[11px]">
-              <span className="flex items-center gap-1 font-medium text-stone-600 dark:text-stone-400">
-                <span className="w-2.5 h-2.5 rounded-sm bg-amber-600"></span> ก้าวหน้า %
-              </span>
-              <span className="flex items-center gap-1 font-medium text-stone-600 dark:text-stone-400">
-                <span className="w-2.5 h-2.5 rounded-sm bg-stone-200 dark:bg-stone-700"></span> เป้าหมาย
-              </span>
-            </div>
-          </div>
-
-          {/* SVG Bar Chart */}
-          <div className="pt-2">
-            <div className="h-56 w-full">
-              <svg className="w-full h-full overflow-visible" viewBox="0 0 500 200" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="barGradCurrent" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#d97706" />
-                    <stop offset="100%" stopColor="#b45309" />
-                  </linearGradient>
-                  <linearGradient id="barGradCompleted" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
-
-                {/* Horizontal Guide Lines */}
-                <line x1="40" y1="20" x2="480" y2="20" stroke="#e5e7eb" strokeDasharray="3 3" opacity="0.6" />
-                <text x="32" y="24" fill="#9ca3af" fontSize="10" textAnchor="end">100%</text>
-
-                <line x1="40" y1="80" x2="480" y2="80" stroke="#e5e7eb" strokeDasharray="3 3" opacity="0.6" />
-                <text x="32" y="84" fill="#9ca3af" fontSize="10" textAnchor="end">50%</text>
-
-                <line x1="40" y1="140" x2="480" y2="140" stroke="#e5e7eb" strokeDasharray="3 3" opacity="0.6" />
-                <text x="32" y="144" fill="#9ca3af" fontSize="10" textAnchor="end">0%</text>
-
-                {/* 4 Quarterly Bars */}
-                {quarterlyData.map((qd, idx) => {
-                  const x = 70 + idx * 105;
-                  const barWidth = 48;
-                  const maxHeight = 120; // 20 to 140
-                  const barHeight = Math.max(8, (qd.progress / 100) * maxHeight);
-                  const barY = 140 - barHeight;
-                  const isFinished = qd.progress === 100;
-
-                  return (
-                    <g key={qd.q} className="transition-all duration-500">
-                      {/* Background Placeholder Bar */}
-                      <rect
-                        x={x}
-                        y="20"
-                        width={barWidth}
-                        height={maxHeight}
-                        rx="6"
-                        fill="currentColor"
-                        className="text-stone-100 dark:text-stone-800"
-                        opacity="0.8"
-                      />
-
-                      {/* Actual Progress Bar */}
-                      <rect
-                        x={x}
-                        y={barY}
-                        width={barWidth}
-                        height={barHeight}
-                        rx="6"
-                        fill={isFinished ? 'url(#barGradCompleted)' : (qd.isCurrent ? 'url(#barGradCurrent)' : '#d97706')}
-                        opacity={qd.progress > 0 ? '1' : '0.2'}
-                      />
-
-                      {/* Percentage Badge on top */}
-                      <text
-                        x={x + barWidth / 2}
-                        y={barY - 6}
-                        fill={qd.progress > 0 ? '#b45309' : '#9ca3af'}
-                        fontSize="11"
-                        fontWeight="bold"
-                        textAnchor="middle"
-                      >
-                        {qd.progress}%
-                      </text>
-
-                      {/* Quarter Label */}
-                      <text
-                        x={x + barWidth / 2}
-                        y="160"
-                        fill="currentColor"
-                        className="text-stone-800 dark:text-stone-200"
-                        fontSize="11"
-                        fontWeight="bold"
-                        textAnchor="middle"
-                      >
-                        {qd.label}
-                      </text>
-
-                      {/* Month range and projects count */}
-                      <text
-                        x={x + barWidth / 2}
-                        y="176"
-                        fill="#9ca3af"
-                        fontSize="9"
-                        textAnchor="middle"
-                      >
-                        {qd.months}
-                      </text>
-
-                      {/* Current Quarter Marker */}
-                      {qd.isCurrent && (
-                        <text
-                          x={x + barWidth / 2}
-                          y="192"
-                          fill="#d97706"
-                          fontSize="9"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          ● ไตรมาสปัจจุบัน
-                        </text>
-                      )}
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-
-            {/* Quarterly Summary Footer */}
-            <div className="grid grid-cols-4 gap-2 pt-3 border-t border-stone-100 dark:border-stone-800 text-center text-xs">
-              {quarterlyData.map((qd) => (
-                <div key={qd.q} className={`p-2 rounded-xl ${qd.isCurrent ? 'bg-amber-500/10 dark:bg-amber-500/20' : 'bg-stone-50 dark:bg-stone-850'}`}>
-                  <div className="font-bold text-stone-700 dark:text-stone-300">
-                    {qd.total} โครงการ
-                  </div>
-                  <div className="text-[10px] text-stone-500">
-                    เสร็จ {qd.completed} / กำลังตรวจ {qd.inProgress}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Chart 2: Status Donut & Risk Coverage (Col span 5) */}
-        <div className="lg:col-span-5 bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col justify-between space-y-4">
-          <div>
-            <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
-                <PieChart className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                  สัดส่วนสถานะโครงการตรวจสอบ
-                </h3>
-                <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                  โครงสร้างความคืบหน้าของโครงการทั้งหมด
-                </p>
-              </div>
-            </div>
-
-            {/* Donut Chart & Legend */}
-            <div className="flex flex-col sm:flex-row items-center justify-around gap-4 pt-4">
-              {/* SVG Donut */}
-              <div className="relative w-36 h-36 shrink-0 flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
-                  {/* Background Track */}
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="65"
-                    stroke="currentColor"
-                    strokeWidth="16"
-                    fill="transparent"
-                    className="text-stone-100 dark:text-stone-800"
-                  />
-
-                  {/* Completed Arc (Emerald) */}
-                  {completedPlans > 0 && (
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="65"
-                      stroke="#10b981"
-                      strokeWidth="16"
-                      fill="transparent"
-                      strokeDasharray={strokeDashCompleted}
-                      strokeDashoffset="0"
-                      className="transition-all duration-700"
-                    />
-                  )}
-
-                  {/* In Progress Arc (Amber) */}
-                  {inProgressPlans > 0 && (
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="65"
-                      stroke="#f59e0b"
-                      strokeWidth="16"
-                      fill="transparent"
-                      strokeDasharray={strokeDashInProgress}
-                      strokeDashoffset={strokeOffsetInProgress}
-                      className="transition-all duration-700"
-                    />
-                  )}
-
-                  {/* Pending Arc (Stone/Slate) */}
-                  {pendingPlans > 0 && (
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="65"
-                      stroke="#9ca3af"
-                      strokeWidth="16"
-                      fill="transparent"
-                      strokeDasharray={strokeDashPending}
-                      strokeDashoffset={strokeOffsetPending}
-                      className="transition-all duration-700"
-                    />
-                  )}
-                </svg>
-
-                {/* Center Stats */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-xl font-black text-stone-900 dark:text-stone-100">
-                    {avgProgress}%
-                  </span>
-                  <span className="text-[10px] text-stone-500 dark:text-stone-400 font-medium">
-                    ความสำเร็จเฉลี่ย
-                  </span>
-                </div>
-              </div>
-
-              {/* Legends */}
-              <div className="space-y-2 text-xs w-full sm:w-auto">
-                <div className="flex items-center justify-between sm:justify-start space-x-3 p-1.5 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <span className="font-bold text-stone-700 dark:text-stone-300">ตรวจเสร็จแล้ว:</span>
-                  </div>
-                  <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                    {completedPlans} ({totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0}%)
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-start space-x-3 p-1.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/20">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    <span className="font-bold text-stone-700 dark:text-stone-300">กำลังตรวจ:</span>
-                  </div>
-                  <span className="font-mono font-bold text-amber-700 dark:text-amber-400">
-                    {inProgressPlans} ({totalPlans > 0 ? Math.round((inProgressPlans / totalPlans) * 100) : 0}%)
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-start space-x-3 p-1.5 rounded-lg bg-stone-50 dark:bg-stone-850">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-stone-400"></span>
-                    <span className="font-bold text-stone-700 dark:text-stone-300">รอเข้าตรวจ:</span>
-                  </div>
-                  <span className="font-mono font-bold text-stone-600 dark:text-stone-400">
-                    {pendingPlans} ({totalPlans > 0 ? Math.round((pendingPlans / totalPlans) * 100) : 0}%)
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Risk Profile & Plan Coverage Progress */}
-          <div className="pt-3 border-t border-stone-100 dark:border-stone-800 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
-                <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-                <span>การครอบคลุมจุดเสี่ยงสูงในแผน (Risk Coverage)</span>
-              </span>
-              <span className="font-mono font-bold text-rose-600">
-                {highRiskCovered}/{highRisks} เรื่อง ({highRiskCoveragePercent}%)
-              </span>
-            </div>
-            <div className="w-full bg-stone-100 dark:bg-stone-800 h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-rose-500 to-amber-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${highRiskCoveragePercent}%` }}
-              />
-            </div>
-            <p className="text-[10px] text-stone-500">
-              {highRiskCoveragePercent === 100
-                ? '✓ ครอบคลุมกิจกรรมความเสี่ยงสูงครบถ้วน 100% ตามหลักเกณฑ์กระทรวงการคลัง'
-                : `ยังมีกิจกรรมความเสี่ยงสูงอีก ${highRisks - highRiskCovered} กิจกรรมที่ยังไม่ได้บรรจุในแผน`}
-            </p>
           </div>
         </div>
       </div>
