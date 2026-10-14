@@ -572,25 +572,26 @@ export function exportRiskMatrixToExcel({
   ];
 
   const rows = activities.map((act, idx) => {
-    const s = act.scoreS ?? 0;
-    const o = act.scoreO ?? 0;
-    const f = act.scoreF ?? 0;
-    const c = act.scoreC ?? 0;
-    const k = act.scoreK ?? 0;
-    const avg = act.averageScore ?? ((s + o + f + c + k) / 5).toFixed(2);
-    const level = act.riskLevel || (avg >= 4 ? 'สูงมาก (Very High)' : avg >= 3 ? 'สูง (High)' : avg >= 2 ? 'ปานกลาง (Medium)' : 'ต่ำ (Low)');
-    const inPlan = (act.inAnnualPlan || avg >= 3) ? 'อยู่ในแผนประจำปี' : 'เฝ้าระวัง/แผนระยะยาว';
+    const s = Number(act.sScore ?? act.scoreS ?? act.s ?? 1);
+    const o = Number(act.oScore ?? act.scoreO ?? act.o ?? 1);
+    const f = Number(act.fScore ?? act.scoreF ?? act.f ?? 1);
+    const c = Number(act.cScore ?? act.scoreC ?? act.c ?? 1);
+    const k = Number(act.kScore ?? act.scoreK ?? act.k ?? 1);
+    const avgVal = act.score != null ? Number(act.score) : Number(((s + o + f + c + k) / 5).toFixed(1));
+    const level = act.level || act.riskLevel || (avgVal >= 2.4 ? 'สูง' : avgVal >= 1.6 ? 'ปานกลาง' : 'ต่ำ');
+    const inPlan = (act.includedInPlan || act.inPlan || act.inAnnualPlan || level === 'สูง' || level === 'สูงมาก') ? 'บรรจุในแผนแล้ว' : 'เฝ้าระวัง/แผนระยะยาว';
+    const activityName = act.activity || act.name || act.title || '-';
 
     return [
       idx + 1,
       act.department || '-',
-      act.name || act.title || '-',
+      activityName,
       s,
       o,
       f,
       c,
       k,
-      Number(avg),
+      avgVal,
       level,
       inPlan
     ];
@@ -605,6 +606,50 @@ export function exportRiskMatrixToExcel({
     fileName: `การประเมินความเสี่ยง_SOFCK_ปี_${selectedYear}_${orgName}`,
     colWidths: widths
   });
+}
+
+/**
+ * 7. ระบบตรวจสอบและตั้งค่าขนาดหน้ากระดาษอัจฉริยะ (Smart Print Orientation)
+ * ตรวจสอบความกว้างของเนื้อหาหรือประเภทเอกสาร:
+ * - เอกสารแนวนอน (Landscape): ตาราง Matrix SOFCK, ตารางประเมินความเสี่ยง สถ., ตารางหลายคอลัมน์
+ * - เอกสารแนวตั้ง (Portrait): บันทึกข้อความราชการ, รายงาน, หนังสือราชการ
+ * @param {'auto'|'portrait'|'landscape'} preferred
+ * @param {string} [elementId]
+ * @returns {'portrait'|'landscape'}
+ */
+export function applySmartPrintOrientation(preferred = 'auto', elementId = null) {
+  let orientation = preferred;
+
+  if (orientation === 'auto') {
+    if (elementId && typeof document !== 'undefined') {
+      const el = document.getElementById(elementId);
+      if (el) {
+        const table = el.querySelector('table');
+        if (table && table.rows.length > 0 && table.rows[0].cells.length > 5) {
+          orientation = 'landscape';
+        } else if (el.scrollWidth > 780) {
+          orientation = 'landscape';
+        } else {
+          orientation = 'portrait';
+        }
+      }
+    }
+    if (orientation === 'auto') {
+      orientation = 'portrait';
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    let styleEl = document.getElementById('smart-print-orientation-style');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'smart-print-orientation-style';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML = `@media print { @page { size: ${orientation}; margin: ${orientation === 'landscape' ? '15mm 15mm 15mm 15mm' : '25mm 20mm 20mm 30mm'}; } }`;
+  }
+
+  return orientation;
 }
 
 /**

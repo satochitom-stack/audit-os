@@ -42,8 +42,10 @@ import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import {
   exportThaiMemoToWord,
   exportDocumentToWord,
-  exportRiskMatrixToExcel
+  exportRiskMatrixToExcel,
+  applySmartPrintOrientation
 } from '../utils/documentExportUtils';
+import { toThaiDigits } from '../utils/sarabanUtils';
 import { getDepartments } from '../utils/auth';
 import {
   DLA_RISK_CRITERIA_SOFCK,
@@ -753,6 +755,27 @@ export default function AuditRiskView({
   const [reportFormat, setReportFormat] = useState('dla-form'); // 'dla-form' | 'memo'
   const [toastMessage, setToastMessage] = useState('');
 
+  // 1. เกณฑ์ประเมินความเสี่ยง: '3_levels' (ตาม ว 380: 3 ระดับ) หรือ '5_levels' (COSO/อปท. บางแห่ง: 5 ระดับ)
+  const [riskScaleType, setRiskScaleType] = useState(() => {
+    try {
+      return localStorage.getItem('audit_os_risk_scale_type') || '3_levels';
+    } catch (e) {
+      return '3_levels';
+    }
+  });
+
+  const handleRiskScaleChange = (newScale) => {
+    setRiskScaleType(newScale);
+    try {
+      localStorage.setItem('audit_os_risk_scale_type', newScale);
+    } catch (e) {}
+    showToast(
+      newScale === '5_levels'
+        ? 'เปลี่ยนเกณฑ์ประเมินเป็น "5 ระดับ" (สูงมาก, สูง, ปานกลาง, ต่ำ, ต่ำมาก) เรียบร้อยแล้ว'
+        : 'เปลี่ยนเกณฑ์ประเมินเป็น "3 ระดับ" ตามหนังสือ ว 380 (สูง, ปานกลาง, ต่ำ) เรียบร้อยแล้ว'
+    );
+  };
+
   // Confirm Modal State
   const [confirmModalConfig, setConfirmModalConfig] = useState({
     isOpen: false,
@@ -800,16 +823,77 @@ export default function AuditRiskView({
 
   // คำนวณคะแนนเฉลี่ย SOFCK 5 มิติ (ตามเกณฑ์มาตรฐาน อปท.)
   const calculateScore = (item) => {
-    const sum = Number(item.sScore || 1) + Number(item.oScore || 1) + Number(item.fScore || 1) + Number(item.cScore || 1) + Number(item.kScore || 1);
+    const s = Number(item.sScore ?? item.scoreS ?? item.s ?? 1);
+    const o = Number(item.oScore ?? item.scoreO ?? item.o ?? 1);
+    const f = Number(item.fScore ?? item.scoreF ?? item.f ?? 1);
+    const c = Number(item.cScore ?? item.scoreC ?? item.c ?? 1);
+    const k = Number(item.kScore ?? item.scoreK ?? item.k ?? 1);
+    const sum = s + o + f + c + k;
     const avg = sum / 5;
     return Number(avg.toFixed(1));
   };
 
-  // แปลผลระดับความเสี่ยงตามเกณฑ์มาตรฐาน อปท. (ว 380):
-  // คะแนน 1.0 - 1.4 = ต่ำ
-  // คะแนน 1.6 - 2.2 = ปานกลาง
-  // คะแนน 2.4 - 3.0 = สูง / สูงมาก
-  const getRiskLevelInfo = (score) => {
+  // แปลผลระดับความเสี่ยง: รองรับทั้งเกณฑ์ 3 ระดับ (ว 380) และเกณฑ์ 5 ระดับ (COSO / อปท.)
+  const getRiskLevelInfo = (score, scale = riskScaleType) => {
+    if (scale === '5_levels') {
+      // เกณฑ์ 5 ระดับ: ช่วงคะแนน = (5 - 1) / 5 = 0.80
+      // 4.21 - 5.00: สูงมาก (Very High)
+      // 3.41 - 4.20: สูง (High)
+      // 2.61 - 3.40: ปานกลาง (Medium)
+      // 1.81 - 2.60: ต่ำ (Low)
+      // 1.00 - 1.80: ต่ำมาก (Very Low)
+      if (score >= 4.21) {
+        return {
+          level: 'สูงมาก',
+          color: 'rose',
+          badgeClass: 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-200 border-red-300 dark:border-red-700 font-black',
+          planDecision: 'ต้องบรรจุในแผนประจำปีเร่งด่วนที่สุด (Priority 1)',
+          actionClass: 'text-red-700 dark:text-red-400 font-black',
+          priority: 1
+        };
+      } else if (score >= 3.41) {
+        return {
+          level: 'สูง',
+          color: 'rose',
+          badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+          planDecision: 'ต้องบรรจุในแผนประจำปี (Priority 1)',
+          actionClass: 'text-rose-700 dark:text-rose-400 font-bold',
+          priority: 1
+        };
+      } else if (score >= 2.61) {
+        return {
+          level: 'ปานกลาง',
+          color: 'amber',
+          badgeClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+          planDecision: 'แผนระยะยาว / รอบหมุนเวียน 2-3 ปี (Priority 2)',
+          actionClass: 'text-amber-700 dark:text-amber-400',
+          priority: 2
+        };
+      } else if (score >= 1.81) {
+        return {
+          level: 'ต่ำ',
+          color: 'sky',
+          badgeClass: 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+          planDecision: 'เฝ้าระวัง / ใช้ระบบควบคุมภายในปกติ (Priority 3)',
+          actionClass: 'text-sky-700 dark:text-sky-400',
+          priority: 3
+        };
+      } else {
+        return {
+          level: 'ต่ำมาก',
+          color: 'emerald',
+          badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+          planDecision: 'ยอมรับความเสี่ยงได้ / ติดตามประจำปี (Priority 4)',
+          actionClass: 'text-emerald-700 dark:text-emerald-400',
+          priority: 4
+        };
+      }
+    }
+
+    // เกณฑ์ 3 ระดับตามหนังสือ ว 380: ช่วงคะแนน = (3 - 1) / 3 = 0.67
+    // 2.40 - 3.00: สูง
+    // 1.60 - 2.39: ปานกลาง
+    // 1.00 - 1.59: ต่ำ
     if (score >= 2.4) {
       return {
         level: 'สูง',
@@ -845,10 +929,10 @@ export default function AuditRiskView({
     const list = (auditUniverse && auditUniverse.length > 0) ? auditUniverse : fangkhamRealAuditUniverse;
     return list.map((item) => {
       const score = calculateScore(item);
-      const info = getRiskLevelInfo(score);
+      const info = getRiskLevelInfo(score, riskScaleType);
       return { ...item, score, ...info };
     });
-  }, [auditUniverse]);
+  }, [auditUniverse, riskScaleType]);
 
   // ฟังก์ชันตรวจสอบความเชื่อมโยงกับแผนการตรวจสอบประจำปี (Department-aware & ID-aware)
   const isActivityInAnnualPlan = (item) => {
@@ -866,9 +950,12 @@ export default function AuditRiskView({
 
   // สถิติกิจกรรม & ความเชื่อมโยงกับแผน
   const totalActivities = scoredActivities.length;
+  const veryHighCount = scoredActivities.filter((i) => i.level === 'สูงมาก').length;
   const highCount = scoredActivities.filter((i) => i.level === 'สูง').length;
   const mediumCount = scoredActivities.filter((i) => i.level === 'ปานกลาง').length;
   const lowCount = scoredActivities.filter((i) => i.level === 'ต่ำ').length;
+  const veryLowCount = scoredActivities.filter((i) => i.level === 'ต่ำมาก').length;
+  const mustPlanCount = scoredActivities.filter((i) => i.level === 'สูง' || i.level === 'สูงมาก').length;
   const inPlanCount = scoredActivities.filter(isActivityInAnnualPlan).length;
 
   // กรองรายการกิจกรรม
@@ -1079,7 +1166,7 @@ export default function AuditRiskView({
 
   // บรรจุทุกกิจกรรมความเสี่ยงสูง เข้าสู่แผนการตรวจสอบประจำปีพร้อมกัน (Batch Action)
   const handlePushAllHighRiskToAnnualPlan = () => {
-    const highUnplanned = scoredActivities.filter((i) => i.level === 'สูง' && !isActivityInAnnualPlan(i));
+    const highUnplanned = scoredActivities.filter((i) => (i.level === 'สูง' || i.level === 'สูงมาก') && !isActivityInAnnualPlan(i));
     if (highUnplanned.length === 0) {
       showToast('ทุกกิจกรรมที่มีความเสี่ยงสูงได้รับการบรรจุในแผนการตรวจสอบประจำปีแล้ว');
       return;
@@ -1151,6 +1238,20 @@ export default function AuditRiskView({
   const handleDownloadWord = () => {
     try {
       if (reportFormat === 'memo') {
+        const factDetails = riskScaleType === '5_levels'
+          ? `&nbsp;&nbsp;&nbsp;&nbsp;๒.๑ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูงมาก (๔.๒๑ - ๕.๐๐ คะแนน)</strong> จำนวน <strong>${veryHighCount} กิจกรรม</strong><br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๒ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูง (๓.๔๑ - ๔.๒๐ คะแนน)</strong> จำนวน <strong>${highCount} กิจกรรม</strong><br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๓ กิจกรรมที่มีความเสี่ยง <strong>ระดับปานกลาง (๒.๖๑ - ๓.๔๐ คะแนน)</strong> จำนวน <strong>${mediumCount} กิจกรรม</strong><br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๔ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำ (๑.๘๑ - ๒.๖๐ คะแนน)</strong> จำนวน <strong>${lowCount} กิจกรรม</strong><br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๕ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำมาก (๑.๐๐ - ๑.๘๐ คะแนน)</strong> จำนวน <strong>${veryLowCount} กิจกรรม</strong>`
+          : `&nbsp;&nbsp;&nbsp;&nbsp;๒.๑ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูง (๒.๔ - ๓.๐ คะแนน)</strong> จำนวน <strong>${highCount} กิจกรรม</strong><br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๒ กิจกรรมที่มีความเสี่ยง <strong>ระดับปานกลาง (๑.๖ - ๒.๒ คะแนน)</strong> จำนวน <strong>${mediumCount} กิจกรรม</strong><br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๓ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำ (๑.๐ - ๑.๔ คะแนน)</strong> จำนวน <strong>${lowCount} กิจกรรม</strong>`;
+
+        const proposalApproval = riskScaleType === '5_levels'
+          ? `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำกิจกรรมที่มีระดับความเสี่ยงสูงมากและสูง จำนวน ${mustPlanCount} กิจกรรม ไปบรรจุเป็นโครงการตรวจสอบในแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} ต่อไป`
+          : `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำกิจกรรมที่มีระดับความเสี่ยงสูง จำนวน ${highCount} กิจกรรม ไปบรรจุเป็นโครงการตรวจสอบในแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} ต่อไป`;
+
         exportThaiMemoToWord({
           agency: `หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`,
           phone: orgProfile?.phone || '',
@@ -1160,13 +1261,11 @@ export default function AuditRiskView({
           to: `นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`,
           contentParagraphs: [
             `<strong>๑. เรื่องเดิม:</strong> ตามระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ และหนังสือกรมบัญชีกลาง ด่วนที่สุด ที่ กค ๐๔๑๖.๓/ว ๓๘๐ เรื่อง แนวปฏิบัติการประเมินความเสี่ยงเพื่อวางแผนการตรวจสอบ กำหนดให้ผู้ตรวจสอบภายในต้องดำเนินการประเมินความเสี่ยงของกิจกรรมและหน่วยรับตรวจทั้งหมดในจักรวาลการตรวจสอบ (Audit Universe) เพื่อนำผลมาจัดลำดับความสำคัญในการคัดเลือกกิจกรรมบรรจุลงในแผนการตรวจสอบประจำปี นั้น`,
-            `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงกิจกรรมของทุกสำนัก/กอง ในสังกัด ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ประจำปีงบประมาณ พ.ศ. ${selectedYear} ตามกรอบปัจจัยเสี่ยง ๕ มิติ (SOFCK) รวมทั้งสิ้น <strong>${totalActivities} กิจกรรม</strong> ปรากฏผลการประเมินความเสี่ยง ดังนี้<br/>` +
-            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๑ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูง (๒.๔ - ๓.๐ คะแนน)</strong> จำนวน <strong>${highCount} กิจกรรม</strong><br/>` +
-            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๒ กิจกรรมที่มีความเสี่ยง <strong>ระดับปานกลาง (๑.๖ - ๒.๒ คะแนน)</strong> จำนวน <strong>${mediumCount} กิจกรรม</strong><br/>` +
-            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๓ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำ (๑.๐ - ๑.๔ คะแนน)</strong> จำนวน <strong>${lowCount} กิจกรรม</strong>`,
+            `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงกิจกรรมของทุกสำนัก/กอง ในสังกัด ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ประจำปีงบประมาณ พ.ศ. ${selectedYear} ตามกรอบปัจจัยเสี่ยง ๕ มิติ (SOFCK) รวมทั้งสิ้น <strong>${totalActivities} กิจกรรม</strong> (${riskScaleType === '5_levels' ? 'เกณฑ์ประเมิน ๕ ระดับ' : 'เกณฑ์ประเมิน ๓ ระดับตาม ว ๓๘๐'}) ปรากฏผลการประเมินความเสี่ยง ดังนี้<br/>` +
+            factDetails,
             `<strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> เพื่อให้การจัดทำแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} สอดคล้องกับระเบียบกระทรวงมหาดไทย และมุ่งเน้นการใช้ทรัพยากรตรวจสอบที่มีอยู่อย่างจำกัดให้เกิดประสิทธิภาพสูงสุด หน่วยตรวจสอบภายในจึงขอเสนอดังนี้:<br/>` +
             `&nbsp;&nbsp;&nbsp;&nbsp;๓.๑ เห็นชอบผลการประเมินความเสี่ยงตามตารางประเมินความเสี่ยงแนบท้ายนี้<br/>` +
-            `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำกิจกรรมที่มีระดับความเสี่ยงสูง จำนวน ${highCount} กิจกรรม ไปบรรจุเป็นโครงการตรวจสอบในแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} ต่อไป<br/><br/>` +
+            proposalApproval + `<br/><br/>` +
             `จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ`
           ],
           signatoryName: effectiveAuditorName,
@@ -1184,17 +1283,17 @@ export default function AuditRiskView({
           if (items.length > 0) {
             tableRows += `<tr style="background-color: #e5e7eb; font-weight: bold;"><td colspan="9" style="padding: 6pt; border: 1pt solid #000;">${dept}</td></tr>`;
             items.forEach((item, idx) => {
-              const s = item.scoreS ?? 0;
-              const o = item.scoreO ?? 0;
-              const f = item.scoreF ?? 0;
-              const c = item.scoreC ?? 0;
-              const k = item.scoreK ?? 0;
-              const avg = item.averageScore ?? ((s + o + f + c + k) / 5).toFixed(2);
-              const level = item.riskLevel || (avg >= 2.4 ? 'สูง' : avg >= 1.6 ? 'ปานกลาง' : 'ต่ำ');
+              const s = Number(item.sScore ?? item.scoreS ?? item.s ?? 1);
+              const o = Number(item.oScore ?? item.scoreO ?? item.o ?? 1);
+              const f = Number(item.fScore ?? item.scoreF ?? item.f ?? 1);
+              const c = Number(item.cScore ?? item.scoreC ?? item.c ?? 1);
+              const k = Number(item.kScore ?? item.scoreK ?? item.k ?? 1);
+              const avg = item.score != null ? Number(item.score).toFixed(1) : ((s + o + f + c + k) / 5).toFixed(1);
+              const level = item.level || (riskScaleType === '5_levels' ? (avg >= 4.21 ? 'สูงมาก' : avg >= 3.41 ? 'สูง' : avg >= 2.61 ? 'ปานกลาง' : avg >= 1.81 ? 'ต่ำ' : 'ต่ำมาก') : (avg >= 2.4 ? 'สูง' : avg >= 1.6 ? 'ปานกลาง' : 'ต่ำ'));
               tableRows += `
                 <tr>
                   <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${idx + 1}</td>
-                  <td style="border: 1pt solid #000; padding: 4pt;">${item.name || item.title || item.activity || ''}</td>
+                  <td style="border: 1pt solid #000; padding: 4pt;">${item.activity || item.name || item.title || ''}</td>
                   <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${s}</td>
                   <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${o}</td>
                   <td style="text-align: center; border: 1pt solid #000; padding: 4pt;">${f}</td>
@@ -1211,7 +1310,7 @@ export default function AuditRiskView({
         const dlaHtml = `
           <div style="text-align: center; margin-bottom: 16pt;">
             <h2 style="font-size: 18pt; font-weight: bold; margin: 0;">การประเมินความเสี่ยง ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}</h2>
-            <div style="font-size: 16pt; font-weight: bold; margin-top: 4pt;">ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ</div>
+            <div style="font-size: 16pt; font-weight: bold; margin-top: 4pt;">ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ (${riskScaleType === '5_levels' ? 'เกณฑ์ ๕ ระดับ' : 'เกณฑ์ ๓ ระดับ ว ๓๘๐'})</div>
             <div style="font-size: 14pt; margin-top: 2pt;">ประจำปีงบประมาณ พ.ศ. ${selectedYear}</div>
           </div>
           <table class="table-bordered" style="width: 100%; border: 1pt solid #000; border-collapse: collapse; font-size: 14pt;">
@@ -1252,6 +1351,35 @@ export default function AuditRiskView({
     }
   };
 
+  // 3. ระบบพิมพ์เอกสารตรวจสอบขนาดเนื้อหาแนวตั้ง/แนวนอนอัจฉริยะ (Smart Orientation Detection)
+  const handlePrintDocument = (overrideOrientation = null) => {
+    // หากพิมพ์ตาราง SOFCK / DLA Table มีหลายคอลัมน์ -> แนวนอน (landscape)
+    // หากพิมพ์บันทึกข้อความราชการ -> แนวตั้ง (portrait)
+    const preferred = overrideOrientation || (reportFormat === 'memo' ? 'portrait' : 'landscape');
+    applySmartPrintOrientation(preferred, 'audit-risk-report-container');
+    showToast(`ระบบจัดหน้ากระดาษเป็น "${preferred === 'landscape' ? 'แนวนอน (Landscape)' : 'แนวตั้ง (Portrait)'}" ตามขนาดเอกสารอัจฉริยะ`);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  // 4. บันทึกเป็น PDF พร้อมจัดหน้ากระดาษและตั้งชื่อไฟล์อัตโนมัติ
+  const handleSavePdf = () => {
+    const preferred = reportFormat === 'memo' ? 'portrait' : 'landscape';
+    applySmartPrintOrientation(preferred, 'audit-risk-report-container');
+    const orgName = orgProfile?.name || 'อปท';
+    const docName = reportFormat === 'memo' ? 'บันทึกข้อความขออนุมัติผลประเมินความเสี่ยง' : 'ตารางประเมินความเสี่ยง_SOFCK';
+    const origTitle = document.title;
+    document.title = `${docName}_ปี_${selectedYear}_${orgName}`;
+    showToast(`ระบบจัดหน้ากระดาษเป็น "${preferred === 'landscape' ? 'แนวนอน' : 'แนวตั้ง'}" และตั้งชื่อไฟล์อัตโนมัติ กรุณาเลือก "Save as PDF"`);
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        document.title = origTitle;
+      }, 1000);
+    }, 200);
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
@@ -1273,52 +1401,147 @@ export default function AuditRiskView({
         year={selectedYear}
       />
 
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 no-print print:hidden">
-        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
-          <div className="text-[11px] font-bold text-stone-500 dark:text-stone-400">กิจกรรมที่ประเมินทั้งหมด</div>
-          <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 mt-0.5">{totalActivities}</div>
-          <div className="text-[10px] text-stone-400 mt-0.5">ใน Audit Universe</div>
+      {/* 1. Risk Scale Selector: สลับเกณฑ์ประเมินความเสี่ยง 3 ระดับ (ว 380) vs 5 ระดับ (COSO/อปท.) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-stone-900 p-3.5 rounded-2xl border border-stone-200/80 dark:border-stone-800 shadow-2xs no-print print:hidden">
+        <div className="flex items-center space-x-2 text-xs font-bold text-stone-800 dark:text-stone-200">
+          <Sliders className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
+          <span>เกณฑ์ประเมินความเสี่ยง อปท.:</span>
+          <span className="text-stone-400 font-normal">
+            {riskScaleType === '5_levels'
+              ? 'ระบบประเมิน ๕ ระดับ (สูงมาก, สูง, ปานกลาง, ต่ำ, ต่ำมาก ตามหลักสากล/COSO)'
+              : 'ระบบประเมิน ๓ ระดับ (สูง, ปานกลาง, ต่ำ ตามหนังสือ มท./กรมบัญชีกลาง ว ๓๘๐)'}
+          </span>
         </div>
 
-        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-rose-200/80 dark:border-rose-900/50 shadow-xs">
-          <div className="text-[11px] font-bold text-rose-700 dark:text-rose-400 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-rose-500 mr-1.5 shrink-0"></span>
-            ความเสี่ยงสูง (2.4 - 3.0)
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-rose-700 dark:text-rose-400 mt-0.5">{highCount}</div>
-          <div className="text-[10px] text-rose-600/80 mt-0.5">ต้องบรรจุในแผนประจำปี</div>
-        </div>
-
-        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-emerald-200/80 dark:border-emerald-900/50 shadow-xs">
-          <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mr-1 shrink-0" />
-            บรรจุในแผนประจำปีแล้ว
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5">
-            {inPlanCount} <span className="text-xs font-semibold text-stone-400">/ {highCount} รายการ</span>
-          </div>
-          <div className="text-[10px] text-emerald-600/80 mt-0.5">เชื่อมโยงกับเมนู 3 แผนประจำปี</div>
-        </div>
-
-        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-amber-200/80 dark:border-amber-900/50 shadow-xs">
-          <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5 shrink-0"></span>
-            ความเสี่ยงปานกลาง (1.6 - 2.2)
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-amber-700 dark:text-amber-400 mt-0.5">{mediumCount}</div>
-          <div className="text-[10px] text-amber-700/80 mt-0.5">แผนระยะยาว</div>
-        </div>
-
-        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
-          <div className="text-[11px] font-bold text-stone-600 dark:text-stone-300 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-stone-400 mr-1.5 shrink-0"></span>
-            ความเสี่ยงต่ำ (1.0 - 1.4)
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-stone-700 dark:text-stone-300 mt-0.5">{lowCount}</div>
-          <div className="text-[10px] text-stone-400 mt-0.5">เฝ้าระวัง / ควบคุมภายในปกติ</div>
+        <div className="inline-flex p-1 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => handleRiskScaleChange('3_levels')}
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
+              riskScaleType === '3_levels'
+                ? 'bg-amber-800 text-white dark:bg-amber-700 shadow-xs'
+                : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+            }`}
+          >
+            <span>๓ ระดับ (ว ๓๘๐)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRiskScaleChange('5_levels')}
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
+              riskScaleType === '5_levels'
+                ? 'bg-amber-800 text-white dark:bg-amber-700 shadow-xs'
+                : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+            }`}
+          >
+            <span>๕ ระดับ (อปท. / COSO)</span>
+          </button>
         </div>
       </div>
+
+      {/* KPI Stats Grid: 3 ระดับ vs 5 ระดับ */}
+      {riskScaleType === '5_levels' ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 no-print print:hidden">
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3 border border-stone-200/80 dark:border-stone-800 shadow-xs">
+            <div className="text-[10px] font-bold text-stone-500 dark:text-stone-400 truncate">กิจกรรมทั้งหมด</div>
+            <div className="text-xl font-black text-stone-900 dark:text-stone-100 mt-0.5">{totalActivities}</div>
+            <div className="text-[10px] text-stone-400 mt-0.5">ใน Audit Universe</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3 border border-red-300 dark:border-red-900/60 shadow-xs bg-red-50/20">
+            <div className="text-[10px] font-bold text-red-800 dark:text-red-300 flex items-center truncate">
+              <span className="w-2 h-2 rounded-full bg-red-600 mr-1 shrink-0"></span>
+              สูงมาก (4.21-5.00)
+            </div>
+            <div className="text-xl font-black text-red-800 dark:text-red-300 mt-0.5">{veryHighCount}</div>
+            <div className="text-[10px] text-red-600/80 mt-0.5">ต้องเข้าแผนเร่งด่วน</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3 border border-rose-200/80 dark:border-rose-900/50 shadow-xs">
+            <div className="text-[10px] font-bold text-rose-700 dark:text-rose-400 flex items-center truncate">
+              <span className="w-2 h-2 rounded-full bg-rose-500 mr-1 shrink-0"></span>
+              สูง (3.41-4.20)
+            </div>
+            <div className="text-xl font-black text-rose-700 dark:text-rose-400 mt-0.5">{highCount}</div>
+            <div className="text-[10px] text-rose-600/80 mt-0.5">บรรจุในแผนประจำปี</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3 border border-amber-200/80 dark:border-amber-900/50 shadow-xs">
+            <div className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center truncate">
+              <span className="w-2 h-2 rounded-full bg-amber-500 mr-1 shrink-0"></span>
+              ปานกลาง (2.61-3.40)
+            </div>
+            <div className="text-xl font-black text-amber-700 dark:text-amber-400 mt-0.5">{mediumCount}</div>
+            <div className="text-[10px] text-amber-700/80 mt-0.5">แผนระยะยาว 2-3 ปี</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3 border border-sky-200/80 dark:border-sky-900/50 shadow-xs">
+            <div className="text-[10px] font-bold text-sky-700 dark:text-sky-400 flex items-center truncate">
+              <span className="w-2 h-2 rounded-full bg-sky-500 mr-1 shrink-0"></span>
+              ต่ำ (1.81-2.60)
+            </div>
+            <div className="text-xl font-black text-sky-700 dark:text-sky-400 mt-0.5">{lowCount}</div>
+            <div className="text-[10px] text-sky-600/80 mt-0.5">เฝ้าระวัง/คุมภายใน</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3 border border-emerald-200/80 dark:border-emerald-900/50 shadow-xs">
+            <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center truncate">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 mr-1 shrink-0" />
+              เข้าแผนแล้ว
+            </div>
+            <div className="text-xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5">
+              {inPlanCount} <span className="text-[11px] font-normal text-stone-400">/ {mustPlanCount}</span>
+            </div>
+            <div className="text-[10px] text-emerald-600/80 mt-0.5">สูงมาก + สูง</div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 no-print print:hidden">
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
+            <div className="text-[11px] font-bold text-stone-500 dark:text-stone-400">กิจกรรมที่ประเมินทั้งหมด</div>
+            <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 mt-0.5">{totalActivities}</div>
+            <div className="text-[10px] text-stone-400 mt-0.5">ใน Audit Universe</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-rose-200/80 dark:border-rose-900/50 shadow-xs">
+            <div className="text-[11px] font-bold text-rose-700 dark:text-rose-400 flex items-center">
+              <span className="w-2 h-2 rounded-full bg-rose-500 mr-1.5 shrink-0"></span>
+              ความเสี่ยงสูง (2.4 - 3.0)
+            </div>
+            <div className="text-xl sm:text-2xl font-black text-rose-700 dark:text-rose-400 mt-0.5">{highCount}</div>
+            <div className="text-[10px] text-rose-600/80 mt-0.5">ต้องบรรจุในแผนประจำปี</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-emerald-200/80 dark:border-emerald-900/50 shadow-xs">
+            <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mr-1 shrink-0" />
+              บรรจุในแผนประจำปีแล้ว
+            </div>
+            <div className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5">
+              {inPlanCount} <span className="text-xs font-semibold text-stone-400">/ {highCount} รายการ</span>
+            </div>
+            <div className="text-[10px] text-emerald-600/80 mt-0.5">เชื่อมโยงกับเมนู 3 แผนประจำปี</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-amber-200/80 dark:border-amber-900/50 shadow-xs">
+            <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400 flex items-center">
+              <span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5 shrink-0"></span>
+              ความเสี่ยงปานกลาง (1.6 - 2.2)
+            </div>
+            <div className="text-xl sm:text-2xl font-black text-amber-700 dark:text-amber-400 mt-0.5">{mediumCount}</div>
+            <div className="text-[10px] text-amber-700/80 mt-0.5">แผนระยะยาว</div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
+            <div className="text-[11px] font-bold text-stone-600 dark:text-stone-300 flex items-center">
+              <span className="w-2 h-2 rounded-full bg-stone-400 mr-1.5 shrink-0"></span>
+              ความเสี่ยงต่ำ (1.0 - 1.4)
+            </div>
+            <div className="text-xl sm:text-2xl font-black text-stone-700 dark:text-stone-300 mt-0.5">{lowCount}</div>
+            <div className="text-[10px] text-stone-400 mt-0.5">เฝ้าระวัง / ควบคุมภายในปกติ</div>
+          </div>
+        </div>
+      )}
 
       {/* Streamlined 3-Tab Selector */}
       <div className="bg-stone-200/80 dark:bg-stone-800/80 p-1.5 rounded-xl border border-stone-300/80 dark:border-stone-700 flex space-x-1.5 overflow-x-auto text-xs font-bold scrollbar-none no-print print:hidden">
@@ -1406,10 +1629,16 @@ export default function AuditRiskView({
                 excelSubtitle={`ตารางกิจกรรมและคะแนน 5 มิติ SOFCK ปีงบประมาณ ${selectedYear}`}
                 onPrint={() => {
                   setActiveSubTab('report');
-                  setTimeout(() => window.print(), 200);
+                  setTimeout(() => handlePrintDocument(), 250);
                 }}
-                pdfTitle="พิมพ์รายงานการประเมินความเสี่ยง / PDF"
-                pdfSubtitle="พิมพ์แบบฟอร์ม สถ. หรือบันทึกข้อความเสนออนุมัติ (A4)"
+                printTitle="พิมพ์เอกสารทางราชการ"
+                printSubtitle="จัดหน้าแนวนอน/แนวตั้งตามขนาดเนื้อหาอัตโนมัติ"
+                onSavePdf={() => {
+                  setActiveSubTab('report');
+                  setTimeout(() => handleSavePdf(), 250);
+                }}
+                pdfTitle="บันทึกเป็นเอกสาร PDF (.pdf)"
+                pdfSubtitle={`บันทึกเอกสาร A4 พร้อมตั้งชื่อไฟล์อัตโนมัติ`}
               />
             </div>
 
@@ -1444,9 +1673,21 @@ export default function AuditRiskView({
                   className="px-2.5 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 outline-none text-xs font-medium text-stone-900 dark:text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
                 >
                   <option value="all">ทุกระดับความเสี่ยง</option>
-                  <option value="สูง">ความเสี่ยงสูง (2.4 - 3.0)</option>
-                  <option value="ปานกลาง">ความเสี่ยงปานกลาง (1.6 - 2.2)</option>
-                  <option value="ต่ำ">ความเสี่ยงต่ำ (1.0 - 1.4)</option>
+                  {riskScaleType === '5_levels' ? (
+                    <>
+                      <option value="สูงมาก">สูงมาก (4.21 - 5.00)</option>
+                      <option value="สูง">สูง (3.41 - 4.20)</option>
+                      <option value="ปานกลาง">ปานกลาง (2.61 - 3.40)</option>
+                      <option value="ต่ำ">ต่ำ (1.81 - 2.60)</option>
+                      <option value="ต่ำมาก">ต่ำมาก (1.00 - 1.80)</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="สูง">ความเสี่ยงสูง (2.4 - 3.0)</option>
+                      <option value="ปานกลาง">ความเสี่ยงปานกลาง (1.6 - 2.2)</option>
+                      <option value="ต่ำ">ความเสี่ยงต่ำ (1.0 - 1.4)</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -1656,7 +1897,7 @@ export default function AuditRiskView({
                   <span>การจัดลำดับคะแนนความเสี่ยงเพื่อคัดเลือกลงแผนการตรวจสอบประจำปี {selectedYear}</span>
                 </h3>
                 <p className="text-xs text-stone-500 mt-1">
-                  เรียงลำดับกิจกรรม 1 ถึง N ตามคะแนนความเสี่ยงเฉลี่ย SOFCK โดยกิจกรรมความเสี่ยงสูง (2.4 - 3.0) ต้องได้รับการบรรจุลงในแผนประจำปีก่อน
+                  เรียงลำดับกิจกรรม 1 ถึง N ตามคะแนนความเสี่ยงเฉลี่ย SOFCK ({riskScaleType === '5_levels' ? 'เกณฑ์ ๕ ระดับ: สูงมาก 4.21-5.00 และ สูง 3.41-4.20' : 'เกณฑ์ ๓ ระดับ ว ๓๘๐: สูง 2.4-3.0'}) ต้องได้รับการบรรจุลงในแผนประจำปีก่อน
                 </p>
               </div>
 
@@ -1666,7 +1907,7 @@ export default function AuditRiskView({
                   className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition-all active:scale-95"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                  <span>⚡ บรรจุทุกกิจกรรมความเสี่ยงสูงเข้าแผนประจำปี</span>
+                  <span>⚡ {riskScaleType === '5_levels' ? 'บรรจุทุกกิจกรรมความเสี่ยงสูงมาก/สูงเข้าแผน' : 'บรรจุทุกกิจกรรมความเสี่ยงสูงเข้าแผนประจำปี'}</span>
                 </button>
 
                 {setCurrentTab && (
@@ -1681,30 +1922,70 @@ export default function AuditRiskView({
               </div>
             </div>
 
-            {/* Criteria Legend */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-stone-50/70 dark:bg-stone-850/50 rounded-xl border border-stone-200/80 dark:border-stone-800 text-xs">
-              <div className="flex items-start space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 mt-1 shrink-0"></span>
-                <div>
-                  <strong className="text-rose-700 dark:text-rose-400">ระดับสูง (2.4 - 3.0 คะแนน)</strong>
-                  <p className="text-[11px] text-stone-500">ลำดับความสำคัญที่ 1 (Priority 1) ต้องบรรจุในแผนการตรวจสอบประจำปี พ.ศ. {selectedYear}</p>
+            {/* Criteria Legend: 3 ระดับ vs 5 ระดับ */}
+            {riskScaleType === '5_levels' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 p-3 bg-stone-50/70 dark:bg-stone-850/50 rounded-xl border border-stone-200/80 dark:border-stone-800 text-xs">
+                <div className="flex items-start space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-600 mt-1 shrink-0"></span>
+                  <div>
+                    <strong className="text-red-800 dark:text-red-300">ระดับสูงมาก (4.21 - 5.00)</strong>
+                    <p className="text-[10px] text-stone-500">ลำดับที่ 1 (เร่งด่วนที่สุด) ต้องบรรจุในแผนปี {selectedYear}</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 mt-1 shrink-0"></span>
+                  <div>
+                    <strong className="text-rose-700 dark:text-rose-400">ระดับสูง (3.41 - 4.20)</strong>
+                    <p className="text-[10px] text-stone-500">ลำดับที่ 1 ต้องบรรจุในแผนการตรวจสอบประจำปี</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0"></span>
+                  <div>
+                    <strong className="text-amber-700 dark:text-amber-400">ระดับปานกลาง (2.61 - 3.40)</strong>
+                    <p className="text-[10px] text-stone-500">ลำดับที่ 2 บรรจุในแผนระยะยาว / รอบ 2-3 ปี</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-sky-500 mt-1 shrink-0"></span>
+                  <div>
+                    <strong className="text-sky-700 dark:text-sky-400">ระดับต่ำ (1.81 - 2.60)</strong>
+                    <p className="text-[10px] text-stone-500">ลำดับที่ 3 เฝ้าระวัง / ใช้ระบบควบคุมภายในปกติ</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0"></span>
+                  <div>
+                    <strong className="text-emerald-700 dark:text-emerald-400">ระดับต่ำมาก (1.00 - 1.80)</strong>
+                    <p className="text-[10px] text-stone-500">ลำดับที่ 4 ยอมรับความเสี่ยงได้ / ทบทวนประจำปี</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0"></span>
-                <div>
-                  <strong className="text-amber-700 dark:text-amber-400">ระดับปานกลาง (1.6 - 2.2 คะแนน)</strong>
-                  <p className="text-[11px] text-stone-500">ลำดับความสำคัญที่ 2 (Priority 2) บรรจุในแผนกลยุทธ์ 3 ปี หรือตรวจสอบรอบ 2-3 ปี</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-stone-50/70 dark:bg-stone-850/50 rounded-xl border border-stone-200/80 dark:border-stone-800 text-xs">
+                <div className="flex items-start space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 mt-1 shrink-0"></span>
+                  <div>
+                    <strong className="text-rose-700 dark:text-rose-400">ระดับสูง (2.4 - 3.0 คะแนน)</strong>
+                    <p className="text-[11px] text-stone-500">ลำดับความสำคัญที่ 1 (Priority 1) ต้องบรรจุในแผนการตรวจสอบประจำปี พ.ศ. {selectedYear}</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0"></span>
+                  <div>
+                    <strong className="text-amber-700 dark:text-amber-400">ระดับปานกลาง (1.6 - 2.2 คะแนน)</strong>
+                    <p className="text-[11px] text-stone-500">ลำดับความสำคัญที่ 2 (Priority 2) บรรจุในแผนระยะยาว หรือตรวจสอบรอบ 2-3 ปี</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0"></span>
+                  <div>
+                    <strong className="text-emerald-700 dark:text-emerald-400">ระดับต่ำ (1.0 - 1.4 คะแนน)</strong>
+                    <p className="text-[11px] text-stone-500">ลำดับความสำคัญที่ 3 (Priority 3) เฝ้าระวังและใช้ระบบการควบคุมภายในปกติ</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0"></span>
-                <div>
-                  <strong className="text-emerald-700 dark:text-emerald-400">ระดับต่ำ (1.0 - 1.4 คะแนน)</strong>
-                  <p className="text-[11px] text-stone-500">ลำดับความสำคัญที่ 3 (Priority 3) เฝ้าระวังและใช้ระบบการควบคุมภายในปกติ</p>
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* Ranked List */}
             <div className="space-y-2.5 pt-2">
@@ -1830,160 +2111,175 @@ export default function AuditRiskView({
               onDownloadExcel={handleDownloadExcel}
               excelTitle="ตารางคะแนนประเมินความเสี่ยง (.xlsx)"
               excelSubtitle={`ข้อมูลกิจกรรม สำนัก/กอง และคะแนนเฉลี่ย ปี ${selectedYear}`}
-              onPrint={() => window.print()}
-              pdfTitle="พิมพ์เอกสารทางการ / บันทึกเป็น PDF"
-              pdfSubtitle="พิมพ์รายงานรูปแบบที่เลือก หรือบันทึกเป็น PDF"
+              onPrint={() => handlePrintDocument()}
+              printTitle="พิมพ์เอกสารทางราชการ"
+              printSubtitle={reportFormat === 'memo' ? 'พิมพ์บันทึกข้อความ (แนวตั้ง A4 อัตโนมัติ)' : 'พิมพ์ตารางประเมิน สถ. (แนวนอน A4 อัตโนมัติ)'}
+              onSavePdf={handleSavePdf}
+              pdfTitle="บันทึกเป็นเอกสาร PDF (.pdf)"
+              pdfSubtitle={`บันทึกเอกสาร A4 พร้อมตั้งชื่อไฟล์อัตโนมัติ`}
             />
           </div>
 
-          {/* Format 1: Official DLA Table Form */}
-          {reportFormat === 'dla-form' && (
-            <div className="bg-white dark:bg-stone-900 rounded-xl p-8 sm:p-12 border border-stone-200 dark:border-stone-800 shadow-sm max-w-4xl mx-auto space-y-6 text-stone-800 dark:text-stone-200 text-xs leading-relaxed print:p-0 print:border-none print:shadow-none">
-              <div className="border-b-2 border-stone-900 dark:border-stone-700 pb-4 text-center space-y-1">
-                <h2 className="text-base sm:text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
-                  การประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
-                </h2>
-                <div className="text-sm font-semibold text-stone-700 dark:text-stone-300">
-                  ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ
+          <div id="audit-risk-report-container">
+            {/* Format 1: Official DLA Table Form */}
+            {reportFormat === 'dla-form' && (
+              <div className="bg-white dark:bg-stone-900 rounded-xl p-8 sm:p-12 border border-stone-200 dark:border-stone-800 shadow-sm max-w-4xl mx-auto space-y-6 text-stone-800 dark:text-stone-200 text-xs leading-relaxed print:p-0 print:border-none print:shadow-none">
+                <div className="border-b-2 border-stone-900 dark:border-stone-700 pb-4 text-center space-y-1">
+                  <h2 className="text-base sm:text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
+                    การประเมินความเสี่ยง {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}
+                  </h2>
+                  <div className="text-sm font-semibold text-stone-700 dark:text-stone-300">
+                    ตารางกิจกรรมที่จะนำมาประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ({riskScaleType === '5_levels' ? 'เกณฑ์ ๕ ระดับ' : 'เกณฑ์ ๓ ระดับ ว ๓๘๐'})
+                  </div>
+                  <div className="text-xs text-stone-500">
+                    ประจำปีงบประมาณ พ.ศ. {selectedYear}
+                  </div>
                 </div>
-                <div className="text-xs text-stone-500">
-                  ประจำปีงบประมาณ พ.ศ. {selectedYear}
+
+                <div className="border border-stone-200/80 dark:border-stone-700 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-stone-50/90 dark:bg-stone-900 font-bold border-b border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200">
+                      <tr>
+                        <th className="p-2 w-10 text-center">ที่</th>
+                        <th className="p-2">กิจกรรม</th>
+                        <th className="p-1.5 text-center w-10">S</th>
+                        <th className="p-1.5 text-center w-10">O</th>
+                        <th className="p-1.5 text-center w-10">F</th>
+                        <th className="p-1.5 text-center w-10">C</th>
+                        <th className="p-1.5 text-center w-10">K</th>
+                        <th className="p-2 text-center w-20">คะแนนเฉลี่ย</th>
+                        <th className="p-2 text-center w-20">ระดับความเสี่ยง</th>
+                        <th className="p-2 text-center w-24">การบรรจุในแผน</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
+                      {getDepartments().filter((d) => d !== 'หน่วยตรวจสอบภายใน').map((dept) => {
+                        const items = scoredActivities.filter((a) => a.department === dept);
+                        if (items.length === 0) return null;
+
+                        return (
+                          <React.Fragment key={dept}>
+                            <tr className="bg-stone-50 dark:bg-stone-800/60 font-bold">
+                              <td colSpan="10" className="p-2 font-bold text-stone-900 dark:text-stone-100">
+                                {dept}
+                              </td>
+                            </tr>
+                            {items.map((item, idx) => {
+                              const inPlan = isActivityInAnnualPlan(item);
+                              return (
+                                <tr key={item.id}>
+                                  <td className="p-2 text-center text-stone-500">{idx + 1}</td>
+                                  <td className="p-2 font-medium">- {item.activity}</td>
+                                  <td className="p-1.5 text-center font-mono">{item.sScore}</td>
+                                  <td className="p-1.5 text-center font-mono">{item.oScore}</td>
+                                  <td className="p-1.5 text-center font-mono">{item.fScore}</td>
+                                  <td className="p-1.5 text-center font-mono">{item.cScore}</td>
+                                  <td className="p-1.5 text-center font-mono">{item.kScore}</td>
+                                  <td className="p-2 text-center font-mono font-bold">{item.score.toFixed(1)}</td>
+                                  <td className="p-2 text-center">
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${item.badgeClass}`}>
+                                      {item.level}
+                                    </span>
+                                  </td>
+                                  <td className="p-2 text-center text-[10px] font-bold">
+                                    {inPlan ? (
+                                      <span className="text-emerald-700 dark:text-emerald-400">บรรจุในแผนแล้ว</span>
+                                    ) : (
+                                      <span className="text-stone-400">-</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
 
-              <div className="border border-stone-200/80 dark:border-stone-700 rounded-lg overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-stone-50/90 dark:bg-stone-900 font-bold border-b border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200">
-                    <tr>
-                      <th className="p-2 w-10 text-center">ที่</th>
-                      <th className="p-2">กิจกรรม</th>
-                      <th className="p-1.5 text-center w-10">S</th>
-                      <th className="p-1.5 text-center w-10">O</th>
-                      <th className="p-1.5 text-center w-10">F</th>
-                      <th className="p-1.5 text-center w-10">C</th>
-                      <th className="p-1.5 text-center w-10">K</th>
-                      <th className="p-2 text-center w-20">คะแนนเฉลี่ย</th>
-                      <th className="p-2 text-center w-20">ระดับความเสี่ยง</th>
-                      <th className="p-2 text-center w-24">การบรรจุในแผน</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
-                    {getDepartments().filter((d) => d !== 'หน่วยตรวจสอบภายใน').map((dept) => {
-                      const items = scoredActivities.filter((a) => a.department === dept);
-                      if (items.length === 0) return null;
-
-                      return (
-                        <React.Fragment key={dept}>
-                          <tr className="bg-stone-50 dark:bg-stone-800/60 font-bold">
-                            <td colSpan="10" className="p-2 font-bold text-stone-900 dark:text-stone-100">
-                              {dept}
-                            </td>
-                          </tr>
-                          {items.map((item, idx) => {
-                            const inPlan = isActivityInAnnualPlan(item);
-                            return (
-                              <tr key={item.id}>
-                                <td className="p-2 text-center text-stone-500">{idx + 1}</td>
-                                <td className="p-2 font-medium">- {item.activity}</td>
-                                <td className="p-1.5 text-center font-mono">{item.sScore}</td>
-                                <td className="p-1.5 text-center font-mono">{item.oScore}</td>
-                                <td className="p-1.5 text-center font-mono">{item.fScore}</td>
-                                <td className="p-1.5 text-center font-mono">{item.cScore}</td>
-                                <td className="p-1.5 text-center font-mono">{item.kScore}</td>
-                                <td className="p-2 text-center font-mono font-bold">{item.score.toFixed(1)}</td>
-                                <td className="p-2 text-center">
-                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${item.badgeClass}`}>
-                                    {item.level}
-                                  </span>
-                                </td>
-                                <td className="p-2 text-center text-[10px] font-bold">
-                                  {inPlan ? (
-                                    <span className="text-emerald-700 dark:text-emerald-400">บรรจุในแผนแล้ว</span>
-                                  ) : (
-                                    <span className="text-stone-400">-</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </React.Fragment>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Signatures */}
-              <div className="pt-8 flex justify-end">
-                <div className="text-center text-xs space-y-3 pr-6">
-                  <div>ลงชื่อ....................................................................</div>
-                  <div>
-                    <div className="font-bold">({effectiveAuditorName})</div>
-                    <div className="text-stone-500">{effectiveAuditorPosition}</div>
-                    <div className="text-[10px] text-stone-400">ผู้ประเมินความเสี่ยง {orgProfile?.name || 'อปท.'}</div>
+                {/* Signatures */}
+                <div className="pt-8 flex justify-end">
+                  <div className="text-center text-xs space-y-3 pr-6">
+                    <div>ลงชื่อ....................................................................</div>
+                    <div>
+                      <div className="font-bold">({effectiveAuditorName})</div>
+                      <div className="text-stone-500">{effectiveAuditorPosition}</div>
+                      <div className="text-[10px] text-stone-400">ผู้ประเมินความเสี่ยง {orgProfile?.name || 'อปท.'}</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Format 2: Official Thai Memorandum */}
-          {reportFormat === 'memo' && (
-            <OfficialThaiMemo
-              agency={`หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}`}
-              phone={orgProfile?.phone || '๐๔๕-๘๔๒-๑๑๑ ต่อ ๑๐๘'}
-              docNumber="อบ ๗๑๒๐๑/พิเศษ"
-              date="๒๙ สิงหาคม ๒๕๖๘"
-              subject={`รายงานผลการประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
-              to={`นายก${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'} (ผ่าน ปลัด${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'})`}
-              signatory={{
-                name: effectiveAuditorName,
-                position: effectiveAuditorPosition,
-                role: 'ผู้ประเมินความเสี่ยงและจัดทำแผน'
-              }}
-              palatReview={{
-                name: orgProfile?.palatName || 'นายสมศักดิ์ สุจริต',
-                position: `ปลัด${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}`
-              }}
-              executiveOrder={{
-                name: orgProfile?.mayorName || 'นายประสิทธิ์ พัฒนา',
-                position: `นายก${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}`
-              }}
-            >
-              <div className="space-y-4 text-justify leading-relaxed">
-                <p className="indent-8">
-                  <strong>๑. เรื่องเดิม:</strong> ตามระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ และหนังสือกรมบัญชีกลาง ด่วนที่สุด ที่ กค ๐๔๑๖.๓/ว ๓๘๐ เรื่อง แนวปฏิบัติการประเมินความเสี่ยงเพื่อวางแผนการตรวจสอบ กำหนดให้ผู้ตรวจสอบภายในต้องดำเนินการประเมินความเสี่ยงของกิจกรรมและหน่วยรับตรวจทั้งหมดในจักรวาลการตรวจสอบ (Audit Universe) เพื่อนำผลมาจัดลำดับความสำคัญในการคัดเลือกกิจกรรมบรรจุลงในแผนการตรวจสอบประจำปี นั้น
-                </p>
-
-                <p className="indent-8">
-                  <strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงกิจกรรมของทุกสำนัก/กอง ในสังกัด {orgProfile?.name || 'องค์การบริหารส่วนตำบล'} ประจำปีงบประมาณ พ.ศ. {selectedYear} ตามกรอบปัจจัยเสี่ยง ๕ มิติ (SOFCK) รวมทั้งสิ้น <strong>{totalActivities} กิจกรรม</strong> ปรากฏผลการประเมินความเสี่ยง ดังนี้
-                </p>
-
-                <div className="pl-6 space-y-1 text-sm">
-                  <p>๒.๑ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูง (๒.๔ - ๓.๐ คะแนน)</strong> จำนวน <strong>{highCount} กิจกรรม</strong></p>
-                  <p>๒.๒ กิจกรรมที่มีความเสี่ยง <strong>ระดับปานกลาง (๑.๖ - ๒.๒ คะแนน)</strong> จำนวน <strong>{mediumCount} กิจกรรม</strong></p>
-                  <p>๒.๓ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำ (๑.๐ - ๑.๔ คะแนน)</strong> จำนวน <strong>{lowCount} กิจกรรม</strong></p>
-                </div>
-
-                <p className="indent-8">
-                  <strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> เพื่อให้การจัดทำแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. {selectedYear} สอดคล้องกับระเบียบกระทรวงมหาดไทย และมุ่งเน้นการใช้ทรัพยากรตรวจสอบที่มีอยู่อย่างจำกัดให้เกิดประสิทธิภาพสูงสุด หน่วยตรวจสอบภายในจึงขอเสนอดังนี้:
-                </p>
-
-                <div className="pl-6 space-y-1.5 text-sm">
-                  <p>
-                    ๓.๑ เห็นชอบผลการประเมินความเสี่ยงตามตารางประเมินความเสี่ยงแนบท้ายนี้
+            {/* Format 2: Official Thai Memorandum */}
+            {reportFormat === 'memo' && (
+              <OfficialThaiMemo
+                agency={`หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}`}
+                phone={orgProfile?.phone || '๐๔๕-๘๔๒-๑๑๑ ต่อ ๑๐๘'}
+                docNumber="อบ ๗๑๒๐๑/พิเศษ"
+                date="๒๙ สิงหาคม ๒๕๖๘"
+                subject={`รายงานผลการประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
+                to={`นายก${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'} (ผ่าน ปลัด${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'})`}
+                signatory={{
+                  name: effectiveAuditorName,
+                  position: effectiveAuditorPosition,
+                  role: 'ผู้ประเมินความเสี่ยงและจัดทำแผน'
+                }}
+                palatReview={{
+                  name: orgProfile?.palatName || 'นายสมศักดิ์ สุจริต',
+                  position: `ปลัด${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}`
+                }}
+                executiveOrder={{
+                  name: orgProfile?.mayorName || 'นายประสิทธิ์ พัฒนา',
+                  position: `นายก${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'}`
+                }}
+              >
+                <div className="space-y-4 text-justify leading-relaxed">
+                  <p className="indent-8">
+                    <strong>๑. เรื่องเดิม:</strong> ตามระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ และหนังสือกรมบัญชีกลาง ด่วนที่สุด ที่ กค ๐๔๑๖.๓/ว ๓๘๐ เรื่อง แนวปฏิบัติการประเมินความเสี่ยงเพื่อวางแผนการตรวจสอบ กำหนดให้ผู้ตรวจสอบภายในต้องดำเนินการประเมินความเสี่ยงของกิจกรรมและหน่วยรับตรวจทั้งหมดในจักรวาลการตรวจสอบ (Audit Universe) เพื่อนำผลมาจัดลำดับความสำคัญในการคัดเลือกกิจกรรมบรรจุลงในแผนการตรวจสอบประจำปี นั้น
                   </p>
-                  <p>
-                    ๓.๒ อนุมัติให้นำกิจกรรมที่มีระดับความเสี่ยงสูง จำนวน {highCount} กิจกรรม ไปบรรจุเป็นโครงการตรวจสอบในแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. {selectedYear} ต่อไป
+
+                  <p className="indent-8">
+                    <strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงกิจกรรมของทุกสำนัก/กอง ในสังกัด {orgProfile?.name || 'องค์การบริหารส่วนตำบล'} ประจำปีงบประมาณ พ.ศ. {selectedYear} ตามกรอบปัจจัยเสี่ยง ๕ มิติ (SOFCK) รวมทั้งสิ้น <strong>{toThaiDigits(totalActivities)} กิจกรรม</strong> ({riskScaleType === '5_levels' ? 'เกณฑ์ประเมิน ๕ ระดับ' : 'เกณฑ์ประเมิน ๓ ระดับตาม ว ๓๘๐'}) ปรากฏผลการประเมินความเสี่ยง ดังนี้
+                  </p>
+
+                  {riskScaleType === '5_levels' ? (
+                    <div className="pl-6 space-y-1 text-sm">
+                      <p>๒.๑ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูงมาก (๔.๒๑ - ๕.๐๐ คะแนน)</strong> จำนวน <strong>{toThaiDigits(veryHighCount)} กิจกรรม</strong></p>
+                      <p>๒.๒ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูง (๓.๔๑ - ๔.๒๐ คะแนน)</strong> จำนวน <strong>{toThaiDigits(highCount)} กิจกรรม</strong></p>
+                      <p>๒.๓ กิจกรรมที่มีความเสี่ยง <strong>ระดับปานกลาง (๒.๖๑ - ๓.๔๐ คะแนน)</strong> จำนวน <strong>{toThaiDigits(mediumCount)} กิจกรรม</strong></p>
+                      <p>๒.๔ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำ (๑.๘๑ - ๒.๖๐ คะแนน)</strong> จำนวน <strong>{toThaiDigits(lowCount)} กิจกรรม</strong></p>
+                      <p>๒.๕ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำมาก (๑.๐๐ - ๑.๘๐ คะแนน)</strong> จำนวน <strong>{toThaiDigits(veryLowCount)} กิจกรรม</strong></p>
+                    </div>
+                  ) : (
+                    <div className="pl-6 space-y-1 text-sm">
+                      <p>๒.๑ กิจกรรมที่มีความเสี่ยง <strong>ระดับสูง (๒.๔ - ๓.๐ คะแนน)</strong> จำนวน <strong>{toThaiDigits(highCount)} กิจกรรม</strong></p>
+                      <p>๒.๒ กิจกรรมที่มีความเสี่ยง <strong>ระดับปานกลาง (๑.๖ - ๒.๒ คะแนน)</strong> จำนวน <strong>{toThaiDigits(mediumCount)} กิจกรรม</strong></p>
+                      <p>๒.๓ กิจกรรมที่มีความเสี่ยง <strong>ระดับต่ำ (๑.๐ - ๑.๔ คะแนน)</strong> จำนวน <strong>{toThaiDigits(lowCount)} กิจกรรม</strong></p>
+                    </div>
+                  )}
+
+                  <p className="indent-8">
+                    <strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> เพื่อให้การจัดทำแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. {selectedYear} สอดคล้องกับระเบียบกระทรวงมหาดไทย และมุ่งเน้นการใช้ทรัพยากรตรวจสอบที่มีอยู่อย่างจำกัดให้เกิดประสิทธิภาพสูงสุด หน่วยตรวจสอบภายในจึงขอเสนอดังนี้:
+                  </p>
+
+                  <div className="pl-6 space-y-1.5 text-sm">
+                    <p>
+                      ๓.๑ เห็นชอบผลการประเมินความเสี่ยงตามตารางประเมินความเสี่ยงแนบท้ายนี้
+                    </p>
+                    <p>
+                      ๓.๒ อนุมัติให้นำกิจกรรมที่มีระดับความเสี่ยง{riskScaleType === '5_levels' ? 'สูงมากและสูง' : 'สูง'} จำนวน {toThaiDigits(riskScaleType === '5_levels' ? mustPlanCount : highCount)} กิจกรรม ไปบรรจุเป็นโครงการตรวจสอบในแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. {selectedYear} ต่อไป
+                    </p>
+                  </div>
+
+                  <p className="indent-8 pt-2">
+                    จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ
                   </p>
                 </div>
-
-                <p className="indent-8 pt-2">
-                  จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ
-                </p>
-              </div>
-            </OfficialThaiMemo>
-          )}
+              </OfficialThaiMemo>
+            )}
+          </div>
         </div>
       )}
 
@@ -2139,14 +2435,47 @@ export default function AuditRiskView({
               {/* Reference Subtab 1: 22 Criteria */}
               {referencesTab === 'criteria' && (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-stone-700 dark:text-stone-300 space-y-1.5">
-                    <div className="font-bold text-amber-900 dark:text-amber-200">สูตรคำนวณช่วงคะแนนและการแปลผล (ว 380)</div>
-                    <code className="block bg-white dark:bg-stone-900 p-2 rounded-lg font-mono text-amber-800 dark:text-amber-300">
-                      ความกว้างของช่วงคะแนน = (คะแนนสูงสุด - คะแนนต่ำสุด) / จำนวนระดับ = (3 - 1) / 3 = 0.67
-                    </code>
-                    <p className="text-[11px] text-stone-600 dark:text-stone-400 pt-1">
-                      • <strong>2.40 - 3.00 (สูง):</strong> บรรจุในแผนประจำปีทันที (Priority 1) | • <strong>1.60 - 2.20 (ปานกลาง):</strong> แผนระยะยาว | • <strong>1.00 - 1.40 (ต่ำ):</strong> เฝ้าระวัง
-                    </p>
+                  <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-stone-700 dark:text-stone-300 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-bold text-amber-900 dark:text-amber-200 text-sm">สูตรคำนวณช่วงคะแนนและการแปลผลระดับความเสี่ยง</div>
+                      <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-700">
+                        เกณฑ์ที่เลือกใช้งานปัจจุบัน: {riskScaleType === '5_levels' ? '๕ ระดับ (อปท. ทั่วไป / COSO)' : '๓ ระดับ (ตาม ว ๓๘๐)'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className={`p-3 rounded-lg border ${riskScaleType === '3_levels' ? 'bg-amber-100/50 border-amber-400 dark:bg-amber-900/30' : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800'}`}>
+                        <div className="font-bold text-stone-900 dark:text-stone-100 mb-1 flex items-center justify-between">
+                          <span>📌 เกณฑ์ ๓ ระดับ (ว ๓๘๐)</span>
+                          {riskScaleType === '3_levels' && <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">● กำลังใช้งาน</span>}
+                        </div>
+                        <code className="block bg-stone-100 dark:bg-stone-850 p-1.5 rounded font-mono text-[11px] text-amber-800 dark:text-amber-300 mb-1.5">
+                          ช่วงคะแนน = (3 - 1) / 3 = 0.67
+                        </code>
+                        <div className="text-[11px] space-y-0.5 text-stone-600 dark:text-stone-400">
+                          <div>• <strong className="text-rose-600">2.40 - 3.00 (สูง):</strong> บรรจุในแผนประจำปีทันที (Priority 1)</div>
+                          <div>• <strong className="text-amber-600">1.60 - 2.39 (ปานกลาง):</strong> แผนระยะปานกลาง / หมุนเวียนตรวจ</div>
+                          <div>• <strong className="text-emerald-600">1.00 - 1.59 (ต่ำ):</strong> เฝ้าระวัง / ประเมินซ้ำรอบหน้า</div>
+                        </div>
+                      </div>
+
+                      <div className={`p-3 rounded-lg border ${riskScaleType === '5_levels' ? 'bg-amber-100/50 border-amber-400 dark:bg-amber-900/30' : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800'}`}>
+                        <div className="font-bold text-stone-900 dark:text-stone-100 mb-1 flex items-center justify-between">
+                          <span>📌 เกณฑ์ ๕ ระดับ (มาตรฐาน อปท. / COSO)</span>
+                          {riskScaleType === '5_levels' && <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">● กำลังใช้งาน</span>}
+                        </div>
+                        <code className="block bg-stone-100 dark:bg-stone-850 p-1.5 rounded font-mono text-[11px] text-amber-800 dark:text-amber-300 mb-1.5">
+                          ช่วงคะแนน = (5 - 1) / 5 = 0.80
+                        </code>
+                        <div className="text-[11px] space-y-0.5 text-stone-600 dark:text-stone-400">
+                          <div>• <strong className="text-rose-700">4.21 - 5.00 (สูงมาก):</strong> เข้าแผนประจำปีเร่งด่วน</div>
+                          <div>• <strong className="text-orange-600">3.41 - 4.20 (สูง):</strong> เข้าแผนการตรวจสอบประจำปี</div>
+                          <div>• <strong className="text-amber-600">2.61 - 3.40 (ปานกลาง):</strong> จัดทำแผนระยะปานกลาง 3 ปี</div>
+                          <div>• <strong className="text-blue-600">1.81 - 2.60 (ต่ำ):</strong> สุ่มตรวจตามรอบเฝ้าระวัง</div>
+                          <div>• <strong className="text-emerald-600">1.00 - 1.80 (ต่ำมาก):</strong> บันทึกความเสี่ยงยอมรับได้</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-3">
@@ -2423,77 +2752,33 @@ export default function AuditRiskView({
 
               <div className="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl space-y-2 border border-stone-200 dark:border-stone-700">
                 <div className="font-bold text-stone-800 dark:text-stone-200 flex items-center justify-between">
-                  <span>คะแนนปัจจัยเสี่ยง 5 มิติ (SOFCK 1-3 คะแนน)</span>
+                  <span>คะแนนปัจจัยเสี่ยง 5 มิติ (SOFCK {riskScaleType === '5_levels' ? '1-5' : '1-3'} คะแนน)</span>
                   <span className="text-amber-700 dark:text-amber-400 font-mono text-sm">
                     เฉลี่ย: {((Number(formData.sScore) + Number(formData.oScore) + Number(formData.fScore) + Number(formData.cScore) + Number(formData.kScore)) / 5).toFixed(1)}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-5 gap-2 text-center text-[11px]">
-                  <div>
-                    <label className="font-semibold block mb-1">S (กลยุทธ์)</label>
-                    <select
-                      value={formData.sScore}
-                      onChange={(e) => setFormData({ ...formData, sScore: Number(e.target.value) })}
-                      className="w-full p-1.5 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 font-bold"
-                    >
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold block mb-1">O (ทำงาน)</label>
-                    <select
-                      value={formData.oScore}
-                      onChange={(e) => setFormData({ ...formData, oScore: Number(e.target.value) })}
-                      className="w-full p-1.5 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 font-bold"
-                    >
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold block mb-1">F (การเงิน)</label>
-                    <select
-                      value={formData.fScore}
-                      onChange={(e) => setFormData({ ...formData, fScore: Number(e.target.value) })}
-                      className="w-full p-1.5 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 font-bold"
-                    >
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold block mb-1">C (ระเบียบ)</label>
-                    <select
-                      value={formData.cScore}
-                      onChange={(e) => setFormData({ ...formData, cScore: Number(e.target.value) })}
-                      className="w-full p-1.5 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 font-bold"
-                    >
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold block mb-1">K (ความรู้)</label>
-                    <select
-                      value={formData.kScore}
-                      onChange={(e) => setFormData({ ...formData, kScore: Number(e.target.value) })}
-                      className="w-full p-1.5 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 font-bold"
-                    >
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                    </select>
-                  </div>
+                  {[
+                    { key: 'sScore', label: 'S (กลยุทธ์)' },
+                    { key: 'oScore', label: 'O (ทำงาน)' },
+                    { key: 'fScore', label: 'F (การเงิน)' },
+                    { key: 'cScore', label: 'C (ระเบียบ)' },
+                    { key: 'kScore', label: 'K (ความรู้)' }
+                  ].map((dim) => (
+                    <div key={dim.key}>
+                      <label className="font-semibold block mb-1">{dim.label}</label>
+                      <select
+                        value={formData[dim.key]}
+                        onChange={(e) => setFormData({ ...formData, [dim.key]: Number(e.target.value) })}
+                        className="w-full p-1.5 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 font-bold"
+                      >
+                        {(riskScaleType === '5_levels' ? [1, 2, 3, 4, 5] : [1, 2, 3]).map((num) => (
+                          <option key={num} value={num}>{num}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
                 </div>
               </div>
 

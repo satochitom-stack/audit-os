@@ -6,7 +6,7 @@
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.7.9';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.8.0';
 export const APP_BUILD_TIME = typeof __BUILD_TIMESTAMP__ !== 'undefined' ? Number(__BUILD_TIMESTAMP__) : Date.now();
 
 const BROADCAST_CHANNEL_NAME = 'audit_os_system_updates';

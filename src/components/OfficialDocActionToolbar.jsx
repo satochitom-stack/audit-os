@@ -23,11 +23,17 @@ export default function OfficialDocActionToolbar({
   showExcel = true,
 
   onPrint,
-  onPdf,
-  pdfTitle = 'ดาวน์โหลดไฟล์ PDF / สั่งพิมพ์',
-  pdfSubtitle = 'พิมพ์แบบฟอร์ม A4 ทางการ หรือบันทึกเป็น PDF',
-  printTooltip = 'สั่งพิมพ์เอกสาร หรือบันทึกเป็นไฟล์ PDF',
+  printTitle = 'พิมพ์เอกสารทางราชการ',
+  printSubtitle = 'สั่งพิมพ์ผ่านเครื่องพิมพ์ (ปรับแนวตั้ง/แนวนอนอัตโนมัติ)',
+  printTooltip = 'สั่งพิมพ์เอกสาร',
   showPrint = true,
+
+  onSavePdf,
+  onPdf,
+  pdfTitle = 'บันทึกเป็นเอกสาร PDF (.pdf)',
+  pdfSubtitle = 'บันทึกเป็นไฟล์ PDF ขนาด A4',
+  pdfTooltip = 'บันทึกเป็นเอกสาร PDF (.pdf)',
+  showPdf = true,
 
   className = '',
   buttonClassName = '',
@@ -39,7 +45,9 @@ export default function OfficialDocActionToolbar({
 
   const wordAction = onDownloadWord || onWord;
   const excelAction = onDownloadExcel || onExcel;
-  const printAction = onPrint || onPdf;
+  // แยก Print กับ PDF ออกจากกันอย่างชัดเจน
+  const printAction = onPrint;
+  const pdfAction = onSavePdf || (onPdf && onPdf !== onPrint ? onPdf : onPrint);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -56,7 +64,7 @@ export default function OfficialDocActionToolbar({
     };
   }, [isOpen]);
 
-  const hasAnyExport = (showWord && wordAction) || (showExcel && excelAction) || (showPrint && printAction);
+  const hasAnyExport = (showWord && wordAction) || (showExcel && excelAction) || (showPrint && printAction) || (showPdf && pdfAction);
   if (!hasAnyExport && !extraActions) return null;
 
   return (
@@ -68,7 +76,7 @@ export default function OfficialDocActionToolbar({
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
             className={`px-2.5 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs active:scale-95 ${buttonClassName}`}
-            title="ดาวน์โหลดเอกสาร (Word / Excel / PDF)"
+            title="ดาวน์โหลดหรือพิมพ์เอกสาร (Word / Excel / PDF / Print)"
             aria-expanded={isOpen}
             aria-haspopup="true"
           >
@@ -83,7 +91,7 @@ export default function OfficialDocActionToolbar({
                 align === 'left' ? 'left-0' : 'right-0'
               }`}
             >
-              {/* Option 1: PDF / Print */}
+              {/* Option 1: Print Document (แยกชัดเจน) */}
               {showPrint && printAction && (
                 <button
                   type="button"
@@ -92,10 +100,31 @@ export default function OfficialDocActionToolbar({
                     printAction();
                   }}
                   title={printTooltip}
-                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-800 dark:text-stone-200 hover:text-rose-700 dark:hover:text-rose-300 flex items-center space-x-2.5 text-xs font-bold transition-all cursor-pointer"
+                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-stone-800 dark:text-stone-200 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center space-x-2.5 text-xs font-bold transition-all cursor-pointer"
+                >
+                  <span className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 shrink-0">
+                    <Printer className="w-3.5 h-3.5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold">{printTitle}</div>
+                    <div className="text-[10px] text-stone-400 font-normal truncate">{printSubtitle}</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Option 2: Save as PDF (.pdf) (แยกออกจากเมนูพิมพ์) */}
+              {showPdf && pdfAction && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    pdfAction();
+                  }}
+                  title={pdfTooltip}
+                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-800 dark:text-stone-200 hover:text-rose-700 dark:hover:text-rose-300 flex items-center space-x-2.5 text-xs font-bold transition-all cursor-pointer mt-1"
                 >
                   <span className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-300 shrink-0">
-                    <Printer className="w-3.5 h-3.5" />
+                    <FileText className="w-3.5 h-3.5" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="font-bold">{pdfTitle}</div>

@@ -1,8 +1,8 @@
 {
-  "version": "2.7.9",
-  "buildTime": 1791959674212,
+  "version": "2.8.0",
+  "buildTime": 1791964838203,
   "releaseDate": "14 ตุลาคม 2569",
-  "title": "Audit-OS v2.7.9: ย้ายกราฟสรุปและสัดส่วนขึ้นด้านบนของกรอบแผนการตรวจ (Visual Charts Above Audit Plan)",
-  "description": "ปรับตำแหน่งการแสดงผลหน้าแดชบอร์ดตรวจสอบภายใน โดยยกแผงกราฟแท่งความคืบหน้ารายไตรมาสและโดนัทชาร์ตสัดส่วนสถานะการตรวจขึ้นไปอยู่ด้านบนของกรอบแผนการตรวจและตัวชี้วัด",
-  "changeSummary": "Position Visual Analytics Charts (Quarterly Progress Bar Chart & Donut Status Chart) directly above the Annual Audit Plan KPI metrics section"
+  "title": "Audit-OS v2.8.0: ยกระดับระบบประเมินความเสี่ยง เกณฑ์ 3/5 ระดับ, ตราครุฑงานสารบรรณ, จัดหน้าพิมพ์อัจฉริยะ และแก้ไขตัวเลขส่งออก",
+  "description": "เพิ่มตัวเลือกสลับเกณฑ์ประเมินความเสี่ยง ๓ ระดับ (ว ๓๘๐) และ ๕ ระดับ (อปท./COSO), ตราครุฑมาตรฐานงานสารบรรณ ๑.๕ ซม., จัดหน้ากระดาษพิมพ์แนวตั้ง/แนวนอนอัตโนมัติตามเนื้อหา, แยกปุ่มพิมพ์และ PDF, แก้ไขตัวเลขคะแนนในไฟล์ดาวน์โหลด",
+  "changeSummary": "Add 3/5 risk scale toggle, official Garuda emblem, smart print orientation, separate print/pdf actions, and fix export score data"
 }

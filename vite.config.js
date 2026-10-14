@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.9';
+const appVersion = '2.8.0';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.9: ย้ายกราฟสรุปและสัดส่วนขึ้นด้านบนของกรอบแผนการตรวจ (Visual Charts Above Audit Plan)',
-        description: 'ปรับตำแหน่งการแสดงผลหน้าแดชบอร์ดตรวจสอบภายใน โดยยกแผงกราฟแท่งความคืบหน้ารายไตรมาสและโดนัทชาร์ตสัดส่วนสถานะการตรวจขึ้นไปอยู่ด้านบนของกรอบแผนการตรวจและตัวชี้วัด',
-        changeSummary: 'Position Visual Analytics Charts (Quarterly Progress Bar Chart & Donut Status Chart) directly above the Annual Audit Plan KPI metrics section'
+        title: 'Audit-OS v2.8.0: ยกระดับระบบประเมินความเสี่ยง เกณฑ์ 3/5 ระดับ, ตราครุฑงานสารบรรณ, จัดหน้าพิมพ์อัจฉริยะ และแก้ไขตัวเลขส่งออก',
+        description: 'เพิ่มตัวเลือกสลับเกณฑ์ประเมินความเสี่ยง ๓ ระดับ (ว ๓๘๐) และ ๕ ระดับ (อปท./COSO), ตราครุฑมาตรฐานงานสารบรรณ ๑.๕ ซม., จัดหน้ากระดาษพิมพ์แนวตั้ง/แนวนอนอัตโนมัติตามเนื้อหา, แยกปุ่มพิมพ์และ PDF, แก้ไขตัวเลขคะแนนในไฟล์ดาวน์โหลด',
+        changeSummary: 'Add 3/5 risk scale toggle, official Garuda emblem, smart print orientation, separate print/pdf actions, and fix export score data'
       };
       try {
         if (!fs.existsSync('./public')) {
