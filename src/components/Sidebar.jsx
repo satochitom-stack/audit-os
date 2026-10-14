@@ -31,7 +31,8 @@ import {
   Shield,
   ArrowRight,
   Radio,
-  FileCode2
+  FileCode2,
+  Home
 } from 'lucide-react';
 import { MEMBERSHIP_PLANS, checkUserSubscription } from '../utils/auth';
 import { getUserFeedbacks } from '../utils/feedbackUtils';
@@ -205,11 +206,11 @@ export default function Sidebar({
       <div className="p-4 border-b border-stone-200/70 dark:border-stone-800 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-wider uppercase">
-            {isAdmin ? (adminWorkspaceMode === 'admin' ? '👑 SUPER ADMIN CONSOLE' : '🛡️ AUDITOR WORKSPACE (PREVIEW)') : '🛡️ AUDITOR WORKSPACE'}
+            {isAdmin ? (adminWorkspaceMode === 'admin' ? 'SUPER ADMIN CONSOLE' : 'AUDITOR WORKSPACE (PREVIEW)') : 'AUDITOR WORKSPACE'}
           </span>
           {isAdmin ? (
             <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 to-amber-600 text-stone-950 border border-amber-300 shadow-2xs">
-              👑 ROOT ADMIN
+              ROOT ADMIN
             </span>
           ) : (
             <button
@@ -224,15 +225,15 @@ export default function Sidebar({
                 </span>
               ) : subStatus.isTrial ? (
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:text-slate-300 shadow-2xs inline-flex items-center space-x-1">
-                  <span>🌱 ฟรี 30 วัน</span>
+                  <span>ฟรี 30 วัน</span>
                 </span>
               ) : subStatus.tier === 'VIP' ? (
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border border-blue-400/50 shadow-sm inline-flex items-center space-x-1">
-                  <span>⭐ VIP</span>
+                  <span>VIP</span>
                 </span>
               ) : subStatus.tier === 'PREMIUM' ? (
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border border-amber-200 shadow-md inline-flex items-center space-x-1">
-                  <span>👑 PREMIUM</span>
+                  <span>PREMIUM</span>
                 </span>
               ) : (
                 <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${planInfo.badgeColor}`}>
@@ -373,7 +374,7 @@ export default function Sidebar({
                   </div>
                   <div className="min-w-0">
                     <div className="font-black text-xs text-amber-100 truncate">
-                      🛡️ สลับไปพื้นที่ตรวจ (Auditor View)
+                      สลับไปพื้นที่ตรวจ (Auditor View)
                     </div>
                     <div className="text-[10px] text-stone-400 font-normal truncate">
                       ดูและทดสอบ 11 ขั้นตอนของ อปท.
@@ -394,7 +395,7 @@ export default function Sidebar({
               <div className="p-2.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-600/15 to-transparent border border-amber-500/40 space-y-2 mb-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black text-amber-900 dark:text-amber-200 uppercase tracking-wider flex items-center gap-1">
-                    <span>👁️ โหมดทดสอบพื้นที่ตรวจ</span>
+                    <span>โหมดทดสอบพื้นที่ตรวจ</span>
                   </span>
                   <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-200 font-mono font-bold border border-amber-500/30">
                     AUDITOR VIEW
@@ -409,7 +410,7 @@ export default function Sidebar({
                   className="w-full py-2 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   <Crown className="w-3.5 h-3.5" />
-                  <span>👑 กลับสู่ศูนย์ควบคุม Super Admin</span>
+                  <span>กลับสู่ศูนย์ควบคุม Super Admin</span>
                 </button>
               </div>
             )}
@@ -425,7 +426,7 @@ export default function Sidebar({
                     : 'bg-white dark:bg-stone-900/60 text-stone-700 dark:text-stone-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 hover:text-amber-800 dark:hover:text-amber-300 border border-stone-200/80 dark:border-stone-800'
                 }`}
               >
-                <span className="text-sm">🏠</span>
+                <Home className="w-4 h-4 text-amber-500 shrink-0" />
                 <span>หน้าแรก (ภาพรวมระบบ)</span>
               </button>
               <button
@@ -568,7 +569,7 @@ export default function Sidebar({
                     )}
                   </div>
                   <div className="text-[10px] text-stone-500 dark:text-stone-400 font-normal truncate">
-                    {sheetsConfig.webAppUrl ? '🟢 ซิงค์ลง Google Drive แล้ว' : '100% Data Sovereignty ของ อปท.'}
+                    {sheetsConfig.webAppUrl ? 'ซิงค์ลง Google Drive แล้ว' : '100% Data Sovereignty ของ อปท.'}
                   </div>
                 </div>
               </button>
@@ -605,7 +606,7 @@ export default function Sidebar({
                   className="w-full py-2.5 px-3 rounded-2xl text-xs font-black bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 text-amber-100 shadow-md flex items-center justify-center gap-2 cursor-pointer hover:brightness-110 transition-all"
                 >
                   <Crown className="w-4 h-4 text-amber-300" />
-                  <span>👑 กลับสู่ศูนย์ควบคุม Super Admin</span>
+                  <span>กลับสู่ศูนย์ควบคุม Super Admin</span>
                 </button>
               </div>
             )}
@@ -616,7 +617,7 @@ export default function Sidebar({
       {/* Sidebar Footer */}
       <div className="p-3 border-t border-stone-200/60 dark:border-stone-800 text-[10px] text-stone-400 text-center">
         <div>Audit-OS for Local Government</div>
-        <div className="text-[9px] text-stone-500">เวอร์ชัน 2.6 (SaaS Auditor & Admin Console)</div>
+        <div className="text-[9px] text-stone-500">เวอร์ชัน 2.7 (ระบบสนับสนุนงานตรวจสอบ อปท.)</div>
       </div>
     </aside>
   );

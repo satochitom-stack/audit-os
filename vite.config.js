@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.3';
+const appVersion = '2.7.4';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.3: ซิงค์สิทธิประโยชน์สนับสนุนระบบจาก Admin และกำหนดแพ็กเกจตลอดชีพเป็นคุ้มค่าที่สุด (Synced Benefits & Lifetime VIP Most Valuable)',
-        description: 'ปรับปรุงหน้ารายละเอียดสิทธิประโยชน์ให้เชื่อมโยงข้อความจากหน้า Admin โดยตรง รองรับ Markdown และข้อความสนับสนุนระบบ พร้อมปรับย้ายป้ายแนะนำและคุ้มค่าที่สุดไปยังแพ็กเกจตลอดชีพ (LIFETIME VIP ฿590) อย่างชัดเจนและสมบูรณ์',
-        changeSummary: 'Admin Benefits Sync, Markdown-ready Benefits Rendering, Lifetime VIP Most Valuable badge, Annual Plan label update, Registration Plan Choice enhancement'
+        title: 'Audit-OS v2.7.4: ปรับปรุงโครงสร้างเมนู คลีนสัญลักษณ์ซ้อน และจัดระเบียบหน้าแรกให้สะอาดตา (Streamlined Navigation & Clean Landing UI)',
+        description: 'ปรับลดความซ้ำซ้อนของเมนูในระบบทั้งหมด ตัดสัญลักษณ์และอีโมจิที่ซ้อนกันออก จัดกลุ่มเมนูใน User Dropdown ให้ชัดเจน และคลีน Floating Header หน้าแรกให้สบายตา พร้อมป้องกันข้อมูลของ Admin หลุดไปยังมุมมองผู้ใช้ทั่วไป',
+        changeSummary: 'Streamlined Navigation Menus, Clean User Dropdown, No Duplicate Emojis/Icons, Clean Landing Page Header, Single CTA Action, Tenant Org Leakage Prevention'
       };
       try {
         if (!fs.existsSync('./public')) {

@@ -390,35 +390,27 @@ export default function WelcomeView({
                   Audit-OS
                 </span>
                 <span className="text-[10px] font-semibold bg-amber-50 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-200/80 tracking-wide truncate max-w-[150px] sm:max-w-xs">
-                  {orgProfile?.name || 'อปท. เครือข่าย'}
+                  {session?.organization || (orgProfile?.name && !orgProfile.name.includes('ศูนย์ควบคุม') ? orgProfile.name : 'สำหรับ อปท.')}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Navigation Pill Links */}
-          <nav className="hidden lg:flex items-center space-x-1 bg-stone-100/80 p-1 rounded-full border border-stone-200/70 text-xs font-semibold text-stone-600 backdrop-blur-md">
-            <button
-              type="button"
-              onClick={scrollToExplore}
-              className="px-4 py-1.5 rounded-full hover:text-stone-900 hover:bg-white hover:shadow-xs border border-transparent transition-all cursor-pointer flex items-center space-x-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>ภาพรวมระบบ</span>
-            </button>
+          <nav className="hidden lg:flex items-center space-x-1 bg-stone-100/90 dark:bg-stone-800/90 p-1 rounded-full border border-stone-200/80 dark:border-stone-700/80 text-xs font-semibold text-stone-600 dark:text-stone-300 backdrop-blur-md shadow-2xs">
             <a
               href="#departments"
-              className="px-4 py-1.5 rounded-full hover:text-stone-900 hover:bg-white hover:shadow-xs border border-transparent transition-all cursor-pointer flex items-center space-x-1.5"
+              className="px-3.5 py-1.5 rounded-full hover:text-stone-900 dark:hover:text-white hover:bg-white dark:hover:bg-stone-700 hover:shadow-2xs transition-all cursor-pointer flex items-center space-x-1.5"
             >
-              <Building className="w-3.5 h-3.5 text-stone-600" />
+              <Building className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>หน่วยรับตรวจ {auditeeDepartments.length} หน่วย</span>
             </a>
             <a
-              href="#modules"
-              className="px-4 py-1.5 rounded-full hover:text-stone-900 hover:bg-white hover:shadow-xs border border-transparent transition-all cursor-pointer flex items-center space-x-1.5"
+              href="#byod"
+              className="px-3.5 py-1.5 rounded-full hover:text-stone-900 dark:hover:text-white hover:bg-white dark:hover:bg-stone-700 hover:shadow-2xs transition-all cursor-pointer flex items-center space-x-1.5"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>ฟังก์ชันการตรวจสอบ</span>
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>ฐานข้อมูล BYOD Google Sheets</span>
             </a>
           </nav>
 
@@ -428,36 +420,34 @@ export default function WelcomeView({
               <button
                 type="button"
                 onClick={handleDashboardEntry}
-                className="relative group p-[1px] rounded-full overflow-hidden bg-gradient-to-r from-stone-800 via-stone-700 to-amber-700 shadow-md shadow-stone-900/20 hover:shadow-lg transition-all cursor-pointer"
+                className="relative group p-[1px] rounded-full overflow-hidden bg-gradient-to-r from-amber-600 via-amber-700 to-stone-800 shadow-md shadow-stone-900/10 hover:shadow-lg transition-all cursor-pointer"
               >
-                <div className="px-4 sm:px-5 py-2 rounded-full bg-stone-800 hover:bg-stone-900 text-amber-100 font-bold text-xs flex items-center space-x-2 transition-all">
+                <div className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-stone-900 hover:bg-stone-950 text-amber-100 font-bold text-xs flex items-center space-x-2 transition-all">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>เข้าสู่ระบบงานตรวจสอบ</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-amber-300 transform group-hover:translate-x-1 transition-transform" />
+                  <span>เข้าสู่ห้องทำงานตรวจ</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-300 transform group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </button>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
                 {onOpenOnboarding && (
                   <button
                     type="button"
                     onClick={onOpenOnboarding}
-                    className="hidden sm:flex items-center space-x-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-stone-800 hover:bg-stone-900 text-amber-100 font-bold text-xs shadow-md border border-amber-600/30 transition-all cursor-pointer"
-                    title="ตั้งค่าและลงทะเบียน อปท. ใหม่ (ทดลองใช้งานฟรี 30 วัน)"
+                    className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-all cursor-pointer"
+                    title="ลงทะเบียน อปท. ใหม่ (ทดลองใช้งานฟรี 30 วัน)"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                    <span>ลงทะเบียน อปท. (Free Trial 30 วัน)</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>ลงทะเบียน อปท. (Free Trial)</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(true)}
-                  className="relative group p-[1px] rounded-full overflow-hidden bg-gradient-to-r from-stone-800 via-stone-700 to-amber-700 shadow-md shadow-stone-900/20 hover:shadow-lg transition-all cursor-pointer"
+                  className="inline-flex items-center space-x-1.5 px-4 py-1.5 sm:py-2 rounded-full bg-stone-900 hover:bg-stone-800 text-amber-100 font-bold text-xs shadow-md border border-amber-600/30 transition-all cursor-pointer"
                 >
-                  <div className="px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-stone-800 to-stone-900 hover:from-stone-900 hover:to-stone-950 text-amber-100 font-bold text-xs flex items-center space-x-2 transition-all border border-amber-600/30">
-                    <LogIn className="w-3.5 h-3.5 text-amber-300" />
-                    <span>เข้าสู่ระบบงานตรวจสอบ</span>
-                  </div>
+                  <LogIn className="w-3.5 h-3.5 text-amber-300" />
+                  <span>เข้าสู่ระบบ</span>
                 </button>
               </div>
             )}
@@ -471,11 +461,11 @@ export default function WelcomeView({
           session={session}
           onPrimaryClick={handleDashboardEntry}
           onCtaClick={handleDashboardEntry}
-          primaryButtonText="เข้าสู่ระบบงานตรวจสอบ"
+          primaryButtonText={session ? "เข้าสู่ห้องทำงานตรวจ" : "เริ่มต้นปฏิบัติงาน"}
           logoText="Audit-OS"
-          subLogoText={orgProfile?.name || "เครือข่ายผู้ตรวจสอบภายใน อปท."}
+          subLogoText={session?.organization || (orgProfile?.name && !orgProfile.name.includes('ศูนย์ควบคุม') ? orgProfile.name : "เครือข่ายผู้ตรวจสอบภายใน อปท.")}
           title="ระบบสารสนเทศเพื่อการตรวจสอบภายใน"
-          titleLine2={orgProfile?.name ? orgProfile.name : "สำหรับองค์กรปกครองส่วนท้องถิ่น"}
+          titleLine2={session?.organization || (orgProfile?.name && !orgProfile.name.includes('ศูนย์ควบคุม') ? orgProfile.name : "สำหรับองค์กรปกครองส่วนท้องถิ่น")}
           executiveLeader={executiveLeaderPartner}
           permanentSecretary={permanentSecretaryPartner}
           partners={heroPartners}
@@ -486,13 +476,14 @@ export default function WelcomeView({
           description=""
           partnersTitle={`โครงสร้าง ${auditeeDepartments.length} หน่วยรับตรวจที่เชื่อมโยงในระบบ (CONNECTED DEPARTMENTS)`}
           navLinks={[
-            { label: "แผนภูมิโครงสร้าง & หน่วยรับตรวจ", href: "#departments", isActive: true }
+            { label: "แผนภูมิโครงสร้าง & หน่วยรับตรวจ", href: "#departments", isActive: true },
+            { label: "ฐานข้อมูล BYOD Google Sheets", href: "#byod", isActive: false }
           ]}
         />
       </section>
 
       {/* 2.5 Bring Your Own Database (BYOD) Data Sovereignty Banner */}
-      <section className="pt-2 pb-4 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto">
+      <section id="byod" className="pt-2 pb-4 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto">
         <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-950 via-stone-900 to-stone-900 text-white shadow-xl border border-emerald-500/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center space-x-3.5">
             <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-inner">

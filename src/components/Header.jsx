@@ -22,7 +22,9 @@ import {
   Clock,
   CreditCard,
   Crown,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Lightbulb,
+  BookOpen
 } from 'lucide-react';
 import { cloudSyncService } from '../services/cloudSyncService';
 import { getGoogleSheetsConfig } from '../services/googleSheetsSyncService';
@@ -201,7 +203,7 @@ export default function Header({
               title="เปิดคลังแม่แบบและแนวทางปฏิบัติงาน สถ. (63 หน้า)"
               className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-100/90 hover:bg-amber-200/90 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700/70 transition-all cursor-pointer shadow-2xs shrink-0"
             >
-              <span className="text-sm">🏛️</span>
+              <BookOpen className="w-3.5 h-3.5 text-amber-800 dark:text-amber-300 shrink-0" />
               <span className="hidden sm:inline">คู่มือ สถ.</span>
             </button>
 
@@ -230,14 +232,14 @@ export default function Header({
                 }`}
               >
                 {currentTab === 'backoffice' || adminWorkspaceMode === 'admin' ? (
-                  <Shield className="w-3.5 h-3.5 text-amber-300" />
+                  <Shield className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                 ) : (
-                  <Crown className="w-3.5 h-3.5 text-amber-300" />
+                  <Crown className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                 )}
                 <span>
                   {currentTab === 'backoffice' || adminWorkspaceMode === 'admin'
                     ? 'สลับไปหน้าตรวจ (Auditor)'
-                    : '👑 ศูนย์ควบคุม Super Admin'}
+                    : 'ศูนย์ควบคุม Super Admin'}
                 </span>
               </button>
             )}
@@ -324,11 +326,15 @@ export default function Header({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-2xl shadow-xl overflow-hidden z-40 text-xs">
-                  <div className="px-3.5 py-2.5 border-b border-stone-100 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-800/40">
-                    <div className="font-bold text-stone-800 dark:text-stone-200 truncate">{userTitle}</div>
-                    <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate">{departmentLabel}</div>
-                    <div className="text-[10px] text-amber-800 dark:text-amber-400 mt-0.5 font-semibold">
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700/80 rounded-2xl shadow-xl overflow-hidden z-40 text-xs animate-fade-in">
+                  {/* User Profile Header */}
+                  <div className="px-3.5 py-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-850">
+                    <div className="font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5 truncate">
+                      {isAdmin && <Crown className="w-4 h-4 text-amber-500 shrink-0" />}
+                      <span className="truncate">{userTitle}</span>
+                    </div>
+                    <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate mt-0.5">{departmentLabel}</div>
+                    <div className="text-[10px] text-amber-800 dark:text-amber-400 font-semibold mt-1">
                       {isAdmin ? 'สิทธิ์ผู้ดูแลระบบสูงสุด (Super Admin)' : `ชื่อผู้ใช้: @${session?.username} • สมาชิกผู้ตรวจสอบภายใน`}
                     </div>
                   </div>
@@ -337,14 +343,14 @@ export default function Header({
                   {!isAdmin && session && (
                     <div className="px-3.5 py-2.5 bg-amber-50/50 dark:bg-amber-950/20 border-b border-stone-100 dark:border-stone-800">
                       <div className="flex items-center justify-between text-[11px] font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                           <span>เวลาสมาชิกคงเหลือ:</span>
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-200/80 dark:bg-amber-900/60 font-bold">{countdown.planLabel}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/60 font-bold">{countdown.planLabel}</span>
                       </div>
                       <div className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300">
-                        ⏳ {countdown.text}
+                        {countdown.text}
                       </div>
                       <div className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5">
                         หมดอายุ: {countdown.expiryText}
@@ -352,8 +358,9 @@ export default function Header({
                     </div>
                   )}
 
-                  {isAdmin ? (
-                    <>
+                  {/* Admin Workspace Switcher Section */}
+                  {isAdmin && (
+                    <div className="p-1 border-b border-stone-100 dark:border-stone-800 space-y-0.5">
                       <button
                         type="button"
                         onClick={() => {
@@ -361,10 +368,10 @@ export default function Header({
                           if (setAdminWorkspaceMode) setAdminWorkspaceMode('admin');
                           if (setCurrentTab) setCurrentTab('backoffice');
                         }}
-                        className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 font-black border-b border-stone-100 dark:border-stone-800 cursor-pointer text-left"
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-amber-950 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100/80 font-bold transition-all cursor-pointer text-left"
                       >
-                        <Crown className="w-4 h-4 text-amber-600" />
-                        <span>👑 ศูนย์ควบคุม Super Admin Console</span>
+                        <Crown className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>ศูนย์ควบคุม Super Admin</span>
                       </button>
 
                       <button
@@ -374,129 +381,92 @@ export default function Header({
                           if (setAdminWorkspaceMode) setAdminWorkspaceMode('auditor');
                           if (setCurrentTab) setCurrentTab('dashboard');
                         }}
-                        className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 font-bold border-b border-stone-100 dark:border-stone-800 cursor-pointer text-left"
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-all cursor-pointer text-left"
                       >
-                        <Shield className="w-4 h-4 text-amber-500" />
-                        <span>🛡️ สลับไปพื้นที่ตรวจ (Auditor Workspace)</span>
+                        <Shield className="w-4 h-4 text-sky-600 shrink-0" />
+                        <span>สลับไปพื้นที่ตรวจ (Auditor Workspace)</span>
                       </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setMenuOpen(false);
-                          if (setCurrentTab) setCurrentTab('welcome');
-                        }}
-                        className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium border-b border-stone-100 dark:border-stone-800"
-                      >
-                        <span>🏠 หน้าแรก (ภาพรวมระบบ)</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setMenuOpen(false);
-                          if (setCurrentTab) setCurrentTab('dashboard');
-                        }}
-                        className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-800 dark:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 cursor-pointer font-semibold border-b border-stone-100 dark:border-stone-800"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-                        <span>🛡️ แดชบอร์ดตรวจสอบ (Audit Cockpit)</span>
-                      </button>
-                    </>
+                    </div>
                   )}
 
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      if (setCurrentTab) setCurrentTab('central-hub');
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium border-b border-stone-100 dark:border-stone-800"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>📚 คลังเอกสารกลาง & ระเบียบปฏิบัติ</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      if (onOpenDlaTemplates) onOpenDlaTemplates();
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-200 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800"
-                  >
-                    <span>🏛️ คลังคู่มือ & แม่แบบ สถ. 63 หน้า</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onOpenSettings && onOpenSettings();
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium border-b border-stone-100 dark:border-stone-800/60"
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                    <span>🏛️ แก้ไขข้อมูล อปท. และผู้ตรวจสอบ</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      if (onOpenCloudSync) onOpenCloudSync();
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-emerald-900 dark:text-emerald-200 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800 text-left"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <div className="flex-1 truncate">
-                      <div>📑 ฐานข้อมูล Google Sheets (BYOD)</div>
-                      <div className="text-[10px] text-emerald-700/90 dark:text-emerald-400 font-normal">
-                        {sheetsConfig.webAppUrl ? '🟢 ซิงค์ลง Google Drive แล้ว' : '100% Data Sovereignty ของ อปท.'}
-                      </div>
-                    </div>
-                  </button>
-
-                  {!isAdmin && (
+                  {/* Settings & Organization Data Section */}
+                  <div className="p-1 border-b border-stone-100 dark:border-stone-800 space-y-0.5">
                     <button
                       onClick={() => {
                         setMenuOpen(false);
-                        if (onOpenPackageModal) onOpenPackageModal();
+                        onOpenSettings && onOpenSettings();
                       }}
-                      className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-200 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800 text-left"
+                      className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-all cursor-pointer text-left"
                     >
-                      <CreditCard className="w-3.5 h-3.5 text-amber-600" />
-                      <span>แพ็กเกจ & สนับสนุนระบบ</span>
+                      <Building2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span>แก้ไขข้อมูล อปท. และผู้ตรวจสอบ</span>
                     </button>
-                  )}
 
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      if (onOpenFeedback) onOpenFeedback();
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800"
-                  >
-                    <span>💡 เสนอความคิดเห็นถึง ADMIN</span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (onOpenCloudSync) onOpenCloudSync();
+                      }}
+                      className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-all cursor-pointer text-left"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div className="flex-1 truncate">
+                        <div>ฐานข้อมูล Google Sheets (BYOD)</div>
+                        <div className="text-[10px] text-stone-400 font-normal">
+                          {sheetsConfig.webAppUrl ? 'เชื่อมต่อ Google Drive แล้ว' : '100% Data Sovereignty ของ อปท.'}
+                        </div>
+                      </div>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onChangePassword();
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer font-medium"
-                  >
-                    <KeyRound className="w-3.5 h-3.5" />
-                    <span>เปลี่ยนรหัสผ่านเข้าสู่ระบบ</span>
-                  </button>
+                    {!isAdmin && (
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          if (onOpenPackageModal) onOpenPackageModal();
+                        }}
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-amber-900 dark:text-amber-200 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 font-bold transition-all cursor-pointer text-left"
+                      >
+                        <CreditCard className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>แพ็กเกจ & สนับสนุนระบบ</span>
+                      </button>
+                    )}
+                  </div>
 
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onLogout();
-                    }}
-                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer font-semibold border-t border-stone-100 dark:border-stone-800"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>ออกจากระบบ / สลับบัญชี</span>
-                  </button>
+                  {/* Support & Account Security Section */}
+                  <div className="p-1 space-y-0.5">
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (onOpenFeedback) onOpenFeedback();
+                      }}
+                      className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-all cursor-pointer text-left"
+                    >
+                      <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>เสนอความคิดเห็นถึง ADMIN</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onChangePassword();
+                      }}
+                      className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-all cursor-pointer text-left"
+                    >
+                      <KeyRound className="w-4 h-4 text-stone-500 shrink-0" />
+                      <span>เปลี่ยนรหัสผ่านเข้าสู่ระบบ</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-semibold transition-all cursor-pointer text-left border-t border-stone-100 dark:border-stone-800 mt-1 pt-1.5"
+                    >
+                      <LogOut className="w-4 h-4 text-rose-500 shrink-0" />
+                      <span>ออกจากระบบ / สลับบัญชี</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
