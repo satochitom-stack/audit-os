@@ -214,32 +214,6 @@ export default function PackageRenewalModal({
                   </div>
                 )}
                 <FormattedBenefits text={rawBenefits} />
-                <div className="mt-2.5 pt-2 border-t border-amber-200/80 dark:border-amber-800/40 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] text-stone-600 dark:text-stone-400">
-                  <div className="flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                    <span>ปลดล็อก 11 กระบวนการตรวจ</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                    <span>คลังระเบียบ & หนังสือสั่งการ สถ.</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                    <span>ระบบควบคุมภายใน ปค. 1-6</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                    <span>บริหารความเสี่ยง บส. 1-5</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                    <span>คำนวณ Factor F & ค่าปรับ</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                    <span>ระบบสำรองข้อมูล Multi-tenant</span>
-                  </div>
-                </div>
               </div>
             );
           })()}

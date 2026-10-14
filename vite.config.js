@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.5';
+const appVersion = '2.7.6';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.5: นำกรอบสถาปัตยกรรม BYOD ออกจากหน้าแรก และปรับแถบนำทางให้กระชับเรียบหรู (Removed Redundant Architecture Banner & Streamlined Landing UI)',
-        description: 'นำบล็อกกรอบสถาปัตยกรรม Bring Your Own Database (BYOD) ออกจากหน้าแรกเพื่อขจัดความซ้ำซ้อน เนื่องจากมีเมนูจัดการฐานข้อมูล Google Sheets อย่างสมบูรณ์อยู่ภายในระบบแล้ว พร้อมปรับแถบ Navigation เชื่อมโยงตรงสู่แผนภูมิโครงสร้างหน่วยรับตรวจ',
-        changeSummary: 'Remove BYOD architecture banner from WelcomeView, Clean Single Anchor Navigation, Remove unused icons and dead links'
+        title: 'Audit-OS v2.7.6: นำรายการสิทธิประโยชน์ 6 ข้อออกจากหน้าต่างสนับสนุนระบบ (Cleaned 11 Audit Processes Checkmarks in Support Modal)',
+        description: 'นำรายการ 6 หัวข้อย่อย (ปลดล็อก 11 กระบวนการตรวจ, คลังระเบียบ สถ. ฯลฯ) ออกจากหน้าต่างแพ็กเกจ & สนับสนุนระบบ เพื่อให้คงเหลือเฉพาะข้อความสนับสนุนระบบจาก Admin โดยตรงอย่างกระชับและไม่ซ้ำซ้อน',
+        changeSummary: 'Remove 6 checkmark items from PackageRenewalModal, Pure Admin Markdown Message, Streamline Support Modal View'
       };
       try {
         if (!fs.existsSync('./public')) {
