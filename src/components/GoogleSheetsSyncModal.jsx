@@ -274,7 +274,33 @@ export default function GoogleSheetsSyncModal({
               ) : (
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               )}
-              <div className="leading-relaxed">{feedback.message}</div>
+              <div className="leading-relaxed flex-1 space-y-1.5">
+                <div>{feedback.message}</div>
+                {feedback.message && (feedback.message.includes('50000') || feedback.message.includes('อักขระสูงสุด')) && (
+                  <div className="p-3 rounded-xl bg-white/80 dark:bg-stone-900/80 border border-rose-200 dark:border-rose-800 text-[11px] text-stone-700 dark:text-stone-300 space-y-1.5">
+                    <div className="font-bold text-rose-800 dark:text-rose-300 flex items-center gap-1.5">
+                      <span>สาเหตุและวิธีแก้ไขปัญหาอักขระเกิน 50,000 ตัว:</span>
+                    </div>
+                    <p>
+                      <strong>สาเหตุ:</strong> เกิดจาก Google Sheets มีข้อจำกัดขนาดข้อมูล <strong>ไม่เกิน 50,000 ตัวอักษรต่อ 1 เซลล์</strong> เมื่อข้อมูลกระดาษทำการของ อปท. มีปริมาณมาก โค้ด Apps Script เวอร์ชันเก่าจึงเกิด Error นี้
+                    </p>
+                    <p>
+                      <strong>วิธีแก้ไข:</strong> ระบบได้อัปเกรดโค้ด Apps Script ใหม่ที่รองรับการแบ่งท่อนข้อมูล (Data Chunking) ขนาดใหญ่ไม่จำกัดเรียบร้อยแล้ว เพียงกดปุ่ม <strong>"คัดลอกโค้ดสคริปต์"</strong> ด้านล่าง แล้วนำไปวางทับในหน้าต่าง Apps Script เดิม จากนั้นกด <strong>ทำให้ใช้งานได้ (Deploy) &gt; รายการใหม่</strong> ก็จะซิงค์ผ่าน 100% ทันทีครับ
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleCopyCode();
+                        setActiveTab('setup');
+                      }}
+                      className="py-1 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs inline-flex items-center gap-1 transition-all cursor-pointer shadow-xs mt-1"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>📋 คัดลอกโค้ด Apps Script ชุดอัปเกรดใหม่</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -516,14 +542,43 @@ export default function GoogleSheetsSyncModal({
                     <div className="w-6 h-6 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center shrink-0 text-xs">
                       4
                     </div>
-                    <div>
+                    <div className="flex-1 space-y-2">
                       <div className="font-bold text-stone-800 dark:text-stone-200">ทำให้ใช้งานได้ (Deploy) เป็น เว็บแอป (Web app)</div>
                       <div className="text-[11px] text-stone-500 dark:text-stone-400 leading-relaxed">
                         คลิกปุ่มสีน้ำเงิน <strong>"ทำให้ใช้งานได้" (Deploy)</strong> &gt; <strong>"การทำให้ใช้งานได้รายการใหม่" (New deployment)</strong><br />
                         - เลือกประเภท: <strong>เว็บแอป (Web app)</strong><br />
                         - ดำเนินการในฐานะ: <strong>ฉัน (Me)</strong><br />
                         - ผู้ที่มีสิทธิ์เข้าถึง: <strong>ทุกคน (Anyone)</strong> <span className="text-amber-600 font-bold">*** สำคัญมาก ***</span><br />
-                        กด "ทำให้ใช้งานได้" แล้วอนุมัติสิทธิ์ (Authorize access) จากนั้นคัดลอก <strong>URL เว็บแอป</strong> มาใส่ในช่องด้านล่าง
+                        กดปุ่ม <strong>"ทำให้ใช้งานได้"</strong> แล้วกด <strong>"อนุมัติสิทธิ์" (Authorize access)</strong>
+                      </div>
+
+                      {/* Google Verification Warning Bypass Box */}
+                      <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-[11px] space-y-1.5 text-stone-700 dark:text-stone-300">
+                        <div className="font-bold text-amber-950 dark:text-amber-200 flex items-center gap-1.5">
+                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                          <span>วิธีผ่านหน้าจอแจ้งเตือน "Google hasn't verified this app" (ทำเพียงครั้งแรก):</span>
+                        </div>
+                        <p className="text-stone-600 dark:text-stone-400 text-[10px]">
+                          เนื่องจากสคริปต์นี้สร้างขึ้นในบัญชีส่วนตัวของท่านเอง Google จึงแสดงหน้าต่างเตือนความปลอดภัยตามมาตรฐาน โดยมีขั้นตอนผ่านดังนี้:
+                        </p>
+                        <div className="space-y-1 pl-1">
+                          <div className="flex items-start gap-1.5">
+                            <span className="font-black text-amber-700 dark:text-amber-400">1.</span>
+                            <span>เมื่อพบหน้าต่าง <strong>"Google hasn't verified this app"</strong> (รูปสามเหลี่ยมสีแดง) อย่าเพิ่งกดปุ่มสีน้ำเงิน ให้คลิกลิงก์ตัวเล็กๆ ด้านซ้ายล่างชื่อ <strong>"Advanced" (ขั้นสูง)</strong></span>
+                          </div>
+                          <div className="flex items-start gap-1.5">
+                            <span className="font-black text-amber-700 dark:text-amber-400">2.</span>
+                            <span>คลิกลิงก์ด้านล่างสุด <strong>"Go to ... (unsafe)"</strong> หรือ <strong>"ไปที่ โครงการไม่มีชื่อ (ไม่ปลอดภัย)"</strong></span>
+                          </div>
+                          <div className="flex items-start gap-1.5">
+                            <span className="font-black text-amber-700 dark:text-amber-400">3.</span>
+                            <span>ในหน้าจอถัดไป เลื่อนลงมากดปุ่ม <strong>"Continue" (ดำเนินการต่อ)</strong> หรือ <strong>"Allow" (อนุญาต)</strong></span>
+                          </div>
+                          <div className="flex items-start gap-1.5">
+                            <span className="font-black text-amber-700 dark:text-amber-400">4.</span>
+                            <span>Google จะแสดง <strong>URL เว็บแอป (Web app URL)</strong> ที่ลงท้ายด้วย <code>/exec</code> ให้คัดลอกมาวางในช่องด้านล่าง แล้วกดบันทึกได้ทันทีครับ</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.6';
+const appVersion = '2.7.7';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.6: นำรายการสิทธิประโยชน์ 6 ข้อออกจากหน้าต่างสนับสนุนระบบ (Cleaned 11 Audit Processes Checkmarks in Support Modal)',
-        description: 'นำรายการ 6 หัวข้อย่อย (ปลดล็อก 11 กระบวนการตรวจ, คลังระเบียบ สถ. ฯลฯ) ออกจากหน้าต่างแพ็กเกจ & สนับสนุนระบบ เพื่อให้คงเหลือเฉพาะข้อความสนับสนุนระบบจาก Admin โดยตรงอย่างกระชับและไม่ซ้ำซ้อน',
-        changeSummary: 'Remove 6 checkmark items from PackageRenewalModal, Pure Admin Markdown Message, Streamline Support Modal View'
+        title: 'Audit-OS v2.7.7: อัปเกรดระบบสำรองข้อมูล Google Sheets (Data Chunking ป้องกัน 50,000 อักขระ & คู่มือสิทธิ์ Google)',
+        description: 'แก้ไขปัญหาข้อจำกัด 50,000 อักขระต่อเซลล์ของ Google Sheets โดยใช้ระบบ Data Chunking แตกไฟล์ JSON ลงหลายแถวอัตโนมัติ และเพิ่มคำแนะนำการตั้งค่าผ่านหน้าจอความปลอดภัย Google Unverified App',
+        changeSummary: 'Data chunking for Google Sheets raw data backup (bypass 50k char limit), add step-by-step Google unverified app bypass guide and auto-detect 50k error'
       };
       try {
         if (!fs.existsSync('./public')) {

@@ -266,7 +266,7 @@ function doPost(e) {
           message: 'ยังไม่พบข้อมูลสำรอง Audit-OS ใน Google Sheet นี้ กรุณากดซิงค์ข้อมูลจากระบบขึ้นมาก่อน'
         });
       }
-      var rawJson = rawSheet.getRange(1, 1).getValue();
+      var rawJson = loadRawDataChunks(rawSheet);
       if (!rawJson) {
         return createJsonResponse({ success: false, message: 'ข้อมูลสำรองในแผ่นงานว่างเปล่า' });
       }
@@ -285,14 +285,13 @@ function doPost(e) {
       var orgName = req.orgName || (payload.orgProfile && payload.orgProfile.name) || 'อปท.';
       var selectedYear = req.selectedYear || payload.selectedYear || '2569';
 
-      // 3.1 บันทึก Full JSON ลงแผ่นงานที่ซ่อนไว้ เพื่อการกู้คืนแบบสมบูรณ์ 100%
+      // 3.1 บันทึก Full JSON ลงแผ่นงานที่ซ่อนไว้ โดยแบ่งส่วน (Chunking) ป้องกันข้อจำกัด 50,000 อักขระ/เซลล์
       var rawSheet = ss.getSheetByName('_AuditOS_RawData');
       if (!rawSheet) {
         rawSheet = ss.insertSheet('_AuditOS_RawData');
         rawSheet.hideSheet();
       }
-      rawSheet.clear();
-      rawSheet.getRange(1, 1).setValue(JSON.stringify(payload));
+      saveRawDataChunks(rawSheet, JSON.stringify(payload));
 
       // 3.2 ปรับชื่อไฟล์ Spreadsheet ให้ชัดเจน
       try {
@@ -338,6 +337,41 @@ function createJsonResponse(obj) {
 }
 
 // -----------------------------------------------------------------------------
+// Large Data Chunking Helpers (ป้องกัน Error: อินพุตเกินจำนวนอักขระสูงสุด 50,000 ตัว/เซลล์)
+// -----------------------------------------------------------------------------
+function saveRawDataChunks(sheet, dataString) {
+  sheet.clear();
+  var CHUNK_SIZE = 40000; // ตัดเป็นท่อนละ 40,000 ตัวอักษร ปลอดภัยต่ำกว่า 50,000 ตัวอักษรเสมอ
+  var chunks = [];
+  for (var i = 0; i < dataString.length; i += CHUNK_SIZE) {
+    chunks.push([dataString.substring(i, i + CHUNK_SIZE)]);
+  }
+  if (chunks.length > 0) {
+    sheet.getRange(1, 1, chunks.length, 1).setValues(chunks);
+  }
+}
+
+function loadRawDataChunks(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow === 0) return '';
+  var values = sheet.getRange(1, 1, lastRow, 1).getValues();
+  var fullStr = '';
+  for (var i = 0; i < values.length; i++) {
+    fullStr += (values[i][0] || '');
+  }
+  return fullStr;
+}
+
+function safeCell(val) {
+  if (val === null || val === undefined) return '';
+  var str = String(val);
+  if (str.length > 45000) {
+    return str.substring(0, 45000) + '... [ตัดทอนเพื่อความปลอดภัยของ Google Sheets (จำกัด 50,000 ตัวอักษร/เซลล์)]';
+  }
+  return str;
+}
+
+// -----------------------------------------------------------------------------
 // Formatters for Human-Readable Spreadsheet Tabs
 // -----------------------------------------------------------------------------
 
@@ -367,14 +401,14 @@ function formatOrgProfileSheet(ss, profile, year) {
    .setFontSize(14).setFontWeight('bold').setFontColor('#b45309');
   
   var rows = [
-    ['ชื่อหน่วยงาน (อปท.):', profile.name || ''],
-    ['อำเภอ:', profile.district || ''],
-    ['จังหวัด:', profile.province || ''],
-    ['ปีงบประมาณ:', profile.fiscalYear || year],
-    ['ผู้ตรวจสอบภายใน:', profile.auditorName || ''],
-    ['ตำแหน่งผู้ตรวจ:', profile.auditorPosition || ''],
-    ['ปลัด อปท.:', profile.palatName || ''],
-    ['นายก อปท. (ผู้อนุมัติ):', profile.approverName || ''],
+    ['ชื่อหน่วยงาน (อปท.):', safeCell(profile.name || '')],
+    ['อำเภอ:', safeCell(profile.district || '')],
+    ['จังหวัด:', safeCell(profile.province || '')],
+    ['ปีงบประมาณ:', safeCell(profile.fiscalYear || year)],
+    ['ผู้ตรวจสอบภายใน:', safeCell(profile.auditorName || '')],
+    ['ตำแหน่งผู้ตรวจ:', safeCell(profile.auditorPosition || '')],
+    ['ปลัด อปท.:', safeCell(profile.palatName || '')],
+    ['นายก อปท. (ผู้อนุมัติ):', safeCell(profile.approverName || '')],
     ['อัปเดตล่าสุด:', new Date().toLocaleString('th-TH')]
   ];
   
@@ -399,13 +433,13 @@ function formatAnnualPlanSheet(ss, plansByYear, year) {
   if (list.length > 0) {
     var rows = list.map(function(item) {
       return [
-        item.id || item.code || '-',
-        item.title || item.name || '-',
-        item.department || item.target || '-',
-        item.quarter || item.period || '-',
-        item.objective || '-',
-        item.auditor || '-',
-        item.status || 'รอการตรวจสอบ'
+        safeCell(item.id || item.code || '-'),
+        safeCell(item.title || item.name || '-'),
+        safeCell(item.department || item.target || '-'),
+        safeCell(item.quarter || item.period || '-'),
+        safeCell(item.objective || '-'),
+        safeCell(item.auditor || '-'),
+        safeCell(item.status || 'รอการตรวจสอบ')
       ];
     });
     s.getRange(4, 1, rows.length, headers.length).setValues(rows);
@@ -433,13 +467,13 @@ function formatWorkingPapersSheet(ss, wpByYear, year) {
       else if (Array.isArray(item.findings)) findingsText = item.findings.map(function(f){ return (f.title || f.condition || '') }).join('; ');
       
       return [
-        item.id || item.code || '-',
-        item.title || item.name || '-',
-        item.department || '-',
-        item.result || item.conclusion || 'ตรวจสอบแล้ว',
-        findingsText || '-',
-        item.criteria || item.regulation || '-',
-        item.recommendation || '-'
+        safeCell(item.id || item.code || '-'),
+        safeCell(item.title || item.name || '-'),
+        safeCell(item.department || '-'),
+        safeCell(item.result || item.conclusion || 'ตรวจสอบแล้ว'),
+        safeCell(findingsText || '-'),
+        safeCell(item.criteria || item.regulation || '-'),
+        safeCell(item.recommendation || '-')
       ];
     });
     s.getRange(4, 1, rows.length, headers.length).setValues(rows);
@@ -464,11 +498,11 @@ function formatCapaSheet(ss, capaByYear, year) {
     var rows = list.map(function(item, idx) {
       return [
         idx + 1,
-        item.issue || item.finding || item.title || '-',
-        item.department || item.target || '-',
-        item.deadline || item.dueDate || '30 วัน',
-        item.status || 'อยู่ระหว่างติดตาม',
-        item.note || item.remark || '-'
+        safeCell(item.issue || item.finding || item.title || '-'),
+        safeCell(item.department || item.target || '-'),
+        safeCell(item.deadline || item.dueDate || '30 วัน'),
+        safeCell(item.status || 'อยู่ระหว่างติดตาม'),
+        safeCell(item.note || item.remark || '-')
       ];
     });
     s.getRange(4, 1, rows.length, headers.length).setValues(rows);
@@ -492,12 +526,12 @@ function formatRiskAssessmentSheet(ss, universeByYear, year) {
   if (list.length > 0) {
     var rows = list.map(function(item) {
       return [
-        item.id || item.code || '-',
-        item.activity || item.name || item.title || '-',
-        item.department || '-',
-        item.riskScore || item.score || '-',
-        item.riskLevel || item.level || 'ปานกลาง',
-        item.priority || '-'
+        safeCell(item.id || item.code || '-'),
+        safeCell(item.activity || item.name || item.title || '-'),
+        safeCell(item.department || '-'),
+        safeCell(item.riskScore || item.score || '-'),
+        safeCell(item.riskLevel || item.level || 'ปานกลาง'),
+        safeCell(item.priority || '-')
       ];
     });
     s.getRange(4, 1, rows.length, headers.length).setValues(rows);
