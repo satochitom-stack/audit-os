@@ -119,7 +119,7 @@ export default function DlaTemplateModal({
               }`}
             >
               <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>2. แผนระยะยาว 3 ปี & คน-วัน (น. 12-14)</span>
+              <span>2. แผนระยะยาว & คน-วัน (น. 12-14)</span>
             </button>
 
             <button
@@ -301,12 +301,12 @@ export default function DlaTemplateModal({
                     <button
                       onClick={() => {
                         onApplyStrategicPlan();
-                        showToast('นำเข้าแผนระยะยาว 3 ปีเข้าสู่ระบบแล้ว');
+                        showToast('นำเข้าแผนระยะยาวเข้าสู่ระบบแล้ว');
                       }}
                       className="bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 cursor-pointer shadow-xs"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>นำเข้าแผนระยะยาว 3 ปีนี้</span>
+                      <span>นำเข้าแผนระยะยาวนี้</span>
                     </button>
                   )}
                 </div>

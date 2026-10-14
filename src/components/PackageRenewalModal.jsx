@@ -87,7 +87,7 @@ export default function PackageRenewalModal({
             </div>
             <div>
               <h3 className="font-extrabold text-base sm:text-lg text-amber-100 flex items-center gap-2">
-                <span>แพ็กเกจสมาชิก & การต่ออายุการใช้งาน</span>
+                <span>แพ็กเกจ & การสนับสนุนระบบ</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 font-bold">
                   SaaS Local Gov
                 </span>
@@ -176,7 +176,7 @@ export default function PackageRenewalModal({
           {/* 2. รายการแพ็กเกจ เรียงต่อลงมา โดยไม่ต้องมีกรอบรายละเอียดซ้ำอีก (ตามข้อกำหนดของผู้ใช้) */}
           <div className="space-y-2.5">
             <label className="block text-xs font-bold text-stone-700 dark:text-stone-300">
-              เลือกแพ็กเกจที่ต้องการสมัครหรือต่ออายุ:
+              เลือกแพ็กเกจที่ต้องการสนับสนุนระบบ:
             </label>
             <div className="space-y-2">
               {/* แพ็กเกจ 1: ฟรี 30 วัน */}
@@ -416,7 +416,7 @@ export default function PackageRenewalModal({
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5" />
-                      <span>แจ้งต่ออายุถึง ADMIN 📤</span>
+                      <span>แจ้งข้อมูลสนับสนุนระบบถึง ADMIN 📤</span>
                     </>
                   )}
                 </button>

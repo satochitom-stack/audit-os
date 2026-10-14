@@ -238,13 +238,13 @@ export default function StrategicPlanView({
 
           <OfficialDocActionToolbar
             onDownloadWord={handleDownloadWord}
-            wordTitle="บันทึกขออนุมัติแผนระยะยาว 3 ปี (.doc)"
+            wordTitle="บันทึกขออนุมัติแผนระยะยาว (.doc)"
             wordSubtitle={`บันทึกข้อความสารบรรณเสนออนุมัติต่อนายก ${year1} - ${year3}`}
             onDownloadExcel={handleDownloadExcel}
-            excelTitle="ตารางแผน 3 ปีและอัตรากำลัง (.xlsx)"
+            excelTitle="ตารางแผนระยะยาวและอัตรากำลัง (.xlsx)"
             excelSubtitle={`ตาราง 16 กิจกรรมและสรุปคน-วันรายปี พ.ศ. ${year1} - ${year3}`}
             onPrint={() => window.print()}
-            pdfTitle="พิมพ์แผนระยะยาว 3 ปี / PDF"
+            pdfTitle="พิมพ์แผนระยะยาว / PDF"
             pdfSubtitle="พิมพ์สรุปแผนระยะยาวและอัตรากำลังคน-วัน (A4)"
           />
         </div>

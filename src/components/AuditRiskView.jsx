@@ -1299,7 +1299,7 @@ export default function AuditRiskView({
             ความเสี่ยงปานกลาง (1.6 - 2.2)
           </div>
           <div className="text-xl sm:text-2xl font-black text-amber-700 dark:text-amber-400 mt-0.5">{mediumCount}</div>
-          <div className="text-[10px] text-amber-700/80 mt-0.5">แผนระยะยาว 3 ปี</div>
+          <div className="text-[10px] text-amber-700/80 mt-0.5">แผนระยะยาว</div>
         </div>
 
         <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs rounded-xl p-3.5 border border-stone-200/80 dark:border-stone-800 shadow-xs">
@@ -2137,7 +2137,7 @@ export default function AuditRiskView({
                       ความกว้างของช่วงคะแนน = (คะแนนสูงสุด - คะแนนต่ำสุด) / จำนวนระดับ = (3 - 1) / 3 = 0.67
                     </code>
                     <p className="text-[11px] text-stone-600 dark:text-stone-400 pt-1">
-                      • <strong>2.40 - 3.00 (สูง):</strong> บรรจุในแผนประจำปีทันที (Priority 1) | • <strong>1.60 - 2.20 (ปานกลาง):</strong> แผนระยะยาว 3 ปี | • <strong>1.00 - 1.40 (ต่ำ):</strong> เฝ้าระวัง
+                      • <strong>2.40 - 3.00 (สูง):</strong> บรรจุในแผนประจำปีทันที (Priority 1) | • <strong>1.60 - 2.20 (ปานกลาง):</strong> แผนระยะยาว | • <strong>1.00 - 1.40 (ต่ำ):</strong> เฝ้าระวัง
                     </p>
                   </div>
 

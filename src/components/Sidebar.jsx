@@ -149,7 +149,7 @@ export default function Sidebar({
       groupTitle: 'การวางแผนตรวจสอบ',
       items: [
         { id: 'audit-risk', label: 'การประเมินความเสี่ยง (Risk Assessment)', icon: ShieldAlert, desc: 'วิเคราะห์เกณฑ์ 5 ด้าน SOFCK และผังความเสี่ยง Universe' },
-        { id: 'strategic-plan', label: 'แผนระยะยาว 3 ปี (Strategic Plan)', icon: Calendar, desc: 'คำนวณวันทำการตรวจ และแผนหมุนเวียน 3 ปี' },
+        { id: 'strategic-plan', label: 'แผนระยะยาว (Strategic Plan)', icon: Calendar, desc: 'คำนวณวันทำการตรวจ และแผนหมุนเวียน' },
         { id: 'planning', label: 'แผนการตรวจสอบประจำปี (Annual Audit Plan)', icon: FileText, desc: 'จัดทำแผนประจำปี บันทึกขอนายก และกฎบัตร' },
         { id: 'engagement-plan', label: 'แผนการปฏิบัติงาน (Engagement Plan)', icon: Sparkles, desc: 'แผนการปฏิบัติงานรายโครงการและแนวการตรวจ' }
       ]
@@ -215,7 +215,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={onOpenPackageModal}
-              title="คลิกเพื่อดูแพ็กเกจ & ต่ออายุสมาชิก"
+              title="คลิกเพื่อดูแพ็กเกจ & สนับสนุนระบบ"
               className="cursor-pointer hover:scale-105 active:scale-95 transition-transform"
             >
               {isExpired ? (
@@ -277,7 +277,7 @@ export default function Sidebar({
               className="mt-2 w-full py-1.5 px-2 rounded-xl text-[11px] font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-800 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
             >
               <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>💳 สมัคร / ต่ออายุแพ็กเกจ</span>
+              <span>สนับสนุนระบบ</span>
             </button>
           </div>
         )}

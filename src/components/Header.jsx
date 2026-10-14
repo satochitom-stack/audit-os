@@ -247,7 +247,7 @@ export default function Header({
               <button
                 type="button"
                 onClick={onOpenPackageModal}
-                title={`แพ็กเกจ: ${countdown.planLabel} | หมดอายุ: ${countdown.expiryText} (คลิกเพื่อดูแพ็กเกจ & ต่ออายุสมาชิก)`}
+                title={`แพ็กเกจ: ${countdown.planLabel} | หมดอายุ: ${countdown.expiryText} (คลิกเพื่อดูแพ็กเกจ & สนับสนุนระบบ)`}
                 className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs shrink-0 cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
                   countdown.isExpired
                     ? 'bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100'
@@ -462,7 +462,7 @@ export default function Header({
                       className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-amber-900 dark:text-amber-200 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/80 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800 text-left"
                     >
                       <CreditCard className="w-3.5 h-3.5 text-amber-600" />
-                      <span>💳 แพ็กเกจ & ต่ออายุสมาชิก</span>
+                      <span>แพ็กเกจ & สนับสนุนระบบ</span>
                     </button>
                   )}
 

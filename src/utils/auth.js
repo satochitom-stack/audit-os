@@ -383,7 +383,7 @@ export function setLastUsername(username) {
 // -------------------------------------------------------------
 export const ALL_MENU_IDS = [
   { id: 'audit-risk', label: '1. ประเมินความเสี่ยง SOFCK', icon: 'ShieldAlert', desc: 'ขั้นตอนที่ 1: วิเคราะห์เกณฑ์ SOFCK 5 ด้าน และจัดทำผังความเสี่ยง (Audit Universe)' },
-  { id: 'strategic-plan', label: '2. แผนระยะยาว 3 ปี & คน-วัน', icon: 'Calendar', desc: 'ขั้นตอนที่ 2: คำนวณวันทำการตรวจสอบ (Man-Day Capacity) และจัดทำแผน 3 ปี' },
+  { id: 'strategic-plan', label: '2. แผนระยะยาว & คน-วัน', icon: 'Calendar', desc: 'ขั้นตอนที่ 2: คำนวณวันทำการตรวจสอบ (Man-Day Capacity) และจัดทำแผนระยะยาว' },
   { id: 'planning', label: '3. แผนตรวจสอบประจำปี & ขออนุมัติ', icon: 'FileText', desc: 'ขั้นตอนที่ 3: แผนการตรวจสอบประจำปี บันทึกขออนุมัตินายก และกฎบัตร' },
   { id: 'engagement-plan', label: '4. แผนปฏิบัติงาน & แนวตรวจ ว 614', icon: 'Sparkles', desc: 'ขั้นตอนที่ 4: แผนปฏิบัติงานเฉพาะเรื่อง วัตถุประสงค์ ขอบเขต และแนวการตรวจ' },
   { id: 'opening-meeting', label: '5. ประชุมเปิดการตรวจสอบ', icon: 'Users', desc: 'ขั้นตอนที่ 5: หนังสือแจ้งเข้าตรวจล่วงหน้า และบันทึกรายงานการประชุมเปิดตรวจ' },
