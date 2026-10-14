@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.6.2';
+const appVersion = '2.7.0';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS อัปเดตโครงสร้างราคาแพ็กเกจใหม่ (v2.6.2)',
-        description: 'ปรับลดราคาแพ็กเกจสนับสนุนนักตรวจสอบภายใน อปท. เข้าถึงได้ง่าย สบายกระเป๋า: รายเดือน 60 บาท, รายปี 200 บาท, และตลอดชีพ 590 บาท',
-        changeSummary: 'New affordable subscription packages: 60/mo, 200/yr, 590/lifetime'
+        title: 'Audit-OS v2.7.0: ระบบฐานข้อมูล Google Sheets ของ อปท. (BYOD)',
+        description: 'เพิ่มระบบเชื่อมต่อ Google Sheets ส่วนตัวของผู้ใช้ (100% Data Sovereignty) ซิงค์กระดาษทำการ แผนงาน และรายงานผลลง Google Drive ของหน่วยงานท่านเองโดยตรง ปลอดภัยสูงสุด',
+        changeSummary: 'Google Sheets BYOD Data Sovereignty, Auto-Sync in background, 1-Click Apps Script Webhook, Human-readable spreadsheet tabs'
       };
       try {
         if (!fs.existsSync('./public')) {

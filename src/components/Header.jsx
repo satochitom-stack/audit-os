@@ -21,9 +21,11 @@ import {
   Edit3,
   Clock,
   CreditCard,
-  Crown
+  Crown,
+  FileSpreadsheet
 } from 'lucide-react';
 import { cloudSyncService } from '../services/cloudSyncService';
+import { getGoogleSheetsConfig } from '../services/googleSheetsSyncService';
 import { clearPendingUsers, getSubscriptionCountdown } from '../utils/auth';
 import { getCurrentFiscalYear, getStandardFiscalYears } from '../utils/dateUtils';
 
@@ -77,6 +79,13 @@ export default function Header({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const [sheetsConfig, setSheetsConfig] = useState(() => getGoogleSheetsConfig(session));
+  useEffect(() => {
+    const handleSheetsUpdate = () => setSheetsConfig(getGoogleSheetsConfig(session));
+    window.addEventListener('ia-google-sheets-config-changed', handleSheetsUpdate);
+    return () => window.removeEventListener('ia-google-sheets-config-changed', handleSheetsUpdate);
+  }, [session]);
 
   const isAdmin = session?.role === 'admin';
   const countdown = getSubscriptionCountdown(session, now);
@@ -251,6 +260,32 @@ export default function Header({
               </button>
             )}
 
+            {/* Google Sheets BYOD Data Sovereignty Sync Button */}
+            {!isAdmin && session && (
+              <button
+                type="button"
+                onClick={onOpenCloudSync}
+                title={
+                  sheetsConfig.webAppUrl
+                    ? `ฐานข้อมูล Google Sheets: ${sheetsConfig.sheetTitle || 'เชื่อมต่อแล้ว'} (คลิกเพื่อดูหรือสั่งซิงค์)`
+                    : 'เชื่อมต่อฐานข้อมูล Google Sheets ของ อปท. (100% Data Sovereignty)'
+                }
+                className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs shrink-0 cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
+                  sheetsConfig.webAppUrl
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100'
+                    : 'bg-stone-100 dark:bg-stone-850 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200'
+                }`}
+              >
+                <FileSpreadsheet className={`w-3.5 h-3.5 ${sheetsConfig.webAppUrl ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-500'}`} />
+                <span className="font-semibold text-[11px]">
+                  {sheetsConfig.webAppUrl ? 'Google Sheets' : 'เชื่อมต่อ Sheets'}
+                </span>
+                {sheetsConfig.webAppUrl && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                )}
+              </button>
+            )}
+
             {/* Dark Mode Toggle */}
             <button
               onClick={onToggleDarkMode}
@@ -400,6 +435,22 @@ export default function Header({
                   >
                     <Building2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     <span>🏛️ แก้ไขข้อมูล อปท. และผู้ตรวจสอบ</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (onOpenCloudSync) onOpenCloudSync();
+                    }}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2.5 text-emerald-900 dark:text-emerald-200 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 cursor-pointer font-bold border-b border-stone-100 dark:border-stone-800 text-left"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <div className="flex-1 truncate">
+                      <div>📑 ฐานข้อมูล Google Sheets (BYOD)</div>
+                      <div className="text-[10px] text-emerald-700/90 dark:text-emerald-400 font-normal">
+                        {sheetsConfig.webAppUrl ? '🟢 ซิงค์ลง Google Drive แล้ว' : '100% Data Sovereignty ของ อปท.'}
+                      </div>
+                    </div>
                   </button>
 
                   {!isAdmin && (

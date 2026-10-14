@@ -16,6 +16,7 @@ import WelcomeView from './components/WelcomeView';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import ProfileSettingsModal from './components/ProfileSettingsModal';
 import CloudSyncModal from './components/CloudSyncModal';
+import { getGoogleSheetsConfig, pushToGoogleSheets } from './services/googleSheetsSyncService';
 import OnboardingModal from './components/OnboardingModal';
 import DlaTemplateModal from './components/DlaTemplateModal';
 import { onFirebaseAuthStateChanged, logoutFirebase } from './services/firebaseAuthService';
@@ -1219,36 +1220,65 @@ export default function App() {
     localStorage.removeItem('ia_lpa_indicators');
   };
 
+  // Consolidate complete audit dataset for Google Sheets BYOD sync and backups
+  const getAllAuditData = () => ({
+    version: '2.6.2',
+    exportedAt: new Date().toISOString(),
+    users: getUsers(),
+    departments: getDepartments(),
+    orgProfile,
+    fiscalYears,
+    selectedYear,
+    auditUniverseByYear,
+    engagementPlansByYear,
+    annualPlansByYear,
+    workingPapersByYear,
+    riskAssessmentsByYear,
+    internalControlsByYear,
+    riskManagementByYear,
+    lpaIndicatorsByYear,
+    auditCharterByYear,
+    strategicPlan,
+    capaFindingsByYear
+  });
+
   // Export JSON Backup
   const handleExportBackup = () => {
-    const data = {
-      version: '2.4',
-      exportedAt: new Date().toISOString(),
-      users: getUsers(),
-      departments: getDepartments(),
-      orgProfile,
-      fiscalYears,
-      selectedYear,
-      auditUniverseByYear,
-      engagementPlansByYear,
-      annualPlansByYear,
-      workingPapersByYear,
-      riskAssessmentsByYear,
-      internalControlsByYear,
-      riskManagementByYear,
-      lpaIndicatorsByYear,
-      auditCharterByYear,
-      strategicPlan,
-      capaFindingsByYear
-    };
+    const data = getAllAuditData();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `IA-OS_Backup_${orgProfile.name || 'อปท'}_${selectedYear}.json`;
+    a.download = `Audit-OS_Backup_${orgProfile.name || 'อปท'}_${selectedYear}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  // Background Auto-Sync to Personal Google Sheets (BYOD) when enabled
+  useEffect(() => {
+    if (!session || session.role === 'admin') return;
+    const cfg = getGoogleSheetsConfig(session);
+    if (!cfg.webAppUrl || !cfg.autoSync) return;
+
+    const timer = setTimeout(() => {
+      const fullData = getAllAuditData();
+      pushToGoogleSheets(cfg.webAppUrl, fullData, session).catch((err) => {
+        console.warn('Background Google Sheets auto-sync notice:', err.message);
+      });
+    }, 15000); // 15s debounce to avoid spamming Google Apps Script quotas
+
+    return () => clearTimeout(timer);
+  }, [
+    workingPapersByYear,
+    annualPlansByYear,
+    capaFindingsByYear,
+    auditUniverseByYear,
+    engagementPlansByYear,
+    riskAssessmentsByYear,
+    internalControlsByYear,
+    riskManagementByYear,
+    session
+  ]);
 
   // Import JSON Backup
   const handleImportBackup = (data) => {
@@ -1330,6 +1360,7 @@ export default function App() {
           session={session}
           orgProfile={orgProfile}
           onOpenOnboarding={() => setShowOnboarding(true)}
+          onOpenCloudSync={() => setShowCloudSyncModal(true)}
           onLogin={(sess) => {
             const s = sess || getSession();
             setSession(s);
@@ -1525,9 +1556,10 @@ export default function App() {
         <CloudSyncModal
           isOpen={showCloudSyncModal}
           onClose={() => setShowCloudSyncModal(false)}
-          riskManagementByYear={riskManagementByYear}
-          setRiskManagementByYear={setRiskManagementByYear}
-          selectedYear={selectedYear}
+          allData={getAllAuditData()}
+          onImportBackup={handleImportBackup}
+          onExportBackup={handleExportBackup}
+          session={session}
           isAdmin={session?.role === 'admin'}
         />
       )}
@@ -1621,6 +1653,7 @@ export default function App() {
           onShowExpiredModal={() => setShowPackageModal(true)}
           onOpenFeedback={() => setShowFeedbackModal(true)}
           onOpenPackageModal={() => setShowPackageModal(true)}
+          onOpenCloudSync={() => setShowCloudSyncModal(true)}
           adminSubTab={adminSubTab}
           setAdminSubTab={setAdminSubTab}
           adminWorkspaceMode={adminWorkspaceMode}

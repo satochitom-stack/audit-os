@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { MEMBERSHIP_PLANS, checkUserSubscription } from '../utils/auth';
 import { getUserFeedbacks } from '../utils/feedbackUtils';
+import { getGoogleSheetsConfig } from '../services/googleSheetsSyncService';
 
 export default function Sidebar({
   currentTab,
@@ -47,6 +48,7 @@ export default function Sidebar({
   onShowExpiredModal,
   onOpenFeedback,
   onOpenPackageModal,
+  onOpenCloudSync,
   adminSubTab = 'overview',
   setAdminSubTab,
   adminWorkspaceMode = 'admin',
@@ -56,6 +58,14 @@ export default function Sidebar({
   const subStatus = checkUserSubscription(session);
   const isExpired = subStatus.expired;
   const [toolkitSubmenuOpen, setToolkitSubmenuOpen] = useState(false);
+
+  // Google Sheets BYOD Config State
+  const [sheetsConfig, setSheetsConfig] = useState(() => getGoogleSheetsConfig(session));
+  useEffect(() => {
+    const handleSheetsUpdate = () => setSheetsConfig(getGoogleSheetsConfig(session));
+    window.addEventListener('ia-google-sheets-config-changed', handleSheetsUpdate);
+    return () => window.removeEventListener('ia-google-sheets-config-changed', handleSheetsUpdate);
+  }, [session]);
 
   // Real-time Feedbacks counter for Admin badge
   const [feedbacks, setFeedbacks] = useState(() => getUserFeedbacks());
@@ -538,8 +548,34 @@ export default function Sidebar({
               </div>
             ))}
 
-            {/* User Feedback & Suggestions button */}
+            {/* Google Sheets BYOD Button in Sidebar */}
             <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenCloudSync) onOpenCloudSync();
+                }}
+                className="w-full text-left p-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2.5 cursor-pointer bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-950 dark:text-emerald-200 border border-emerald-500/20 hover:border-emerald-500/40 shadow-2xs group"
+              >
+                <span className="p-1 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 group-hover:scale-110 transition-transform">
+                  <FileSpreadsheet className="w-4 h-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs truncate flex items-center gap-1.5">
+                    <span>ฐานข้อมูล Google Sheets</span>
+                    {sheetsConfig.webAppUrl && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-stone-500 dark:text-stone-400 font-normal truncate">
+                    {sheetsConfig.webAppUrl ? '🟢 ซิงค์ลง Google Drive แล้ว' : '100% Data Sovereignty ของ อปท.'}
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* User Feedback & Suggestions button */}
+            <div className="pt-1.5">
               <button
                 type="button"
                 onClick={() => {
