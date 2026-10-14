@@ -2044,19 +2044,20 @@ export default function AdminBackofficeView({
                 </div>
                 <textarea
                   rows={4}
-                  value={settings.platformBenefits || settings.trialBenefits || settings.premiumBenefits || ''}
+                  value={settings.platformBenefits || settings.systemBenefits || settings.trialBenefits || settings.premiumBenefits || ''}
                   onChange={(e) => {
                     const val = e.target.value;
                     setSettings({
                       ...settings,
                       platformBenefits: val,
+                      systemBenefits: val,
                       trialBenefits: val,
                       vipBenefits: val,
                       premiumBenefits: val,
                       lifetimeBenefits: val
                     });
                   }}
-                  placeholder="เช่น:&#10;• สิทธิ์ใช้งานระบบตรวจสอบภายใน อปท. ครบวงจร 12 ขั้นตอน&#10;• บันทึกกระดาษทำการ 6 ภารกิจ และงานช่างมาตรฐาน ว 614&#10;• เครื่องมือช่วยคำนวณ Factor F, ค่าปรับจัดซื้อจัดจ้าง และการสุ่มตัวอย่างพัสดุ&#10;• ส่งออกรายงานผลการตรวจสอบเป็นไฟล์ Word / Excel พร้อมใช้งานทันที&#10;• คลังระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 และตัวอย่างกระดาษทำการครบชุด&#10;• สำรองข้อมูลบน Cloud ปลอดภัย แยกฐานข้อมูลเฉพาะ อปท. ของท่านเป็นเอกเทศ"
+                  placeholder="เช่น:&#10;### 🤝 สนับสนุนการพัฒนา Audit-OS&#10;**หากระบบนี้ช่วยให้งานของพี่ๆ ง่ายขึ้น สามารถร่วมสนับสนุนค่าใช้จ่ายในการดูแลและพัฒนาระบบได้ตามแพ็กเกจที่กำหนดเลยนะครับ"
                   className="w-full p-3 rounded-xl border border-amber-300 dark:border-amber-800 bg-white dark:bg-stone-850 text-xs text-stone-800 dark:text-stone-200 leading-relaxed font-sans focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-inner"
                 />
                 <p className="text-[10px] text-amber-800/80 dark:text-amber-400/80">
@@ -2141,7 +2142,7 @@ export default function AdminBackofficeView({
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 shadow-xs">
                       <span>👑</span> <span>{settings.annualPlanName || 'PREMIUM (รายปี)'}</span>
                     </span>
-                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400">คุ้มค่าที่สุด (365 วัน)</span>
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400">รายปี (365 วัน)</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">
@@ -2152,7 +2153,7 @@ export default function AdminBackofficeView({
                         value={settings.annualPlanName || ''}
                         onChange={(e) => setSettings({ ...settings, annualPlanName: e.target.value })}
                         placeholder="เช่น PREMIUM (รายปี)"
-                        className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-bold text-amber-700 dark:text-amber-300 text-xs"
+                        className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-850 font-bold text-amber-700 dark:text-amber-300 text-xs"
                       />
                     </div>
                     <div>
@@ -2161,7 +2162,7 @@ export default function AdminBackofficeView({
                         type="number"
                         value={settings.annualPrice || 200}
                         onChange={(e) => setSettings({ ...settings, annualPrice: parseFloat(e.target.value) || 200 })}
-                        className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-black text-amber-600 text-xs"
+                        className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-850 font-black text-amber-600 text-xs"
                         required
                       />
                     </div>
@@ -2174,7 +2175,9 @@ export default function AdminBackofficeView({
                     <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-purple-700 to-pink-700 text-white shadow-xs">
                       <span>💎</span> <span>{settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'}</span>
                     </span>
-                    <span className="text-xs font-bold text-purple-600">ไม่มีวันหมดอายุ (ถาวร)</span>
+                    <span className="text-xs font-black text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/60 px-2.5 py-0.5 rounded-full border border-purple-300 dark:border-purple-800 flex items-center gap-1">
+                      <span>⭐ แนะนำ คุ้มค่าที่สุด (ถาวร)</span>
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">

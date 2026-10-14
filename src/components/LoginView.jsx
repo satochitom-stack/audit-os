@@ -492,9 +492,8 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                   <label className="block font-semibold text-stone-300">
                     เลือกแพ็กเกจสมาชิกที่ต้องการสมัคร
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                     {Object.values(getMembershipPlans(settings))
-                      .filter((p) => p.id !== 'lifetime')
                       .map((p) => (
                         <button
                           type="button"
@@ -502,13 +501,22 @@ export default function LoginView({ onLogin, orgProfile, onBackToWelcome }) {
                           onClick={() => setRegPlan(p.id)}
                           className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                             regPlan === p.id
-                              ? 'bg-amber-600/25 border-amber-500 text-white ring-2 ring-amber-500/50 shadow-md'
+                              ? p.id === 'lifetime'
+                                ? 'bg-purple-900/30 border-purple-500 text-white ring-2 ring-purple-500/50 shadow-md'
+                                : 'bg-amber-600/25 border-amber-500 text-white ring-2 ring-amber-500/50 shadow-md'
                               : 'bg-[#2b3545]/70 border-stone-600/80 text-stone-400 hover:border-stone-500'
                           }`}
                         >
-                          <div className="font-bold text-xs text-stone-100 flex items-center space-x-1">
-                            <span>{p.id === 'trial' ? '🌱' : p.id === 'monthly' ? '⭐' : '👑'}</span>
-                            <span>{p.name}</span>
+                          <div className="font-bold text-xs text-stone-100 flex items-center justify-between">
+                            <span className="flex items-center space-x-1">
+                              <span>{p.id === 'trial' ? '🌱' : p.id === 'monthly' ? '⭐' : p.id === 'annual' ? '👑' : '💎'}</span>
+                              <span>{p.name}</span>
+                            </span>
+                            {p.id === 'lifetime' && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black">
+                                คุ้มที่สุด
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs font-black text-amber-400 mt-1">{p.priceLabel}</div>
                           <div className="text-[10px] text-stone-400 mt-0.5 line-clamp-1">{p.description}</div>

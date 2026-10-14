@@ -16,6 +16,72 @@ import {
 import { getMembershipPlans, getSubscriptionCountdown, checkUserSubscription } from '../utils/auth';
 import { addFeedback } from '../utils/feedbackUtils';
 
+function parseInlineBold(text) {
+  if (!text || !text.includes('**')) return text;
+  
+  // If line starts with ** and does not contain another **, make the whole line bold
+  const asterisksMatches = text.match(/\*\*/g);
+  if (asterisksMatches && asterisksMatches.length === 1 && text.startsWith('**')) {
+    return <strong className="font-bold text-stone-900 dark:text-stone-100">{text.replace(/^\*\*/, '')}</strong>;
+  }
+  
+  // Split by **
+  const parts = text.split('**');
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      return (
+        <strong key={i} className="font-bold text-stone-900 dark:text-stone-100">
+          {part}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
+function FormattedBenefits({ text }) {
+  if (!text) return null;
+  const lines = text.split('\n');
+  return (
+    <div className="space-y-1.5 text-xs leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={idx} className="h-0.5" />;
+        }
+        if (trimmed.startsWith('### ')) {
+          return (
+            <div key={idx} className="font-extrabold text-xs sm:text-sm text-amber-950 dark:text-amber-200 flex items-center gap-1.5 pb-0.5 pt-0.5">
+              <span>{trimmed.replace(/^###\s*/, '')}</span>
+            </div>
+          );
+        }
+        if (trimmed.startsWith('## ')) {
+          return (
+            <div key={idx} className="font-black text-sm text-amber-950 dark:text-amber-100 flex items-center gap-1.5 pb-0.5 pt-0.5">
+              <span>{trimmed.replace(/^##\s*/, '')}</span>
+            </div>
+          );
+        }
+        if (trimmed.startsWith('• ') || trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          const content = trimmed.replace(/^[•\-*]\s*/, '');
+          return (
+            <div key={idx} className="flex items-start gap-1.5 text-[11px] text-stone-700 dark:text-stone-300 pl-0.5">
+              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              <span>{parseInlineBold(content)}</span>
+            </div>
+          );
+        }
+        return (
+          <p key={idx} className="text-[11px] text-stone-600 dark:text-stone-300 leading-relaxed">
+            {parseInlineBold(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function PackageRenewalModal({
   isOpen,
   onClose,
@@ -29,7 +95,7 @@ export default function PackageRenewalModal({
   const plans = getMembershipPlans(settings);
   const currentPlanKey = session?.plan || 'trial';
   const [selectedPlanId, setSelectedPlanId] = useState(() => {
-    return currentPlanKey === 'trial' ? 'annual' : currentPlanKey;
+    return currentPlanKey === 'trial' ? 'lifetime' : currentPlanKey;
   });
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -38,7 +104,7 @@ export default function PackageRenewalModal({
 
   const countdown = getSubscriptionCountdown(session);
   const subStatus = checkUserSubscription(session);
-  const selectedPlan = plans[selectedPlanId] || plans.annual;
+  const selectedPlan = plans[selectedPlanId] || plans.lifetime || plans.annual;
 
   const handleCopyPromptPay = () => {
     const num = settings.promptPayNo || '0619614953';
@@ -135,43 +201,48 @@ export default function PackageRenewalModal({
             </div>
           )}
 
-          {/* 1. กรอบรายละเอียดสิทธิประโยชน์ส่วนกลางแค่ 1 กรอบด้านบน (ตามข้อกำหนดของผู้ใช้) */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-stone-50 to-amber-50/50 dark:from-amber-950/30 dark:via-stone-850 dark:to-stone-800 border border-amber-300/80 dark:border-amber-800/60 text-xs">
-            <div className="font-bold text-amber-950 dark:text-amber-200 flex items-center gap-1.5 mb-2 text-sm">
-              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>รายละเอียดและสิทธิประโยชน์ระบบมาตรฐาน (รวมทุกแพ็กเกจ)</span>
-            </div>
-            <p className="text-stone-600 dark:text-stone-300 leading-relaxed text-[11px]">
-              {settings.systemBenefits ||
-                'ระบบตรวจสอบภายใน อปท. (Audit-OS) ปลดล็อกฟังก์ชันครบวงจร 11 ขั้นตอน: การประเมินความเสี่ยง SOFCK, แผนตรวจสอบระยะยาว 3 ปี, แผนการตรวจสอบประจำปี, แผนการปฏิบัติงานรายโครงการ, การประชุมเปิด-ปิดตรวจ, กระดาษทำการตรวจสอบ, รายงานผล 5 องค์ประกอบ, ทะเบียนคุมติดตามผล 30/60 วัน, คณะกรรมการตรวจสอบ (Audit Committee), การควบคุมภายใน (แบบ ปค. 1, 4, 5, 6), การบริหารความเสี่ยง (แบบ บส. 1 - 5), คลังเอกสารระเบียบปฏิบัติ และเครื่องมือคำนวณ Factor F/ค่าปรับ'}
-            </p>
-            <div className="mt-2.5 pt-2 border-t border-amber-200/80 dark:border-amber-800/40 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] text-stone-600 dark:text-stone-400">
-              <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>ปลดล็อก 11 กระบวนการตรวจ</span>
+          {/* 1. กรอบรายละเอียดสิทธิประโยชน์ส่วนกลางแค่ 1 กรอบด้านบน (ดึงจาก Admin สอดคล้องกับหน้า Admin) */}
+          {(() => {
+            const rawBenefits = settings.platformBenefits || settings.systemBenefits || settings.trialBenefits || `### 🤝 สนับสนุนการพัฒนา Audit-OS\n**หากระบบนี้ช่วยให้งานของพี่ๆ ง่ายขึ้น สามารถร่วมสนับสนุนค่าใช้จ่ายในการดูแลและพัฒนาระบบได้ตามแพ็กเกจที่กำหนดเลยนะครับ\n**ขอบคุณพี่ๆ ทุกคนที่ร่วมทดลองใช้ ให้คำแนะนำ และช่วยกันทำให้ Audit-OS เป็นเครื่องมือที่ตอบโจทย์งานตรวจสอบภายในท้องถิ่นอย่างแท้จริง`;
+            const hasCustomHeading = rawBenefits.includes('###') || rawBenefits.includes('##');
+            return (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-stone-50 to-amber-50/50 dark:from-amber-950/30 dark:via-stone-850 dark:to-stone-800 border border-amber-300/80 dark:border-amber-800/60 text-xs shadow-xs">
+                {!hasCustomHeading && (
+                  <div className="font-bold text-amber-950 dark:text-amber-200 flex items-center gap-1.5 mb-2 text-sm">
+                    <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <span>รายละเอียดและสิทธิประโยชน์ระบบมาตรฐาน (รวมทุกแพ็กเกจ)</span>
+                  </div>
+                )}
+                <FormattedBenefits text={rawBenefits} />
+                <div className="mt-2.5 pt-2 border-t border-amber-200/80 dark:border-amber-800/40 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] text-stone-600 dark:text-stone-400">
+                  <div className="flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>ปลดล็อก 11 กระบวนการตรวจ</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>คลังระเบียบ & หนังสือสั่งการ สถ.</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>ระบบควบคุมภายใน ปค. 1-6</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>บริหารความเสี่ยง บส. 1-5</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>คำนวณ Factor F & ค่าปรับ</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>ระบบสำรองข้อมูล Multi-tenant</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>คลังระเบียบ & หนังสือสั่งการ สถ.</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>ระบบควบคุมภายใน ปค. 1-6</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>บริหารความเสี่ยง บส. 1-5</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>คำนวณ Factor F & ค่าปรับ</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>ระบบสำรองข้อมูล Multi-tenant</span>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* 2. รายการแพ็กเกจ เรียงต่อลงมา โดยไม่ต้องมีกรอบรายละเอียดซ้ำอีก (ตามข้อกำหนดของผู้ใช้) */}
           <div className="space-y-2.5">
@@ -247,12 +318,12 @@ export default function PackageRenewalModal({
                 </div>
               </label>
 
-              {/* แพ็กเกจ 3: รายปี PREMIUM (แนะนำ คุ้มค่าที่สุด) */}
+              {/* แพ็กเกจ 3: รายปี PREMIUM */}
               <label
                 onClick={() => setSelectedPlanId('annual')}
                 className={`p-3 sm:p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
                   selectedPlanId === 'annual'
-                    ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-2 ring-amber-500/40 shadow-md'
+                    ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-2 ring-amber-500/40 shadow-xs'
                     : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600 bg-white dark:bg-stone-850'
                 }`}
               >
@@ -267,8 +338,8 @@ export default function PackageRenewalModal({
                   <div>
                     <div className="font-extrabold text-xs sm:text-sm text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
                       <span>👑 {plans.annual.name}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black shadow-2xs">
-                        ⭐ แนะนำ คุ้มค่าที่สุด
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-800">
+                        รายปี (365 วัน)
                       </span>
                     </div>
                     <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
@@ -281,12 +352,12 @@ export default function PackageRenewalModal({
                 </div>
               </label>
 
-              {/* แพ็กเกจ 4: ตลอดชีพ LIFETIME VIP */}
+              {/* แพ็กเกจ 4: ตลอดชีพ LIFETIME VIP (แนะนำ คุ้มค่าที่สุด) */}
               <label
                 onClick={() => setSelectedPlanId('lifetime')}
                 className={`p-3 sm:p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
                   selectedPlanId === 'lifetime'
-                    ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-950/30 ring-2 ring-purple-500/40 shadow-xs'
+                    ? 'border-purple-600 dark:border-purple-500 bg-purple-50/60 dark:bg-purple-950/40 ring-2 ring-purple-500/50 shadow-md'
                     : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600 bg-white dark:bg-stone-850'
                 }`}
               >
@@ -301,17 +372,17 @@ export default function PackageRenewalModal({
                   <div>
                     <div className="font-extrabold text-xs sm:text-sm text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
                       <span>💎 {plans.lifetime.name}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 font-bold border border-purple-200 dark:border-purple-800">
-                        ตลอดชีพ
+                      <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 font-black shadow-2xs flex items-center gap-1">
+                        ⭐ แนะนำ คุ้มค่าที่สุด
                       </span>
                     </div>
                     <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
-                      ปลดล็อกถาวร ไม่จำกัดวันหมดอายุ ดูแลระยะยาว
+                      ปลดล็อกถาวร ไม่จำกัดวันหมดอายุ คุ้มค่าที่สุด ดูแลระยะยาว
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="font-black text-sm text-purple-700 dark:text-purple-400">{plans.lifetime.priceLabel}</span>
+                  <span className="font-black text-sm text-purple-700 dark:text-purple-300">{plans.lifetime.priceLabel}</span>
                 </div>
               </label>
             </div>

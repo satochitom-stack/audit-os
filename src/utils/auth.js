@@ -49,11 +49,12 @@ export function getSystemSettings() {
     bankAccountName: 'นายทุมมงคล ธรรมพิทักษ์',
     promptPayNo: '0619614953',
     qrCodeImage: '',
-    platformBenefits: 'ทดลองใช้งานเครื่องมือตรวจสอบภายใน อปท. ครบทุกฟังก์ชันฟรี 30 วัน\nบันทึกกระดาษทำการ และออกรายงานตัวอย่าง\nทดลองใช้เครื่องมือคำนวณและสุ่มตัวอย่าง\nส่งออกรายงานผลการตรวจสอบและหนังสือราชการอัตโนมัติ',
+    platformBenefits: '### 🤝 สนับสนุนการพัฒนา Audit-OS\n**หากระบบนี้ช่วยให้งานของพี่ๆ ง่ายขึ้น สามารถร่วมสนับสนุนค่าใช้จ่ายในการดูแลและพัฒนาระบบได้ตามแพ็กเกจที่กำหนดเลยนะครับ\n**ขอบคุณพี่ๆ ทุกคนที่ร่วมทดลองใช้ ให้คำแนะนำ และช่วยกันทำให้ Audit-OS เป็นเครื่องมือที่ตอบโจทย์งานตรวจสอบภายในท้องถิ่นอย่างแท้จริง',
+    systemBenefits: '### 🤝 สนับสนุนการพัฒนา Audit-OS\n**หากระบบนี้ช่วยให้งานของพี่ๆ ง่ายขึ้น สามารถร่วมสนับสนุนค่าใช้จ่ายในการดูแลและพัฒนาระบบได้ตามแพ็กเกจที่กำหนดเลยนะครับ\n**ขอบคุณพี่ๆ ทุกคนที่ร่วมทดลองใช้ ให้คำแนะนำ และช่วยกันทำให้ Audit-OS เป็นเครื่องมือที่ตอบโจทย์งานตรวจสอบภายในท้องถิ่นอย่างแท้จริง',
     trialBenefits: 'ทดลองใช้งานเครื่องมือตรวจสอบภายใน อปท. ครบทุกฟังก์ชันฟรี 30 วัน\nบันทึกกระดาษทำการ และออกรายงานตัวอย่าง\nทดลองใช้เครื่องมือคำนวณและสุ่มตัวอย่าง',
     vipBenefits: 'บันทึกกระดาษทำการ 6 ภารกิจ & ช่างไม่จำกัด\nเข้าถึงเครื่องมือคำนวณงานช่างและสุ่มตัวอย่างพัสดุ\nออกรายงานสรุปผลการตรวจสอบภายในและหนังสือราชการอัตโนมัติ\nสำรองข้อมูลบนคลาวด์ปลอดภัย แยกฐานข้อมูล อปท. เป็นเอกเทศ',
-    premiumBenefits: 'สิทธิ์ใช้งานระบบครบวงจร 12 ขั้นตอนตลอดปี\nคลังระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 ครบชุด\nกระดาษทำการ 6 ภารกิจ & ช่างมาตรฐาน ว 614 สมบูรณ์แบบ\nระบบทะเบียนคุมและติดตามผล CAPA ข้อทักท้วง 30 วัน\nอัปเดตระบบและเกณฑ์มาตรฐานกระทรวงการคลังฟรีตลอดปี',
-    lifetimeBenefits: 'สิทธิ์ใช้งานตลอดชีพ ไม่ต้องต่ออายุ\nเข้าถึงทุกฟังก์ชันและฟีเจอร์ใหม่ในอนาคตทั้งหมด\nบริการให้คำปรึกษาและทีมซัพพอร์ตระดับพรีเมียมพิเศษ\nอัปเดตระเบียบและเทมเพลตมาตรฐานตลอดอายุการใช้งาน',
+    premiumBenefits: 'สิทธิ์ใช้งานระบบครบวงจร 12 ขั้นตอนตลอดปี (365 วัน)\nคลังระเบียบ กฎหมาย สไลด์หลักสูตรทอง 2569 ครบชุด\nกระดาษทำการ 6 ภารกิจ & ช่างมาตรฐาน ว 614 สมบูรณ์แบบ\nระบบทะเบียนคุมและติดตามผล CAPA ข้อทักท้วง 30 วัน\nอัปเดตระบบและเกณฑ์มาตรฐานกระทรวงการคลังฟรีตลอดปี',
+    lifetimeBenefits: 'สิทธิ์ใช้งานตลอดชีพ แนะนำ คุ้มค่าที่สุด ไม่ต้องต่ออายุ\nเข้าถึงทุกฟังก์ชันและฟีเจอร์ใหม่ในอนาคตทั้งหมด\nบริการให้คำปรึกษาและทีมซัพพอร์ตระดับพรีเมียมพิเศษ\nอัปเดตระเบียบและเทมเพลตมาตรฐานตลอดอายุการใช้งาน',
     announcement: 'ยินดีต้อนรับสู่ Audit-OS แพลตฟอร์มบริหารงานตรวจสอบภายใน อปท. ประจำปีงบประมาณ พ.ศ. 2569',
     broadcastActive: true,
     broadcastDate: new Date().toISOString()
@@ -66,6 +67,8 @@ export function getSystemSettings() {
       if (parsed.monthlyPrice === 299 || !parsed.monthlyPrice) parsed.monthlyPrice = 60;
       if (parsed.annualPrice === 2990 || !parsed.annualPrice) parsed.annualPrice = 200;
       if (parsed.lifetimePrice === 9900 || !parsed.lifetimePrice) parsed.lifetimePrice = 590;
+      if (parsed.platformBenefits && !parsed.systemBenefits) parsed.systemBenefits = parsed.platformBenefits;
+      if (parsed.systemBenefits && !parsed.platformBenefits) parsed.platformBenefits = parsed.systemBenefits;
       return { ...defaults, ...parsed };
     }
   } catch (_) {}
@@ -102,8 +105,8 @@ export function getMembershipPlans(customSettings) {
       price: Number(settings.annualPrice) || 200,
       priceLabel: `฿${(Number(settings.annualPrice) || 200).toLocaleString()} / ปี`,
       durationDays: 365,
-      badgeColor: 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border-amber-200 shadow-lg shadow-amber-500/35 font-black',
-      description: settings.premiumBenefits || 'สมาชิก PREMIUM สูงสุด ประหยัด คุ้มค่าที่สุด พร้อมคลังเอกสารและระเบียบทอง 2569 ตลอดปี'
+      badgeColor: 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border-amber-200 shadow-md font-bold',
+      description: settings.premiumBenefits || 'สมาชิก PREMIUM ปฏิบัติงานต่อเนื่องตลอด 365 วัน พร้อมคลังเอกสารและระเบียบทอง 2569'
     },
     lifetime: {
       id: 'lifetime',
@@ -112,8 +115,8 @@ export function getMembershipPlans(customSettings) {
       price: Number(settings.lifetimePrice) || 590,
       priceLabel: `฿${(Number(settings.lifetimePrice) || 590).toLocaleString()} (ตลอดชีพ)`,
       durationDays: 9999,
-      badgeColor: 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-900 text-white border-purple-300 shadow-md font-black',
-      description: settings.lifetimeBenefits || 'สมาชิกตลอดชีพ ปลดล็อกถาวร'
+      badgeColor: 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-900 text-white border-purple-300 shadow-lg shadow-purple-600/35 font-black',
+      description: settings.lifetimeBenefits || 'สมาชิกตลอดชีพ แนะนำ คุ้มค่าที่สุด ปลดล็อกถาวร ไม่จำกัดระยะเวลา ดูแลและอัปเดตระยะยาว'
     }
   };
 }

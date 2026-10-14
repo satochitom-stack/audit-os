@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.2';
+const appVersion = '2.7.3';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.2: การแยกข้อมูลและโปรไฟล์ระหว่าง ADMIN กับ User อย่างสมบูรณ์ (Tenant Profile & Auditor Isolation)',
-        description: 'แก้ไขปัญหาข้อมูลและชื่อผู้ประเมิน/ผู้ตรวจสอบของ ADMIN ปรากฏในบัญชี User ทั่วไป โดยทำการแยกข้อมูล orgProfile และข้อมูลการจัดทำเอกสาร/ลายมือชื่อตาม Tenant และ Session ของผู้ใช้งานอย่างเด็ดขาด ป้องกันการรั่วไหลของข้อมูลระหว่าง ADMIN กับ User',
-        changeSummary: 'Tenant Profile Isolation, Clean User Workspace, Zero ADMIN leakage in user reports, banners, and memos, Strict effectiveAuditor sanitization'
+        title: 'Audit-OS v2.7.3: ซิงค์สิทธิประโยชน์สนับสนุนระบบจาก Admin และกำหนดแพ็กเกจตลอดชีพเป็นคุ้มค่าที่สุด (Synced Benefits & Lifetime VIP Most Valuable)',
+        description: 'ปรับปรุงหน้ารายละเอียดสิทธิประโยชน์ให้เชื่อมโยงข้อความจากหน้า Admin โดยตรง รองรับ Markdown และข้อความสนับสนุนระบบ พร้อมปรับย้ายป้ายแนะนำและคุ้มค่าที่สุดไปยังแพ็กเกจตลอดชีพ (LIFETIME VIP ฿590) อย่างชัดเจนและสมบูรณ์',
+        changeSummary: 'Admin Benefits Sync, Markdown-ready Benefits Rendering, Lifetime VIP Most Valuable badge, Annual Plan label update, Registration Plan Choice enhancement'
       };
       try {
         if (!fs.existsSync('./public')) {
