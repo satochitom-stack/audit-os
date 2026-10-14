@@ -211,7 +211,7 @@ export default function AdminBackofficeView({
   const [paymentForm, setPaymentForm] = useState({
     username: '',
     plan: 'annual',
-    amount: '2990',
+    amount: '200',
     method: 'พร้อมเพย์ / โอนเงินธนาคาร',
     refNo: '',
     date: new Date().toISOString().split('T')[0],
@@ -2126,8 +2126,8 @@ export default function AdminBackofficeView({
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ราคา (บาท)</label>
                       <input
                         type="number"
-                        value={settings.monthlyPrice || 299}
-                        onChange={(e) => setSettings({ ...settings, monthlyPrice: parseFloat(e.target.value) || 299 })}
+                        value={settings.monthlyPrice || 60}
+                        onChange={(e) => setSettings({ ...settings, monthlyPrice: parseFloat(e.target.value) || 60 })}
                         className="w-full p-2.5 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-stone-800 font-bold text-blue-600 text-xs"
                         required
                       />
@@ -2159,8 +2159,8 @@ export default function AdminBackofficeView({
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ราคา (บาท)</label>
                       <input
                         type="number"
-                        value={settings.annualPrice || 2990}
-                        onChange={(e) => setSettings({ ...settings, annualPrice: parseFloat(e.target.value) || 2990 })}
+                        value={settings.annualPrice || 200}
+                        onChange={(e) => setSettings({ ...settings, annualPrice: parseFloat(e.target.value) || 200 })}
                         className="w-full p-2.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 font-black text-amber-600 text-xs"
                         required
                       />
@@ -2192,8 +2192,8 @@ export default function AdminBackofficeView({
                       <label className="block text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">ราคา (บาท)</label>
                       <input
                         type="number"
-                        value={settings.lifetimePrice || 9900}
-                        onChange={(e) => setSettings({ ...settings, lifetimePrice: parseFloat(e.target.value) || 9900 })}
+                        value={settings.lifetimePrice || 590}
+                        onChange={(e) => setSettings({ ...settings, lifetimePrice: parseFloat(e.target.value) || 590 })}
                         className="w-full p-2.5 rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-stone-800 font-black text-purple-600 text-xs"
                         required
                       />
@@ -2239,7 +2239,7 @@ export default function AdminBackofficeView({
                 setPaymentForm({
                   username: users.find((u) => u.role !== 'admin')?.username || '',
                   plan: 'annual',
-                  amount: '2990',
+                  amount: '200',
                   method: 'พร้อมเพย์ / โอนเงินธนาคาร',
                   refNo: `TRX-${Date.now().toString().slice(-4)}`,
                   date: new Date().toISOString().split('T')[0],
@@ -2905,7 +2905,7 @@ export default function AdminBackofficeView({
                       />
                       <div>
                         <div className="font-bold text-indigo-700 dark:text-indigo-400">⭐ {settings.monthlyPlanName || 'VIP (รายเดือน)'}</div>
-                        <div className="text-[11px] text-stone-500">ปลดล็อกทุกกระดาษทำการ (30 วัน) • ฿{Number(settings.monthlyPrice || 299).toLocaleString()}</div>
+                        <div className="text-[11px] text-stone-500">ปลดล็อกทุกกระดาษทำการ (30 วัน) • ฿{Number(settings.monthlyPrice || 60).toLocaleString()}</div>
                       </div>
                     </div>
                   </label>
@@ -2925,7 +2925,7 @@ export default function AdminBackofficeView({
                       />
                       <div>
                         <div className="font-bold text-amber-600 dark:text-amber-400">👑 {settings.annualPlanName || 'PREMIUM (รายปี)'}</div>
-                        <div className="text-[11px] text-stone-500">ระดับสูงสุด พร้อมคลังระเบียบทอง 2569 (365 วัน) • ฿{Number(settings.annualPrice || 2990).toLocaleString()}</div>
+                        <div className="text-[11px] text-stone-500">ระดับสูงสุด พร้อมคลังระเบียบทอง 2569 (365 วัน) • ฿{Number(settings.annualPrice || 200).toLocaleString()}</div>
                       </div>
                     </div>
                   </label>
@@ -2945,7 +2945,7 @@ export default function AdminBackofficeView({
                       />
                       <div>
                         <div className="font-bold text-purple-700 dark:text-purple-400">💎 {settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'}</div>
-                        <div className="text-[11px] text-stone-500">ไม่จำกัดวันหมดอายุ (ถาวร) • ฿{Number(settings.lifetimePrice || 9900).toLocaleString()}</div>
+                        <div className="text-[11px] text-stone-500">ไม่จำกัดวันหมดอายุ (ถาวร) • ฿{Number(settings.lifetimePrice || 590).toLocaleString()}</div>
                       </div>
                     </div>
                   </label>
@@ -3302,9 +3302,9 @@ export default function AdminBackofficeView({
                     value={paymentForm.plan}
                     onChange={(e) => {
                       const p = e.target.value;
-                      let amt = (settings.annualPrice || 2990).toString();
-                      if (p === 'monthly') amt = (settings.monthlyPrice || 299).toString();
-                      else if (p === 'lifetime') amt = (settings.lifetimePrice || 9900).toString();
+                      let amt = (settings.annualPrice || 200).toString();
+                      if (p === 'monthly') amt = (settings.monthlyPrice || 60).toString();
+                      else if (p === 'lifetime') amt = (settings.lifetimePrice || 590).toString();
                       setPaymentForm({
                         ...paymentForm,
                         plan: p,
@@ -3313,9 +3313,9 @@ export default function AdminBackofficeView({
                     }}
                     className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
                   >
-                    <option value="annual">{settings.annualPlanName || 'PREMIUM (รายปี)'} (฿{Number(settings.annualPrice || 2990).toLocaleString()})</option>
-                    <option value="monthly">{settings.monthlyPlanName || 'VIP (รายเดือน)'} (฿{Number(settings.monthlyPrice || 299).toLocaleString()})</option>
-                    <option value="lifetime">{settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'} (฿{Number(settings.lifetimePrice || 9900).toLocaleString()})</option>
+                    <option value="annual">{settings.annualPlanName || 'PREMIUM (รายปี)'} (฿{Number(settings.annualPrice || 200).toLocaleString()})</option>
+                    <option value="monthly">{settings.monthlyPlanName || 'VIP (รายเดือน)'} (฿{Number(settings.monthlyPrice || 60).toLocaleString()})</option>
+                    <option value="lifetime">{settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)'} (฿{Number(settings.lifetimePrice || 590).toLocaleString()})</option>
                   </select>
                 </div>
 

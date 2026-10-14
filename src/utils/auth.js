@@ -40,9 +40,9 @@ export function getSystemSettings() {
     monthlyPlanName: 'VIP (รายเดือน)',
     annualPlanName: 'PREMIUM (รายปี)',
     lifetimePlanName: 'LIFETIME VIP (ตลอดชีพ)',
-    monthlyPrice: 299,
-    annualPrice: 2990,
-    lifetimePrice: 9900,
+    monthlyPrice: 60,
+    annualPrice: 200,
+    lifetimePrice: 590,
     bankName: 'ธนาคารกสิกรไทย / กรุงไทย',
     bankAccountNo: '061-9-61495-3',
     bankAccountName: 'นายทุมมงคล ธรรมพิทักษ์',
@@ -61,6 +61,10 @@ export function getSystemSettings() {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      // Auto-migrate old default prices if they match previous defaults
+      if (parsed.monthlyPrice === 299 || !parsed.monthlyPrice) parsed.monthlyPrice = 60;
+      if (parsed.annualPrice === 2990 || !parsed.annualPrice) parsed.annualPrice = 200;
+      if (parsed.lifetimePrice === 9900 || !parsed.lifetimePrice) parsed.lifetimePrice = 590;
       return { ...defaults, ...parsed };
     }
   } catch (_) {}
@@ -84,8 +88,8 @@ export function getMembershipPlans(customSettings) {
       id: 'monthly',
       name: settings.monthlyPlanName || 'VIP (รายเดือน)',
       tier: 'VIP',
-      price: Number(settings.monthlyPrice) || 299,
-      priceLabel: `฿${(Number(settings.monthlyPrice) || 299).toLocaleString()} / เดือน`,
+      price: Number(settings.monthlyPrice) || 60,
+      priceLabel: `฿${(Number(settings.monthlyPrice) || 60).toLocaleString()} / เดือน`,
       durationDays: 30,
       badgeColor: 'bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white border-blue-400/60 shadow-md shadow-indigo-600/30',
       description: settings.vipBenefits || 'สมาชิก VIP สำหรับปฏิบัติงานตรวจสอบภายใน อปท. ต่อเนื่อง ปลดล็อกทุกกระดาษทำการ'
@@ -94,8 +98,8 @@ export function getMembershipPlans(customSettings) {
       id: 'annual',
       name: settings.annualPlanName || 'PREMIUM (รายปี)',
       tier: 'PREMIUM',
-      price: Number(settings.annualPrice) || 2990,
-      priceLabel: `฿${(Number(settings.annualPrice) || 2990).toLocaleString()} / ปี`,
+      price: Number(settings.annualPrice) || 200,
+      priceLabel: `฿${(Number(settings.annualPrice) || 200).toLocaleString()} / ปี`,
       durationDays: 365,
       badgeColor: 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 text-stone-950 border-amber-200 shadow-lg shadow-amber-500/35 font-black',
       description: settings.premiumBenefits || 'สมาชิก PREMIUM สูงสุด ประหยัด คุ้มค่าที่สุด พร้อมคลังเอกสารและระเบียบทอง 2569 ตลอดปี'
@@ -104,8 +108,8 @@ export function getMembershipPlans(customSettings) {
       id: 'lifetime',
       name: settings.lifetimePlanName || 'LIFETIME VIP (ตลอดชีพ)',
       tier: 'LIFETIME',
-      price: Number(settings.lifetimePrice) || 9900,
-      priceLabel: `฿${(Number(settings.lifetimePrice) || 9900).toLocaleString()} (ตลอดชีพ)`,
+      price: Number(settings.lifetimePrice) || 590,
+      priceLabel: `฿${(Number(settings.lifetimePrice) || 590).toLocaleString()} (ตลอดชีพ)`,
       durationDays: 9999,
       badgeColor: 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-900 text-white border-purple-300 shadow-md font-black',
       description: settings.lifetimeBenefits || 'สมาชิกตลอดชีพ ปลดล็อกถาวร'

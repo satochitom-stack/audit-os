@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.5.5';
+const appVersion = '2.6.2';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS อัปเดตเวอร์ชัน 2.5.5 เรียบร้อยแล้ว!',
-        description: 'อัปเดตระบบสมาชิกอัตโนมัติ 30 วัน, นาฬิกานับถอยหลังอายุสมาชิกแบบเรียลไทม์, กำหนดวันหมดอายุโดยตรงใน Admin, ซ่อนรหัสผ่านของผู้ใช้เพื่อความปลอดภัยขั้นสูงสุด และระบบลืมรหัสผ่านด้วยตนเอง',
-        changeSummary: 'Instant 30-day trial, Live Countdown Timer, Admin Expiry Date Picker, Strict Password Privacy, Self-Service Password Reset'
+        title: 'Audit-OS อัปเดตโครงสร้างราคาแพ็กเกจใหม่ (v2.6.2)',
+        description: 'ปรับลดราคาแพ็กเกจสนับสนุนนักตรวจสอบภายใน อปท. เข้าถึงได้ง่าย สบายกระเป๋า: รายเดือน 60 บาท, รายปี 200 บาท, และตลอดชีพ 590 บาท',
+        changeSummary: 'New affordable subscription packages: 60/mo, 200/yr, 590/lifetime'
       };
       try {
         if (!fs.existsSync('./public')) {

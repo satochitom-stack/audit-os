@@ -938,11 +938,15 @@ export default function WelcomeView({
               <div className="space-y-1.5 text-[11px] pt-1">
                 <div className="flex justify-between py-1 border-b border-stone-200/60">
                   <span className="text-stone-500">อัตราค่าสมาชิกรายปี:</span>
-                  <span className="font-bold text-amber-900">฿{systemSettings.annualPrice || '2,990'} / ปี</span>
+                  <span className="font-bold text-amber-900">฿{systemSettings.annualPrice || '200'} / ปี</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-stone-200/60">
                   <span className="text-stone-500">อัตราค่าสมาชิกรายเดือน:</span>
-                  <span className="font-bold text-stone-800">฿{systemSettings.monthlyPrice || '299'} / เดือน</span>
+                  <span className="font-bold text-stone-800">฿{systemSettings.monthlyPrice || '60'} / เดือน</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-stone-200/60">
+                  <span className="text-stone-500">อัตราค่าสมาชิกตลอดชีพ:</span>
+                  <span className="font-bold text-purple-800">฿{systemSettings.lifetimePrice || '590'} (ตลอดชีพ)</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-stone-200/60">
                   <span className="text-stone-500">พร้อมเพย์ (PromptPay):</span>
