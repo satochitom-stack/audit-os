@@ -11,7 +11,6 @@ import {
   EyeOff,
   AlertCircle,
   FileText,
-  FileSpreadsheet,
   ShieldCheck,
   Award,
   BookOpen,
@@ -25,8 +24,7 @@ import {
   Mail,
   Info,
   GitFork,
-  LayoutGrid,
-  Zap
+  LayoutGrid
 } from 'lucide-react';
 import { ResponsiveHeroBanner } from './ui/responsive-hero-banner';
 import OrgChartStructure from './OrgChartStructure';
@@ -403,14 +401,7 @@ export default function WelcomeView({
               className="px-3.5 py-1.5 rounded-full hover:text-stone-900 dark:hover:text-white hover:bg-white dark:hover:bg-stone-700 hover:shadow-2xs transition-all cursor-pointer flex items-center space-x-1.5"
             >
               <Building className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>หน่วยรับตรวจ {auditeeDepartments.length} หน่วย</span>
-            </a>
-            <a
-              href="#byod"
-              className="px-3.5 py-1.5 rounded-full hover:text-stone-900 dark:hover:text-white hover:bg-white dark:hover:bg-stone-700 hover:shadow-2xs transition-all cursor-pointer flex items-center space-x-1.5"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>ฐานข้อมูล BYOD Google Sheets</span>
+              <span>แผนภูมิโครงสร้าง & หน่วยรับตรวจ ({auditeeDepartments.length} หน่วย)</span>
             </a>
           </nav>
 
@@ -476,42 +467,9 @@ export default function WelcomeView({
           description=""
           partnersTitle={`โครงสร้าง ${auditeeDepartments.length} หน่วยรับตรวจที่เชื่อมโยงในระบบ (CONNECTED DEPARTMENTS)`}
           navLinks={[
-            { label: "แผนภูมิโครงสร้าง & หน่วยรับตรวจ", href: "#departments", isActive: true },
-            { label: "ฐานข้อมูล BYOD Google Sheets", href: "#byod", isActive: false }
+            { label: `แผนภูมิโครงสร้าง & หน่วยรับตรวจ (${auditeeDepartments.length} หน่วย)`, href: "#departments", isActive: true }
           ]}
         />
-      </section>
-
-      {/* 2.5 Bring Your Own Database (BYOD) Data Sovereignty Banner */}
-      <section id="byod" className="pt-2 pb-4 px-2.5 sm:px-4 lg:px-6 max-w-[1440px] 2xl:max-w-[1560px] mx-auto">
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-950 via-stone-900 to-stone-900 text-white shadow-xl border border-emerald-500/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center space-x-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-inner">
-              <FileSpreadsheet className="w-6 h-6 text-emerald-400" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-extrabold text-sm sm:text-base text-emerald-200">
-                  สถาปัตยกรรม Bring Your Own Database (BYOD) & Data Sovereignty
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black border border-emerald-400/30">
-                  100% กรรมสิทธิ์ข้อมูลของ อปท.
-                </span>
-              </div>
-              <p className="text-xs text-stone-300 leading-relaxed max-w-2xl">
-                กระดาษทำการ แผนตรวจ และรายงานผลทั้งหมด จัดเก็บบน Google Sheets ใน Google Drive ส่วนตัวของหน่วยงานท่านเองโดยตรง ปลอดภัยสูงสุดตามระเบียบรักษาความลับราชการ และลดค่าบริการเหลือเพียง 60/ด., 200/ปี, 590/ตลอดชีพ
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenCloudSync || handleDashboardEntry}
-            className="py-2.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-stone-950 font-black text-xs transition-all shadow-md shadow-emerald-600/30 shrink-0 cursor-pointer flex items-center justify-center gap-2 self-start md:self-auto"
-          >
-            <Zap className="w-4 h-4 text-stone-950" />
-            <span>เชื่อมต่อ Google Sheets</span>
-          </button>
-        </div>
       </section>
 
       {/* 3. Departments Grid & Flowchart (หน่วยรับตรวจและโครงสร้าง อปท.) */}

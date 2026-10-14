@@ -66,9 +66,7 @@ export const ResponsiveHeroBanner: React.FC<ResponsiveHeroBannerProps> = ({
   subLogoText = "ระบบตรวจสอบภายใน อปท.",
   backgroundImageUrl = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80",
   navLinks = [
-    { label: "ภาพรวมระบบ", href: "#welcome-features", isActive: true },
-    { label: "หน่วยรับตรวจและส่วนราชการ", href: "#departments" },
-    { label: "ฟังก์ชันการตรวจสอบ", href: "#modules" }
+    { label: "แผนภูมิโครงสร้าง & หน่วยรับตรวจ", href: "#departments", isActive: true }
   ],
   ctaButtonText = "เข้าสู่ระบบ",
   onCtaClick,

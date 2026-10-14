@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.4';
+const appVersion = '2.7.5';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.4: ปรับปรุงโครงสร้างเมนู คลีนสัญลักษณ์ซ้อน และจัดระเบียบหน้าแรกให้สะอาดตา (Streamlined Navigation & Clean Landing UI)',
-        description: 'ปรับลดความซ้ำซ้อนของเมนูในระบบทั้งหมด ตัดสัญลักษณ์และอีโมจิที่ซ้อนกันออก จัดกลุ่มเมนูใน User Dropdown ให้ชัดเจน และคลีน Floating Header หน้าแรกให้สบายตา พร้อมป้องกันข้อมูลของ Admin หลุดไปยังมุมมองผู้ใช้ทั่วไป',
-        changeSummary: 'Streamlined Navigation Menus, Clean User Dropdown, No Duplicate Emojis/Icons, Clean Landing Page Header, Single CTA Action, Tenant Org Leakage Prevention'
+        title: 'Audit-OS v2.7.5: นำกรอบสถาปัตยกรรม BYOD ออกจากหน้าแรก และปรับแถบนำทางให้กระชับเรียบหรู (Removed Redundant Architecture Banner & Streamlined Landing UI)',
+        description: 'นำบล็อกกรอบสถาปัตยกรรม Bring Your Own Database (BYOD) ออกจากหน้าแรกเพื่อขจัดความซ้ำซ้อน เนื่องจากมีเมนูจัดการฐานข้อมูล Google Sheets อย่างสมบูรณ์อยู่ภายในระบบแล้ว พร้อมปรับแถบ Navigation เชื่อมโยงตรงสู่แผนภูมิโครงสร้างหน่วยรับตรวจ',
+        changeSummary: 'Remove BYOD architecture banner from WelcomeView, Clean Single Anchor Navigation, Remove unused icons and dead links'
       };
       try {
         if (!fs.existsSync('./public')) {
