@@ -1,17 +1,21 @@
 import React from 'react';
+import { toThaiDigits, formatSarabanDate, GARUDA_SVG_PATH, SARABAN_CONFIG } from '../utils/sarabanUtils';
 
 /**
- * ตราครุฑราชการ (Garuda Emblem) ขนาดมาตรฐาน 1.5 เซนติเมตร
+ * ตราครุฑราชการ (Garuda Emblem) ขนาดมาตรฐาน ๑.๕ เซนติเมตร
  * ตามระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖ ภาคผนวก ๒ แบบที่ ๒ (บันทึกข้อความ)
  */
-export function GarudaEmblem({ className = 'w-10 h-10' }) {
+export function GarudaEmblem({ className = 'w-14 h-14', size = 57 }) {
   return (
     <svg
       viewBox="0 0 100 100"
+      width={size}
+      height={size}
       className={`${className} fill-current text-slate-900 dark:text-slate-100 shrink-0`}
-      aria-label="ตราครุฑราชการ"
+      aria-label="ตราครุฑราชการ ๑.๕ เซนติเมตร"
+      style={{ display: 'inline-block' }}
     >
-      <path d="M50 3 C53 10, 58 15, 66 14 C62 21, 56 25, 54 32 C60 30, 70 25, 80 21 C76 31, 68 38, 60 41 C66 45, 75 49, 83 51 C73 57, 63 55, 55 53 C53 62, 52 72, 50 82 C48 72, 47 62, 45 53 C37 55, 27 57, 17 51 C25 49, 34 45, 40 41 C32 38, 24 31, 20 21 C30 25, 40 30, 46 32 C44 25, 38 21, 34 14 C42 15, 47 10, 50 3 Z M50 32 C54 32, 57 35, 57 39 C57 43, 54 46, 50 46 C46 46, 43 43, 43 39 C43 35, 46 32, 50 32 Z M35 56 C42 62, 47 70, 50 80 C53 70, 58 62, 65 56 C60 62, 55 72, 50 88 C45 72, 40 62, 35 56 Z" />
+      <path d={GARUDA_SVG_PATH} />
     </svg>
   );
 }
@@ -19,6 +23,11 @@ export function GarudaEmblem({ className = 'w-10 h-10' }) {
 /**
  * แบบฟอร์มบันทึกข้อความราชการ (Official Thai Government Memorandum - Form 2)
  * ออกแบบถูกต้องตามระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖ และที่แก้ไขเพิ่มเติม
+ * - หัวหนังสือ: คำว่า "บันทึกข้อความ" ตัวพิมพ์หนา ๒๙ พอยต์ กึ่งกลาง ตราครุฑสูง ๑.๕ ซม. ชิดมุมบนซ้าย
+ * - ตัวอักษร: TH Sarabun PSK / New ขนาด ๑๖ พอยต์
+ * - วันที่: มีคำว่า "วันที่" นำหน้า
+ * - ตัวเลข: แปลงตัวเลขอารบิกทั้งหมดให้เป็นตัวเลขไทย (๐-๙)
+ * - ระยะขอบ: กั้นหน้า ๓ ซม. กั้นหลัง ๒ ซม. กั้นบน ๒.๕ ซม. กั้นล่าง ๒ ซม. ย่อหน้า ๒.๕ ซม.
  */
 export default function OfficialThaiMemo({
   agency = 'หน่วยตรวจสอบภายใน องค์การบริหารส่วนตำบลต้นแบบ',
@@ -45,32 +54,39 @@ export default function OfficialThaiMemo({
   customReviewBoxes = null,
   className = ''
 }) {
+  const displayPhone = toThaiDigits(phone);
+  const displayDocNumber = toThaiDigits(docNumber) || 'อบ ............../...............';
+  const displayDate = date ? formatSarabanDate(date, { isExternal: false }) : 'วันที่ ...... เดือน ................................ พ.ศ. ............';
+  const displaySubject = toThaiDigits(subject);
+  const displayTo = toThaiDigits(to);
+
   return (
     <div
-      className={`official-saraban-memo bg-white text-black p-8 sm:p-14 max-w-4xl mx-auto shadow-md border border-stone-300 print:shadow-none print:border-none print:p-0 print:m-0 print:max-w-none print:text-black ${className}`}
+      className={`official-saraban-memo bg-white text-black p-6 sm:p-12 max-w-4xl mx-auto shadow-md border border-stone-300 print:shadow-none print:border-none print:p-0 print:m-0 print:max-w-none print:text-black ${className}`}
       style={{
-        fontFamily: "'Sarabun', 'TH Sarabun New', 'Angsana New', 'Cordia New', Tahoma, sans-serif",
-        lineHeight: 1.6,
-        fontSize: '15px'
+        fontFamily: SARABAN_CONFIG.fontFamily,
+        lineHeight: 1.35,
+        fontSize: '16pt',
+        boxSizing: 'border-box'
       }}
     >
       {/* =========================================================================
           ส่วนหัวบันทึกข้อความ (ตามแบบที่ ๒ ท้ายระเบียบฯ)
-          - ครุฑสูง ๑.๕ ซม. อยู่มุมบนซ้าย
-          - คำว่า "บันทึกข้อความ" ตัวพิมพ์หนา ๒๙ พอยท์ อยู่กึ่งกลาง
+          - ครุฑสูง ๑.๕ ซม. (57px) ชิดมุมบนซ้าย
+          - คำว่า "บันทึกข้อความ" ตัวพิมพ์หนา ๒๙ พอยต์ อยู่กึ่งกลางหน้ากระดาษ
       ========================================================================= */}
       <div className="relative pb-3 border-b-2 border-black">
-        {/* ครุฑมุมบนซ้าย */}
         <div className="flex items-start">
-          <div className="w-14 h-14 flex items-center justify-center shrink-0">
-            <GarudaEmblem className="w-12 h-12" />
+          {/* ครุฑมุมบนซ้าย ขนาด ๑.๕ ซม. */}
+          <div className="w-14 h-14 flex items-center justify-start shrink-0">
+            <GarudaEmblem className="w-14 h-14" size={57} />
           </div>
 
-          {/* คำว่า "บันทึกข้อความ" กึ่งกลางหน้า */}
+          {/* คำว่า "บันทึกข้อความ" ๒๙ พอยต์ กึ่งกลางหน้า */}
           <div className="flex-1 text-center pr-14">
             <h1
               className="font-bold tracking-normal inline-block text-black"
-              style={{ fontSize: '28px', letterSpacing: '1px' }}
+              style={{ fontSize: '29pt', lineHeight: 1.2, letterSpacing: '1px' }}
             >
               บันทึกข้อความ
             </h1>
@@ -78,12 +94,12 @@ export default function OfficialThaiMemo({
         </div>
 
         {/* รายละเอียดส่วนราชการ, ที่, วันที่, เรื่อง */}
-        <div className="mt-3 space-y-1.5 text-[15px] text-black">
+        <div className="mt-3 space-y-1 text-[16pt] text-black">
           {/* ส่วนราชการ */}
           <div className="flex items-baseline">
             <span className="font-bold shrink-0">ส่วนราชการ</span>
             <span className="ml-3 flex-1 border-b border-dotted border-stone-400 print:border-none">
-              {agency} {phone ? `โทร. ${phone}` : ''}
+              {agency} {displayPhone ? `โทร. ${displayPhone}` : ''}
             </span>
           </div>
 
@@ -92,13 +108,13 @@ export default function OfficialThaiMemo({
             <div className="flex items-baseline">
               <span className="font-bold shrink-0">ที่</span>
               <span className="ml-3 flex-1 border-b border-dotted border-stone-400 print:border-none">
-                {docNumber || 'อบ ............../...............'}
+                {displayDocNumber}
               </span>
             </div>
             <div className="flex items-baseline">
-              <span className="font-bold shrink-0">วันที่</span>
-              <span className="ml-3 flex-1 border-b border-dotted border-stone-400 print:border-none">
-                {date || '...... เดือน ................................ พ.ศ. ............'}
+              <span className="font-bold shrink-0"></span>
+              <span className="flex-1 border-b border-dotted border-stone-400 print:border-none">
+                {displayDate}
               </span>
             </div>
           </div>
@@ -107,7 +123,7 @@ export default function OfficialThaiMemo({
           <div className="flex items-baseline pt-0.5">
             <span className="font-bold shrink-0">เรื่อง</span>
             <span className="ml-3 font-bold flex-1 border-b border-dotted border-stone-400 print:border-none">
-              {subject}
+              {displaySubject}
             </span>
           </div>
         </div>
@@ -116,17 +132,18 @@ export default function OfficialThaiMemo({
       {/* =========================================================================
           คำขึ้นต้น (เรียน)
       ========================================================================= */}
-      <div className="pt-4 pb-2 text-[15px]">
+      <div className="pt-3 pb-2 text-[16pt]">
         <span className="font-bold">เรียน</span>
-        <span className="ml-3 font-medium">{to}</span>
+        <span className="ml-3">{displayTo}</span>
       </div>
 
       {/* =========================================================================
           เนื้อความบันทึกข้อความ (Children)
-          - ย่อหน้า ๒.๕ ซม. (indent-10)
-          - จัดชิดขอบและกระชับตามแบบหนังสือราชการ
+          - ย่อหน้า ๒.๕ ซม.
+          - จัดขอบชิดสองข้าง (text-justify)
+          - ขนาดตัวอักษร ๑๖ พอยต์
       ========================================================================= */}
-      <div className="space-y-4 py-2 text-justify text-[15px] leading-relaxed text-black">
+      <div className="space-y-4 py-2 text-justify text-[16pt] leading-relaxed text-black">
         {children}
       </div>
 
@@ -134,15 +151,15 @@ export default function OfficialThaiMemo({
           ส่วนลงลายมือชื่อผู้รายงาน (ผู้ตรวจสอบภายใน)
           - เยื้องไปทางด้านขวา (ประมาณกึ่งกลางถึงขวา)
       ========================================================================= */}
-      <div className="pt-8 flex justify-end">
-        <div className="w-64 text-center space-y-5">
+      <div className="pt-6 flex justify-end">
+        <div className="w-72 text-center space-y-4 text-[16pt]">
           <div className="text-stone-700">
             (ลงชื่อ)........................................................
           </div>
           <div className="space-y-0.5">
-            <div className="font-bold">({signatory.name || '........................................................'})</div>
-            <div className="text-sm">{signatory.position || 'นักวิชาการตรวจสอบภายใน'}</div>
-            {signatory.role && <div className="text-xs text-stone-600">({signatory.role})</div>}
+            <div className="font-bold">({toThaiDigits(signatory?.name) || '........................................................'})</div>
+            <div>{toThaiDigits(signatory?.position) || 'นักวิชาการตรวจสอบภายใน'}</div>
+            {signatory?.role && <div className="text-sm text-stone-600">({toThaiDigits(signatory.role)})</div>}
           </div>
         </div>
       </div>
@@ -153,20 +170,20 @@ export default function OfficialThaiMemo({
       ========================================================================= */}
       {showReviewBoxes && (
         customReviewBoxes ? (
-          <div className="mt-10 pt-4 border-t-2 border-black">
+          <div className="mt-8 pt-3 border-t-2 border-black">
             {customReviewBoxes}
           </div>
         ) : (
-          <div className="mt-10 pt-4 border-t-2 border-black grid grid-cols-1 sm:grid-cols-2 gap-6 text-[13px] text-black">
+          <div className="mt-8 pt-3 border-t-2 border-black grid grid-cols-1 sm:grid-cols-2 gap-5 text-[14pt] text-black">
             {/* ฝั่งซ้าย: ความเห็นของปลัด อปท. */}
-            <div className="border border-stone-400 p-3.5 rounded-none space-y-2.5 bg-white">
-              <div className="font-bold underline text-[14px]">
+            <div className="border border-stone-400 p-3 rounded-none space-y-2 bg-white">
+              <div className="font-bold underline text-[15pt]">
                 ความเห็นของปลัดองค์กรปกครองส่วนท้องถิ่น
               </div>
-              <div className="text-xs">
+              <div className="text-[14pt]">
                 เรียน นายกองค์กรปกครองส่วนท้องถิ่น
               </div>
-              <div className="space-y-1 text-xs">
+              <div className="space-y-1 text-[13.5pt]">
                 <label className="flex items-start space-x-2">
                   <span className="font-bold text-sm">[  ]</span>
                   <span>เพื่อโปรดทราบ</span>
@@ -184,20 +201,20 @@ export default function OfficialThaiMemo({
                 </label>
               </div>
 
-              <div className="pt-6 text-center space-y-1">
+              <div className="pt-4 text-center space-y-0.5 text-[14pt]">
                 <div>(ลงชื่อ)........................................................</div>
-                <div className="font-bold">({palatReview?.name || '........................................................'})</div>
-                <div className="text-xs text-stone-600">{palatReview?.position || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
-                <div className="text-[11px] text-stone-500">วันที่ ...... / ...... / ......</div>
+                <div className="font-bold">({toThaiDigits(palatReview?.name) || '........................................................'})</div>
+                <div className="text-sm text-stone-600">{toThaiDigits(palatReview?.position) || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
+                <div className="text-xs text-stone-500">วันที่ ...... / ...... / ......</div>
               </div>
             </div>
 
             {/* ฝั่งขวา: คำสั่งการของนายก อปท. */}
-            <div className="border border-stone-400 p-3.5 rounded-none space-y-2.5 bg-white">
-              <div className="font-bold underline text-[14px]">
+            <div className="border border-stone-400 p-3 rounded-none space-y-2 bg-white">
+              <div className="font-bold underline text-[15pt]">
                 คำสั่งการของนายกองค์กรปกครองส่วนท้องถิ่น
               </div>
-              <div className="space-y-1 text-xs pt-3">
+              <div className="space-y-1 text-[13.5pt] pt-2">
                 <label className="flex items-start space-x-2">
                   <span className="font-bold text-sm">[  ]</span>
                   <span>ทราบ</span>
@@ -219,11 +236,11 @@ export default function OfficialThaiMemo({
                 </label>
               </div>
 
-              <div className="pt-6 text-center space-y-1">
+              <div className="pt-4 text-center space-y-0.5 text-[14pt]">
                 <div>(ลงชื่อ)........................................................</div>
-                <div className="font-bold">({executiveOrder?.name || '........................................................'})</div>
-                <div className="text-xs text-stone-600">{executiveOrder?.position || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
-                <div className="text-[11px] text-stone-500">วันที่ ...... / ...... / ......</div>
+                <div className="font-bold">({toThaiDigits(executiveOrder?.name) || '........................................................'})</div>
+                <div className="text-sm text-stone-600">{toThaiDigits(executiveOrder?.position) || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
+                <div className="text-xs text-stone-500">วันที่ ...... / ...... / ......</div>
               </div>
             </div>
           </div>

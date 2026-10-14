@@ -20,7 +20,16 @@ import {
 } from 'lucide-react';
 import { exportAnnualAuditReportExcel } from '../services/reportExportService';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
-import { exportDocumentToWord, wrapWordHtml, THAI_GARUDA_SVG } from '../utils/documentExportUtils';
+import { exportDocumentToWord, wrapWordHtml } from '../utils/documentExportUtils';
+import {
+  toThaiDigits,
+  formatSarabanDate,
+  GARUDA_SVG_PATH,
+  GARUDA_SVG_1_5CM_HTML,
+  GARUDA_SVG_3CM_HTML,
+  SARABAN_CONFIG
+} from '../utils/sarabanUtils';
+import { GarudaEmblem } from './OfficialThaiMemo';
 
 export default function AnnualAuditReportView({
   orgProfile = {},
@@ -78,16 +87,16 @@ export default function AnnualAuditReportView({
     const reportTitle = `รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear}`;
 
     const bodyContent = `
-      <!-- หนังสือนำส่ง / บันทึกข้อความ -->
+      <!-- หนังสือนำส่ง / บันทึกข้อความ (แบบที่ ๒ ตราครุฑ ๑.๕ ซม. ชิดมุมบนซ้าย) -->
       <table style="width: 100%; border: none; margin-bottom: 8pt; font-family: 'TH Sarabun PSK';">
         <tr>
-          <td style="width: 15%; vertical-align: top; text-align: left;">
-            <div style="width: 60pt; height: 60pt;">${THAI_GARUDA_SVG}</div>
+          <td style="width: 20%; vertical-align: top; text-align: left;">
+            ${GARUDA_SVG_1_5CM_HTML}
           </td>
-          <td style="width: 70%; text-align: center; vertical-align: middle;">
+          <td style="width: 60%; text-align: center; vertical-align: middle;">
             <p style="margin: 0; font-size: 29pt; font-weight: bold; font-family: 'TH Sarabun PSK';">บันทึกข้อความ</p>
           </td>
-          <td style="width: 15%;"></td>
+          <td style="width: 20%;"></td>
         </tr>
       </table>
 
@@ -154,8 +163,9 @@ export default function AnnualAuditReportView({
       <!-- PAGE BREAK -->
       <br clear="all" style="page-break-before:always" />
 
-      <!-- ส่วนรายงานผลการตรวจสอบภายในประจำปี -->
+      <!-- ส่วนรายงานผลการตรวจสอบภายในประจำปี (ตราครุฑ ๓ ซม. กึ่งกลาง) -->
       <div style="text-align: center; margin-bottom: 20pt; font-family: 'TH Sarabun PSK';">
+        <div style="text-align: center; margin-bottom: 10pt;">${GARUDA_SVG_3CM_HTML}</div>
         <p style="margin: 0; font-size: 20pt; font-weight: bold;">${reportTitle}</p>
         <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold;">${orgName}</p>
         <p style="margin: 2pt 0 0 0; font-size: 16pt;">หน่วยตรวจสอบภายใน: ${agencyName}</p>
@@ -320,21 +330,19 @@ export default function AnnualAuditReportView({
         ======================================================================= */}
         {showCoverMemo && (
           <div className="space-y-6 pb-8 border-b-2 border-slate-900 dark:border-slate-600">
-            {/* Garuda Emblem and Header */}
-            <div className="relative text-center pb-4">
-              {/* Garuda Emblem SVG */}
-              <div className="w-16 h-16 mx-auto mb-2 text-slate-900 dark:text-slate-100 flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-14 h-14 fill-current">
-                  <path d="M50 5 C55 15, 65 20, 75 18 C70 28, 62 32, 60 40 C68 38, 80 32, 90 28 C85 40, 75 48, 65 52 C72 58, 82 62, 92 65 C80 72, 68 70, 58 68 C56 78, 54 88, 50 95 C46 88, 44 78, 42 68 C32 70, 20 72, 8 65 C18 62, 28 58, 35 52 C25 48, 15 40, 10 28 C20 32, 32 38, 40 40 C38 32, 30 28, 25 18 C35 20, 45 15, 50 5 Z" />
-                </svg>
+            {/* Garuda Emblem 1.5 cm Top-Left & 29pt Centered Header */}
+            <div className="grid grid-cols-[auto_1fr_auto] items-center pb-3">
+              <div className="w-14">
+                <GarudaEmblem size={57} />
               </div>
-              <h1 className="text-2xl font-black tracking-wider text-slate-900 dark:text-slate-100">
+              <h1 className="text-center text-3xl sm:text-4xl font-black tracking-wide text-slate-900 dark:text-slate-100 font-serif">
                 บันทึกข้อความ
               </h1>
+              <div className="w-14" aria-hidden="true" />
             </div>
 
             {/* Memorandum Header Fields */}
-            <div className="space-y-2 border-b border-slate-300 dark:border-slate-700 pb-4 text-xs font-semibold">
+            <div className="space-y-2 border-b-2 border-slate-900 dark:border-slate-600 pb-4 text-xs font-semibold">
               <div className="flex flex-col sm:flex-row justify-between gap-1">
                 <div>
                   <span className="font-bold">ส่วนราชการ: </span>
@@ -342,24 +350,24 @@ export default function AnnualAuditReportView({
                 </div>
                 <div>
                   <span className="font-bold">ที่: </span>
-                  <span className="font-normal font-mono">อบ 78408 / ......</span>
+                  <span className="font-normal font-mono">{toThaiDigits(orgProfile.docCode ? `${orgProfile.docCode}/รายงาน` : 'อบ ๗๘๔๐๘/......')}</span>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row justify-between gap-1">
                 <div>
                   <span className="font-bold">วันที่: </span>
-                  <span className="font-normal font-sans">...... เดือน .......................... พ.ศ. {selectedYear}</span>
+                  <span className="font-normal font-sans">...... เดือน .......................... พ.ศ. {toThaiDigits(selectedYear)}</span>
                 </div>
                 <div>
                   <span className="font-bold">โทรศัพท์: </span>
-                  <span className="font-normal font-sans">045-842-xxx</span>
+                  <span className="font-normal font-sans">{toThaiDigits(orgProfile.phone || '๐๔๕-๘๔๒-xxx')}</span>
                 </div>
               </div>
 
               <div>
                 <span className="font-bold">เรื่อง: </span>
-                <span className="font-black text-sm">รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {selectedYear}</span>
+                <span className="font-black text-sm">รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {toThaiDigits(selectedYear)}</span>
               </div>
             </div>
 
@@ -370,12 +378,15 @@ export default function AnnualAuditReportView({
             </div>
 
             {/* Memo Body */}
-            <div className="space-y-3 text-justify leading-relaxed indent-8">
+            <div className="space-y-3 text-justify leading-relaxed text-sm" style={{ textIndent: '2.5cm' }}>
               <p>
-                ตามที่ {agencyName} {orgName} ได้รับอนุมัติแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. {selectedYear} และได้เข้าปฏิบัติงานตรวจสอบภายในหน่วยรับตรวจในสังกัด {orgName} ตามมาตรฐานการปฏิบัติงานวิชาชีพการตรวจสอบภายในภาครัฐ และระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. 2545 และที่แก้ไขเพิ่มเติม เพื่อประเมินความมีประสิทธิภาพ ประสิทธิผล ความโปร่งใส และความคุ้มค่าของการบริหารจัดการ การเงิน การบัญชี การพัสดุ และการใช้ทรัพยากรของทางราชการ นั้น
+                ตามที่ {agencyName} {orgName} ได้รับอนุมัติแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. {toThaiDigits(selectedYear)} และได้เข้าปฏิบัติงานตรวจสอบภายในหน่วยรับตรวจในสังกัด {orgName} ตามมาตรฐานการปฏิบัติงานวิชาชีพการตรวจสอบภายในภาครัฐ และระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ และที่แก้ไขเพิ่มเติม เพื่อประเมินความมีประสิทธิภาพ ประสิทธิผล ความโปร่งใส และความคุ้มค่าของการบริหารจัดการ การเงิน การบัญชี การพัสดุ และการใช้ทรัพยากรของทางราชการ นั้น
               </p>
               <p>
-                บัดนี้ การปฏิบัติงานตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {selectedYear} ได้เสร็จสิ้นสมบูรณ์แล้ว {agencyName} จึงขอรายงานผลการตรวจสอบภายในฉบับสมบูรณ์ พร้อมข้อสังเกตและข้อเสนอแนะในการปรับปรุงระบบการควบคุมภายในและการบริหารความเสี่ยง รายละเอียดปรากฏตามรายงานแนบท้ายนี้
+                บัดนี้ การปฏิบัติงานตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {toThaiDigits(selectedYear)} ได้เสร็จสิ้นสมบูรณ์แล้ว {agencyName} จึงขอรายงานผลการตรวจสอบภายในฉบับสมบูรณ์ พร้อมข้อสังเกตและข้อเสนอแนะในการปรับปรุงระบบการควบคุมภายในและการบริหารความเสี่ยง รายละเอียดปรากฏตามรายงานแนบท้ายนี้
+              </p>
+              <p>
+                จึงเรียนมาเพื่อโปรดทราบ และพิจารณาให้ความเห็นชอบพร้อมทั้งมอบหมายให้หน่วยรับตรวจถือปฏิบัติตามข้อเสนอแนะต่อไป
               </p>
             </div>
           </div>

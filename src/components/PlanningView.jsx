@@ -39,6 +39,7 @@ import {
   exportThaiMemoToWord,
   exportDocumentToWord
 } from '../utils/documentExportUtils';
+import { toThaiDigits, formatSarabanDate } from '../utils/sarabanUtils';
 import { AUDIT_DIMENSIONS, generateEngagementPlanWithAI } from '../data/engagementPlanTemplates';
 import { DLA_ANNUAL_AUDIT_PLAN_DATA, DLA_STRATEGIC_PLAN_3YEARS } from '../data/dlaStandardTemplates';
 
@@ -1626,8 +1627,8 @@ export default function PlanningView({
                 agency={`${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`}
                 phone={orgProfile?.phone || ''}
                 docNumber={orgProfile?.docCode ? `${orgProfile.docCode}/แผน` : 'อบ ๗๘๔๐๘/แผน'}
-                date={`...... เดือน ...................... พ.ศ. ${selectedYear}`}
-                subject={`ขออนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
+                date={`...... เดือน ...................... พ.ศ. ${toThaiDigits(selectedYear)}`}
+                subject={`ขออนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${toThaiDigits(selectedYear)}`}
                 to={`นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`}
                 signatory={{
                   name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
@@ -1645,7 +1646,7 @@ export default function PlanningView({
                       <div className="space-y-1 text-xs">
                         <label className="flex items-start space-x-2">
                           <span className="font-bold text-sm">[  ]</span>
-                          <span>เห็นชอบแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear} ตามเสนอ</span>
+                          <span>เห็นชอบแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {toThaiDigits(selectedYear)} ตามเสนอ</span>
                         </label>
                         <label className="flex items-start space-x-2">
                           <span className="font-bold text-sm">[  ]</span>
@@ -1658,8 +1659,8 @@ export default function PlanningView({
                       </div>
                       <div className="pt-6 text-center space-y-1">
                         <div>(ลงชื่อ)........................................................</div>
-                        <div className="font-bold">({orgProfile?.palatName || '........................................................'})</div>
-                        <div className="text-xs text-stone-600">{orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
+                        <div className="font-bold">({toThaiDigits(orgProfile?.palatName) || '........................................................'})</div>
+                        <div className="text-xs text-stone-600">{toThaiDigits(orgProfile?.palatPosition) || 'ปลัดองค์กรปกครองส่วนท้องถิ่น'}</div>
                         <div className="text-[11px] text-stone-500">วันที่ ...... / ...... / ......</div>
                       </div>
                     </div>
@@ -1672,7 +1673,7 @@ export default function PlanningView({
                       <div className="space-y-1 text-xs pt-3">
                         <label className="flex items-start space-x-2">
                           <span className="font-bold text-sm">[  ]</span>
-                          <span className="font-bold">อนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear}</span>
+                          <span className="font-bold">อนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {toThaiDigits(selectedYear)}</span>
                         </label>
                         <label className="flex items-start space-x-2">
                           <span className="font-bold text-sm">[  ]</span>
@@ -1685,20 +1686,20 @@ export default function PlanningView({
                       </div>
                       <div className="pt-6 text-center space-y-1">
                         <div>(ลงชื่อ)........................................................</div>
-                        <div className="font-bold">({orgProfile?.approverName || '........................................................'})</div>
-                        <div className="text-xs text-stone-600">{orgProfile?.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
+                        <div className="font-bold">({toThaiDigits(orgProfile?.approverName) || '........................................................'})</div>
+                        <div className="text-xs text-stone-600">{toThaiDigits(orgProfile?.approverPosition) || 'นายกองค์กรปกครองส่วนท้องถิ่น'}</div>
                         <div className="text-[11px] text-stone-500">วันที่ ...... / ...... / ......</div>
                       </div>
                     </div>
                   </div>
                 }
               >
-                <div className="space-y-3 text-justify indent-10">
-                  <p>
-                    ด้วยหน่วยตรวจสอบภายใน {orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้ดำเนินการจัดทำแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. {selectedYear} เสร็จเรียบร้อยแล้ว โดยอาศัยอำนาจตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๒) พ.ศ. ๒๕๕๘ ข้อ ๑๘ ข้อ ๑๙ และข้อ ๒๐ ประกอบพระราชบัญญัติวินัยการเงินการคลังของรัฐ พ.ศ. ๒๕๖๑ มาตรา ๗๙
+                <div className="space-y-3 text-justify">
+                  <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify">
+                    {toThaiDigits(`ด้วยหน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้ดำเนินการจัดทำแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear} เสร็จเรียบร้อยแล้ว โดยอาศัยอำนาจตามระเบียบกระทรวงมหาดไทย ว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๒) พ.ศ. ๒๕๕๘ ข้อ ๑๘ ข้อ ๑๙ และข้อ ๒๐ ประกอบพระราชบัญญัติวินัยการเงินการคลังของรัฐ พ.ศ. ๒๕๖๑ มาตรา ๗๙`)}
                   </p>
-                  <p>
-                    ในการนี้ หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงตามเกณฑ์มาตรฐานของกระทรวงการคลัง และจัดลำดับความสำคัญของกิจกรรมครอบคลุมทุกส่วนราชการ โดยบรรจุโครงการตรวจสอบในแผนปฏิบัติการประจำปีงบประมาณ พ.ศ. {selectedYear} รวมทั้งสิ้น <strong>{annualPlans.length} โครงการ</strong> วงเงินงบประมาณรวม <strong>{totalBudget.toLocaleString()} บาท</strong> โดยมีรายละเอียดดังต่อไปนี้:
+                  <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify">
+                    {toThaiDigits(`ในการนี้ หน่วยตรวจสอบภายในได้ดำเนินการประเมินความเสี่ยงตามเกณฑ์มาตรฐานของกระทรวงการคลัง และจัดลำดับความสำคัญของกิจกรรมครอบคลุมทุกส่วนราชการ โดยบรรจุโครงการตรวจสอบในแผนปฏิบัติการประจำปีงบประมาณ พ.ศ. ${selectedYear} รวมทั้งสิ้น ${annualPlans.length} โครงการ วงเงินงบประมาณรวม ${totalBudget.toLocaleString()} บาท โดยมีรายละเอียดดังต่อไปนี้:`)}
                   </p>
                 </div>
 

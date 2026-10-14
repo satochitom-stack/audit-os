@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.0';
+const appVersion = '2.7.1';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.0: ระบบฐานข้อมูล Google Sheets ของ อปท. (BYOD)',
-        description: 'เพิ่มระบบเชื่อมต่อ Google Sheets ส่วนตัวของผู้ใช้ (100% Data Sovereignty) ซิงค์กระดาษทำการ แผนงาน และรายงานผลลง Google Drive ของหน่วยงานท่านเองโดยตรง ปลอดภัยสูงสุด',
-        changeSummary: 'Google Sheets BYOD Data Sovereignty, Auto-Sync in background, 1-Click Apps Script Webhook, Human-readable spreadsheet tabs'
+        title: 'Audit-OS v2.7.1: รูปแบบเอกสารราชการมาตรฐานตามระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖',
+        description: 'ปรับปรุงเอกสารราชการทั้งหมดในระบบให้ถูกต้องตามระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖ และที่แก้ไขเพิ่มเติม: ตัวเลขไทย (๐-๙), ตราครุฑเวกเตอร์มาตรฐาน, ระยะขอบกระดาษ A4 มาตรฐาน (กั้นหน้า ๓ ซม. กั้นหลัง ๒ ซม. กั้นบน ๒.๕ ซม. กั้นล่าง ๒ ซม. ย่อหน้า ๒.๕ ซม.)',
+        changeSummary: 'Thai Saraban Regulation Compliance, Thai Digits (๐-๙), Official SVG Garuda Emblem (1.5cm / 3.0cm), Precise MSO Word Margins, OfficialThaiExternalLetter, OfficialThaiOrder, OfficialThaiMemo'
       };
       try {
         if (!fs.existsSync('./public')) {

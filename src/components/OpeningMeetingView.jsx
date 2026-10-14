@@ -25,6 +25,7 @@ import {
   exportThaiMemoToWord,
   exportDocumentToWord
 } from '../utils/documentExportUtils';
+import { toThaiDigits, formatSarabanDate } from '../utils/sarabanUtils';
 
 export default function OpeningMeetingView({
   selectedYear = '2569',
@@ -109,15 +110,14 @@ export default function OpeningMeetingView({
         exportThaiMemoToWord({
           agency: `หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`,
           phone: orgProfile?.phone || '',
-          docNumber: `อบ ๗๘๔๐๘/เปิดตรวจ`,
-          docDate: `${meetingDate}`,
+          docNumber: toThaiDigits(docRefNo || 'อบ ๗๘๔๐๘/เปิดตรวจ'),
+          docDate: formatSarabanDate(meetingDate),
           subject: `ขอเชิญร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) โครงการ ${currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน'}`,
-          to: `หัวหน้า${currentPlan.department || 'หน่วยรับตรวจ'}`,
+          to: `ผู้อำนวยการ${currentPlan.department || 'หน่วยรับตรวจ'}`,
           contentParagraphs: [
-            `<strong>๑. เรื่องเดิม:</strong> ตามที่ นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้อนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear} นั้น`,
-            `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายใน กำหนดจะเข้าปฏิบัติงานตรวจสอบโครงการ <strong>${currentPlan.projectName || currentPlan.topic}</strong> จึงขอเชิญท่านและเจ้าหน้าที่ผู้เกี่ยวข้องร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) ในวันที่ <strong>${meetingDate}</strong> เวลา <strong>${meetingTime}</strong> ณ <strong>${meetingLocation}</strong>`,
-            `<strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> ในการประชุมดังกล่าวจะมีการชี้แจงวัตถุประสงค์ ขอบเขต และขั้นตอนการตรวจสอบ เพื่อสร้างความเข้าใจร่วมกัน จึงเรียนมาเพื่อโปรดเข้าร่วมประชุมตามกำหนดเวลาดังกล่าว<br/><br/>` +
-            `จึงเรียนมาเพื่อโปรดพิจารณา`
+            `๑. เรื่องเดิม: ตามที่ นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้อนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${toThaiDigits(selectedYear)} เรียบร้อยแล้วนั้น`,
+            `๒. ข้อเท็จจริง: หน่วยตรวจสอบภายใน กำหนดจะเข้าปฏิบัติงานตรวจสอบโครงการ ${currentPlan.projectName || currentPlan.topic} จึงขอเชิญท่านและเจ้าหน้าที่ผู้เกี่ยวข้องร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) ในวันที่ ${formatSarabanDate(meetingDate)} เวลา ${toThaiDigits(meetingTime)} ณ ${meetingLocation}`,
+            `๓. ข้อพิจารณาและข้อเสนอ: ในการประชุมดังกล่าวจะมีการชี้แจงวัตถุประสงค์ ขอบเขต และขั้นตอนการตรวจสอบ เพื่อสร้างความเข้าใจร่วมกัน จึงเรียนมาเพื่อโปรดเข้าร่วมประชุมตามกำหนดเวลาดังกล่าว\n\nจึงเรียนมาเพื่อโปรดพิจารณา`
           ],
           signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
           signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
@@ -444,51 +444,32 @@ export default function OpeningMeetingView({
         </div>
       )}
 
-      {/* VIEW: OFFICIAL NOTICE LETTER */}
+      {/* VIEW: OFFICIAL NOTICE MEMO */}
       {activeSubTab === 'notice' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 max-w-3xl mx-auto print:border-none print:shadow-none print:p-0">
-          <div className="text-center font-bold text-base text-slate-900 dark:text-slate-100 border-b pb-3 border-slate-200">
-            บันทึกข้อความ (หนังสือแจ้งเข้าตรวจสอบล่วงหน้า)
-          </div>
-
-          <div className="text-xs space-y-2 text-slate-800 dark:text-slate-200">
-            <div className="flex justify-between">
-              <div><strong>ส่วนราชการ:</strong> หน่วยตรวจสอบภายใน {orgProfile?.name || 'อปท.'}</div>
-              <div><strong>โทร:</strong> {orgProfile?.phone || '-'}</div>
-            </div>
-            <div className="flex justify-between">
-              <div><strong>ที่:</strong> <input type="text" value={docRefNo} onChange={(e) => setDocRefNo(e.target.value)} className="font-mono bg-transparent" /></div>
-              <div><strong>วันที่:</strong> {new Date().toLocaleDateString('th-TH')}</div>
-            </div>
-            <div>
-              <strong>เรื่อง:</strong> แจ้งเข้าปฏิบัติงานตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {selectedYear}
-            </div>
-            <div className="pt-2">
-              <strong>เรียน:</strong> ผู้อำนวยการ{currentPlan.department || 'หน่วยรับตรวจ'}
-            </div>
-          </div>
-
-          <div className="text-xs space-y-3 leading-relaxed text-slate-700 dark:text-slate-300 text-justify">
-            <p className="indent-8">
-              ตามที่ นายก{orgProfile?.name || 'อปท.'} ได้อนุมัติแผนการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {selectedYear} เรียบร้อยแล้วนั้น หน่วยตรวจสอบภายในมีกำหนดเข้าปฏิบัติงานตรวจสอบในภารกิจ "{currentPlan.projectName || currentPlan.topic || 'งานตรวจสอบ'}" สังกัด{currentPlan.department || 'หน่วยรับตรวจ'} ระหว่างวันที่ {meetingDate} เป็นต้นไป
-            </p>
-            <p className="indent-8">
-              ในการนี้ เพื่อให้การตรวจสอบเป็นไปด้วยความเรียบร้อยและมีประสิทธิภาพ จึงขอความร่วมมือท่านจัดเตรียมเอกสารหลักฐานที่เกี่ยวข้อง และขอเชิญร่วมการประชุมเปิดการตรวจสอบ (Opening Meeting) ในวันที่ {meetingDate} เวลา {meetingTime} ณ {meetingLocation}
-            </p>
-            <p className="indent-8">
-              จึงเรียนมาเพื่อโปรดทราบและพิจารณาให้ความร่วมมือ
-            </p>
-          </div>
-
-          <div className="pt-10 text-center text-xs space-y-12 ml-auto w-64">
-            <div>(ลงชื่อ)........................................................</div>
-            <div>
-              ({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})<br />
-              {orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}<br />
-              หน่วยตรวจสอบภายใน {orgProfile?.name || 'อปท.'}
-            </div>
-          </div>
-        </div>
+        <OfficialThaiMemo
+          agency={`หน่วยตรวจสอบภายใน ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'}`}
+          phone={orgProfile?.phone || ''}
+          docNumber={docRefNo || 'อบ ๗๘๔๐๘/เปิดตรวจ'}
+          date={meetingDate}
+          subject={`ขอเชิญร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) ภารกิจ "${currentPlan.projectName || currentPlan.topic || 'งานตรวจสอบ'}"`}
+          to={`ผู้อำนวยการ${currentPlan.department || 'หน่วยรับตรวจ'}`}
+          signatory={{
+            name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+            position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+            role: 'หัวหน้าทีมตรวจสอบ'
+          }}
+          showReviewBoxes={false}
+        >
+          <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify">
+            {toThaiDigits(`๑. เรื่องเดิม: ตามที่ นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} ได้อนุมัติแผนการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} เรียบร้อยแล้วนั้น หน่วยตรวจสอบภายในมีกำหนดเข้าปฏิบัติงานตรวจสอบในภารกิจ "${currentPlan.projectName || currentPlan.topic || 'งานตรวจสอบ'}" สังกัด${currentPlan.department || 'หน่วยรับตรวจ'} ตั้งแต่วันที่ ${meetingDate} เป็นต้นไป`)}
+          </p>
+          <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify">
+            {toThaiDigits(`๒. ข้อเท็จจริง: ในการนี้ เพื่อให้การตรวจสอบเป็นไปด้วยความเรียบร้อยและมีประสิทธิภาพ จึงขอความร่วมมือท่านจัดเตรียมเอกสารหลักฐานที่เกี่ยวข้อง และขอเชิญร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) ในวันที่ ${meetingDate} เวลา ${meetingTime} ณ ${meetingLocation}`)}
+          </p>
+          <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify">
+            {toThaiDigits(`๓. ข้อพิจารณา: จึงเรียนมาเพื่อโปรดทราบและเข้าร่วมการประชุมเปิดการตรวจสอบตามวัน เวลา และสถานที่ดังกล่าวข้างต้น`)}
+          </p>
+        </OfficialThaiMemo>
       )}
     </div>
   );

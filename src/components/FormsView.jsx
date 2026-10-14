@@ -31,6 +31,20 @@ import {
 import OfficialThaiMemo from './OfficialThaiMemo';
 import OfficialThaiOrder from './OfficialThaiOrder';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import {
+  toThaiDigits,
+  formatSarabanDate,
+  GARUDA_SVG_PATH,
+  GARUDA_SVG_1_5CM_HTML,
+  GARUDA_SVG_3CM_HTML,
+  SARABAN_CONFIG
+} from '../utils/sarabanUtils';
+import {
+  exportThaiMemoToWord,
+  exportThaiOrderToWord,
+  exportThaiExternalLetterToWord,
+  exportDocumentToWord
+} from '../utils/documentExportUtils';
 
 const cleanCategoryLabel = (label) => {
   if (!label) return '';
@@ -92,208 +106,86 @@ export default function FormsView({
   // Download Microsoft Word (.doc) File with exact Saraban Margins and Styling
   const handleDownloadWord = (doc) => {
     const resolvedOrg = orgName;
-    let bodyContent = '';
 
     if (doc.docType === 'order') {
-      bodyContent = `
+      exportThaiOrderToWord({
+        orderHeader: (doc.title || `คำสั่ง${resolvedOrg}`).replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg),
+        orderNumber: doc.docNumber || 'ที่ ........./๒๕๖๙',
+        orderSubject: (doc.subject || doc.title).replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg),
+        orderPreamble: (doc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg),
+        orderClauses: (doc.orderClauses || []).map((c) => c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)),
+        orderEffectiveDate: (doc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg),
+        orderIssuedDate: doc.docDate || '',
+        orderSignatoryName: doc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])',
+        orderSignatoryPosition: doc.orderSignatoryPosition ? doc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : `นายก${resolvedOrg}`,
+        fileName: `${doc.code} - ${doc.title.slice(0, 40)}`
+      });
+      showToast('ดาวน์โหลดไฟล์ Word (.doc) ตามระเบียบสารบรรณสำเร็จแล้ว!');
+      return;
+    }
+
+    if (doc.docType === 'charter' || doc.docType === 'plan') {
+      const title = doc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg);
+      const content = (doc.fullContent || doc.summary).replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg);
+      const signatoryName = doc.signatoryName || '([ชื่อ-นามสกุล นายก อปท.])';
+      const signatoryPosition = doc.signatoryPosition ? doc.signatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : `นายก${resolvedOrg}`;
+
+      const bodyHtml = `
         <div style="text-align: center; margin-bottom: 20pt;">
-          <p style="text-align: center; margin: 0 0 6pt 0;"><span style="font-size: 22pt; font-weight: bold; font-family: 'TH Sarabun PSK';">(ตราครุฑ)</span></p>
-          <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0; font-family: 'TH Sarabun PSK';">${doc.title || 'คำสั่ง' + resolvedOrg}</p>
-          <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 0 0; font-family: 'TH Sarabun PSK';">${doc.docNumber || 'ที่ ........./๒๕๖๙'}</p>
-          <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 12pt 0; font-family: 'TH Sarabun PSK';">เรื่อง ${doc.subject || doc.title}</p>
-        </div>
-        <div style="border-top: 1pt solid black; margin-bottom: 12pt;"></div>
-        <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-          ${(doc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
-        </p>
-        ${(doc.orderClauses || [])
-          .map(
-            (c) =>
-              `<p style="margin-left: 2cm; margin-bottom: 6pt; text-align: justify; font-size: 16pt; font-family: 'TH Sarabun PSK';">${c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}</p>`
-          )
-          .join('')}
-        <p style="text-indent: 2.5cm; margin-top: 12pt; margin-bottom: 8pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-          ${(doc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}
-        </p>
-        <p style="text-indent: 3cm; margin-top: 12pt; margin-bottom: 24pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-          ${doc.docDate || ''}
-        </p>
-        <table style="width: 100%; border: none; margin-top: 30pt;">
-          <tr>
-            <td style="width: 50%;"></td>
-            <td style="width: 50%; text-align: center; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-              <p style="margin: 0;">(ลงชื่อ)........................................................</p>
-              <p style="margin: 4pt 0 0 0; font-weight: bold;">${doc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}</p>
-              <p style="margin: 2pt 0 0 0;">${doc.orderSignatoryPosition ? doc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}</p>
-            </td>
-          </tr>
-        </table>
-      `;
-    } else if (doc.docType === 'charter' || doc.docType === 'plan') {
-      bodyContent = `
-        <div style="text-align: center; margin-bottom: 20pt;">
-          <p style="text-align: center; margin: 0 0 6pt 0;"><span style="font-size: 22pt; font-weight: bold; font-family: 'TH Sarabun PSK';">(ตราครุฑ)</span></p>
-          <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0; font-family: 'TH Sarabun PSK';">${doc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}</p>
+          <div style="text-align: center; margin-bottom: 8pt;">${GARUDA_SVG_3CM_HTML}</div>
+          <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0; font-family: 'TH Sarabun PSK';">${title}</p>
           <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 12pt 0; font-family: 'TH Sarabun PSK';">${doc.docNumber || ''}</p>
         </div>
         <div style="border-top: 1pt solid black; margin-bottom: 12pt;"></div>
         <div style="font-size: 16pt; line-height: 1.35; font-family: 'TH Sarabun PSK'; text-align: justify;">
-          ${(doc.fullContent || doc.summary).replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
+          ${content.replace(/\n/g, '<br/>')}
         </div>
         <table style="width: 100%; border: none; margin-top: 30pt;">
           <tr>
-            <td style="width: 50%;"></td>
-            <td style="width: 50%; text-align: center; font-size: 16pt; font-family: 'TH Sarabun PSK';">
+            <td style="width: 45%;"></td>
+            <td style="width: 55%; text-align: center; font-size: 16pt; font-family: 'TH Sarabun PSK';">
               <p style="margin: 0;">(ลงชื่อ)........................................................</p>
-              <p style="margin: 4pt 0 0 0; font-weight: bold;">${doc.signatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}</p>
-              <p style="margin: 2pt 0 0 0;">${doc.signatoryPosition ? doc.signatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">${signatoryName}</p>
+              <p style="margin: 2pt 0 0 0;">${signatoryPosition}</p>
             </td>
           </tr>
         </table>
       `;
-    } else {
-      // บันทึกข้อความ (Official Memorandum Form 2)
-      bodyContent = `
-        <table style="width: 100%; border-bottom: 2pt solid black; padding-bottom: 8pt; margin-bottom: 14pt;">
-          <tr>
-            <td style="width: 20%; vertical-align: top;">
-              <span style="font-size: 18pt; font-weight: bold; font-family: 'TH Sarabun PSK';">(ตราครุฑ)</span>
-            </td>
-            <td style="width: 80%; text-align: center; vertical-align: middle;">
-              <span style="font-size: 26pt; font-weight: bold; letter-spacing: 2px; font-family: 'TH Sarabun PSK';">บันทึกข้อความ</span>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" style="padding-top: 8pt;">
-              <p style="margin: 0 0 4pt 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-                <strong>ส่วนราชการ:</strong> ${doc.agency ? doc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'หน่วยตรวจสอบภายใน ' + resolvedOrg} ${doc.phone ? 'โทร. ' + doc.phone : ''}
-              </p>
-              <table style="width: 100%; border: none; margin: 0; padding: 0;">
-                <tr>
-                  <td style="width: 50%; padding: 0;">
-                    <p style="margin: 0 0 4pt 0; font-size: 16pt; font-family: 'TH Sarabun PSK';"><strong>ที่:</strong> ${doc.docNumber || 'อบ ........./๒๕๖๙'}</p>
-                  </td>
-                  <td style="width: 50%; padding: 0;">
-                    <p style="margin: 0 0 4pt 0; font-size: 16pt; font-family: 'TH Sarabun PSK';"><strong>วันที่:</strong> ${doc.docDate || '...... เดือน ................... พ.ศ. .........'}</p>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-                <strong>เรื่อง:</strong> <strong>${doc.subject || doc.title}</strong>
-              </p>
-            </td>
-          </tr>
-        </table>
 
-        <p style="font-size: 16pt; margin-bottom: 12pt; font-family: 'TH Sarabun PSK';">
-          <strong>เรียน:</strong> ${doc.to ? doc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}
-        </p>
-
-        <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-          ${(doc.part1_background || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
-        </p>
-
-        <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-          ${(doc.part2_facts || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
-        </p>
-
-        <p style="text-indent: 2.5cm; margin-bottom: 16pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-          ${(doc.part3_proposal || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}
-        </p>
-
-        <!-- ลายมือชื่อผู้ตรวจ -->
-        <table style="width: 100%; border: none; margin-top: 24pt; margin-bottom: 24pt;">
-          <tr>
-            <td style="width: 50%;"></td>
-            <td style="width: 50%; text-align: center; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-              <p style="margin: 0;">(ลงชื่อ)........................................................</p>
-              <p style="margin: 4pt 0 0 0; font-weight: bold;">${doc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])'}</p>
-              <p style="margin: 2pt 0 0 0;">${doc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ'}</p>
-              ${doc.signatoryRole ? `<p style="margin: 2pt 0 0 0; font-size: 14pt;">(${doc.signatoryRole})</p>` : ''}
-            </td>
-          </tr>
-        </table>
-
-        <!-- ส่วนเกษียณหนังสือ (ข้อสั่งการ) -->
-        <table style="width: 100%; border-top: 1.5pt solid black; margin-top: 20pt; border-collapse: collapse;">
-          <tr>
-            <td style="width: 50%; border: 1pt solid #777; padding: 8pt; vertical-align: top; font-size: 15pt; font-family: 'TH Sarabun PSK';">
-              <p style="margin: 0 0 6pt 0; font-weight: bold; text-decoration: underline;">ความเห็นของปลัดองค์กรปกครองส่วนท้องถิ่น</p>
-              <p style="margin: 0 0 4pt 0; font-size: 14pt;">เรียน นายก${resolvedOrg}</p>
-              <p style="margin: 0 0 3pt 0;">[  ] เพื่อโปรดทราบ</p>
-              <p style="margin: 0 0 3pt 0;">[  ] ${doc.palatReview || 'เห็นควรอนุมัติและสั่งการตามเสนอ'}</p>
-              <p style="margin: 0 0 12pt 0;">[  ] อื่นๆ ..............................................................</p>
-              <p style="text-align: center; margin: 16pt 0 0 0;">(ลงชื่อ)........................................................</p>
-              <p style="text-align: center; margin: 2pt 0 0 0; font-size: 14pt;">ปลัด${resolvedOrg}</p>
-            </td>
-            <td style="width: 50%; border: 1pt solid #777; padding: 8pt; vertical-align: top; font-size: 15pt; font-family: 'TH Sarabun PSK';">
-              <p style="margin: 0 0 6pt 0; font-weight: bold; text-decoration: underline;">คำสั่งการของนายกองค์กรปกครองส่วนท้องถิ่น</p>
-              <p style="margin: 0 0 3pt 0;">[  ] ทราบ</p>
-              <p style="margin: 0 0 3pt 0;">[  ] ${doc.executiveOrder || 'อนุมัติ / เห็นชอบตามเสนอ'}</p>
-              <p style="margin: 0 0 12pt 0;">[  ] อื่นๆ ..............................................................</p>
-              <p style="text-align: center; margin: 16pt 0 0 0;">(ลงชื่อ)........................................................</p>
-              <p style="text-align: center; margin: 2pt 0 0 0; font-size: 14pt;">นายก${resolvedOrg}</p>
-            </td>
-          </tr>
-        </table>
-      `;
+      exportDocumentToWord({
+        title,
+        htmlContent: bodyHtml,
+        fileName: `${doc.code} - ${title.slice(0, 40)}`
+      });
+      showToast('ดาวน์โหลดไฟล์ Word (.doc) สำเร็จแล้ว!');
+      return;
     }
 
-    const fullWordHtml = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head>
-        <meta charset='utf-8'>
-        <title>${doc.title}</title>
-        <!--[if gte mso 9]>
-        <xml>
-          <w:WordDocument>
-            <w:View>Print</w:View>
-            <w:Zoom>100</w:Zoom>
-            <w:DoNotOptimizeForBrowser/>
-          </w:WordDocument>
-        </xml>
-        <![endif]-->
-        <style>
-          @page Section1 {
-            size: 595.3pt 841.9pt; /* A4 Portrait */
-            margin: 70.85pt 56.7pt 56.7pt 70.85pt; /* Top 2.5cm, Right 2.0cm, Bottom 2.0cm, Left 2.5cm */
-            mso-header-margin: 36pt;
-            mso-footer-margin: 36pt;
-            mso-paper-source: 0;
-          }
-          div.Section1 { page: Section1; }
-          body {
-            font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Angsana New', sans-serif;
-            font-size: 16pt;
-            line-height: 1.25;
-            color: #000;
-          }
-          p { margin: 0 0 6pt 0; font-size: 16pt; font-family: 'TH Sarabun PSK', sans-serif; }
-        </style>
-      </head>
-      <body>
-        <div class="Section1">
-          ${bodyContent}
-        </div>
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob(['\ufeff', fullWordHtml], {
-      type: 'application/msword;charset=utf-8'
+    // Default: บันทึกข้อความ (Official Memorandum Form 2)
+    exportThaiMemoToWord({
+      agency: doc.agency ? doc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : `หน่วยตรวจสอบภายใน ${resolvedOrg}`,
+      phone: doc.phone || '',
+      docNumber: doc.docNumber || 'อบ ........./๒๕๖๙',
+      docDate: doc.docDate || '',
+      subject: (doc.subject || doc.title).replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg),
+      to: doc.to ? doc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : `นายก${resolvedOrg}`,
+      contentParagraphs: [
+        (doc.part1_background || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg),
+        (doc.part2_facts || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg),
+        (doc.part3_proposal || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)
+      ].filter(Boolean),
+      signatoryName: doc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])',
+      signatoryPosition: doc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+      signatoryRole: doc.signatoryRole || '',
+      palatReviewText: doc.palatReview || 'เห็นควรอนุมัติและสั่งการตามเสนอ',
+      executiveOrderText: doc.executiveOrder || 'อนุมัติ / เห็นชอบตามเสนอ',
+      orgName: resolvedOrg,
+      fileName: `${doc.code} - ${doc.title.slice(0, 40)}`
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${doc.code} - ${doc.title.slice(0, 40)}.doc`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast(`ดาวน์โหลดไฟล์ Word (.doc) สำเร็จแล้ว!`);
+    showToast('ดาวน์โหลดบันทึกข้อความ Word (.doc) ตามระเบียบสารบรรณสำเร็จแล้ว!');
   };
 
-  // Direct Standard Print Window
+  // Direct Standard Print Window strictly compliant with Saraban margins & Garuda
   const handlePrintDocument = (doc) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -311,35 +203,43 @@ export default function FormsView({
           <style>
             @page {
               size: A4 portrait;
-              margin: 2.5cm 2cm 2cm 2.5cm;
+              margin: 2.5cm 2.0cm 2.0cm 3.0cm; /* บน 2.5 ซม. ขวา 2.0 ซม. ล่าง 2.0 ซม. ซ้าย 3.0 ซม. ตามระเบียบสารบรรณ */
             }
             body {
-              font-family: 'Sarabun', 'TH Sarabun New', Tahoma, sans-serif;
+              font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', Tahoma, sans-serif;
               padding: 0;
               margin: 0;
-              line-height: 1.6;
+              line-height: 1.35;
               color: #000;
               background: #fff;
-              font-size: 15px;
+              font-size: 16pt;
             }
             .memo-header {
               border-bottom: 2px solid black;
-              padding-bottom: 10px;
-              margin-bottom: 18px;
+              padding-bottom: 8px;
+              margin-bottom: 14px;
             }
             .memo-title {
               text-align: center;
-              font-size: 26px;
+              font-size: 29pt;
               font-weight: bold;
               margin: 0;
+              line-height: 1.1;
+            }
+            .order-title {
+              text-align: center;
+              font-size: 24pt;
+              font-weight: bold;
+              margin: 0;
+              line-height: 1.2;
             }
             .indent {
               text-indent: 2.5cm;
               text-align: justify;
-              margin-bottom: 12px;
+              margin-bottom: 10px;
             }
-            table { width: 100%; border-collapse: collapse; }
-            .review-box { border: 1px solid #666; padding: 10px; }
+            table { width: 100%; border-collapse: collapse; font-size: 16pt; }
+            .review-box { border: 1px solid #555; padding: 8px; font-size: 14pt; }
             @media print {
               body { padding: 0; }
             }
@@ -349,72 +249,76 @@ export default function FormsView({
           ${
             doc.docType === 'order'
               ? `
-            <div style="text-align:center; margin-bottom: 24px;">
-              <div style="font-size: 22px; font-weight: bold; margin-bottom: 4px;">(ตราครุฑ)</div>
-              <h1 style="font-size: 22px; font-weight: bold; margin: 0;">${doc.title || 'คำสั่ง' + resolvedOrg}</h1>
-              <div style="font-size: 16px; font-weight: bold; margin-top: 4px;">${doc.docNumber || 'ที่ ........./๒๕๖๙'}</div>
-              <div style="font-size: 16px; font-weight: bold; margin-top: 4px;">เรื่อง ${doc.subject || doc.title}</div>
+            <div style="text-align:center; margin-bottom: 16px;">
+              <div style="margin-bottom: 8px;">${GARUDA_SVG_3CM_HTML}</div>
+              <h1 class="order-title">${toThaiDigits(doc.title || 'คำสั่ง' + resolvedOrg)}</h1>
+              <div style="font-size: 16pt; font-weight: bold; margin-top: 4px;">${toThaiDigits(doc.docNumber || 'ที่ ........./๒๕๖๙')}</div>
+              <div style="font-size: 16pt; font-weight: bold; margin-top: 4px;">เรื่อง ${toThaiDigits(doc.subject || doc.title)}</div>
             </div>
-            <hr style="border: 0.5px solid black; margin-bottom: 16px;" />
-            <div class="indent">${(doc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}</div>
-            ${(doc.orderClauses || []).map((c) => `<div style="padding-left: 1.5cm; margin-bottom: 8px; text-align: justify;">${c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}</div>`).join('')}
-            <div class="indent" style="margin-top: 16px;">${(doc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)}</div>
-            <div style="text-indent: 3cm; margin-top: 16px;">${doc.docDate || ''}</div>
-            <div style="margin-top: 40px; text-align: right; padding-right: 40px;">
+            <hr style="border: 0.5px solid black; margin-bottom: 14px;" />
+            <div class="indent">${toThaiDigits((doc.orderPreamble || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)).replace(/\n/g, '<br/>')}</div>
+            ${(doc.orderClauses || []).map((c) => `<div style="padding-left: 2cm; margin-bottom: 8px; text-align: justify;">${toThaiDigits(c.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg))}</div>`).join('')}
+            <div class="indent" style="margin-top: 14px;">${toThaiDigits((doc.orderEffectiveDate || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg))}</div>
+            <div class="indent" style="margin-top: 14px;">${formatSarabanDate(doc.docDate, { isOrder: true })}</div>
+            <div style="margin-top: 36px; text-align: right; padding-right: 40px; font-size: 16pt;">
               <div>(ลงชื่อ)........................................................</div>
-              <div style="font-weight: bold; margin-top: 6px;">${doc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}</div>
-              <div>${doc.orderSignatoryPosition ? doc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}</div>
+              <div style="font-weight: bold; margin-top: 6px;">${toThaiDigits(doc.orderSignatoryName || '([ชื่อ-นามสกุล นายก อปท.])')}</div>
+              <div>${toThaiDigits(doc.orderSignatoryPosition ? doc.orderSignatoryPosition.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg)}</div>
             </div>
           `
               : `
             <div class="memo-header">
               <table style="width: 100%;">
                 <tr>
-                  <td style="width: 20%; vertical-align: top; font-weight: bold; font-size: 18px;">(ตราครุฑ)</td>
-                  <td style="width: 80%; text-align: center;"><div class="memo-title">บันทึกข้อความ</div></td>
+                  <td style="width: 15%; vertical-align: top; text-align: left;">
+                    ${GARUDA_SVG_1_5CM_HTML}
+                  </td>
+                  <td style="width: 85%; text-align: center; vertical-align: middle;">
+                    <div class="memo-title">บันทึกข้อความ</div>
+                  </td>
                 </tr>
               </table>
-              <div style="margin-top: 12px; font-size: 15px;">
-                <div style="margin-bottom: 4px;"><strong>ส่วนราชการ:</strong> ${doc.agency ? doc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'หน่วยตรวจสอบภายใน ' + resolvedOrg} ${doc.phone ? 'โทร. ' + doc.phone : ''}</div>
+              <div style="margin-top: 10px; font-size: 16pt;">
+                <div style="margin-bottom: 4px;"><strong>ส่วนราชการ:</strong> ${toThaiDigits(doc.agency ? doc.agency.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'หน่วยตรวจสอบภายใน ' + resolvedOrg)} ${doc.phone ? 'โทร. ' + toThaiDigits(doc.phone) : ''}</div>
                 <table style="width: 100%; margin-bottom: 4px;">
                   <tr>
-                    <td style="width: 50%;"><strong>ที่:</strong> ${doc.docNumber || 'อบ ........./๒๕๖๙'}</td>
-                    <td style="width: 50%;"><strong>วันที่:</strong> ${doc.docDate || '...... เดือน ................... พ.ศ. .........'}</td>
+                    <td style="width: 50%;"><strong>ที่:</strong> ${toThaiDigits(doc.docNumber || 'อบ ........./๒๕๖๙')}</td>
+                    <td style="width: 50%;"><strong>วันที่:</strong> ${formatSarabanDate(doc.docDate, { isExternal: false })}</td>
                   </tr>
                 </table>
-                <div><strong>เรื่อง:</strong> <strong>${doc.subject || doc.title}</strong></div>
+                <div><strong>เรื่อง:</strong> <strong>${toThaiDigits(doc.subject || doc.title)}</strong></div>
               </div>
             </div>
 
-            <div style="margin-bottom: 14px;"><strong>เรียน:</strong> ${doc.to ? doc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg}</div>
+            <div style="margin-bottom: 12px; font-size: 16pt;"><strong>เรียน:</strong> ${toThaiDigits(doc.to ? doc.to.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg) : 'นายก' + resolvedOrg)}</div>
 
-            <div class="indent">${(doc.part1_background || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}</div>
-            <div class="indent">${(doc.part2_facts || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}</div>
-            <div class="indent">${(doc.part3_proposal || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg).replace(/\n/g, '<br/>')}</div>
+            <div class="indent">${toThaiDigits((doc.part1_background || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)).replace(/\n/g, '<br/>')}</div>
+            <div class="indent">${toThaiDigits((doc.part2_facts || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)).replace(/\n/g, '<br/>')}</div>
+            <div class="indent">${toThaiDigits((doc.part3_proposal || '').replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, resolvedOrg)).replace(/\n/g, '<br/>')}</div>
 
-            <div style="margin-top: 36px; text-align: right; padding-right: 40px;">
+            <div style="margin-top: 32px; text-align: right; padding-right: 40px; font-size: 16pt;">
               <div>(ลงชื่อ)........................................................</div>
-              <div style="font-weight: bold; margin-top: 6px;">${doc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])'}</div>
-              <div>${doc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ'}</div>
+              <div style="font-weight: bold; margin-top: 6px;">${toThaiDigits(doc.signatoryName || '([ชื่อ-นามสกุล ผู้ตรวจสอบภายใน])')}</div>
+              <div>${toThaiDigits(doc.signatoryPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ')}</div>
             </div>
 
-            <table style="width: 100%; border-top: 2px solid black; margin-top: 30px; font-size: 13px;">
+            <table style="width: 100%; border-top: 2px solid black; margin-top: 24px; font-size: 14pt;">
               <tr>
-                <td style="width: 50%; border: 1px solid #777; padding: 10px; vertical-align: top;">
-                  <div style="font-weight: bold; text-decoration: underline; margin-bottom: 6px;">ความเห็นของปลัดองค์กรปกครองส่วนท้องถิ่น</div>
+                <td style="width: 50%; border: 1px solid #777; padding: 8px; vertical-align: top;">
+                  <div style="font-weight: bold; text-decoration: underline; margin-bottom: 4px; font-size: 15pt;">ความเห็นของปลัดองค์กรปกครองส่วนท้องถิ่น</div>
                   <div>เรียน นายก${resolvedOrg}</div>
                   <div>[  ] เพื่อโปรดทราบ</div>
-                  <div>[  ] ${doc.palatReview || 'เห็นควรอนุมัติตามเสนอ'}</div>
-                  <div style="margin-top: 24px; text-align: center;">
+                  <div>[  ] ${toThaiDigits(doc.palatReview || 'เห็นควรอนุมัติตามเสนอ')}</div>
+                  <div style="margin-top: 20px; text-align: center;">
                     <div>(ลงชื่อ)........................................................</div>
                     <div>ปลัด${resolvedOrg}</div>
                   </div>
                 </td>
-                <td style="width: 50%; border: 1px solid #777; padding: 10px; vertical-align: top;">
-                  <div style="font-weight: bold; text-decoration: underline; margin-bottom: 6px;">คำสั่งการของนายกองค์กรปกครองส่วนท้องถิ่น</div>
+                <td style="width: 50%; border: 1px solid #777; padding: 8px; vertical-align: top;">
+                  <div style="font-weight: bold; text-decoration: underline; margin-bottom: 4px; font-size: 15pt;">คำสั่งการของนายกองค์กรปกครองส่วนท้องถิ่น</div>
                   <div>[  ] ทราบ</div>
-                  <div>[  ] ${doc.executiveOrder || 'อนุมัติ / เห็นชอบตามเสนอ'}</div>
-                  <div style="margin-top: 24px; text-align: center;">
+                  <div>[  ] ${toThaiDigits(doc.executiveOrder || 'อนุมัติ / เห็นชอบตามเสนอ')}</div>
+                  <div style="margin-top: 20px; text-align: center;">
                     <div>(ลงชื่อ)........................................................</div>
                     <div>นายก${resolvedOrg}</div>
                   </div>
@@ -845,32 +749,39 @@ export default function FormsView({
                   <div
                     className="bg-white text-black p-8 sm:p-14 max-w-4xl w-full mx-auto shadow-md border border-stone-300"
                     style={{
-                      fontFamily: "'Sarabun', 'TH Sarabun New', Tahoma, sans-serif",
-                      lineHeight: 1.6,
-                      fontSize: '15px'
+                      fontFamily: SARABAN_CONFIG.fontFamily,
+                      lineHeight: 1.35,
+                      fontSize: '16pt'
                     }}
                   >
-                    <div className="text-center pb-4">
-                      <div className="font-bold text-lg mb-1">(ตราครุฑ)</div>
+                    <div className="flex flex-col items-center justify-center pb-3 text-center">
+                      <svg viewBox="0 0 100 100" width="113" height="113" className="fill-current text-black mb-3 shrink-0" aria-label="ตราครุฑ ๓ เซนติเมตร">
+                        <path d={GARUDA_SVG_PATH} />
+                      </svg>
                       <h1 className="font-bold text-xl text-black">
-                        {previewDoc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName)}
+                        {toThaiDigits(previewDoc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName))}
                       </h1>
-                      <div className="font-bold text-sm text-stone-600 mt-1">{previewDoc.docNumber}</div>
+                      <div className="font-bold text-sm text-stone-600 mt-1">{toThaiDigits(previewDoc.docNumber)}</div>
                     </div>
                     <hr className="border-stone-400 my-4" />
-                    <div className="space-y-4 py-2 text-justify text-[15px] leading-relaxed whitespace-pre-line">
-                      {(previewDoc.fullContent || previewDoc.summary).replace(
-                        /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
-                        orgName
+                    <div
+                      className="space-y-4 py-2 text-justify text-[16pt] leading-relaxed whitespace-pre-line"
+                      style={{ textIndent: '2.5cm' }}
+                    >
+                      {toThaiDigits(
+                        (previewDoc.fullContent || previewDoc.summary).replace(
+                          /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
+                          orgName
+                        )
                       )}
                     </div>
                     <div className="pt-8 flex justify-end">
-                      <div className="w-64 text-center space-y-4">
+                      <div className="w-80 text-center space-y-4 text-[16pt]">
                         <div>(ลงชื่อ)........................................................</div>
                         <div className="font-bold">
-                          {previewDoc.signatoryName || '([ชื่อ-นามสกุล นายก อปท.])'}
+                          {toThaiDigits(previewDoc.signatoryName || '([ชื่อ-นามสกุล นายก อปท.])')}
                         </div>
-                        <div className="text-sm">นายก{orgName}</div>
+                        <div className="text-[15pt]">นายก{orgName}</div>
                       </div>
                     </div>
                   </div>
@@ -905,23 +816,23 @@ export default function FormsView({
                     }}
                     showReviewBoxes={true}
                   >
-                    <p className="indent-10">
-                      {(previewDoc.part1_background || '').replace(
+                    <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify">
+                      {toThaiDigits((previewDoc.part1_background || '').replace(
                         /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
                         orgName
-                      )}
+                      ))}
                     </p>
-                    <p className="indent-10">
-                      {(previewDoc.part2_facts || '').replace(
+                    <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify">
+                      {toThaiDigits((previewDoc.part2_facts || '').replace(
                         /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
                         orgName
-                      )}
+                      ))}
                     </p>
-                    <p className="indent-10">
-                      {(previewDoc.part3_proposal || '').replace(
+                    <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify">
+                      {toThaiDigits((previewDoc.part3_proposal || '').replace(
                         /\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g,
                         orgName
-                      )}
+                      ))}
                     </p>
                   </OfficialThaiMemo>
                 )}

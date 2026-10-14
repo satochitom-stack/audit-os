@@ -35,6 +35,7 @@ import ReportExportHubModal from './ReportExportHubModal';
 import OfficialThaiMemo from './OfficialThaiMemo';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { exportThaiMemoToWord, exportDocumentToWord } from '../utils/documentExportUtils';
+import { GARUDA_SVG_3CM_HTML, toThaiDigits } from '../utils/sarabanUtils';
 import { initialCapaFindings } from '../data/initialData';
 import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
 
@@ -332,6 +333,7 @@ export default function ReportingView({
 
     const bodyContent = `
       <div style="text-align: center; margin-bottom: 16pt;">
+        <div style="text-align: center; margin-bottom: 10pt;">${GARUDA_SVG_3CM_HTML}</div>
         <p style="margin: 0; font-size: 20pt; font-weight: bold; font-family: 'TH Sarabun PSK';">รายงานผลการตรวจสอบภายใน</p>
         <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK';">เรื่อง: ${projTitle}</p>
         <p style="margin: 2pt 0 0 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">หน่วยรับตรวจ: ${deptName} ${orgName}</p>

@@ -18,6 +18,7 @@ import { getDepartments } from '../utils/auth';
 import ConfirmModal from './ConfirmModal';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExportUtils';
+import { GARUDA_SVG_3CM_HTML, GARUDA_SVG_PATH, toThaiDigits } from '../utils/sarabanUtils';
 
 export default function InternalControlView({
   internalControls,
@@ -182,7 +183,7 @@ export default function InternalControlView({
 
       const bodyContent = `
         <div style="text-align: center; margin-bottom: 20pt; font-family: 'TH Sarabun PSK';">
-          <p style="text-align: center; margin: 0 0 6pt 0;"><span style="font-size: 22pt; font-weight: bold;">(ตราครุฑ)</span></p>
+          <div style="text-align: center; margin: 0 0 10pt 0;">${GARUDA_SVG_3CM_HTML}</div>
           <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0;">หนังสือรับรองการปฏิบัติตามมาตรฐานการควบคุมภายใน (แบบ ปค.1)</p>
           <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 0 0;">${orgName} ${orgProfile?.district || ''} ${orgProfile?.province || ''}</p>
           <p style="font-size: 16pt; margin: 2pt 0 0 0;">สำหรับปีงบประมาณสิ้นสุดวันที่ 30 กันยายน พ.ศ. ${selectedYear}</p>
@@ -291,7 +292,7 @@ export default function InternalControlView({
     } else if (activeTab === 'pk6') {
       const bodyContent = `
         <div style="text-align: center; margin-bottom: 20pt; font-family: 'TH Sarabun PSK';">
-          <p style="text-align: center; margin: 0 0 6pt 0;"><span style="font-size: 22pt; font-weight: bold;">(ตราครุฑ)</span></p>
+          <div style="text-align: center; margin: 0 0 10pt 0;">${GARUDA_SVG_3CM_HTML}</div>
           <p style="font-size: 20pt; font-weight: bold; margin: 2pt 0 0 0;">แบบ ปค.6: รายงานการสอบทานการประเมินผลการควบคุมภายในของผู้ตรวจสอบภายใน</p>
           <p style="font-size: 16pt; font-weight: bold; margin: 2pt 0 0 0;">${orgName} ${orgProfile?.district || ''} ${orgProfile?.province || ''}</p>
           <p style="font-size: 16pt; margin: 2pt 0 0 0;">สำหรับระยะเวลาสิ้นสุดวันที่ 30 กันยายน พ.ศ. ${selectedYear}</p>
@@ -685,24 +686,29 @@ export default function InternalControlView({
       {activeTab === 'pk1' && (
         <div className="bg-white dark:bg-stone-900 rounded-2xl p-8 sm:p-12 border border-stone-200/80 dark:border-stone-800 shadow-xs max-w-3xl mx-auto space-y-6 text-stone-800 dark:text-stone-200 text-xs sm:text-sm">
           <div className="text-center border-b border-stone-200 dark:border-stone-800 pb-6 space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center mb-3">
-              <ShieldCheck className="w-7 h-7" />
+            <div className="flex justify-center mb-3">
+              <svg viewBox="0 0 100 100" width="80" height="80" className="fill-current text-stone-900 dark:text-stone-100 shrink-0" aria-label="ตราครุฑ ๓ เซนติเมตร">
+                <path d={GARUDA_SVG_PATH} />
+              </svg>
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
               หนังสือรับรองการปฏิบัติตามมาตรฐานการควบคุมภายใน (แบบ ปค.1)
             </h3>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
+            <p className="text-xs text-stone-500 dark:text-stone-400 font-bold">
               {orgProfile?.name} {orgProfile?.district} {orgProfile?.province}
+            </p>
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              สำหรับปีงบประมาณสิ้นสุดวันที่ ๓๐ กันยายน พ.ศ. {toThaiDigits(selectedYear)}
             </p>
           </div>
 
-          <div className="space-y-5 leading-relaxed">
-            <p className="indent-8 text-justify">
+          <div className="space-y-5 leading-relaxed text-sm">
+            <p className="indent-10 text-justify">
               {orgProfile?.name} ได้ประเมินผลการควบคุมภายในของหน่วยงานตามมาตรฐานและหลักเกณฑ์ปฏิบัติการควบคุมภายในสำหรับหน่วยงานของรัฐที่กระทรวงการคลังกำหนด
-              สำหรับปีงบประมาณสิ้นสุดวันที่ 30 กันยายน พ.ศ. {selectedYear}
+              สำหรับปีงบประมาณสิ้นสุดวันที่ ๓๐ กันยายน พ.ศ. {toThaiDigits(selectedYear)}
             </p>
 
-            <p className="indent-8 text-justify">
+            <p className="indent-10 text-justify">
               จากผลการประเมินดังกล่าว เห็นว่า ระบบการควบคุมภายในของ {orgProfile?.name} มีความเพียงพอและมีประสิทธิผลตามสมควร
               ที่จะให้ความเชื่อมั่นอย่างสมเหตุสมผลว่า การดำเนินงานจะบรรลุวัตถุประสงค์ด้านการดำเนินงาน
               ด้านการรายงานทางการเงิน และด้านการปฏิบัติตามกฎหมายและระเบียบ
@@ -717,8 +723,8 @@ export default function InternalControlView({
                 <div className="text-xs text-stone-500 dark:text-stone-400">
                   {orgProfile?.approverPosition || pk1Data?.position || 'นายกองค์กรปกครองส่วนท้องถิ่น'}
                 </div>
-                <div className="text-xs text-stone-400 dark:text-stone-500 mt-2 font-mono">
-                  วันที่ {pk1Data?.signDate || '30 กันยายน 2569'}
+                <div className="text-xs text-stone-500 dark:text-stone-400 mt-2">
+                  วันที่ {toThaiDigits(pk1Data?.signDate || `๓๐ กันยายน ${toThaiDigits(selectedYear)}`)}
                 </div>
               </div>
             </div>

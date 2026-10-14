@@ -21,6 +21,7 @@ import {
 import { DLA_CLOSING_MEETING_DATA } from '../data/dlaStandardTemplates';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { exportDocumentToWord, exportDataToExcel, wrapWordHtml } from '../utils/documentExportUtils';
+import { toThaiDigits, formatSarabanDate } from '../utils/sarabanUtils';
 
 export default function ClosingMeetingView({
   selectedYear = '2569',
@@ -141,28 +142,28 @@ export default function ClosingMeetingView({
   };
 
   const handleDownloadWord = () => {
-    const orgName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
-    const projName = currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน';
-    const deptName = currentPlan.department || 'หน่วยรับตรวจ';
-    const auditorName = orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน';
-    const auditorPos = orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน';
+    const orgName = toThaiDigits(orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น');
+    const projName = toThaiDigits(currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน');
+    const deptName = toThaiDigits(currentPlan.department || 'หน่วยรับตรวจ');
+    const auditorName = toThaiDigits(orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน');
+    const auditorPos = toThaiDigits(orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน');
 
     const bodyContent = `
       <div style="text-align: center; margin-bottom: 16pt;">
         <p style="margin: 0; font-size: 20pt; font-weight: bold; font-family: 'TH Sarabun PSK';">รายงานการประชุมปิดการตรวจสอบ (Closing Meeting Minutes)</p>
         <p style="margin: 4pt 0 0 0; font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK';">โครงการ: ${projName}</p>
         <p style="margin: 2pt 0 0 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">หน่วยรับตรวจ: ${deptName} ${orgName}</p>
-        <p style="margin: 2pt 0 0 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">ประจำปีงบประมาณ พ.ศ. ${selectedYear}</p>
+        <p style="margin: 2pt 0 0 0; font-size: 16pt; font-family: 'TH Sarabun PSK';">ประจำปีงบประมาณ พ.ศ. ${toThaiDigits(selectedYear)}</p>
       </div>
       <div style="border-top: 1pt solid black; margin-bottom: 14pt;"></div>
 
       <table style="width: 100%; border: none; font-size: 16pt; font-family: 'TH Sarabun PSK'; margin-bottom: 12pt;">
         <tr>
-          <td style="width: 50%;"><strong>วัน/เดือน/ปี ที่ประชุม:</strong> ${meetingDate}</td>
-          <td style="width: 50%;"><strong>เวลา:</strong> ${meetingTime}</td>
+          <td style="width: 50%;"><strong>วัน/เดือน/ปี ที่ประชุม:</strong> ${formatSarabanDate(meetingDate, { isExternal: true })}</td>
+          <td style="width: 50%;"><strong>เวลา:</strong> ${toThaiDigits(meetingTime)}</td>
         </tr>
         <tr>
-          <td colspan="2"><strong>สถานที่ประชุม:</strong> ${meetingLocation}</td>
+          <td colspan="2"><strong>สถานที่ประชุม:</strong> ${toThaiDigits(meetingLocation)}</td>
         </tr>
       </table>
 
@@ -181,11 +182,11 @@ export default function ClosingMeetingView({
         .map(
           (f, i) => `
       <div style="margin-bottom: 12pt; padding: 8pt; border: 1pt solid #ccc; font-family: 'TH Sarabun PSK';">
-        <p style="margin: 0 0 4pt 0; font-size: 16pt; font-weight: bold;">ประเด็นที่ ${i + 1}: ${f.topic}</p>
-        <p style="margin: 2pt 0; font-size: 16pt;"><strong>สภาพที่ตรวจพบ (Condition):</strong> ${f.condition || '-'}</p>
-        <p style="margin: 2pt 0; font-size: 16pt;"><strong>เกณฑ์มาตรฐาน (Criteria):</strong> ${f.criteria || '-'}</p>
-        <p style="margin: 2pt 0; font-size: 16pt;"><strong>คำชี้แจงของหน่วยรับตรวจ (Auditee Feedback):</strong> ${f.auditeeFeedback || '-'}</p>
-        <p style="margin: 2pt 0; font-size: 16pt; color: #047857;"><strong>ข้อตกลงแนวทางแก้ไขร่วมกัน (Agreed Action):</strong> ${f.agreement || '-'}</p>
+        <p style="margin: 0 0 4pt 0; font-size: 16pt; font-weight: bold;">ประเด็นที่ ${toThaiDigits(i + 1)}: ${toThaiDigits(f.topic)}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>สภาพที่ตรวจพบ (Condition):</strong> ${toThaiDigits(f.condition || '-')}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>เกณฑ์มาตรฐาน (Criteria):</strong> ${toThaiDigits(f.criteria || '-')}</p>
+        <p style="margin: 2pt 0; font-size: 16pt;"><strong>คำชี้แจงของหน่วยรับตรวจ (Auditee Feedback):</strong> ${toThaiDigits(f.auditeeFeedback || '-')}</p>
+        <p style="margin: 2pt 0; font-size: 16pt; color: #047857;"><strong>ข้อตกลงแนวทางแก้ไขร่วมกัน (Agreed Action):</strong> ${toThaiDigits(f.agreement || '-')}</p>
       </div>
       `
         )

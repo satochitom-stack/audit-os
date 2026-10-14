@@ -9,18 +9,21 @@ import { Download, ChevronDown, FileText, Printer, FileSpreadsheet } from 'lucid
  */
 export default function OfficialDocActionToolbar({
   onDownloadWord,
+  onWord,
   wordTitle = 'ดาวน์โหลดไฟล์ Word (.doc)',
   wordSubtitle = 'เอกสารมาตรฐานงานสารบรรณ พ.ศ. ๒๕๒๖',
   wordTooltip = 'ดาวน์โหลดไฟล์ Word (.doc)',
   showWord = true,
 
   onDownloadExcel,
+  onExcel,
   excelTitle = 'ดาวน์โหลดไฟล์ Excel (.xlsx)',
   excelSubtitle = 'ตารางข้อมูลและระบบคำนวณมาตรฐาน',
   excelTooltip = 'ดาวน์โหลดไฟล์ Excel (.xlsx)',
   showExcel = true,
 
   onPrint,
+  onPdf,
   pdfTitle = 'ดาวน์โหลดไฟล์ PDF / สั่งพิมพ์',
   pdfSubtitle = 'พิมพ์แบบฟอร์ม A4 ทางการ หรือบันทึกเป็น PDF',
   printTooltip = 'สั่งพิมพ์เอกสาร หรือบันทึกเป็นไฟล์ PDF',
@@ -33,6 +36,10 @@ export default function OfficialDocActionToolbar({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const wordAction = onDownloadWord || onWord;
+  const excelAction = onDownloadExcel || onExcel;
+  const printAction = onPrint || onPdf;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -49,7 +56,7 @@ export default function OfficialDocActionToolbar({
     };
   }, [isOpen]);
 
-  const hasAnyExport = (showWord && onDownloadWord) || (showExcel && onDownloadExcel) || (showPrint && onPrint);
+  const hasAnyExport = (showWord && wordAction) || (showExcel && excelAction) || (showPrint && printAction);
   if (!hasAnyExport && !extraActions) return null;
 
   return (
@@ -77,12 +84,12 @@ export default function OfficialDocActionToolbar({
               }`}
             >
               {/* Option 1: PDF / Print */}
-              {showPrint && onPrint && (
+              {showPrint && printAction && (
                 <button
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    onPrint();
+                    printAction();
                   }}
                   title={printTooltip}
                   className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-stone-800 dark:text-stone-200 hover:text-rose-700 dark:hover:text-rose-300 flex items-center space-x-2.5 text-xs font-bold transition-all cursor-pointer"
@@ -98,12 +105,12 @@ export default function OfficialDocActionToolbar({
               )}
 
               {/* Option 2: Word (.doc) */}
-              {showWord && onDownloadWord && (
+              {showWord && wordAction && (
                 <button
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    onDownloadWord();
+                    wordAction();
                   }}
                   title={wordTooltip}
                   className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/40 text-stone-800 dark:text-stone-200 hover:text-blue-700 dark:hover:text-blue-300 flex items-center space-x-2.5 text-xs font-bold transition-all cursor-pointer mt-1"
@@ -119,12 +126,12 @@ export default function OfficialDocActionToolbar({
               )}
 
               {/* Option 3: Excel (.xlsx) */}
-              {showExcel && onDownloadExcel && (
+              {showExcel && excelAction && (
                 <button
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
-                    onDownloadExcel();
+                    excelAction();
                   }}
                   title={excelTooltip}
                   className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-stone-800 dark:text-stone-200 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center space-x-2.5 text-xs font-bold transition-all cursor-pointer mt-1"

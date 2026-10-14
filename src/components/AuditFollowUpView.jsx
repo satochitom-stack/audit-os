@@ -26,6 +26,7 @@ import { DLA_FOLLOWUP_REGISTER_6, DLA_FOLLOWUP_MEMO_TEMPLATE } from '../data/dla
 import OfficialThaiMemo from './OfficialThaiMemo';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { exportDocumentToWord, exportThaiMemoToWord, exportDataToExcel } from '../utils/documentExportUtils';
+import { toThaiDigits, formatSarabanDate } from '../utils/sarabanUtils';
 import { luxuryConfirm } from './LuxuryModal';
 
 export default function AuditFollowUpView({
@@ -701,18 +702,18 @@ export default function AuditFollowUpView({
             }}
             showReviewBoxes={false}
           >
-            <p className="indent-10 text-justify leading-relaxed">
-              ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. {selectedYear} ในภารกิจ "{currentMemoItem.title}" และ นายก{orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ {currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด {isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} นั้น
+            <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed">
+              {toThaiDigits(`ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ในภารกิจ "${currentMemoItem.title}" และ นายก${orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ ${currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} นั้น`)}
             </p>
-            <p className="indent-10 text-justify leading-relaxed">
-              บัดนี้ ได้ครบกำหนดระยะเวลา {isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} แล้ว (ครบกำหนดวันที่ {currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม {isCgdRegime ? 'หลักเกณฑ์ปฏิบัติการตรวจสอบภายในสำหรับหน่วยงานของรัฐ พ.ศ. ๒๕๖๑ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๔) พ.ศ. ๒๕๖๖' : 'ระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๑'} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว
+            <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed">
+              {toThaiDigits(`บัดนี้ ได้ครบกำหนดระยะเวลา ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} แล้ว (ครบกำหนดวันที่ ${currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม ${isCgdRegime ? 'หลักเกณฑ์ปฏิบัติการตรวจสอบภายในสำหรับหน่วยงานของรัฐ พ.ศ. ๒๕๖๑ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๔) พ.ศ. ๒๕๖๖' : 'ระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๑'} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว`)}
             </p>
-            <div className="p-3.5 bg-stone-50 border border-stone-300 rounded-none space-y-1">
+            <div className="p-3.5 bg-stone-50 border border-stone-300 rounded-none space-y-1 my-2">
               <div className="font-bold text-black">ข้อเสนอแนะที่ต้องติดตาม:</div>
-              <div className="text-stone-900 whitespace-pre-line leading-relaxed">{currentMemoItem.recommendation}</div>
+              <div className="text-stone-900 whitespace-pre-line leading-relaxed">{toThaiDigits(currentMemoItem.recommendation)}</div>
             </div>
-            <p className="indent-10 text-justify leading-relaxed pt-2">
-              จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก{orgProfile?.name || 'อปท.'} ต่อไป
+            <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed pt-2">
+              {toThaiDigits(`จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป`)}
             </p>
           </OfficialThaiMemo>
         </div>
