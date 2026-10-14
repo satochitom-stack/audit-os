@@ -541,7 +541,7 @@ export default function AuditCommitteeView({
           <OfficialDocActionToolbar
             onWord={handleDownloadWord}
             onExcel={handleDownloadExcel}
-            onPdf={() => window.print()}
+            onPrint={() => window.print()}
             wordTitle={
               activeTab === 'charter'
                 ? 'ส่งออกกฎบัตรคณะกรรมการตรวจสอบ (Word .doc)'
@@ -562,8 +562,8 @@ export default function AuditCommitteeView({
             }
             excelTitle="ส่งออกตารางการประเมินตนเอง (Excel .xlsx)"
             excelSubtitle="ตารางคะแนนการประเมินผลตนเอง 11 ด้านและเกณฑ์คะแนน"
-            pdfTitle="พิมพ์รายงานคณะกรรมการตรวจสอบ (PDF/Print)"
-            pdfSubtitle="จัดพิมพ์รายงานการประเมินตนเองและเอกสารคณะกรรมการตรวจสอบ"
+            printTitle="พิมพ์เอกสารคณะกรรมการตรวจสอบ"
+            printSubtitle="สั่งพิมพ์ผ่านเครื่องพิมพ์ (ปรับแนวตั้ง/แนวนอนอัตโนมัติ)"
           />
         </div>
       </div>

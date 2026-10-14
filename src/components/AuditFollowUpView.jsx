@@ -507,7 +507,7 @@ export default function AuditFollowUpView({
           <OfficialDocActionToolbar
             onWord={handleDownloadWord}
             onExcel={activeTab === 'register' ? handleDownloadExcel : null}
-            onPdf={() => window.print()}
+            onPrint={() => window.print()}
             wordTitle={activeTab === 'register' ? 'ส่งออกทะเบียนคุม (Word .doc)' : 'ส่งออกบันทึกข้อความติดตามผล (Word .doc)'}
             wordSubtitle={
               activeTab === 'register'
@@ -516,11 +516,11 @@ export default function AuditFollowUpView({
             }
             excelTitle={activeTab === 'register' ? 'ส่งออกทะเบียนคุม (Excel .xlsx)' : undefined}
             excelSubtitle={activeTab === 'register' ? 'ตารางทะเบียนคุมข้อสังเกตและสถานะการปรับปรุงแก้ไข' : undefined}
-            pdfTitle={activeTab === 'register' ? 'พิมพ์ทะเบียนคุม (PDF/Print)' : 'พิมพ์บันทึกข้อความเตือน (PDF/Print)'}
-            pdfSubtitle={
+            printTitle={activeTab === 'register' ? 'พิมพ์ทะเบียนคุม' : 'พิมพ์บันทึกข้อความเตือน'}
+            printSubtitle={
               activeTab === 'register'
-                ? 'จัดพิมพ์ทะเบียนคุมแบบหน้ากว้างและรายงานสรุป'
-                : 'จัดพิมพ์บันทึกข้อความตราครุฑมาตรฐาน'
+                ? 'สั่งพิมพ์ทะเบียนคุมและรายงานสรุปผ่านเครื่องพิมพ์'
+                : 'สั่งพิมพ์บันทึกข้อความตราครุฑมาตรฐาน'
             }
           />
         </div>

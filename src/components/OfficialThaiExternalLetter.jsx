@@ -63,15 +63,14 @@ export default function OfficialThaiExternalLetter({
           ส่วนหัว: ตราครุฑ สูง ๓ ซม. กึ่งกลางหน้ากระดาษ
       ========================================================================= */}
       <div className="flex flex-col items-center justify-center pb-2 text-center">
-        <svg
-          viewBox="0 0 100 100"
+        <img
+          src="/garuda.png"
+          alt="ตราครุฑราชการ ๓ เซนติเมตร"
           width="113"
           height="113"
-          className="fill-current text-black mb-3 shrink-0"
-          aria-label="ตราครุฑราชการ ๓ เซนติเมตร"
-        >
-          <path d={GARUDA_SVG_PATH} />
-        </svg>
+          className="object-contain mb-3 shrink-0"
+          style={{ width: '3.0cm', height: '3.0cm', maxHeight: '3.0cm' }}
+        />
       </div>
 
       {/* =========================================================================

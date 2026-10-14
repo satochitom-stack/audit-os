@@ -17,7 +17,7 @@ import {
 import { getDepartments } from '../utils/auth';
 import ConfirmModal from './ConfirmModal';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
-import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExportUtils';
+import { exportDocumentToWord, exportDataToExcel, applySmartPrintOrientation, exportElementToPdf } from '../utils/documentExportUtils';
 import { GARUDA_SVG_3CM_HTML, GARUDA_SVG_PATH, toThaiDigits } from '../utils/sarabanUtils';
 
 export default function InternalControlView({
@@ -116,8 +116,13 @@ export default function InternalControlView({
 
   const pk4List = internalControls?.pk4 || [];
   const pk5List = internalControls?.pk5 || [];
-  const pk1Data = internalControls?.pk1 || {};
   const [pk6SavedToast, setPk6SavedToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const rawPk6 = internalControls?.pk6;
   const pk6Data = {
@@ -415,11 +420,52 @@ export default function InternalControlView({
     }
   };
 
+  const handlePrintDocument = () => {
+    const isPortrait = activeTab === 'pk1';
+    applySmartPrintOrientation(isPortrait ? 'portrait' : 'landscape', 'internal-control-report-container');
+    showToast(`กำลังเปิดหน้าต่างพิมพ์ (${isPortrait ? 'แนวตั้ง' : 'แนวนอน'} A4)...`);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  const handleSavePdf = async () => {
+    const isPortrait = activeTab === 'pk1';
+    const orgName = orgProfile?.name || 'อปท';
+    const docName = activeTab === 'pk1'
+      ? `หนังสือรับรอง_ปค1_ปี_${selectedYear}_${orgName}`
+      : activeTab === 'pk6'
+      ? `รายงานสอบทาน_ปค6_ปี_${selectedYear}_${orgName}`
+      : activeTab === 'pk5'
+      ? `รายงานติดตาม_ปค5_ปี_${selectedYear}_${orgName}`
+      : `รายงานประเมินผล_ปค4_ปี_${selectedYear}_${orgName}`;
+
+    showToast('กำลังประมวลผลและดาวน์โหลดไฟล์ PDF...');
+
+    try {
+      await exportElementToPdf('internal-control-report-container', {
+        fileName: `${docName}.pdf`,
+        orientation: isPortrait ? 'portrait' : 'landscape',
+        margin: isPortrait ? [20, 15, 20, 20] : [10, 10, 10, 10]
+      });
+      showToast('ดาวน์โหลดไฟล์ PDF เรียบร้อยแล้ว');
+    } catch (err) {
+      console.error('Save PDF error:', err);
+      showToast('⚠️ เกิดข้อผิดพลาดในการสร้างไฟล์ PDF กรุณาลองใหม่อีกครั้ง');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
-      {pk6SavedToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 dark:bg-slate-950 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 border border-slate-700 text-xs font-bold animate-slide-up">
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-stone-900/95 dark:bg-stone-950 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 border border-stone-700 text-xs font-bold animate-slide-up no-print print:hidden">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+      {pk6SavedToast && !toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 dark:bg-slate-950 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 border border-slate-700 text-xs font-bold animate-slide-up no-print print:hidden">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>บันทึกรายงานการสอบทาน ปค.6 เรียบร้อยแล้ว</span>
         </div>
@@ -498,7 +544,28 @@ export default function InternalControlView({
           <OfficialDocActionToolbar
             onWord={handleDownloadWord}
             onExcel={activeTab !== 'pk1' ? handleDownloadExcel : null}
-            onPdf={() => window.print()}
+            onPrint={handlePrintDocument}
+            printTitle={
+              activeTab === 'pk6'
+                ? 'พิมพ์รายงานสอบทาน ปค.6 (แนวตั้ง A4)'
+                : activeTab === 'pk1'
+                ? 'พิมพ์หนังสือรับรอง ปค.1 (แนวตั้ง A4)'
+                : activeTab === 'pk5'
+                ? 'พิมพ์รายงาน ปค.5 (แนวนอน A4)'
+                : 'พิมพ์รายงาน ปค.4 (แนวนอน A4)'
+            }
+            printSubtitle="พิมพ์เอกสารราชการผ่านเครื่องพิมพ์ (ปรับแนวหน้ากระดาษอัตโนมัติ)"
+            onSavePdf={handleSavePdf}
+            pdfTitle={
+              activeTab === 'pk6'
+                ? 'บันทึกรายงานสอบทาน ปค.6 เป็น PDF (.pdf)'
+                : activeTab === 'pk1'
+                ? 'บันทึกหนังสือรับรอง ปค.1 เป็น PDF (.pdf)'
+                : activeTab === 'pk5'
+                ? 'บันทึกรายงาน ปค.5 เป็น PDF (.pdf)'
+                : 'บันทึกรายงาน ปค.4 เป็น PDF (.pdf)'
+            }
+            pdfSubtitle="ดาวน์โหลดเป็นไฟล์ PDF คุณภาพสูงลงเครื่องทันที"
             wordTitle={
               activeTab === 'pk6'
                 ? 'ส่งออกรายงานสอบทาน ปค.6 (Word .doc)'
@@ -535,26 +602,12 @@ export default function InternalControlView({
                 ? 'ตารางการประเมินและการปรับปรุงการควบคุมภายในระดับกอง'
                 : undefined
             }
-            pdfTitle={
-              activeTab === 'pk6'
-                ? 'พิมพ์รายงานสอบทาน ปค.6 (PDF/Print)'
-                : activeTab === 'pk1'
-                ? 'พิมพ์หนังสือรับรอง ปค.1 (PDF/Print)'
-                : activeTab === 'pk5'
-                ? 'พิมพ์รายงาน ปค.5 (PDF/Print)'
-                : 'พิมพ์รายงาน ปค.4 (PDF/Print)'
-            }
-            pdfSubtitle={
-              activeTab === 'pk6'
-                ? 'จัดพิมพ์รายงานการสอบทานของผู้ตรวจสอบภายใน (แบบ ปค.6)'
-                : activeTab === 'pk1'
-                ? 'จัดพิมพ์หนังสือรับรอง ปค.1 พร้อมลงนามหัวหน้าหน่วยงาน'
-                : 'จัดพิมพ์แบบรายงานตามมาตรฐานกรมบัญชีกลาง'
-            }
           />
         </div>
       </div>
 
+      {/* Printable Report Container */}
+      <div id="internal-control-report-container">
       {/* Tab: PK 4 */}
       {activeTab === 'pk4' && (
         <div className="space-y-4">
@@ -701,9 +754,14 @@ export default function InternalControlView({
         <div className="bg-white dark:bg-stone-900 rounded-2xl p-8 sm:p-12 border border-stone-200/80 dark:border-stone-800 shadow-xs max-w-3xl mx-auto space-y-6 text-stone-800 dark:text-stone-200 text-xs sm:text-sm">
           <div className="text-center border-b border-stone-200 dark:border-stone-800 pb-6 space-y-2">
             <div className="flex justify-center mb-3">
-              <svg viewBox="0 0 100 100" width="80" height="80" className="fill-current text-stone-900 dark:text-stone-100 shrink-0" aria-label="ตราครุฑ ๓ เซนติเมตร">
-                <path d={GARUDA_SVG_PATH} />
-              </svg>
+              <img
+                src="/garuda.png"
+                alt="ตราครุฑ ๓ เซนติเมตร"
+                width="113"
+                height="113"
+                className="object-contain shrink-0"
+                style={{ width: '3.0cm', height: '3.0cm', maxHeight: '3.0cm' }}
+              />
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
               หนังสือรับรองการปฏิบัติตามมาตรฐานการควบคุมภายใน (แบบ ปค.1)
@@ -942,6 +1000,7 @@ export default function InternalControlView({
           </div>
         </div>
       )}
+      </div>
 
       {/* Modal Add PK.4 */}
       {showAddModal && (

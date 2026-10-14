@@ -140,13 +140,13 @@ export default function LpaView({
           <OfficialDocActionToolbar
             onWord={handleDownloadWord}
             onExcel={handleDownloadExcel}
-            onPdf={() => window.print()}
+            onPrint={() => window.print()}
             wordTitle="ส่งออกแบบประเมิน LPA (Word .doc)"
             wordSubtitle="แบบประเมินประสิทธิภาพ อปท. ด้านที่ 1 งานตรวจสอบและควบคุมภายใน"
             excelTitle="ส่งออกคะแนนและเกณฑ์ LPA (Excel .xlsx)"
             excelSubtitle="ตารางตัวชี้วัดที่ 29, 30, 31 พร้อมคะแนนและเอกสารหลักฐานอ้างอิง"
-            pdfTitle="พิมพ์แบบประเมิน LPA (PDF/Print)"
-            pdfSubtitle="จัดพิมพ์แบบประเมินประสิทธิภาพมาตรฐานกรมส่งเสริมการปกครองท้องถิ่น"
+            printTitle="พิมพ์แบบประเมิน LPA"
+            printSubtitle="จัดพิมพ์แบบประเมินประสิทธิภาพมาตรฐานกรมส่งเสริมการปกครองท้องถิ่น"
           />
         </div>
       </div>

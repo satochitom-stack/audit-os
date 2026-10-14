@@ -105,28 +105,25 @@ export function formatSarabanDate(dateInput, options = {}) {
   return `วันที่ ${thaiDay} ${monthName} ${thaiYear}`;
 }
 
-/**
- * SVG Path สำหรับตราครุฑทางการที่มีความคมชัดและได้สัดส่วนมาตรฐานระเบียบสำนักนายกรัฐมนตรี
- * โครงร่างพญาครุฑกางปีก ยอดชฎา พระพักตร์ จงอยปาก ทรวงอก หางลายกนก และกรงเล็บตามมาตรฐานงานสารบรรณ
- */
-export const GARUDA_SVG_PATH = "M 50,1 L 51.2,7 L 52.8,12 L 50.8,13 L 53,17 L 55,21 L 52,22 L 54.5,26 L 50,27.5 L 45.5,26 L 48,22 L 45,21 L 47.2,17 L 45.2,13 L 47.2,12 L 48.8,7 Z M 50,28 C 53,28 55,30 55,33 C 55,36 53,38 51.5,40 L 50,44 L 48.5,40 C 47,38 45,36 45,33 C 45,30 47,28 50,28 Z M 45,30 C 42,29 39,32 38,35 C 41,35 43,34 44.5,33 Z M 55,30 C 58,29 61,32 62,35 C 59,35 57,34 55.5,33 Z M 42,36 C 35,32 26,22 17,14 C 19,20 22,27 26,33 C 18,27 11,25 6,26 C 9,33 14,39 21,43 C 13,39 7,41 3,46 C 7,51 14,54 21,54 C 13,54 8,58 5,64 C 11,65 18,64 24,61 C 17,64 12,70 11,76 C 17,75 23,72 28,66 C 22,71 18,78 18,85 C 24,82 30,76 34,68 C 36,65 39,63 41,61 L 43,50 Z M 58,36 C 65,32 74,22 83,14 C 81,20 78,27 74,33 C 82,27 89,25 94,26 C 91,33 86,39 79,43 C 87,39 93,41 97,46 C 93,51 86,54 79,54 C 87,54 92,58 95,64 C 89,65 82,64 76,61 C 83,64 88,70 89,76 C 83,75 77,72 72,66 C 78,71 82,78 82,85 C 76,82 70,76 66,68 C 64,65 61,63 59,61 L 57,50 Z M 46,42 C 43,45 42,50 43,56 C 44,61 46,65 48,67 L 50,68 L 52,67 C 54,65 56,61 57,56 C 58,50 57,45 54,42 Z M 44,43 C 38,42 34,44 32,48 C 30,52 32,56 36,56 C 39,56 42,53 44,50 Z M 56,43 C 62,42 66,44 68,48 C 70,52 68,56 64,56 C 61,56 58,53 56,50 Z M 48,67 C 46,74 42,83 38,94 C 43,92 47,87 49,81 L 50,96 L 51,81 C 53,87 57,92 62,94 C 58,83 54,74 52,67 Z M 44,65 C 41,71 37,77 34,83 C 32,86 31,89 29,91 C 32,90 35,87 37,84 C 36,87 35,91 34,94 C 38,91 40,86 42,81 C 44,77 46,72 46,67 Z M 56,65 C 59,71 63,77 66,83 C 68,86 69,89 71,91 C 68,90 65,87 63,84 C 64,87 65,91 66,94 C 62,91 60,86 58,81 C 56,77 54,72 54,67 Z";
+import { GARUDA_PNG_BASE64 } from '../data/garudaBase64';
 
 /**
- * Garuda Emblem HTML string สำหรับ Word (.doc) และ Direct Print Window
- * - 1.5 ซม. (ประมาณ 42.5 pt / 57 px) ใช้สำหรับหนังสือภายใน (บันทึกข้อความ แบบที่ ๒)
- * - 3.0 ซม. (ประมาณ 85 pt / 113 px) ใช้สำหรับหนังสือภายนอก (แบบที่ ๑) และคำสั่ง (แบบที่ ๑๔)
+ * ตราครุฑราชการมาตรฐานระเบียบสำนักนายกรัฐมนตรี ว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖
+ * - 1.5 ซม. (กว้าง 1.5 ซม. สูง 1.5 ซม.) ใช้สำหรับหนังสือภายใน (บันทึกข้อความ แบบที่ ๒)
+ * - 3.0 ซม. (กว้าง 3.0 ซม. สูง 3.0 ซม.) ใช้สำหรับหนังสือภายนอก (แบบที่ ๑) และคำสั่ง (แบบที่ ๑๔)
  */
-export const GARUDA_SVG_1_5CM_HTML = `
-<svg width="57" height="57" viewBox="0 0 100 100" style="fill: black; display: inline-block; vertical-align: top;">
-  <path d="${GARUDA_SVG_PATH}" />
-</svg>
+export const GARUDA_SVG_PATH = "";
+
+export const GARUDA_IMAGE_1_5CM_HTML = `
+<img src="${GARUDA_PNG_BASE64}" width="57" height="57" alt="ตราครุฑ ๑.๕ เซนติเมตร" style="width: 1.5cm; height: 1.5cm; max-height: 1.5cm; display: inline-block; vertical-align: top; object-fit: contain;" />
 `;
 
-export const GARUDA_SVG_3CM_HTML = `
-<svg width="113" height="113" viewBox="0 0 100 100" style="fill: black; display: inline-block; margin: 0 auto;">
-  <path d="${GARUDA_SVG_PATH}" />
-</svg>
+export const GARUDA_IMAGE_3CM_HTML = `
+<img src="${GARUDA_PNG_BASE64}" width="113" height="113" alt="ตราครุฑ ๓ เซนติเมตร" style="width: 3.0cm; height: 3.0cm; max-height: 3.0cm; display: inline-block; margin: 0 auto; object-fit: contain;" />
 `;
+
+export const GARUDA_SVG_1_5CM_HTML = GARUDA_IMAGE_1_5CM_HTML;
+export const GARUDA_SVG_3CM_HTML = GARUDA_IMAGE_3CM_HTML;
 
 /**
  * มาตรฐานระยะขอบและฟอนต์ตามระเบียบงานสารบรรณ

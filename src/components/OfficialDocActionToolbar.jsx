@@ -45,9 +45,9 @@ export default function OfficialDocActionToolbar({
 
   const wordAction = onDownloadWord || onWord;
   const excelAction = onDownloadExcel || onExcel;
-  // แยก Print กับ PDF ออกจากกันอย่างชัดเจน
+  // แยก Print กับ PDF ออกจากกันอย่างชัดเจน (ห้ามสับสนหรือตกไปเรียก onPrint เด็ดขาด)
   const printAction = onPrint;
-  const pdfAction = onSavePdf || (onPdf && onPdf !== onPrint ? onPdf : onPrint);
+  const pdfAction = onSavePdf || (onPdf && onPdf !== onPrint ? onPdf : null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
