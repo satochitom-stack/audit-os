@@ -1719,6 +1719,7 @@ export default function App() {
                 lpaIndicators={lpaIndicators}
                 riskAssessments={riskAssessments}
                 auditUniverse={auditUniverse}
+                capaFindings={capaFindings}
                 setCurrentTab={handleSelectTab}
                 setSelectedWp={setSelectedWp}
                 onOpenSettings={() => setShowSettings(true)}

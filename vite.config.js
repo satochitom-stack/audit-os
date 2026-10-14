@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.7';
+const appVersion = '2.7.8';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.7: อัปเกรดระบบสำรองข้อมูล Google Sheets (Data Chunking ป้องกัน 50,000 อักขระ & คู่มือสิทธิ์ Google)',
-        description: 'แก้ไขปัญหาข้อจำกัด 50,000 อักขระต่อเซลล์ของ Google Sheets โดยใช้ระบบ Data Chunking แตกไฟล์ JSON ลงหลายแถวอัตโนมัติ และเพิ่มคำแนะนำการตั้งค่าผ่านหน้าจอความปลอดภัย Google Unverified App',
-        changeSummary: 'Data chunking for Google Sheets raw data backup (bypass 50k char limit), add step-by-step Google unverified app bypass guide and auto-detect 50k error'
+        title: 'Audit-OS v2.7.8: ปรับโฉมหน้าแดชบอร์ดตรวจสอบภายในใหม่ (Executive Audit Cockpit & Visual Progress Charts)',
+        description: 'ยกเครื่องหน้าแดชบอร์ดให้เป็นศูนย์สรุปผลการปฏิบัติงานตรวจสอบภายในที่สะอาดตา นำเมนูปุ่มทางลัดที่ซ้ำซ้อนออก เพิ่มกราฟแท่งความคืบหน้ารายไตรมาส Q1-Q4 โดนัทชาร์ตสัดส่วนสถานะการตรวจ และเส้นทางความก้าวหน้า 3 ระยะ',
+        changeSummary: 'Redesign DashboardView with Quarterly Bar Chart, Donut Status Chart, Risk Coverage Progress, Streamlined 3-Stage Lifecycle Tracker, and Project Execution Table'
       };
       try {
         if (!fs.existsSync('./public')) {
