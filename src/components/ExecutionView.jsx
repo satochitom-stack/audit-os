@@ -36,8 +36,16 @@ export default function ExecutionView({
   orgProfile,
   selectedYear = '2569',
   engagementPlans = [],
+  session = null,
   onNavigateToTab
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
   const currentWp = workingPapers.find((w) => w.id === selectedWp) || workingPapers[0] || {
     id: 'WP-EMPTY',
     topic: 'ไม่มีกระดาษทำการ',
@@ -115,7 +123,7 @@ export default function ExecutionView({
         topic: matchingEng.title || matchingEng.activityName || 'โครงการตรวจสอบ',
         department: matchingEng.targetAuditee || matchingEng.department || 'หน่วยรับตรวจ',
         auditPeriod: matchingEng.auditPeriod || `ปีงบประมาณ พ.ศ. ${selectedYear}`,
-        auditor: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+        auditor: effectiveAuditorName,
         criteria: criteriaList,
         checklist: (matchingEng.auditProgram || []).map((step, idx) => ({
           id: `CHK-${idx + 1}`,
@@ -496,8 +504,8 @@ export default function ExecutionView({
           <tr>
             <td style="width: 50%; text-align: center;">
               <p style="margin: 0;">(ลงชื่อ)........................................................ผู้ตรวจสอบ</p>
-              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
-              <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${effectiveAuditorName})</p>
+              <p style="margin: 2pt 0 0 0;">${effectiveAuditorPosition}</p>
             </td>
             <td style="width: 50%; text-align: center;">
               <p style="margin: 0;">(ลงชื่อ)........................................................ผู้สอบทาน</p>
@@ -525,7 +533,7 @@ export default function ExecutionView({
       <PageHeaderBanner
         title="กระดาษทำการและการปฏิบัติงานตรวจสอบ (Audit Execution & Working Papers)"
         orgName={orgProfile?.name}
-        auditorName={`ผู้ตรวจสอบ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้ตรวจสอบ: ${effectiveAuditorName}`}
         year={selectedYear}
       />
 

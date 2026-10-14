@@ -73,7 +73,15 @@ export default function DashboardView({
   const lowRisks = activeUniverse.filter((r) => r.level === 'ต่ำ').length;
   const plannedCount = activeUniverse.filter((r) => r.includedInPlan).length;
 
-  const hasAuditorName = Boolean(orgProfile?.auditorName?.trim());
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
+  const hasAuditorName = Boolean(effectiveAuditorName?.trim());
   const orgDisplayName = orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น';
 
   return (
@@ -116,7 +124,7 @@ export default function DashboardView({
       <PageHeaderBanner
         title={`แดชบอร์ดตรวจสอบภายใน (Audit Cockpit)`}
         orgName={orgDisplayName}
-        auditorName={`ผู้ตรวจสอบ: ${orgProfile?.auditorName ? `${orgProfile.auditorName} (${orgProfile.auditorPosition || 'ผู้ตรวจสอบภายใน'})` : 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้ตรวจสอบ: ${effectiveAuditorName} (${effectiveAuditorPosition})`}
         year={selectedYear}
         badges={['ศูนย์ควบคุม & ติดตามผลการตรวจสอบรอบปี']}
       />
@@ -598,13 +606,13 @@ export default function DashboardView({
                 <div className="flex justify-between">
                   <span className="text-stone-400">ผู้ตรวจสอบ:</span>
                   <span className="font-bold text-stone-800 dark:text-stone-200">
-                    {orgProfile?.auditorName || 'ยังไม่ระบุชื่อ'}
+                    {effectiveAuditorName || 'ยังไม่ระบุชื่อ'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-stone-400">ตำแหน่ง:</span>
                   <span className="text-stone-600 dark:text-stone-300">
-                    {orgProfile?.auditorPosition || 'ผู้ตรวจสอบภายใน'}
+                    {effectiveAuditorPosition || 'ผู้ตรวจสอบภายใน'}
                   </span>
                 </div>
                 <div className="flex justify-between">

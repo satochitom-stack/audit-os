@@ -224,6 +224,10 @@ export default function RiskManagementView({
   session
 }) {
   const currentSession = session || getSession();
+  const isNonAdminUser = currentSession?.role !== 'admin' && currentSession?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (currentSession?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || currentSession?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
   const isAdmin =
     currentSession?.role === 'admin' ||
     currentSession?.department === 'หน่วยตรวจสอบภายใน' ||
@@ -1603,7 +1607,7 @@ export default function RiskManagementView({
       alert('กรุณาระบุหรือเลือกวันที่สอบทาน');
       return;
     }
-    const auditorName = currentSession?.displayName || orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน';
+    const auditorName = effectiveAuditorName;
 
     const newReviewedRecord = {
       ...(riskManagement?.submissions?.[deptToReview] || {}),
@@ -5790,7 +5794,7 @@ export default function RiskManagementView({
               </div>
 
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                ผู้สอบทาน: <span className="font-semibold text-slate-700 dark:text-slate-300">{currentSession?.displayName || orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'}</span>
+                ผู้สอบทาน: <span className="font-semibold text-slate-700 dark:text-slate-300">{effectiveAuditorName}</span>
               </div>
             </div>
 

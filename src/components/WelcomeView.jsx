@@ -233,7 +233,7 @@ export default function WelcomeView({
           uid: fbRes.user.uid,
           username: fbRes.profile?.email || username,
           displayName: fbRes.profile?.displayName || fbRes.user.displayName || 'ผู้ใช้งาน',
-          role: fbRes.profile?.role || 'admin',
+          role: fbRes.profile?.role || 'auditor',
           orgId: fbRes.profile?.orgId || fbRes.organization?.id || '',
           department: fbRes.profile?.department || 'หน่วยตรวจสอบภายใน',
           position: fbRes.profile?.position || '',

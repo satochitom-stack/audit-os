@@ -19,8 +19,16 @@ import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExport
 export default function LpaView({
   lpaIndicators,
   orgProfile,
-  selectedYear = '2569'
+  selectedYear = '2569',
+  session = null
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
   const [checkedEvidence, setCheckedEvidence] = useState({});
   const [expandedId, setExpandedId] = useState(4); // Default expand Indicator 4 (Internal Audit)
 
@@ -81,8 +89,8 @@ export default function LpaView({
           <td style="width: 50%;"></td>
           <td style="width: 50%; text-align: center;">
             <p style="margin: 0;">(ลงชื่อ)........................................................ผู้ประเมิน</p>
-            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
-            <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${effectiveAuditorName})</p>
+            <p style="margin: 2pt 0 0 0;">${effectiveAuditorPosition}</p>
           </td>
         </tr>
       </table>

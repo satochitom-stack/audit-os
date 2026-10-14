@@ -5,7 +5,7 @@ import path from 'path'
 import fs from 'fs'
 
 const buildTimestamp = Date.now();
-const appVersion = '2.7.1';
+const appVersion = '2.7.2';
 
 function versionPlugin() {
   return {
@@ -15,9 +15,9 @@ function versionPlugin() {
         version: appVersion,
         buildTime: buildTimestamp,
         releaseDate: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        title: 'Audit-OS v2.7.1: รูปแบบเอกสารราชการมาตรฐานตามระเบียบงานสารบรรณ พ.ศ. ๒๕๒๖',
-        description: 'ปรับปรุงเอกสารราชการทั้งหมดในระบบให้ถูกต้องตามระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖ และที่แก้ไขเพิ่มเติม: ตัวเลขไทย (๐-๙), ตราครุฑเวกเตอร์มาตรฐาน, ระยะขอบกระดาษ A4 มาตรฐาน (กั้นหน้า ๓ ซม. กั้นหลัง ๒ ซม. กั้นบน ๒.๕ ซม. กั้นล่าง ๒ ซม. ย่อหน้า ๒.๕ ซม.)',
-        changeSummary: 'Thai Saraban Regulation Compliance, Thai Digits (๐-๙), Official SVG Garuda Emblem (1.5cm / 3.0cm), Precise MSO Word Margins, OfficialThaiExternalLetter, OfficialThaiOrder, OfficialThaiMemo'
+        title: 'Audit-OS v2.7.2: การแยกข้อมูลและโปรไฟล์ระหว่าง ADMIN กับ User อย่างสมบูรณ์ (Tenant Profile & Auditor Isolation)',
+        description: 'แก้ไขปัญหาข้อมูลและชื่อผู้ประเมิน/ผู้ตรวจสอบของ ADMIN ปรากฏในบัญชี User ทั่วไป โดยทำการแยกข้อมูล orgProfile และข้อมูลการจัดทำเอกสาร/ลายมือชื่อตาม Tenant และ Session ของผู้ใช้งานอย่างเด็ดขาด ป้องกันการรั่วไหลของข้อมูลระหว่าง ADMIN กับ User',
+        changeSummary: 'Tenant Profile Isolation, Clean User Workspace, Zero ADMIN leakage in user reports, banners, and memos, Strict effectiveAuditor sanitization'
       };
       try {
         if (!fs.existsSync('./public')) {

@@ -33,8 +33,17 @@ export default function AuditFollowUpView({
   selectedYear = '2569',
   orgProfile = {},
   capaFindings = [],
-  setCapaFindings
+  setCapaFindings,
+  session = null
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายใน'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const [activeTab, setActiveTab] = useState('register'); // 'register', 'memo'
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -302,8 +311,8 @@ export default function AuditFollowUpView({
             จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป
           </p>
         `,
-        signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-        signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน',
+        signatoryName: effectiveAuditorName,
+        signatoryPosition: effectiveAuditorPosition,
         palatName: orgProfile?.palatName || 'ปลัด อปท.',
         palatPosition: orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น',
         approverName: orgProfile?.approverName || 'นายก อปท.',
@@ -354,8 +363,8 @@ export default function AuditFollowUpView({
             <td style="width: 50%;"></td>
             <td style="width: 50%; text-align: center;">
               <p style="margin: 0;">(ลงชื่อ)........................................................ผู้ตรวจสอบภายใน</p>
-              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
-              <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${effectiveAuditorName})</p>
+              <p style="margin: 2pt 0 0 0;">${effectiveAuditorPosition}</p>
             </td>
           </tr>
         </table>
@@ -401,7 +410,7 @@ export default function AuditFollowUpView({
       <PageHeaderBanner
         title="ระบบติดตามผลการปฏิบัติตามข้อเสนอแนะและมาตรการปรับปรุง (CAPA Audit Tracking)"
         orgName={orgProfile?.name}
-        auditorName={`ผู้ตรวจสอบ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้ตรวจสอบ: ${effectiveAuditorName}`}
         year={selectedYear}
       />
 
@@ -696,8 +705,8 @@ export default function AuditFollowUpView({
             subject={`ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'}`}
             to={`ผู้อำนวยการ${currentMemoItem.department || 'หน่วยรับตรวจ'}`}
             signatory={{
-              name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-              position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน',
+              name: effectiveAuditorName,
+              position: effectiveAuditorPosition,
               role: `หน่วยตรวจสอบภายใน ${orgProfile?.name || 'อปท.'}`
             }}
             showReviewBoxes={false}

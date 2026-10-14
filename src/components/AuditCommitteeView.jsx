@@ -33,8 +33,17 @@ import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExport
 export default function AuditCommitteeView({
   selectedYear = '2569',
   orgProfile = {},
-  annualPlans = []
+  annualPlans = [],
+  session = null
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในชำนาญการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const [activeTab, setActiveTab] = useState('evaluation'); // 'evaluation', 'meetings', 'charter', 'independence', 'qaip'
 
   // ==========================================
@@ -337,9 +346,9 @@ export default function AuditCommitteeView({
     },
     {
       id: 'MB-04',
-      name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
+      name: effectiveAuditorName,
       position: 'เลขานุการคณะกรรมการตรวจสอบ (หัวหน้าหน่วยตรวจสอบภายใน)',
-      qualification: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+      qualification: effectiveAuditorPosition,
       isAccountingExpert: false,
       signedDate: `${selectedYear}-10-15`,
       status: 'signed'
@@ -351,7 +360,22 @@ export default function AuditCommitteeView({
       const saved = localStorage.getItem(`ia_audit_comm_members_${selectedYear}`);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((m) => {
+            if (m.id === 'MB-04') {
+              return {
+                ...m,
+                name: (isNonAdminUser && (!m.name || m.name.toUpperCase() === 'ADMIN' || m.name.includes('Super Admin')))
+                  ? effectiveAuditorName
+                  : (m.name || effectiveAuditorName),
+                qualification: (isNonAdminUser && (!m.qualification || m.qualification.includes('Platform Root') || m.qualification.includes('ผู้ดูแลระบบ')))
+                  ? effectiveAuditorPosition
+                  : (m.qualification || effectiveAuditorPosition)
+              };
+            }
+            return m;
+          });
+        }
       }
     } catch (_) {}
     return defaultMembers;

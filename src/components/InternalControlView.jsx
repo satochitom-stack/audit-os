@@ -24,8 +24,17 @@ export default function InternalControlView({
   internalControls,
   setInternalControls,
   orgProfile,
-  selectedYear = '2569'
+  selectedYear = '2569',
+  session = null
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const [activeTab, setActiveTab] = useState('pk4'); // 'pk4', 'pk5', 'pk1'
   const [showAddModal, setShowAddModal] = useState(false);
   const [newPk4, setNewPk4] = useState({
@@ -110,14 +119,19 @@ export default function InternalControlView({
   const pk1Data = internalControls?.pk1 || {};
   const [pk6SavedToast, setPk6SavedToast] = useState(false);
 
-  const pk6Data = internalControls?.pk6 || {
-    reviewPeriod: 'สำหรับระยะเวลาสิ้นสุดวันที่ 30 กันยายน',
-    auditorName: orgProfile?.auditorName || 'นักวิชาการตรวจสอบภายใน',
-    auditorPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
-    reviewDate: `30 กันยายน ${selectedYear}`,
-    overallAssurance: 'adequate',
-    summaryOpinion: `หน่วยตรวจสอบภายในได้สอบทานรายงานการประเมินผลการควบคุมภายใน (แบบ ปค.4 และ แบบ ปค.5) ของฝ่ายบริหาร และสอบทานเอกสารหลักฐานที่เกี่ยวข้อง มีความเห็นว่าระบบการควบคุมภายในของ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} มีความเพียงพอ เหมาะสม และมีการปฏิบัติตามอย่างต่อเนื่องตามสมควร อย่างไรก็ดี มีบางกระบวนการที่ควรเพิ่มการควบคุมตามข้อสังเกตและข้อเสนอแนะ`,
-    elementsReview: [
+  const rawPk6 = internalControls?.pk6;
+  const pk6Data = {
+    reviewPeriod: rawPk6?.reviewPeriod || 'สำหรับระยะเวลาสิ้นสุดวันที่ 30 กันยายน',
+    auditorName: (isNonAdminUser && (!rawPk6?.auditorName || rawPk6.auditorName.toUpperCase() === 'ADMIN' || rawPk6.auditorName.includes('Super Admin')))
+      ? effectiveAuditorName
+      : (rawPk6?.auditorName || effectiveAuditorName),
+    auditorPosition: (isNonAdminUser && (!rawPk6?.auditorPosition || rawPk6.auditorPosition.includes('Platform Root') || rawPk6.auditorPosition.includes('ผู้ดูแลระบบ')))
+      ? effectiveAuditorPosition
+      : (rawPk6?.auditorPosition || effectiveAuditorPosition),
+    reviewDate: rawPk6?.reviewDate || `30 กันยายน ${selectedYear}`,
+    overallAssurance: rawPk6?.overallAssurance || 'adequate',
+    summaryOpinion: rawPk6?.summaryOpinion || `หน่วยตรวจสอบภายในได้สอบทานรายงานการประเมินผลการควบคุมภายใน (แบบ ปค.4 และ แบบ ปค.5) ของฝ่ายบริหาร และสอบทานเอกสารหลักฐานที่เกี่ยวข้อง มีความเห็นว่าระบบการควบคุมภายในของ${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} มีความเพียงพอ เหมาะสม และมีการปฏิบัติตามอย่างต่อเนื่องตามสมควร อย่างไรก็ดี มีบางกระบวนการที่ควรเพิ่มการควบคุมตามข้อสังเกตและข้อเสนอแนะ`,
+    elementsReview: rawPk6?.elementsReview || [
       {
         elementName: '๑. สภาพแวดล้อมการควบคุม (Control Environment)',
         status: 'adequate',
@@ -339,8 +353,8 @@ export default function InternalControlView({
             <td style="width: 50%;"></td>
             <td style="width: 50%; text-align: center;">
               <p style="margin: 0;">(ลงชื่อ)........................................................ ผู้ตรวจสอบภายใน</p>
-              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${pk6Data.auditorName || orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
-              <p style="margin: 2pt 0 0 0;">${pk6Data.auditorPosition || orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${pk6Data.auditorName || effectiveAuditorName})</p>
+              <p style="margin: 2pt 0 0 0;">${pk6Data.auditorPosition || effectiveAuditorPosition}</p>
               <p style="margin: 4pt 0 0 0;">วันที่ ${pk6Data.reviewDate || '30 กันยายน ' + selectedYear}</p>
             </td>
           </tr>
@@ -900,7 +914,7 @@ export default function InternalControlView({
                   <span className="text-[11px] text-stone-500 dark:text-stone-400 block mb-1">ผู้ตรวจสอบภายใน:</span>
                   <input
                     type="text"
-                    value={pk6Data.auditorName || orgProfile?.auditorName || ''}
+                    value={pk6Data.auditorName || effectiveAuditorName || ''}
                     onChange={(e) => handleUpdatePk6('auditorName', e.target.value)}
                     placeholder="ชื่อ-นามสกุล ผู้ตรวจสอบภายใน"
                     className="p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs text-stone-800 dark:text-stone-200"
@@ -910,7 +924,7 @@ export default function InternalControlView({
                   <span className="text-[11px] text-stone-500 dark:text-stone-400 block mb-1">ตำแหน่ง:</span>
                   <input
                     type="text"
-                    value={pk6Data.auditorPosition || orgProfile?.auditorPosition || ''}
+                    value={pk6Data.auditorPosition || effectiveAuditorPosition || ''}
                     onChange={(e) => handleUpdatePk6('auditorPosition', e.target.value)}
                     placeholder="ตำแหน่ง"
                     className="p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs text-stone-800 dark:text-stone-200"

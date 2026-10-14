@@ -28,14 +28,23 @@ export default function ClosingMeetingView({
   orgProfile = {},
   annualPlans = [],
   workingPapers = [],
+  session = null,
   onNavigateToTab
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายใน'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const [selectedPlanId, setSelectedPlanId] = useState(() => annualPlans[0]?.id || '');
   const currentPlan = annualPlans.find((p) => p.id === selectedPlanId) || annualPlans[0] || {
     id: 'PLAN-01',
     projectName: 'การตรวจสอบการรับเงินและนำส่งเงิน',
     department: 'กองคลัง',
-    auditor: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'
+    auditor: effectiveAuditorName
   };
 
   const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0]);
@@ -145,8 +154,8 @@ export default function ClosingMeetingView({
     const orgName = toThaiDigits(orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น');
     const projName = toThaiDigits(currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน');
     const deptName = toThaiDigits(currentPlan.department || 'หน่วยรับตรวจ');
-    const auditorName = toThaiDigits(orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน');
-    const auditorPos = toThaiDigits(orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน');
+    const auditorName = toThaiDigits(effectiveAuditorName);
+    const auditorPos = toThaiDigits(effectiveAuditorPosition);
 
     const bodyContent = `
       <div style="text-align: center; margin-bottom: 16pt;">
@@ -243,7 +252,7 @@ export default function ClosingMeetingView({
       <PageHeaderBanner
         title="การประชุมปิดการตรวจสอบและสรุปผลตรวจเบื้องต้น (Closing Meeting)"
         orgName={orgProfile?.name}
-        auditorName={`ผู้ตรวจสอบ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้ตรวจสอบ: ${effectiveAuditorName}`}
         year={selectedYear}
       />
 
@@ -443,7 +452,7 @@ export default function ClosingMeetingView({
         <div className="grid grid-cols-2 gap-8 pt-8 border-t border-slate-200 dark:border-slate-800 text-center text-xs">
           <div className="space-y-12">
             <div>ลงชื่อ........................................................ผู้ตรวจสอบภายใน</div>
-            <div>({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})<br />ตำแหน่ง {orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</div>
+            <div>({effectiveAuditorName})<br />ตำแหน่ง {effectiveAuditorPosition}</div>
           </div>
           <div className="space-y-12">
             <div>ลงชื่อ........................................................หัวหน้าหน่วยรับตรวจ</div>

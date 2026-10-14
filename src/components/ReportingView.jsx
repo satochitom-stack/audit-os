@@ -317,9 +317,16 @@ export default function ReportingView({
     recommendation: currentWp?.finding?.recommendation || 'เห็นควรกำชับให้เจ้าหน้าที่ผู้รับผิดชอบถือปฏิบัติตามระเบียบโดยเคร่งครัด'
   };
   const reportTitle = activeReport.title;
-  const reportDept = activeReport.department;
-  const auditorName = orgProfile.auditorName?.trim() || 'ผู้ตรวจสอบภายใน';
-  const auditorPosition = orgProfile.auditorPosition || 'นักวิชาการตรวจสอบภายใน';
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
+  const auditorName = effectiveAuditorName;
+  const auditorPosition = effectiveAuditorPosition;
   const approverName = orgProfile.approverName?.trim() || 'นายกองค์กรปกครองส่วนท้องถิ่น';
   const approverPosition = orgProfile.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น';
   const palatName = orgProfile.palatName?.trim() || 'ปลัดองค์กรปกครองส่วนท้องถิ่น';
@@ -389,8 +396,8 @@ export default function ReportingView({
           จึงเรียนมาเพื่อโปรดทราบ และพิจารณาให้ความเห็นชอบแจ้งหน่วยรับตรวจที่ยังอยู่ระหว่างดำเนินการให้เร่งรัดการปรับปรุงแก้ไขให้แล้วเสร็จตามกำหนดต่อไป
         </p>
       `,
-      signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-      signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+      signatoryName: auditorName,
+      signatoryPosition: auditorPosition,
       palatName: orgProfile?.palatName || 'ปลัด อปท.',
       palatPosition: orgProfile?.palatPosition || 'ปลัดองค์กรปกครองส่วนท้องถิ่น',
       approverName: orgProfile?.approverName || 'นายก อปท.',
@@ -421,7 +428,7 @@ export default function ReportingView({
             : `ระบบติดตามข้อทักท้วงและการแก้ไขปรับปรุง (CAPA Tracking Suite) ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
         }
         orgName={orgProfile?.name}
-        auditorName={`ผู้รายงาน: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้รายงาน: ${effectiveAuditorName}`}
         year={selectedYear}
       />
 
@@ -574,6 +581,7 @@ export default function ReportingView({
           annualPlans={annualPlans}
           workingPapers={workingPapers}
           capaFindings={findingsList}
+          session={session}
         />
       )}
 
@@ -1507,8 +1515,8 @@ export default function ReportingView({
                 subject={`รายงานผลการติดตามการปฏิบัติตามข้อทักท้วงและข้อสังเกต ประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
                 to={`นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`}
                 signatory={{
-                  name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-                  position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+                  name: effectiveAuditorName,
+                  position: effectiveAuditorPosition,
                   role: 'ผู้รายงาน'
                 }}
                 palatReview={{

@@ -320,10 +320,13 @@ export default function App() {
   // Persistent States - Multi-tenant Dynamic Organization Profile
   const [orgProfile, setOrgProfile] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_org_profile');
+      const currentSession = getSession();
+      const tenantSaved = currentSession ? loadTenantData('ia_org_profile', null, currentSession) : null;
+      const saved = tenantSaved || localStorage.getItem('ia_org_profile');
+      let base = { ...initialOrgProfile };
       if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
+        const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved;
+        base = {
           ...initialOrgProfile,
           ...parsed,
           name: parsed.name || initialOrgProfile.name,
@@ -336,7 +339,18 @@ export default function App() {
           fiscalYear: parsed.fiscalYear || initialOrgProfile.fiscalYear
         };
       }
-      return initialOrgProfile;
+      if (currentSession && currentSession.role !== 'admin' && currentSession.username?.toLowerCase() !== 'admin') {
+        if (!base.auditorName || base.auditorName.toUpperCase() === 'ADMIN' || base.auditorName.includes('Super Admin')) {
+          base.auditorName = currentSession.displayName || 'ผู้ตรวจสอบภายใน';
+        }
+        if (!base.auditorPosition || base.auditorPosition.includes('Platform Root') || base.auditorPosition.includes('ผู้ดูแลระบบ')) {
+          base.auditorPosition = currentSession.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
+        }
+        if (currentSession.organization) base.name = currentSession.organization;
+        if (currentSession.district) base.district = currentSession.district;
+        if (currentSession.province) base.province = currentSession.province;
+      }
+      return base;
     } catch {
       return initialOrgProfile;
     }
@@ -360,15 +374,31 @@ export default function App() {
 
   // When session has organization, district, or province, ensure active orgProfile adopts it
   useEffect(() => {
-    if (session?.organization) {
-      setOrgProfile((prev) => ({
-        ...prev,
-        name: session.organization || prev.name,
-        district: session.district !== undefined && session.district !== '' ? session.district : prev.district,
-        province: session.province !== undefined && session.province !== '' ? session.province : prev.province
-      }));
+    if (session) {
+      setOrgProfile((prev) => {
+        const isNonAdmin = session.role !== 'admin' && session.username?.toLowerCase() !== 'admin';
+        const sanitizedAuditorName = isNonAdmin
+          ? ((!prev.auditorName || prev.auditorName.toUpperCase() === 'ADMIN' || prev.auditorName.includes('Super Admin'))
+              ? (session.displayName || 'ผู้ตรวจสอบภายใน')
+              : prev.auditorName)
+          : prev.auditorName;
+        const sanitizedAuditorPosition = isNonAdmin
+          ? ((!prev.auditorPosition || prev.auditorPosition.includes('Platform Root') || prev.auditorPosition.includes('ผู้ดูแลระบบ'))
+              ? (session.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ')
+              : prev.auditorPosition)
+          : prev.auditorPosition;
+
+        return {
+          ...prev,
+          name: session.organization || prev.name,
+          district: session.district !== undefined && session.district !== '' ? session.district : prev.district,
+          province: session.province !== undefined && session.province !== '' ? session.province : prev.province,
+          auditorName: sanitizedAuditorName,
+          auditorPosition: sanitizedAuditorPosition
+        };
+      });
     }
-  }, [session?.organization, session?.district, session?.province]);
+  }, [session?.username, session?.displayName, session?.organization, session?.district, session?.province, session?.position, session?.role]);
 
   // Persistent States isolated by fiscal year
   const [annualPlansByYear, setAnnualPlansByYear] = useState(() => {
@@ -923,7 +953,21 @@ export default function App() {
   const reloadDataFromStorage = (currentSess = session) => {
     try {
       const org = loadTenantData('ia_org_profile', null, currentSess);
-      if (org) setOrgProfile((prev) => ({ ...prev, ...org }));
+      if (org) {
+        let cleanOrg = { ...org };
+        if (currentSess && currentSess.role !== 'admin' && currentSess.username?.toLowerCase() !== 'admin') {
+          if (!cleanOrg.auditorName || cleanOrg.auditorName.toUpperCase() === 'ADMIN' || cleanOrg.auditorName.includes('Super Admin')) {
+            cleanOrg.auditorName = currentSess.displayName || 'ผู้ตรวจสอบภายใน';
+          }
+          if (!cleanOrg.auditorPosition || cleanOrg.auditorPosition.includes('Platform Root') || cleanOrg.auditorPosition.includes('ผู้ดูแลระบบ')) {
+            cleanOrg.auditorPosition = currentSess.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
+          }
+          if (currentSess.organization) cleanOrg.name = currentSess.organization;
+          if (currentSess.district) cleanOrg.district = currentSess.district;
+          if (currentSess.province) cleanOrg.province = currentSess.province;
+        }
+        setOrgProfile((prev) => ({ ...prev, ...cleanOrg }));
+      }
       const au = loadTenantData('ia_audit_universe_by_year', null, currentSess);
       if (au) setAuditUniverseByYear(au);
       const ap = loadTenantData('ia_annual_plans_by_year', null, currentSess);
@@ -1364,6 +1408,7 @@ export default function App() {
           onLogin={(sess) => {
             const s = sess || getSession();
             setSession(s);
+            reloadDataFromStorage(s);
             const sub = checkUserSubscription(s);
             if (sub.expired && s.role !== 'admin') {
               setCurrentTab('welcome');
@@ -1414,6 +1459,7 @@ export default function App() {
           onLogin={(sess) => {
             const s = sess || getSession();
             setSession(s);
+            reloadDataFromStorage(s);
             if (s?.role === 'admin') {
               setAdminWorkspaceMode('admin');
               setAdminSubTab('overview');
@@ -1704,6 +1750,7 @@ export default function App() {
                 orgProfile={orgProfile}
                 auditUniverse={auditUniverse}
                 annualPlans={annualPlans}
+                session={session}
               />
             )}
 
@@ -1724,6 +1771,7 @@ export default function App() {
                 setStrategicPlan={setStrategicPlan}
                 orgProfile={orgProfile}
                 setCurrentTab={handleSelectTab}
+                session={session}
               />
             )}
 
@@ -1737,6 +1785,7 @@ export default function App() {
                 engagementPlans={engagementPlans}
                 setEngagementPlans={setEngagementPlans}
                 onNavigateToExecution={handleNavigateToExecution}
+                session={session}
               />
             )}
 
@@ -1746,6 +1795,7 @@ export default function App() {
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
+                session={session}
               />
             )}
 
@@ -1760,6 +1810,7 @@ export default function App() {
                 orgProfile={orgProfile}
                 engagementPlans={engagementPlans}
                 onNavigateToTab={handleSelectTab}
+                session={session}
               />
             )}
 
@@ -1771,6 +1822,7 @@ export default function App() {
                 annualPlans={annualPlans}
                 workingPapers={workingPapers}
                 onNavigateToTab={handleSelectTab}
+                session={session}
               />
             )}
 
@@ -1781,6 +1833,7 @@ export default function App() {
                 orgProfile={orgProfile}
                 capaFindings={capaFindings}
                 setCapaFindings={setCapaFindings}
+                session={session}
               />
             )}
 
@@ -1790,6 +1843,7 @@ export default function App() {
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
+                session={session}
               />
             )}
 
@@ -1916,6 +1970,7 @@ export default function App() {
                 internalControls={internalControls}
                 setInternalControls={setInternalControls}
                 orgProfile={orgProfile}
+                session={session}
               />
             )}
 
@@ -1936,6 +1991,7 @@ export default function App() {
                 selectedYear={selectedYear}
                 lpaIndicators={lpaIndicators}
                 orgProfile={orgProfile}
+                session={session}
               />
             )}
 

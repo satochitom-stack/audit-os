@@ -23,8 +23,17 @@ export default function StrategicPlanView({
   selectedYear = '2569',
   orgProfile = {},
   auditUniverse = [],
-  annualPlans = []
+  annualPlans = [],
+  session = null
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const [activeTab, setActiveTab] = useState('manday'); // 'manday', 'three_year'
 
   // Auditor Man-Day Capacity State
@@ -175,8 +184,8 @@ export default function StrategicPlanView({
           `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำแผนปีแรก (พ.ศ. ${year1}) ไปจัดทำเป็นแผนการปฏิบัติงานประจำปีต่อไป<br/><br/>` +
           `จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ`
         ],
-        signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-        signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+        signatoryName: effectiveAuditorName,
+        signatoryPosition: effectiveAuditorPosition,
         signatoryRole: 'ผู้จัดทำแผนการตรวจสอบ',
         palatReviewText: 'เห็นควรอนุมัติแผนการตรวจสอบระยะยาว (๓ ปี) ตามเสนอ',
         executiveOrderText: 'อนุมัติแผนการตรวจสอบระยะยาว (๓ ปี) ตามเสนอ',
@@ -192,9 +201,9 @@ export default function StrategicPlanView({
   return (
     <div className="space-y-6">
       <PageHeaderBanner
-        title={`แผนยุทธศาสตร์การตรวจสอบภายในระยะ 3 ปี (พ.ศ. ${year1} - ${year3})`}
+        title={`แผนการตรวจสอบระยะยาว (พ.ศ. ${year1} - ${year3})`}
         orgName={orgProfile?.name}
-        auditorName={`ผู้จัดทำ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้จัดทำ: ${effectiveAuditorName}`}
         year={`${year1} - ${year3}`}
       />
 

@@ -48,8 +48,17 @@ export default function EngagementPlanView({
   annualPlans = [],
   engagementPlans = INITIAL_ENGAGEMENT_PLANS,
   setEngagementPlans,
-  onNavigateToExecution
+  onNavigateToExecution,
+  session = null
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const [activeTab, setActiveTab] = useState('list'); // 'list', 'ai-copilot', 'detail', 'communication'
   const [selectedPlanId, setSelectedPlanId] = useState(engagementPlans[0]?.id || 'ENG-FIN-01');
   const [serviceTypeFilter, setServiceTypeFilter] = useState('all');
@@ -111,8 +120,8 @@ export default function EngagementPlanView({
         dimension: aiDimension,
         year: selectedYear,
         orgName: orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น',
-        auditorName: orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน',
-        auditorPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+        auditorName: effectiveAuditorName,
+        auditorPosition: effectiveAuditorPosition,
         customGoal: aiCustomNotes
       });
       setGeneratedPreview(newPlan);
@@ -215,7 +224,7 @@ export default function EngagementPlanView({
           evidence: newStep.evidence,
           samplingMethod: newStep.samplingMethod,
           wpRef: newStep.wpRef,
-          auditor: orgProfile?.auditorName || 'นายศุภมงคล ธรรมพิทักษ์',
+          auditor: effectiveAuditorName,
           status: 'pending'
         }
       ]
@@ -252,8 +261,8 @@ export default function EngagementPlanView({
             `&nbsp;&nbsp;&nbsp;&nbsp;๓.๓ จัดเตรียมสถานที่และอำนวยความสะดวกในการเข้าปฏิบัติงานตรวจสอบ<br/><br/>` +
             `จึงเรียนมาเพื่อโปรดทราบและพิจารณาดำเนินการ`
           ],
-          signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-          signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+          signatoryName: effectiveAuditorName,
+          signatoryPosition: effectiveAuditorPosition,
           signatoryRole: 'หัวหน้าทีมตรวจสอบ',
           palatReviewText: 'ทราบและเห็นควรแจ้งหน่วยรับตรวจเตรียมความพร้อม',
           executiveOrderText: 'ทราบ และมอบหมายหน่วยรับตรวจอำนวยความสะดวก',
@@ -303,8 +312,8 @@ export default function EngagementPlanView({
           </table>
           <div style="margin-top: 30pt; text-align: right; padding-right: 40pt;">
             <p style="margin: 0;">ลงชื่อ....................................................................</p>
-            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
-            <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${effectiveAuditorName})</p>
+            <p style="margin: 2pt 0 0 0;">${effectiveAuditorPosition}</p>
           </div>
         `;
 
@@ -351,7 +360,7 @@ export default function EngagementPlanView({
       <PageHeaderBanner
         title="แผนการปฏิบัติงานการตรวจสอบรายโครงการ (Audit Engagement Plan)"
         orgName={orgProfile?.name}
-        auditorName={`ผู้จัดทำ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้จัดทำ: ${effectiveAuditorName}`}
         year={selectedYear}
       />
 
@@ -985,7 +994,7 @@ export default function EngagementPlanView({
                 <span className="text-stone-500 font-medium">หน่วยรับตรวจ: {selectedPlan.department}</span>
                 <span className="text-stone-300 dark:text-stone-700">•</span>
                 <span className="text-stone-500 font-medium">
-                  ผู้ตรวจ: {selectedPlan.auditorName || orgProfile?.auditorName}
+                  ผู้ตรวจ: {selectedPlan.auditorName && selectedPlan.auditorName !== 'ADMIN' ? selectedPlan.auditorName : effectiveAuditorName}
                 </span>
               </div>
               <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100 mt-1">
@@ -1219,8 +1228,8 @@ export default function EngagementPlanView({
               </p>
               <div className="pt-6 flex justify-end">
                 <div className="text-center space-y-1">
-                  <div>( {selectedPlan.auditorName || orgProfile?.auditorName || 'นายศุภมงคล ธรรมพิทักษ์'} )</div>
-                  <div className="text-[11px] text-slate-500">{selectedPlan.auditorPosition || orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ'}</div>
+                  <div>( {selectedPlan.auditorName && selectedPlan.auditorName !== 'ADMIN' ? selectedPlan.auditorName : effectiveAuditorName} )</div>
+                  <div className="text-[11px] text-slate-500">{selectedPlan.auditorPosition && !selectedPlan.auditorPosition.includes('Platform Root') ? selectedPlan.auditorPosition : effectiveAuditorPosition}</div>
                 </div>
               </div>
             </div>
@@ -1253,7 +1262,7 @@ export default function EngagementPlanView({
                 • <strong>รหัสแผน:</strong> {selectedPlan.id} ({selectedPlan.planCode})<br />
                 • <strong>ประเภทงานตาม ว 614:</strong> {selectedPlan.serviceSubtype}<br />
                 • <strong>ระยะเวลาการตรวจสอบ:</strong> {selectedPlan.period} (เข้าตรวจภาคสนาม: {selectedPlan.fieldworkPeriod})<br />
-                • <strong>ผู้รับผิดชอบการตรวจสอบ:</strong> {selectedPlan.auditorName || orgProfile?.auditorName} ({selectedPlan.auditorPosition || orgProfile?.auditorPosition})
+                • <strong>ผู้รับผิดชอบการตรวจสอบ:</strong> {selectedPlan.auditorName && selectedPlan.auditorName !== 'ADMIN' ? selectedPlan.auditorName : effectiveAuditorName} ({selectedPlan.auditorPosition && !selectedPlan.auditorPosition.includes('Platform Root') ? selectedPlan.auditorPosition : effectiveAuditorPosition})
               </div>
             </div>
 
@@ -1315,8 +1324,8 @@ export default function EngagementPlanView({
           <div className="grid grid-cols-3 gap-4 pt-12 text-center text-xs">
             <div className="space-y-1">
               <div>ลงชื่อ....................................................ผู้จัดทำ</div>
-              <div className="font-bold">({selectedPlan.auditorName || orgProfile?.auditorName || 'นายศุภมงคล ธรรมพิทักษ์'})</div>
-              <div>{selectedPlan.auditorPosition || orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ'}</div>
+              <div className="font-bold">({selectedPlan.auditorName && selectedPlan.auditorName !== 'ADMIN' ? selectedPlan.auditorName : effectiveAuditorName})</div>
+              <div>{selectedPlan.auditorPosition && !selectedPlan.auditorPosition.includes('Platform Root') ? selectedPlan.auditorPosition : effectiveAuditorPosition}</div>
               <div>วันที่ ....../....../......</div>
             </div>
 

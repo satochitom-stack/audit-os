@@ -36,7 +36,8 @@ export default function AnnualAuditReportView({
   selectedYear = '2569',
   annualPlans = [],
   workingPapers = [],
-  capaFindings = []
+  capaFindings = [],
+  session = null
 }) {
   const [showCoverMemo, setShowCoverMemo] = useState(true);
   const [showExecSummary, setShowExecSummary] = useState(true);
@@ -50,10 +51,18 @@ export default function AnnualAuditReportView({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const orgName = orgProfile.name || 'องค์กรปกครองส่วนท้องถิ่น';
   const agencyName = orgProfile.agencyName || 'หน่วยตรวจสอบภายใน';
-  const auditorName = orgProfile.auditorName?.trim() || 'หน่วยตรวจสอบภายใน';
-  const auditorPosition = orgProfile.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
+  const auditorName = effectiveAuditorName;
+  const auditorPosition = effectiveAuditorPosition;
   const approverName = orgProfile.approverName?.trim() || 'นายกองค์กรปกครองส่วนท้องถิ่น';
   const approverPosition = orgProfile.approverPosition || 'นายกองค์กรปกครองส่วนท้องถิ่น';
   const palatName = orgProfile.palatName?.trim() || 'ปลัดองค์กรปกครองส่วนท้องถิ่น';

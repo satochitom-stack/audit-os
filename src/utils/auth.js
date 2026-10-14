@@ -19,6 +19,7 @@ import {
   DLA_STRATEGIC_PLAN_3YEARS
 } from '../data/dlaStandardTemplates';
 import { INITIAL_ENGAGEMENT_PLANS } from '../data/engagementPlanTemplates';
+import { initialOrgProfile } from '../data/initialData';
 
 const USERS_KEY = 'ia_auth_users';
 const SESSION_KEY = 'ia_auth_session';
@@ -225,6 +226,38 @@ export function initializeUserTenantWorkspace(user) {
   if (!user || !user.username) return;
   const username = user.username.toLowerCase();
   if (username === 'admin') return; // Admin retains administrative workspace
+
+  // Cleanly isolate/initialize ia_org_profile for this user tenant (never allow ADMIN)
+  const orgKey = getTenantStorageKey('ia_org_profile', username);
+  const existingOrgRaw = localStorage.getItem(orgKey);
+  let shouldInitOrg = !existingOrgRaw;
+  if (existingOrgRaw) {
+    try {
+      const parsed = JSON.parse(existingOrgRaw);
+      if (parsed.auditorName?.toUpperCase() === 'ADMIN' || parsed.auditorName?.includes('Super Admin')) {
+        shouldInitOrg = true;
+      }
+    } catch (_) {
+      shouldInitOrg = true;
+    }
+  }
+
+  if (shouldInitOrg) {
+    const cleanOrg = {
+      ...initialOrgProfile,
+      name: user.organization || initialOrgProfile.name,
+      agencyName: user.department || 'หน่วยตรวจสอบภายใน',
+      district: user.district || '',
+      province: user.province || '',
+      auditorName: user.displayName || 'ผู้ตรวจสอบภายใน',
+      auditorPosition: user.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+      approverName: 'นายกองค์กรปกครองส่วนท้องถิ่น',
+      approverPosition: 'นายกองค์กรปกครองส่วนท้องถิ่น',
+      palatName: 'ปลัดองค์กรปกครองส่วนท้องถิ่น',
+      palatPosition: 'ปลัดองค์กรปกครองส่วนท้องถิ่น'
+    };
+    saveTenantData('ia_org_profile', cleanOrg, user);
+  }
 
   const auKey = getTenantStorageKey('ia_audit_universe_by_year', username);
   const existingAuRaw = localStorage.getItem(auKey);
@@ -484,6 +517,33 @@ export function autoRepairDataLinkages() {
       window.dispatchEvent(new CustomEvent('ia-pending-users-changed'));
     } catch (_) {}
 
+    // Sanitize any existing tenant org profile contaminated with ADMIN for non-admin accounts
+    users.forEach((u) => {
+      if (u.username !== 'admin' && u.role !== 'admin') {
+        try {
+          const tenantOrg = loadTenantData('ia_org_profile', null, u);
+          if (tenantOrg) {
+            let changed = false;
+            if (!tenantOrg.auditorName || tenantOrg.auditorName.toUpperCase() === 'ADMIN' || tenantOrg.auditorName.includes('Super Admin')) {
+              tenantOrg.auditorName = u.displayName || 'ผู้ตรวจสอบภายใน';
+              changed = true;
+            }
+            if (!tenantOrg.auditorPosition || tenantOrg.auditorPosition.includes('Platform Root') || tenantOrg.auditorPosition.includes('ผู้ดูแลระบบ')) {
+              tenantOrg.auditorPosition = u.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
+              changed = true;
+            }
+            if (u.organization && (!tenantOrg.name || tenantOrg.name.includes('ศูนย์ควบคุมแพลตฟอร์มส่วนกลาง') || tenantOrg.name === 'องค์การบริหารส่วนตำบลต้นแบบ')) {
+              tenantOrg.name = u.organization;
+              changed = true;
+            }
+            if (changed) {
+              saveTenantData('ia_org_profile', tenantOrg, u);
+            }
+          }
+        } catch (_) {}
+      }
+    });
+
     // Update active session if necessary
     const sess = getSession();
     if (sess) {
@@ -496,6 +556,23 @@ export function autoRepairDataLinkages() {
         sess.permissions = ALL_MENU_IDS.map((m) => m.id);
         sess.plan = 'admin';
         localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
+      } else {
+        // Active session is a normal user: ensure global ia_org_profile is clean and not contaminated with ADMIN
+        try {
+          const rawActiveOrg = localStorage.getItem('ia_org_profile');
+          if (rawActiveOrg) {
+            const parsed = JSON.parse(rawActiveOrg);
+            if (parsed.auditorName?.toUpperCase() === 'ADMIN' || parsed.auditorName?.includes('Super Admin') || !parsed.auditorName) {
+              parsed.auditorName = sess.displayName || 'ผู้ตรวจสอบภายใน';
+              parsed.auditorPosition = sess.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
+              if (sess.organization) parsed.name = sess.organization;
+              if (sess.district) parsed.district = sess.district;
+              if (sess.province) parsed.province = sess.province;
+              localStorage.setItem('ia_org_profile', JSON.stringify(parsed));
+              saveTenantData('ia_org_profile', parsed, sess);
+            }
+          }
+        } catch (_) {}
       }
     }
   } catch (e) {
@@ -1309,13 +1386,36 @@ export function startSession(user, remember = true, isImpersonating = false) {
 
   // Sync org name, district, province to profile & isolated tenant data
   try {
-    const rawOrg = localStorage.getItem('ia_org_profile');
-    const parsedOrg = rawOrg ? JSON.parse(rawOrg) : {};
+    const isUserAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'admin';
+    const tenantOrg = loadTenantData('ia_org_profile', null, user);
+    const rawOrg = tenantOrg ? null : localStorage.getItem('ia_org_profile');
+    const parsedOrg = tenantOrg || (rawOrg ? JSON.parse(rawOrg) : {});
+
+    let targetAuditorName = parsedOrg.auditorName;
+    let targetAuditorPosition = parsedOrg.auditorPosition;
+
+    if (!isUserAdmin) {
+      // Regular user - NEVER allow ADMIN or Super Admin or empty
+      if (!targetAuditorName || targetAuditorName.toUpperCase() === 'ADMIN' || targetAuditorName.includes('Super Admin')) {
+        targetAuditorName = user.displayName || 'ผู้ตรวจสอบภายใน';
+      }
+      if (!targetAuditorPosition || targetAuditorPosition.includes('Platform Root') || targetAuditorPosition.includes('ผู้ดูแลระบบ')) {
+        targetAuditorPosition = user.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
+      }
+    } else {
+      // Admin session
+      targetAuditorName = user.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)';
+      targetAuditorPosition = user.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)';
+    }
+
     const updatedOrg = {
+      ...initialOrgProfile,
       ...parsedOrg,
-      name: orgName || parsedOrg.name,
-      district: (user.district && user.district.trim()) ? user.district.trim() : (parsedOrg.district || ''),
-      province: (user.province && user.province.trim()) ? user.province.trim() : (parsedOrg.province || '')
+      name: orgName || user.organization || parsedOrg.name || initialOrgProfile.name,
+      district: (user.district && user.district.trim()) ? user.district.trim() : (parsedOrg.district || initialOrgProfile.district),
+      province: (user.province && user.province.trim()) ? user.province.trim() : (parsedOrg.province || initialOrgProfile.province),
+      auditorName: targetAuditorName,
+      auditorPosition: targetAuditorPosition
     };
     saveTenantData('ia_org_profile', updatedOrg, user);
     localStorage.setItem('ia_org_profile', JSON.stringify(updatedOrg));

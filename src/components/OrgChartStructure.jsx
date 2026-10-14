@@ -40,6 +40,14 @@ export default function OrgChartStructure({
   orgProfile = {},
   onStructureChange
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const [structure, setStructure] = useState(() => getTenantOrgStructure(session, orgProfile));
   const [isEditing, setIsEditing] = useState(false);
   const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'table'
@@ -1197,10 +1205,12 @@ export default function OrgChartStructure({
                       หน่วยตรวจสอบภายใน
                     </div>
                     <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 font-semibold">
-                      {structure.auditor?.title || orgProfile.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}
+                      {(isNonAdminUser && structure.auditor?.title?.includes('Platform Root')) ? effectiveAuditorPosition : (structure.auditor?.title || effectiveAuditorPosition)}
                     </div>
                     <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold mt-0.5 truncate">
-                      {structure.auditor?.name || orgProfile.auditorName || 'ผู้ตรวจสอบภายใน'}
+                      {(isNonAdminUser && (!structure.auditor?.name || structure.auditor.name.toUpperCase() === 'ADMIN' || structure.auditor.name.includes('Super Admin')))
+                        ? effectiveAuditorName
+                        : (structure.auditor?.name || effectiveAuditorName)}
                     </div>
                   </div>
                 </div>

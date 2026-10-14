@@ -726,6 +726,14 @@ export default function AuditRiskView({
   setCurrentTab,
   session
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   // 3 Core Regulatory Workflow Subtabs: 'matrix' (ประเมิน), 'ranking' (จัดลำดับ & คัดเลือก), 'report' (รายงาน & บันทึกข้อความ)
   const [activeSubTab, setActiveSubTab] = useState('matrix');
 
@@ -1161,8 +1169,8 @@ export default function AuditRiskView({
             `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำกิจกรรมที่มีระดับความเสี่ยงสูง จำนวน ${highCount} กิจกรรม ไปบรรจุเป็นโครงการตรวจสอบในแผนการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear} ต่อไป<br/><br/>` +
             `จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ`
           ],
-          signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-          signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+          signatoryName: effectiveAuditorName,
+          signatoryPosition: effectiveAuditorPosition,
           signatoryRole: 'ผู้ประเมินความเสี่ยงและจัดทำแผน',
           palatReviewText: 'เห็นควรอนุมัติผลการประเมินความเสี่ยงและให้นำไปจัดทำแผนการตรวจสอบประจำปีต่อไป',
           executiveOrderText: 'อนุมัติตามเสนอ และมอบหมายให้จัดทำแผนการตรวจสอบประจำปีเสนอตามระเบียบต่อไป',
@@ -1226,8 +1234,8 @@ export default function AuditRiskView({
           </table>
           <div style="margin-top: 30pt; text-align: right; padding-right: 40pt;">
             <p style="margin: 0;">ลงชื่อ....................................................................</p>
-            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
-            <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${effectiveAuditorName})</p>
+            <p style="margin: 2pt 0 0 0;">${effectiveAuditorPosition}</p>
           </div>
         `;
 
@@ -1261,7 +1269,7 @@ export default function AuditRiskView({
       <PageHeaderBanner
         title={`การประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
         orgName={orgProfile?.name}
-        auditorName={`ผู้ประเมิน: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้ประเมิน: ${effectiveAuditorName}`}
         year={selectedYear}
       />
 
@@ -1626,8 +1634,8 @@ export default function AuditRiskView({
             <div className="p-5 bg-stone-50/50 dark:bg-stone-900/50 border-t border-stone-200 dark:border-stone-800 flex justify-end">
               <div className="text-center text-xs space-y-1.5">
                 <div className="text-stone-400">ลงชื่อ............................................................</div>
-                <div className="font-bold text-stone-800 dark:text-stone-200">({orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'})</div>
-                <div className="text-stone-500">{orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ'}</div>
+                <div className="font-bold text-stone-800 dark:text-stone-200">({effectiveAuditorName})</div>
+                <div className="text-stone-500">{effectiveAuditorPosition}</div>
                 <div className="text-[10px] text-stone-400">ผู้ประเมินความเสี่ยง {orgProfile?.name || 'อปท.'}</div>
               </div>
             </div>
@@ -1910,8 +1918,8 @@ export default function AuditRiskView({
                 <div className="text-center text-xs space-y-3 pr-6">
                   <div>ลงชื่อ....................................................................</div>
                   <div>
-                    <div className="font-bold">({orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'})</div>
-                    <div className="text-stone-500">{orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ'}</div>
+                    <div className="font-bold">({effectiveAuditorName})</div>
+                    <div className="text-stone-500">{effectiveAuditorPosition}</div>
                     <div className="text-[10px] text-stone-400">ผู้ประเมินความเสี่ยง {orgProfile?.name || 'อปท.'}</div>
                   </div>
                 </div>
@@ -1929,8 +1937,8 @@ export default function AuditRiskView({
               subject={`รายงานผลการประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`}
               to={`นายก${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'} (ผ่าน ปลัด${orgProfile?.name || 'องค์การบริหารส่วนตำบลต้นแบบ'})`}
               signatory={{
-                name: orgProfile?.auditorName || 'นางสาววิภาวี ตรวจการดี',
-                position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+                name: effectiveAuditorName,
+                position: effectiveAuditorPosition,
                 role: 'ผู้ประเมินความเสี่ยงและจัดทำแผน'
               }}
               palatReview={{

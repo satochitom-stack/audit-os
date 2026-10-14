@@ -87,14 +87,14 @@ export default function Header({
     return () => window.removeEventListener('ia-google-sheets-config-changed', handleSheetsUpdate);
   }, [session]);
 
-  const isAdmin = session?.role === 'admin';
+  const isAdmin = session?.role === 'admin' || session?.username?.toLowerCase() === 'admin';
   const countdown = getSubscriptionCountdown(session, now);
   const userTitle = isAdmin
     ? 'ผู้ดูแลระบบส่วนกลาง'
-    : (session?.displayName || orgProfile?.auditorName || session?.username || 'ผู้ตรวจสอบภายใน');
+    : (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : session?.username) || 'ผู้ตรวจสอบภายใน');
   const departmentLabel = isAdmin
     ? 'Super Admin Control'
-    : (session?.organization || orgProfile?.name || 'หน่วยตรวจสอบภายใน');
+    : (session?.organization || (orgProfile?.name && !orgProfile.name.includes('Super Admin') ? orgProfile.name : 'หน่วยตรวจสอบภายใน'));
 
   return (
     <header className="bg-[#faf9f6]/95 dark:bg-[#1a1e28]/95 backdrop-blur-md border-b border-stone-200/90 dark:border-stone-800 sticky top-0 z-30 shadow-xs no-print shrink-0 transition-colors">

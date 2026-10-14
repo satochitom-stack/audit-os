@@ -30,14 +30,23 @@ import { toThaiDigits, formatSarabanDate } from '../utils/sarabanUtils';
 export default function OpeningMeetingView({
   selectedYear = '2569',
   orgProfile = {},
-  annualPlans = []
+  annualPlans = [],
+  session = null
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายใน'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   const [selectedPlanId, setSelectedPlanId] = useState(() => annualPlans[0]?.id || '');
   const currentPlan = annualPlans.find((p) => p.id === selectedPlanId) || annualPlans[0] || {
     id: 'PLAN-01',
     projectName: 'การตรวจสอบการรับเงินและนำส่งเงิน',
     department: 'กองคลัง',
-    auditor: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'
+    auditor: effectiveAuditorName
   };
 
   const [activeSubTab, setActiveSubTab] = useState('minutes'); // 'notice', 'minutes'
@@ -48,7 +57,7 @@ export default function OpeningMeetingView({
 
   // Attendees list
   const [attendees, setAttendees] = useState([
-    { name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน', position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน', role: 'ประธานการประชุม (ผู้ตรวจสอบภายใน)' },
+    { name: effectiveAuditorName, position: effectiveAuditorPosition, role: 'ประธานการประชุม (ผู้ตรวจสอบภายใน)' },
     { name: 'หัวหน้าหน่วยรับตรวจ', position: 'ผู้อำนวยการกอง', role: 'หน่วยรับตรวจ' },
     { name: 'เจ้าหน้าที่ผู้รับผิดชอบงาน', position: 'นักวิชาการ / เจ้าพนักงาน', role: 'ผู้ประสานงานหลัก' }
   ]);
@@ -119,8 +128,8 @@ export default function OpeningMeetingView({
             `๒. ข้อเท็จจริง: หน่วยตรวจสอบภายใน กำหนดจะเข้าปฏิบัติงานตรวจสอบโครงการ ${currentPlan.projectName || currentPlan.topic} จึงขอเชิญท่านและเจ้าหน้าที่ผู้เกี่ยวข้องร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) ในวันที่ ${formatSarabanDate(meetingDate)} เวลา ${toThaiDigits(meetingTime)} ณ ${meetingLocation}`,
             `๓. ข้อพิจารณาและข้อเสนอ: ในการประชุมดังกล่าวจะมีการชี้แจงวัตถุประสงค์ ขอบเขต และขั้นตอนการตรวจสอบ เพื่อสร้างความเข้าใจร่วมกัน จึงเรียนมาเพื่อโปรดเข้าร่วมประชุมตามกำหนดเวลาดังกล่าว\n\nจึงเรียนมาเพื่อโปรดพิจารณา`
           ],
-          signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-          signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+          signatoryName: effectiveAuditorName,
+          signatoryPosition: effectiveAuditorPosition,
           signatoryRole: 'หัวหน้าทีมตรวจสอบ',
           palatReviewText: 'ทราบและเห็นควรแจ้งหน่วยรับตรวจเข้าร่วมประชุม',
           executiveOrderText: 'ทราบ มอบหมายหน่วยรับตรวจเข้าร่วมประชุมตามกำหนด',
@@ -163,8 +172,8 @@ export default function OpeningMeetingView({
           </div>
           <div style="margin-top: 30pt; text-align: right; padding-right: 40pt;">
             <p style="margin: 0;">(ลงชื่อ)........................................................ผู้บันทึกรายงานการประชุม</p>
-            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
-            <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+            <p style="margin: 4pt 0 0 0; font-weight: bold;">(${effectiveAuditorName})</p>
+            <p style="margin: 2pt 0 0 0;">${effectiveAuditorPosition}</p>
           </div>
         `;
 
@@ -202,7 +211,7 @@ export default function OpeningMeetingView({
       <PageHeaderBanner
         title="การประชุมเปิดการตรวจสอบ (Opening Meeting)"
         orgName={orgProfile?.name}
-        auditorName={`ผู้ตรวจสอบ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้ตรวจสอบ: ${effectiveAuditorName}`}
         year={selectedYear}
       />
 
@@ -434,7 +443,7 @@ export default function OpeningMeetingView({
           <div className="grid grid-cols-2 gap-8 pt-8 border-t border-slate-200 dark:border-slate-800 text-center text-xs">
             <div className="space-y-12">
               <div>ลงชื่อ........................................................ประธานการประชุม</div>
-              <div>({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})<br />ตำแหน่ง {orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</div>
+              <div>({effectiveAuditorName})<br />ตำแหน่ง {effectiveAuditorPosition}</div>
             </div>
             <div className="space-y-12">
               <div>ลงชื่อ........................................................หัวหน้าหน่วยรับตรวจ</div>
@@ -454,8 +463,8 @@ export default function OpeningMeetingView({
           subject={`ขอเชิญร่วมประชุมเปิดการตรวจสอบ (Opening Meeting) ภารกิจ "${currentPlan.projectName || currentPlan.topic || 'งานตรวจสอบ'}"`}
           to={`ผู้อำนวยการ${currentPlan.department || 'หน่วยรับตรวจ'}`}
           signatory={{
-            name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-            position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+            name: effectiveAuditorName,
+            position: effectiveAuditorPosition,
             role: 'หัวหน้าทีมตรวจสอบ'
           }}
           showReviewBoxes={false}

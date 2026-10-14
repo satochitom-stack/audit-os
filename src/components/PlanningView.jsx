@@ -57,8 +57,17 @@ export default function PlanningView({
   setStrategicPlan,
   orgProfile = {},
   selectedYear = '2569',
-  setCurrentTab = () => {}
+  setCurrentTab = () => {},
+  session = null
 }) {
+  const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
+  const effectiveAuditorName = isNonAdminUser
+    ? (session?.displayName || (orgProfile?.auditorName && orgProfile.auditorName.toUpperCase() !== 'ADMIN' && !orgProfile.auditorName.includes('Super Admin') ? orgProfile.auditorName : 'ผู้ตรวจสอบภายใน'))
+    : (orgProfile?.auditorName || session?.displayName || 'ผู้ดูแลระบบส่วนกลาง (Super Admin)');
+  const effectiveAuditorPosition = isNonAdminUser
+    ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
+    : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
+
   // 4 Tabs: 'annual', 'strategic', 'risk', 'charter'
   const [activeTab, setActiveTab] = useState('annual');
 
@@ -569,8 +578,8 @@ export default function PlanningView({
           `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ แจ้งสำนัก/กองที่เกี่ยวข้องเพื่อทราบและเตรียมความพร้อมรับการตรวจสอบต่อไป<br/><br/>` +
           `จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ`
         ],
-        signatoryName: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-        signatoryPosition: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในชำนาญการ',
+        signatoryName: effectiveAuditorName,
+        signatoryPosition: effectiveAuditorPosition,
         signatoryRole: 'ผู้จัดทำแผนการปฏิบัติงาน',
         palatReviewText: 'เห็นควรอนุมัติแผนการปฏิบัติงานตรวจสอบประจำปีตามเสนอ',
         executiveOrderText: 'อนุมัติแผนการปฏิบัติงานตรวจสอบประจำปีตามเสนอ และแจ้งหน่วยรับตรวจทราบ',
@@ -622,8 +631,8 @@ export default function PlanningView({
           <tr>
             <td style="width: 50%; text-align: center;">
               <p style="margin: 0;">(ลงชื่อ)........................................................ผู้จัดทำแผน</p>
-              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</p>
-              <p style="margin: 2pt 0 0 0;">${orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</p>
+              <p style="margin: 4pt 0 0 0; font-weight: bold;">(${effectiveAuditorName})</p>
+              <p style="margin: 2pt 0 0 0;">${effectiveAuditorPosition}</p>
             </td>
             <td style="width: 50%; text-align: center;">
               <p style="margin: 0;">(ลงชื่อ)........................................................ผู้อนุมัติแผน</p>
@@ -662,13 +671,13 @@ export default function PlanningView({
           activeTab === 'annual'
             ? `แผนการปฏิบัติงานการตรวจสอบประจำปีงบประมาณ พ.ศ. ${selectedYear}`
             : activeTab === 'strategic'
-            ? `แผนการตรวจสอบระยะยาว 3-5 ปี ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
+            ? `แผนการตรวจสอบระยะยาว ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
             : activeTab === 'risk'
             ? `การประเมินความเสี่ยงเพื่อจัดทำแผนการตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
             : `กฎบัตรการตรวจสอบภายใน (Audit Charter) ประจำปีงบประมาณ พ.ศ. ${selectedYear}`
         }
         orgName={orgProfile?.name}
-        auditorName={`ผู้จัดทำ: ${orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}`}
+        auditorName={`ผู้จัดทำ: ${effectiveAuditorName}`}
         year={selectedYear}
       />
 
@@ -1076,15 +1085,15 @@ export default function PlanningView({
                 </span>
                 <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
                   <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                  <span>ผู้ตรวจสอบ: {orgProfile?.auditorName || 'หน่วยตรวจสอบภายใน'}</span>
+                  <span>ผู้ตรวจสอบ: {effectiveAuditorName}</span>
                 </span>
                 <span className="inline-flex items-center space-x-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-full px-3 py-1 text-xs font-medium text-stone-700 dark:text-stone-300">
                   <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                  <span>กรอบแผน 3-5 ปี</span>
+                  <span>กรอบแผนระยะยาว</span>
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-                แผนการตรวจสอบระยะยาว 3-5 ปี (Strategic Multi-Year Audit Plan)
+                แผนการตรวจสอบระยะยาว (Strategic Multi-Year Audit Plan)
               </h2>
             </div>
           </div>
@@ -1453,8 +1462,8 @@ export default function PlanningView({
             <div className="space-y-8">
               <div>(ลงชื่อ)........................................................</div>
               <div>
-                <div className="font-bold">({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</div>
-                <div className="text-slate-500">{orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</div>
+                <div className="font-bold">({effectiveAuditorName})</div>
+                <div className="text-slate-500">{effectiveAuditorPosition}</div>
                 <div className="text-[11px] text-slate-400">ผู้จัดทำกฎบัตร</div>
               </div>
             </div>
@@ -1631,8 +1640,8 @@ export default function PlanningView({
                 subject={`ขออนุมัติแผนการปฏิบัติงานตรวจสอบ ประจำปีงบประมาณ พ.ศ. ${toThaiDigits(selectedYear)}`}
                 to={`นายก${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'} (ผ่าน ปลัด${orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น'})`}
                 signatory={{
-                  name: orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน',
-                  position: orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายในปฏิบัติการ',
+                  name: effectiveAuditorName,
+                  position: effectiveAuditorPosition,
                   role: 'ผู้จัดทำแผน'
                 }}
                 customReviewBoxes={
@@ -2365,7 +2374,7 @@ export default function PlanningView({
                           {plan.department}
                         </td>
                         <td className="p-2.5 border-r border-slate-200 dark:border-slate-800 text-[11px]">
-                          {plan.auditor || orgProfile?.auditorName || 'นักวิชาการตรวจสอบภายใน'}
+                          {plan.auditor || effectiveAuditorName}
                         </td>
                         <td className="p-2.5 border-r border-slate-200 dark:border-slate-800 text-center text-[11px]">
                           {plan.period || plan.quarter}
@@ -2398,8 +2407,8 @@ export default function PlanningView({
                 <div className="space-y-6">
                   <div>(ลงชื่อ)........................................................</div>
                   <div>
-                    <div className="font-bold">({orgProfile?.auditorName || 'ผู้ตรวจสอบภายใน'})</div>
-                    <div className="text-slate-500">{orgProfile?.auditorPosition || 'นักวิชาการตรวจสอบภายใน'}</div>
+                    <div className="font-bold">({effectiveAuditorName})</div>
+                    <div className="text-slate-500">{effectiveAuditorPosition}</div>
                     <div className="text-[11px] text-slate-400">ผู้จัดทำแผน</div>
                   </div>
                 </div>
