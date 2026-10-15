@@ -1,0 +1,47 @@
+name: Security Rules Isolated Test Suite
+
+on:
+  pull_request:
+    branches:
+      - main
+      - feature/auth-tenant-isolation
+    paths:
+      - 'tests/**'
+      - 'firebase.test.json'
+      - 'firestore.rules'
+  workflow_dispatch:
+
+# Least Privilege: อนุญาตเฉพาะการอ่านโค้ดใน Repository
+permissions:
+  contents: read
+
+jobs:
+  test-security-rules:
+    name: Run Firestore Rules Tests (Deterministic)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java Runtime (for Firebase Emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Deterministic Dependencies
+        run: npm ci
+
+      - name: Execute Firestore Security Rules Test Suite
+        run: |
+          npx firebase-tools --config firebase.test.json emulators:exec --project audit-os-test-isolation --only firestore "npx mocha tests/security-rules.test.js --timeout 15000"
+        env:
+          # ตัวแปรจำลองเฉพาะสำหรับ Emulator (ไม่มีการส่ง Secret ของ Production)
+          FIRESTORE_EMULATOR_HOST: "127.0.0.1:8080"

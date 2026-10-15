@@ -35,10 +35,12 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "firebase-tools": "^15.32.1",
+    "mocha": "^11.7.5",
     "oxlint": "^1.81.0",
     "vite": "^8.3.0"
   }
