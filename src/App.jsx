@@ -1796,6 +1796,7 @@ export default function App() {
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
+                engagementPlans={engagementPlans}
                 session={session}
               />
             )}
@@ -1821,6 +1822,7 @@ export default function App() {
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
+                engagementPlans={engagementPlans}
                 workingPapers={workingPapers}
                 onNavigateToTab={handleSelectTab}
                 session={session}
