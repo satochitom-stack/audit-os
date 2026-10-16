@@ -56,7 +56,7 @@ export default function AuditFollowUpView({
   // (e.g. 2569-10-16). Keep the input format when adding days.
   const parseDateOnly = (dateStr) => {
     if (typeof dateStr !== 'string') return null;
-    const match = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(dateStr);
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
     if (!match) return null;
 
     const inputYear = Number(match[1]);
