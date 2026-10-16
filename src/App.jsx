@@ -1835,6 +1835,7 @@ export default function App() {
                 capaFindings={capaFindings}
                 setCapaFindings={setCapaFindings}
                 session={session}
+                onNavigateToTab={handleSelectTab}
               />
             )}
 

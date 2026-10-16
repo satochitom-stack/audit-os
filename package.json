@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "verify:guardrails": "node scripts/verify-guardrails.cjs",
+    "test:followup": "node tests/followup-sync.test.js",
     "build": "node scripts/verify-guardrails.cjs && vite build",
     "deploy": "node scripts/verify-guardrails.cjs && vite build && firebase deploy --only hosting",
     "lint": "oxlint",

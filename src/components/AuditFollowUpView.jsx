@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageHeaderBanner from './PageHeaderBanner';
 import {
   FileSpreadsheet,
@@ -20,7 +20,13 @@ import {
   AlertTriangle,
   Scale,
   Sparkles,
-  Award
+  Award,
+  Eye,
+  History,
+  FileText,
+  ExternalLink,
+  ShieldAlert,
+  ArrowRight
 } from 'lucide-react';
 import { DLA_FOLLOWUP_REGISTER_6, DLA_FOLLOWUP_MEMO_TEMPLATE } from '../data/dlaStandardTemplates';
 import OfficialThaiMemo from './OfficialThaiMemo';
@@ -28,13 +34,26 @@ import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { exportDocumentToWord, exportThaiMemoToWord, exportDataToExcel } from '../utils/documentExportUtils';
 import { toThaiDigits, formatSarabanDate } from '../utils/sarabanUtils';
 import { luxuryConfirm } from './LuxuryModal';
+import {
+  parseDateOnly,
+  formatDateOnly,
+  addDays,
+  calculateDaysRemaining,
+  reconcileFollowupRegister,
+  syncFollowupStatusToCapa,
+  createCapaFromFollowupItem,
+  createFollowupHistoryEntry,
+  getSourceMeta,
+  getTodayDate
+} from '../utils/followupSyncUtils';
 
 export default function AuditFollowUpView({
   selectedYear = '2569',
   orgProfile = {},
   capaFindings = [],
   setCapaFindings,
-  session = null
+  session = null,
+  onNavigateToTab = null
 }) {
   const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
   const effectiveAuditorName = isNonAdminUser
@@ -48,72 +67,22 @@ export default function AuditFollowUpView({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [regimeFilter, setRegimeFilter] = useState('all'); // 'all', 'moi_30', 'cgd_60', 'agency_defined'
+  const [sourceFilter, setSourceFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
   const [selectedFindingForMemo, setSelectedFindingForMemo] = useState(null);
+  const [selectedFindingForDetail, setSelectedFindingForDetail] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
-
-  // Parse date-only strings without timezone shifts. Support both Gregorian
-  // dates from HTML date inputs (e.g. 2026-10-16) and legacy Buddhist dates
-  // (e.g. 2569-10-16). Keep the input format when adding days.
-  const parseDateOnly = (dateStr) => {
-    if (typeof dateStr !== 'string') return null;
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
-    if (!match) return null;
-
-    const inputYear = Number(match[1]);
-    const month = Number(match[2]);
-    const day = Number(match[3]);
-    const isBuddhistYear = inputYear >= 2400 && inputYear <= 2700;
-    const year = isBuddhistYear ? inputYear - 543 : inputYear;
-    const date = new Date(Date.UTC(year, month - 1, day));
-
-    // Reject impossible dates rather than silently normalizing them.
-    if (
-      month < 1 ||
-      month > 12 ||
-      day < 1 ||
-      date.getUTCFullYear() !== year ||
-      date.getUTCMonth() !== month - 1 ||
-      date.getUTCDate() !== day
-    ) {
-      return null;
-    }
-
-    return { date, isBuddhistYear };
-  };
-
-  const formatDateOnly = (date, isBuddhistYear) => {
-    const year = date.getUTCFullYear() + (isBuddhistYear ? 543 : 0);
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // Add calendar days while preserving whether the input uses Buddhist or Gregorian years.
-  const addDays = (dateStr, days) => {
-    const parsed = parseDateOnly(dateStr);
-    if (!parsed || !Number.isFinite(days)) return dateStr;
-
-    const date = new Date(parsed.date.getTime());
-    date.setUTCDate(date.getUTCDate() + Math.trunc(days));
-    return formatDateOnly(date, parsed.isBuddhistYear);
-  };
-
-  // Return remaining calendar days using local "today" and a timezone-safe date-only comparison.
-  const calculateDaysRemaining = (deadlineStr) => {
-    const parsedDeadline = parseDateOnly(deadlineStr);
-    if (!parsedDeadline) return 0;
-
-    const now = new Date();
-    const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    return Math.round((parsedDeadline.date.getTime() - today) / 86400000);
-  };
+  const [newLogNote, setNewLogNote] = useState('');
+  const [newLogEvidence, setNewLogEvidence] = useState('');
 
   // Default register findings
   const defaultItems = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
     return [
       {
         id: 'CAPA-FOLLOW-01',
+        findingId: 'CAPA-FOLLOW-01',
+        source: 'internal',
+        sourceName: 'หน่วยตรวจสอบภายใน อปท.',
         title: 'การจัดทำงบกระทบยอดเงินฝากธนาคารล่าช้า',
         department: 'กองคลัง',
         reportedDate: '2569-01-10',
@@ -125,10 +94,24 @@ export default function AuditFollowUpView({
         recommendation: 'ให้กองคลังเร่งรัดจัดทำงบกระทบยอดเงินฝากธนาคารทุกบัญชีเป็นประจำทุกสิ้นเดือนและรายงานผู้บริหารภายใน 15 วัน',
         status: 'overdue', // 'completed', 'in_progress', 'urgent', 'overdue'
         progressNotes: 'กองคลังได้จัดทำงบกระทบยอดของเดือน ม.ค. แล้วเสร็จ อยู่ระหว่างดำเนินการของเดือน ก.พ.',
-        updatedAt: '2569-03-01'
+        updatedAt: '2569-03-01',
+        history: [
+          {
+            timestamp: new Date().toISOString(),
+            date: '2569-01-15',
+            action: 'created',
+            fromStatus: '',
+            toStatus: 'in_progress',
+            changedBy: 'ผู้ตรวจสอบภายใน',
+            note: 'ตั้งเรื่องติดตามผลการตรวจสอบ'
+          }
+        ]
       },
       {
         id: 'CAPA-FOLLOW-02',
+        findingId: 'CAPA-FOLLOW-02',
+        source: 'internal',
+        sourceName: 'หน่วยตรวจสอบภายใน อปท.',
         title: 'การลงบันทึกการใช้รถยนต์ส่วนกลางไม่ครบถ้วน',
         department: 'สำนักปลัด',
         reportedDate: '2569-02-01',
@@ -140,10 +123,24 @@ export default function AuditFollowUpView({
         recommendation: 'กำชับพนักงานขับรถให้ลงบันทึกเลขไมล์เริ่มต้น-สิ้นสุด และคำนวณอัตราสิ้นเปลืองน้ำมันเชื้อเพลิงทุกครั้ง',
         status: 'completed',
         progressNotes: 'สำนักปลัดได้จัดประชุมกำชับพนักงานขับรถ และผู้ควบคุมรถได้ตรวจเช็คสมุดบันทึกประจำรถทุกสัปดาห์แล้ว',
-        updatedAt: '2569-02-25'
+        updatedAt: '2569-02-25',
+        history: [
+          {
+            timestamp: new Date().toISOString(),
+            date: '2569-02-25',
+            action: 'completed',
+            fromStatus: 'in_progress',
+            toStatus: 'completed',
+            changedBy: 'ผู้ตรวจสอบภายใน',
+            note: 'ตรวจสอบสมุดบันทึกประจำรถและหลักฐานแล้วเสร็จ ยุติข้อสังเกต'
+          }
+        ]
       },
       {
         id: 'CAPA-FOLLOW-03',
+        findingId: 'CAPA-FOLLOW-03',
+        source: 'internal',
+        sourceName: 'หน่วยตรวจสอบภายใน อปท.',
         title: 'การจัดทำทะเบียนคุมสินทรัพย์และครุภัณฑ์ยังไม่เป็นปัจจุบัน',
         department: 'กองช่าง',
         reportedDate: '2569-02-10',
@@ -155,32 +152,139 @@ export default function AuditFollowUpView({
         recommendation: 'ให้กองช่างประสานกองคลังเพื่อปรับปรุงฐานข้อมูลสินทรัพย์และสำรวจครุภัณฑ์จริงให้ตรงกับทะเบียนคุม',
         status: 'in_progress',
         progressNotes: 'อยู่ระหว่างการสำรวจสภาพครุภัณฑ์จริงภาคสนามร่วมกับงานพัสดุ',
-        updatedAt: '2569-03-05'
+        updatedAt: '2569-03-05',
+        history: [
+          {
+            timestamp: new Date().toISOString(),
+            date: '2569-02-15',
+            action: 'created',
+            fromStatus: '',
+            toStatus: 'in_progress',
+            changedBy: 'ผู้ตรวจสอบภายใน',
+            note: 'ตั้งเรื่องติดตามผลการตรวจสอบ'
+          }
+        ]
       }
     ];
   }, []);
 
   const [registerItems, setRegisterItems] = useState(() => {
+    let saved = null;
     try {
-      const saved = localStorage.getItem(`ia_followup_register_${selectedYear}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
+      const raw = localStorage.getItem(`ia_followup_register_${selectedYear}`);
+      if (raw) saved = JSON.parse(raw);
     } catch (_) {}
-    return defaultItems;
+    return reconcileFollowupRegister(saved, capaFindings, {
+      auditorName: effectiveAuditorName,
+      selectedYear,
+      defaultItems
+    });
   });
+
+  // Reconcile incoming CAPA updates when capaFindings or selectedYear changes
+  useEffect(() => {
+    setRegisterItems((prev) => {
+      const reconciled = reconcileFollowupRegister(prev, capaFindings, {
+        auditorName: effectiveAuditorName,
+        selectedYear,
+        defaultItems
+      });
+      try {
+        localStorage.setItem(`ia_followup_register_${selectedYear}`, JSON.stringify(reconciled));
+      } catch (_) {}
+      return reconciled;
+    });
+  }, [capaFindings, selectedYear, effectiveAuditorName, defaultItems]);
 
   const saveRegister = (items) => {
     setRegisterItems(items);
-    localStorage.setItem(`ia_followup_register_${selectedYear}`, JSON.stringify(items));
+    try {
+      localStorage.setItem(`ia_followup_register_${selectedYear}`, JSON.stringify(items));
+    } catch (_) {}
   };
 
-  const handleUpdateStatus = (id, newStatus) => {
-    const updated = registerItems.map((item) =>
-      item.id === id ? { ...item, status: newStatus, updatedAt: new Date().toISOString().split('T')[0] } : item
-    );
+  const handleUpdateStatus = (id, newStatus, customNote = '') => {
+    const today = getTodayDate();
+    let updatedTarget = null;
+
+    const updated = registerItems.map((item) => {
+      if (item.id !== id) return item;
+      const historyEntry = createFollowupHistoryEntry({
+        action: 'status_changed',
+        fromStatus: item.status,
+        toStatus: newStatus,
+        changedBy: effectiveAuditorName,
+        note: customNote || (newStatus === 'completed' ? 'ยุติข้อสังเกตและปิดรายการ' : `ปรับปรุงสถานะเป็น ${newStatus}`),
+        date: today
+      });
+      const nextItem = {
+        ...item,
+        status: newStatus,
+        history: [historyEntry, ...(Array.isArray(item.history) ? item.history : [])],
+        updatedAt: today
+      };
+      updatedTarget = nextItem;
+      return nextItem;
+    });
+
     saveRegister(updated);
+
+    // Keep selected finding in sync if modal is open
+    if (selectedFindingForDetail && selectedFindingForDetail.id === id && updatedTarget) {
+      setSelectedFindingForDetail(updatedTarget);
+    }
+
+    // Sync to CAPA findings if setCapaFindings is provided
+    const targetItem = registerItems.find((item) => item.id === id);
+    const targetFindingId = targetItem?.findingId || id;
+    if (setCapaFindings && typeof setCapaFindings === 'function') {
+      setCapaFindings((prev) =>
+        syncFollowupStatusToCapa(prev, targetFindingId, newStatus, {
+          note: customNote || (newStatus === 'completed' ? 'ยุติข้อสังเกตและปิดรายการจากการติดตามผล' : `ปรับปรุงสถานะติดตามเป็น ${newStatus}`),
+          auditorName: effectiveAuditorName,
+          date: today
+        })
+      );
+    }
+  };
+
+  const handleAddFollowupLog = (id) => {
+    if (!newLogNote.trim() && !newLogEvidence.trim()) return;
+    const today = getTodayDate();
+    let updatedTarget = null;
+
+    const updated = registerItems.map((item) => {
+      if (item.id !== id) return item;
+      const historyEntry = createFollowupHistoryEntry({
+        action: 'followup_note',
+        fromStatus: item.status,
+        toStatus: item.status,
+        changedBy: effectiveAuditorName,
+        note: newLogNote.trim(),
+        evidence: newLogEvidence.trim(),
+        date: today
+      });
+      const nextItem = {
+        ...item,
+        evidenceDocs: newLogEvidence.trim()
+          ? (item.evidenceDocs ? `${item.evidenceDocs}, ${newLogEvidence.trim()}` : newLogEvidence.trim())
+          : item.evidenceDocs,
+        progressNotes: newLogNote.trim()
+          ? `${item.progressNotes ? item.progressNotes + '\n' : ''}[${today}] ${newLogNote.trim()}`
+          : item.progressNotes,
+        history: [historyEntry, ...(Array.isArray(item.history) ? item.history : [])],
+        updatedAt: today
+      };
+      updatedTarget = nextItem;
+      return nextItem;
+    });
+
+    saveRegister(updated);
+    if (selectedFindingForDetail && selectedFindingForDetail.id === id && updatedTarget) {
+      setSelectedFindingForDetail(updatedTarget);
+    }
+    setNewLogNote('');
+    setNewLogEvidence('');
   };
 
   const handleUpdateRegime = (id, newRegime, customDays) => {
@@ -193,20 +297,21 @@ export default function AuditFollowUpView({
         regime: newRegime,
         deadlineDays: days,
         deadlineBasis: newRegime === 'agency_defined' ? (item.deadlineBasis || '') : '',
-        deadlineDate: addDays(item.orderDate || new Date().toISOString().split('T')[0], days),
-        updatedAt: new Date().toISOString().split('T')[0]
+        deadlineDate: addDays(item.orderDate || getTodayDate(), days),
+        updatedAt: getTodayDate()
       };
     });
     saveRegister(updated);
   };
+
   const handleUpdateDeadlineSetting = (id, field, value) => {
     const updated = registerItems.map((item) => {
       if (item.id !== id) return item;
-      const next = { ...item, [field]: value, updatedAt: new Date().toISOString().split('T')[0] };
+      const next = { ...item, [field]: value, updatedAt: getTodayDate() };
       if (field === 'deadlineDays') {
         const days = Number(value);
         if (Number.isInteger(days) && days >= 1 && days <= 3650) {
-          next.deadlineDate = addDays(item.orderDate || new Date().toISOString().split('T')[0], days);
+          next.deadlineDate = addDays(item.orderDate || getTodayDate(), days);
         } else {
           // Do not leave an old deadline visible while the edited interval is invalid or empty.
           next.deadlineDate = '';
@@ -219,7 +324,7 @@ export default function AuditFollowUpView({
 
   const handleUpdateNotes = (id, notes) => {
     const updated = registerItems.map((item) =>
-      item.id === id ? { ...item, progressNotes: notes, updatedAt: new Date().toISOString().split('T')[0] } : item
+      item.id === id ? { ...item, progressNotes: notes, updatedAt: getTodayDate() } : item
     );
     saveRegister(updated);
   };
@@ -229,13 +334,16 @@ export default function AuditFollowUpView({
     const confirmed = await luxuryConfirm({
       title: 'ยืนยันการลบรายการติดตามผล',
       message: 'ต้องการลบรายการติดตามผลการตรวจสอบนี้ออกจากทะเบียนหรือไม่?',
-      itemTitle: itemToDelete?.finding || `รหัส ${id}`,
+      itemTitle: itemToDelete?.title || `รหัส ${id}`,
       confirmText: 'ลบรายการ',
       variant: 'danger'
     });
     if (!confirmed) return;
     const updated = registerItems.filter((item) => item.id !== id);
     saveRegister(updated);
+    if (selectedFindingForDetail && selectedFindingForDetail.id === id) {
+      setSelectedFindingForDetail(null);
+    }
   };
 
   const handleSelectForMemo = (item) => {
@@ -245,13 +353,21 @@ export default function AuditFollowUpView({
 
   // New item form state
   const [newItem, setNewItem] = useState({
+    source: 'internal',
     title: '',
     department: 'กองคลัง',
-    orderDate: new Date().toISOString().split('T')[0],
+    responsiblePerson: '',
+    orderDate: getTodayDate(),
     regime: 'agency_defined',
     deadlineDays: 30,
     deadlineBasis: '',
     recommendation: '',
+    condition: '',
+    criteria: '',
+    cause: '',
+    effect: '',
+    correctiveAction: '',
+    evidenceDocs: '',
     progressNotes: ''
   });
 
@@ -263,74 +379,147 @@ export default function AuditFollowUpView({
     if (!Number.isInteger(days) || days < 1 || days > 3650) return;
     if (newItem.regime === 'agency_defined' && !newItem.deadlineBasis.trim()) return;
     const deadlineDate = addDays(newItem.orderDate, days);
+    const today = getTodayDate();
+    const sourceMeta = getSourceMeta(newItem.source || 'internal');
 
+    const generatedId = `CAPA-FOLLOW-${Date.now().toString().slice(-4)}`;
     const item = {
-      id: `CAPA-FOLLOW-${Date.now().toString().slice(-4)}`,
-      title: newItem.title,
+      id: generatedId,
+      findingId: generatedId,
+      source: newItem.source || 'internal',
+      sourceName: sourceMeta.fullName,
+      title: newItem.title.trim(),
       department: newItem.department,
+      responsiblePerson: newItem.responsiblePerson.trim() || `ผู้อำนวยการ${newItem.department}`,
       reportedDate: newItem.orderDate,
       orderDate: newItem.orderDate,
       regime: newItem.regime,
       deadlineDays: days,
       deadlineBasis: newItem.deadlineBasis.trim(),
       deadlineDate: deadlineDate,
-      recommendation: newItem.recommendation,
+      recommendation: newItem.recommendation.trim(),
+      condition: newItem.condition.trim() || newItem.title.trim(),
+      criteria: newItem.criteria.trim(),
+      cause: newItem.cause.trim(),
+      effect: newItem.effect.trim(),
+      correctiveAction: newItem.correctiveAction.trim(),
+      evidenceDocs: newItem.evidenceDocs.trim(),
       status: 'in_progress',
-      progressNotes: newItem.progressNotes || 'อยู่ระหว่างหน่วยรับตรวจจัดทำรายงานผล',
-      updatedAt: new Date().toISOString().split('T')[0]
+      progressNotes: newItem.progressNotes.trim() || 'อยู่ระหว่างหน่วยรับตรวจจัดทำรายงานผลและดำเนินการแก้ไข',
+      history: [
+        createFollowupHistoryEntry({
+          action: 'created_in_followup',
+          fromStatus: '',
+          toStatus: 'in_progress',
+          changedBy: effectiveAuditorName,
+          note: 'บันทึกรายการข้อตรวจพบใหม่เข้าสู่ทะเบียนติดตามผล',
+          date: newItem.orderDate
+        })
+      ],
+      updatedAt: today
     };
 
     const updated = [item, ...registerItems];
     saveRegister(updated);
+
+    // Two-way sync: Add to CAPA findings list as well
+    if (setCapaFindings && typeof setCapaFindings === 'function') {
+      const capaModel = createCapaFromFollowupItem(item, selectedYear);
+      setCapaFindings((prev) => [capaModel, ...(Array.isArray(prev) ? prev : [])]);
+    }
+
     setShowAddModal(false);
     setNewItem({
+      source: 'internal',
       title: '',
       department: 'กองคลัง',
-      orderDate: new Date().toISOString().split('T')[0],
+      responsiblePerson: '',
+      orderDate: getTodayDate(),
       regime: 'agency_defined',
       deadlineDays: 30,
       deadlineBasis: '',
       recommendation: '',
+      condition: '',
+      criteria: '',
+      cause: '',
+      effect: '',
+      correctiveAction: '',
+      evidenceDocs: '',
       progressNotes: ''
     });
   };
 
   const handleLoadDlaFollowupRegister = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     const formatted = DLA_FOLLOWUP_REGISTER_6.map((dla) => ({
       id: dla.id,
+      findingId: dla.id,
+      source: 'internal',
+      sourceName: 'หน่วยตรวจสอบภายใน อปท.',
       title: dla.finding,
       department: dla.department,
+      responsiblePerson: `ผู้อำนวยการ${dla.department}`,
       reportedDate: '2569-01-15',
       orderDate: '2569-01-20',
       regime: 'moi_30',
+      deadlineDays: 30,
+      deadlineBasis: 'ผู้ใช้เลือกอ้างอิง มท.',
       deadlineDate: addDays('2569-01-20', 30),
       recommendation: dla.recommendation,
+      condition: dla.finding,
+      criteria: 'มาตรฐานและคู่มือการปฏิบัติงานตรวจสอบภายใน อปท. (กรมส่งเสริมการปกครองท้องถิ่น)',
+      cause: 'การปฏิบัติงานยังไม่เป็นไปตามแนวทางมาตรฐาน',
+      effect: 'อาจมีความเสี่ยงด้านการควบคุมภายใน',
+      correctiveAction: dla.correctiveAction,
       status: dla.status === 'ยุติข้อสังเกต' ? 'completed' : 'in_progress',
       progressNotes: `การดำเนินการ: ${dla.correctiveAction} (เป้าหมาย: ${dla.targetDate})`,
+      history: [
+        createFollowupHistoryEntry({
+          action: 'loaded_dla_template',
+          fromStatus: '',
+          toStatus: dla.status === 'ยุติข้อสังเกต' ? 'completed' : 'in_progress',
+          changedBy: effectiveAuditorName,
+          note: 'โหลดตัวอย่าง 6 ภารกิจหลักมาตรฐาน สถ.',
+          date: today
+        })
+      ],
       updatedAt: today
     }));
     saveRegister(formatted);
   };
 
+  // Extract unique departments for filter dropdown
+  const availableDepartments = useMemo(() => {
+    const set = new Set();
+    registerItems.forEach((i) => {
+      if (i.department && i.department.trim()) set.add(i.department.trim());
+    });
+    return Array.from(set).sort();
+  }, [registerItems]);
+
   // Filtered Items
   const filteredItems = useMemo(() => {
     return registerItems.filter((item) => {
+      const q = searchTerm.toLowerCase();
       const matchSearch =
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.recommendation.toLowerCase().includes(searchTerm.toLowerCase());
+        (item.title && item.title.toLowerCase().includes(q)) ||
+        (item.department && item.department.toLowerCase().includes(q)) ||
+        (item.recommendation && item.recommendation.toLowerCase().includes(q)) ||
+        (item.sourceName && item.sourceName.toLowerCase().includes(q)) ||
+        (item.id && item.id.toLowerCase().includes(q));
 
       const matchRegime = regimeFilter === 'all' || item.regime === regimeFilter;
+      const matchSource = sourceFilter === 'all' || item.source === sourceFilter;
+      const matchDepartment = departmentFilter === 'all' || item.department === departmentFilter;
 
       let matchStatus = true;
       if (statusFilter !== 'all') {
         matchStatus = item.status === statusFilter;
       }
 
-      return matchSearch && matchRegime && matchStatus;
+      return matchSearch && matchRegime && matchSource && matchDepartment && matchStatus;
     });
-  }, [registerItems, searchTerm, regimeFilter, statusFilter]);
+  }, [registerItems, searchTerm, regimeFilter, sourceFilter, departmentFilter, statusFilter]);
 
   // Summary Metrics
   const stats = useMemo(() => {
@@ -605,12 +794,37 @@ export default function AuditFollowUpView({
                 <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-stone-400" />
                 <input
                   type="text"
-                  placeholder="ค้นหาข้อตรวจพบ, หน่วยงาน..."
+                  placeholder="ค้นหาข้อตรวจพบ, รหัส, หน่วยงาน..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="text-xs pl-8 pr-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:ring-1 focus:ring-amber-500 outline-none w-56"
                 />
               </div>
+
+              {/* Source Filter */}
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="text-xs p-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold outline-none cursor-pointer"
+              >
+                <option value="all">ทุกแหล่งข้อค้นพบ</option>
+                <option value="internal">การตรวจสอบภายใน (IA)</option>
+                <option value="oag">สตง.</option>
+                <option value="inspector">ผู้ตรวจราชการ</option>
+                <option value="external">หน่วยงานภายนอกอื่นๆ</option>
+              </select>
+
+              {/* Department Filter */}
+              <select
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+                className="text-xs p-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold outline-none cursor-pointer"
+              >
+                <option value="all">ทุกหน่วยรับตรวจ</option>
+                {availableDepartments.map((dept) => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
 
               {/* Regime Filter */}
               <select
@@ -619,8 +833,8 @@ export default function AuditFollowUpView({
                 className="text-xs p-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold outline-none cursor-pointer"
               >
                 <option value="all">ทุกกรอบเวลา</option>
-                <option value="moi_30">ผู้ใช้เลือกอ้างอิง มท.</option>
-                <option value="cgd_60">ผู้ใช้เลือกอ้างอิง กค.</option>
+                <option value="moi_30">ผู้ใช้เลือกอ้างอิง มท. (30 วัน)</option>
+                <option value="cgd_60">ผู้ใช้เลือกอ้างอิง กค. (60 วัน)</option>
                 <option value="agency_defined">กรอบเวลาที่หน่วยงานกำหนด</option>
               </select>
 
@@ -634,7 +848,7 @@ export default function AuditFollowUpView({
                 <option value="in_progress">อยู่ระหว่างดำเนินการ</option>
                 <option value="urgent">เร่งด่วน (≤ 15 วัน)</option>
                 <option value="overdue">เกินกำหนดเวลา</option>
-                <option value="completed">ดำเนินการเสร็จสิ้น</option>
+                <option value="completed">เสร็จสิ้นสมบูรณ์</option>
               </select>
             </div>
 
@@ -649,28 +863,66 @@ export default function AuditFollowUpView({
               <thead className="bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold border-b border-stone-200 dark:border-stone-700">
                 <tr>
                   <th className="py-3 px-3 w-12 text-center">ลำดับ</th>
-                  <th className="py-3 px-3">ประเด็นข้อตรวจพบ / ข้อเสนอแนะ</th>
-                  <th className="py-3 px-3 w-28">หน่วยรับตรวจ</th>
+                  <th className="py-3 px-3">แหล่งที่มา & ประเด็นข้อตรวจพบ</th>
+                  <th className="py-3 px-3 w-32">หน่วยรับตรวจ / ผู้รับผิดชอบ</th>
                   <th className="py-3 px-3 w-40">กรอบเวลา & วันครบกำหนด</th>
                   <th className="py-3 px-3">ความคืบหน้า / การดำเนินการ</th>
                   <th className="py-3 px-3 w-36">สถานะการติดตาม</th>
-                  <th className="py-3 px-3 text-right w-36 print:hidden">การจัดการ</th>
+                  <th className="py-3 px-3 text-right w-44 print:hidden">การจัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                 {filteredItems.map((item, idx) => {
                   const daysLeft = calculateDaysRemaining(item.deadlineDate);
+                  const sourceMeta = getSourceMeta(item.source);
 
                   return (
                     <tr key={item.id} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/40 transition-colors">
                       <td className="py-3 px-3 text-center font-bold text-stone-400">{idx + 1}</td>
-                      <td className="py-3 px-3 max-w-xs space-y-1">
+                      <td className="py-3 px-3 max-w-xs space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                              item.source === 'oag'
+                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-900'
+                                : item.source === 'inspector'
+                                ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-900'
+                                : item.source === 'external'
+                                ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300 border-cyan-200 dark:border-cyan-900'
+                                : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-900'
+                            }`}
+                          >
+                            {sourceMeta.label}
+                          </span>
+                          <span className="font-mono text-[10px] text-stone-400 font-bold">{item.id}</span>
+                          {item.severity && (
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                                item.severity === 'critical'
+                                  ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                  : item.severity === 'high'
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                  : 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300'
+                              }`}
+                            >
+                              {item.severity === 'critical' ? 'วิกฤติ' : item.severity === 'high' ? 'สูง' : 'ปานกลาง'}
+                            </span>
+                          )}
+                        </div>
+
                         <div className="font-bold text-stone-900 dark:text-stone-100 leading-snug">{item.title}</div>
-                        <div className="text-stone-500 dark:text-stone-400 text-[11px] leading-relaxed line-clamp-2">{item.recommendation}</div>
+                        <div className="text-stone-500 dark:text-stone-400 text-[11px] leading-relaxed line-clamp-2">
+                          {item.recommendation || item.correctiveAction}
+                        </div>
                       </td>
 
-                      <td className="py-3 px-3 font-semibold text-amber-800 dark:text-amber-300">
-                        {item.department}
+                      <td className="py-3 px-3 space-y-1">
+                        <div className="font-semibold text-amber-800 dark:text-amber-300">{item.department}</div>
+                        {item.responsiblePerson && (
+                          <div className="text-[10px] text-stone-500 dark:text-stone-400">
+                            {item.responsiblePerson}
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-3 px-3 space-y-1">
@@ -687,32 +939,46 @@ export default function AuditFollowUpView({
                         </div>
                         {item.regime === 'agency_defined' && (
                           <div className="mt-2 space-y-1.5">
-                            <input type="number" min="1" max="3650" value={item.deadlineDays ?? ''}
+                            <input
+                              type="number"
+                              min="1"
+                              max="3650"
+                              value={item.deadlineDays ?? ''}
                               onChange={(e) => handleUpdateDeadlineSetting(item.id, 'deadlineDays', e.target.value)}
                               aria-label="จำนวนวันติดตามที่หน่วยงานกำหนด"
-                              className="w-full text-[10px] p-1.5 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800" />
-                            <input type="text" value={item.deadlineBasis || ''}
+                              className="w-full text-[10px] p-1.5 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
+                            />
+                            <input
+                              type="text"
+                              value={item.deadlineBasis || ''}
                               onChange={(e) => handleUpdateDeadlineSetting(item.id, 'deadlineBasis', e.target.value)}
                               placeholder="ฐาน/เหตุผลที่กำหนดเวลา"
                               aria-label="ฐานหรือเหตุผลที่หน่วยงานกำหนดเวลา"
-                              className="w-full text-[10px] p-1.5 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800" />
+                              className="w-full text-[10px] p-1.5 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800"
+                            />
                           </div>
                         )}
                         <div className="font-mono font-bold text-stone-800 dark:text-stone-200">
-                          {item.deadlineDate}
+                          {item.deadlineDate || '-'}
                         </div>
                         <div className="text-[10px] text-stone-400">
-                          สั่งการ: {item.orderDate}
+                          สั่งการ: {item.orderDate || '-'}
                         </div>
                       </td>
 
-                      <td className="py-3 px-3 max-w-xs">
+                      <td className="py-3 px-3 max-w-xs space-y-1.5">
                         <textarea
                           rows={2}
                           value={item.progressNotes}
                           onChange={(e) => handleUpdateNotes(item.id, e.target.value)}
                           className="w-full text-[11px] p-1.5 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 text-stone-800 dark:text-stone-200 leading-relaxed print:border-none focus:ring-1 focus:ring-amber-500 outline-none"
                         />
+                        {item.evidenceDocs && (
+                          <div className="text-[10px] text-blue-700 dark:text-blue-300 flex items-center space-x-1 truncate">
+                            <FileText className="w-3 h-3 shrink-0" />
+                            <span className="truncate" title={item.evidenceDocs}>หลักฐาน: {item.evidenceDocs}</span>
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-3 px-3 space-y-1">
@@ -732,7 +998,7 @@ export default function AuditFollowUpView({
                           <option value="in_progress">อยู่ระหว่างดำเนินการ</option>
                           <option value="urgent">เร่งด่วน (≤ 15 วัน)</option>
                           <option value="overdue">เกินกำหนดเวลา</option>
-                          <option value="completed">เสร็จสิ้นสมบูรณ์</option>
+                          <option value="completed">เสร็จสิ้นสมบูรณ์ (ยุติข้อสังเกต)</option>
                         </select>
 
                         {/* Days countdown badge */}
@@ -750,6 +1016,14 @@ export default function AuditFollowUpView({
                       </td>
 
                       <td className="py-3 px-3 text-right print:hidden space-x-1">
+                        <button
+                          onClick={() => setSelectedFindingForDetail(item)}
+                          className="bg-stone-50 hover:bg-stone-100 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-300/80 dark:border-stone-700 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors shadow-2xs inline-flex items-center space-x-1"
+                          title="ดูรายละเอียดข้อค้นพบและประวัติการติดตามผล (Audit Trail)"
+                        >
+                          <Eye className="w-3 h-3 text-stone-500" />
+                          <span>รายละเอียด</span>
+                        </button>
                         <button
                           onClick={() => handleSelectForMemo(item)}
                           className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors shadow-2xs"
@@ -810,10 +1084,253 @@ export default function AuditFollowUpView({
         </div>
       )}
 
-      {/* Modal Add New Finding */}
+      {/* ==================================================== */}
+      {/* MODAL: DETAIL & AUDIT TRAIL HISTORY */}
+      {/* ==================================================== */}
+      {selectedFindingForDetail && (
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-stone-200 dark:border-stone-800 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b pb-4 border-stone-100 dark:border-stone-800">
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                      selectedFindingForDetail.source === 'oag'
+                        ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-900'
+                        : selectedFindingForDetail.source === 'inspector'
+                        ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-900'
+                        : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-900'
+                    }`}
+                  >
+                    {getSourceMeta(selectedFindingForDetail.source).label}
+                  </span>
+                  <span className="font-mono text-xs text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded font-bold">
+                    {selectedFindingForDetail.id}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      selectedFindingForDetail.status === 'completed'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                        : selectedFindingForDetail.status === 'overdue'
+                        ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                    }`}
+                  >
+                    {selectedFindingForDetail.status === 'completed'
+                      ? 'เสร็จสิ้นสมบูรณ์'
+                      : selectedFindingForDetail.status === 'overdue'
+                      ? 'เกินกำหนดเวลา'
+                      : selectedFindingForDetail.status === 'urgent'
+                      ? 'เร่งด่วน'
+                      : 'อยู่ระหว่างดำเนินการ'}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-stone-900 dark:text-stone-100 pt-1">
+                  {selectedFindingForDetail.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedFindingForDetail(null)}
+                className="text-stone-400 hover:text-stone-600 text-lg cursor-pointer p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Core Metadata */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 text-xs">
+              <div>
+                <span className="text-stone-400 block text-[10px]">หน่วยรับตรวจ:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200">{selectedFindingForDetail.department}</span>
+              </div>
+              <div>
+                <span className="text-stone-400 block text-[10px]">ผู้รับผิดชอบ:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200">{selectedFindingForDetail.responsiblePerson || '-'}</span>
+              </div>
+              <div>
+                <span className="text-stone-400 block text-[10px]">วันที่สั่งการ:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200">{selectedFindingForDetail.orderDate || '-'}</span>
+              </div>
+              <div>
+                <span className="text-stone-400 block text-[10px]">กรอบเวลา:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200">
+                  {selectedFindingForDetail.deadlineDays ? `${selectedFindingForDetail.deadlineDays} วัน` : '-'}
+                </span>
+              </div>
+              <div>
+                <span className="text-stone-400 block text-[10px]">วันครบกำหนด:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200">{selectedFindingForDetail.deadlineDate || '-'}</span>
+              </div>
+              <div>
+                <span className="text-stone-400 block text-[10px]">ฐานอ้างอิง:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200">{selectedFindingForDetail.deadlineBasis || 'ข้อกำหนดที่ใช้บังคับ'}</span>
+              </div>
+            </div>
+
+            {/* 5 Elements Findings */}
+            <div className="space-y-2.5 text-xs">
+              <div className="font-bold text-stone-800 dark:text-stone-200 flex items-center space-x-1.5">
+                <FileText className="w-4 h-4 text-amber-600" />
+                <span>สาระสำคัญของข้อตรวจพบและข้อเสนอแนะ:</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {selectedFindingForDetail.condition && (
+                  <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800">
+                    <span className="font-bold text-stone-700 dark:text-stone-300 block mb-1">สภาพที่ตรวจพบ (Condition):</span>
+                    <p className="text-stone-600 dark:text-stone-400 leading-relaxed">{selectedFindingForDetail.condition}</p>
+                  </div>
+                )}
+                {selectedFindingForDetail.criteria && (
+                  <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800">
+                    <span className="font-bold text-stone-700 dark:text-stone-300 block mb-1">เกณฑ์มาตรฐาน (Criteria):</span>
+                    <p className="text-stone-600 dark:text-stone-400 leading-relaxed">{selectedFindingForDetail.criteria}</p>
+                  </div>
+                )}
+                {selectedFindingForDetail.cause && (
+                  <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800">
+                    <span className="font-bold text-stone-700 dark:text-stone-300 block mb-1">สาเหตุ (Cause):</span>
+                    <p className="text-stone-600 dark:text-stone-400 leading-relaxed">{selectedFindingForDetail.cause}</p>
+                  </div>
+                )}
+                {selectedFindingForDetail.effect && (
+                  <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800">
+                    <span className="font-bold text-stone-700 dark:text-stone-300 block mb-1">ผลกระทบ (Effect):</span>
+                    <p className="text-stone-600 dark:text-stone-400 leading-relaxed">{selectedFindingForDetail.effect}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 space-y-1">
+                <span className="font-bold text-amber-900 dark:text-amber-200 block">ข้อเสนอแนะของผู้ตรวจสอบภายใน (Recommendation):</span>
+                <p className="text-stone-800 dark:text-stone-200 leading-relaxed">{selectedFindingForDetail.recommendation}</p>
+              </div>
+
+              {selectedFindingForDetail.correctiveAction && (
+                <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 space-y-1">
+                  <span className="font-bold text-blue-900 dark:text-blue-200 block">แผนปรับปรุงแก้ไขของหน่วยรับตรวจ (Corrective Action):</span>
+                  <p className="text-stone-800 dark:text-stone-200 leading-relaxed">{selectedFindingForDetail.correctiveAction}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Audit Trail & History Timeline */}
+            <div className="space-y-3 pt-3 border-t border-stone-100 dark:border-stone-800 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="font-bold text-stone-800 dark:text-stone-200 flex items-center space-x-1.5">
+                  <History className="w-4 h-4 text-blue-600" />
+                  <span>ประวัติการติดตามผลและบันทึกหลักฐาน (Audit Trail):</span>
+                </div>
+                <span className="text-[10px] text-stone-400">
+                  {(selectedFindingForDetail.history || []).length} บันทึก
+                </span>
+              </div>
+
+              {/* Add New Follow-up Log Form */}
+              <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-700 space-y-2">
+                <span className="font-bold text-stone-700 dark:text-stone-300 text-[11px] block">
+                  + เพิ่มบันทึกการติดตามผล / พยานหลักฐานที่ได้รับ:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="บันทึกความคืบหน้า เช่น ตรวจพบว่าได้นำส่งรายงานแล้ว..."
+                    value={newLogNote}
+                    onChange={(e) => setNewLogNote(e.target.value)}
+                    className="p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 text-xs outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="อ้างอิงเอกสารหลักฐาน เช่น ลว. 15 มี.ค. 69..."
+                    value={newLogEvidence}
+                    onChange={(e) => setNewLogEvidence(e.target.value)}
+                    className="p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 text-xs outline-none"
+                  />
+                </div>
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    disabled={!newLogNote.trim() && !newLogEvidence.trim()}
+                    onClick={() => handleAddFollowupLog(selectedFindingForDetail.id)}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold text-xs cursor-pointer shadow-xs"
+                  >
+                    บันทึกประวัติการติดตาม
+                  </button>
+                </div>
+              </div>
+
+              {/* History Timeline List */}
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {(selectedFindingForDetail.history || []).length === 0 ? (
+                  <div className="text-stone-400 text-center py-4">ยังไม่มีบันทึกประวัติเพิ่มเติม</div>
+                ) : (
+                  selectedFindingForDetail.history.map((h, i) => (
+                    <div
+                      key={h.id || i}
+                      className="p-2.5 rounded-xl border border-stone-200/80 dark:border-stone-800 bg-white dark:bg-stone-900 text-[11px] space-y-1"
+                    >
+                      <div className="flex items-center justify-between text-stone-400 text-[10px]">
+                        <span>วันที่: {h.date || h.timestamp?.slice(0, 10)}</span>
+                        <span>โดย: {h.changedBy || 'ผู้ตรวจสอบภายใน'}</span>
+                      </div>
+                      <div className="font-semibold text-stone-800 dark:text-stone-200">
+                        {h.note || (h.action === 'status_changed' ? `ปรับสถานะเป็น ${h.toStatus}` : 'บันทึกการติดตาม')}
+                      </div>
+                      {h.evidence && (
+                        <div className="text-blue-600 dark:text-blue-400 text-[10px] flex items-center space-x-1">
+                          <FileText className="w-3 h-3" />
+                          <span>หลักฐาน: {h.evidence}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                {selectedFindingForDetail.status !== 'completed' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus(selectedFindingForDetail.id, 'completed', 'ผู้ตรวจสอบภายในสอบทานหลักฐานและยุติข้อสังเกต')}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs cursor-pointer shadow-xs inline-flex items-center space-x-1.5"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>รับรองและยุติข้อสังเกต</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus(selectedFindingForDetail.id, 'in_progress', 'เปิดประเด็นติดตามผลต่อเนื่อง')}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs cursor-pointer shadow-xs"
+                  >
+                    เปิดการติดตามต่อ
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedFindingForDetail(null)}
+                className="px-4 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold cursor-pointer"
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* MODAL: ADD NEW FINDING */}
+      {/* ==================================================== */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-stone-200 dark:border-stone-800 shadow-xl space-y-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-stone-200 dark:border-stone-800 shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3 border-stone-100 dark:border-stone-800">
               <h3 className="font-bold text-base text-stone-900 dark:text-stone-100">
                 เพิ่มข้อตรวจพบเพื่อติดตามผล (New Follow-up Finding)
@@ -826,7 +1343,43 @@ export default function AuditFollowUpView({
               </button>
             </div>
 
-            <form onSubmit={handleAddNewItem} className="space-y-3.5 text-xs">
+            <form onSubmit={handleAddNewItem} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                    แหล่งที่มาของข้อค้นพบ:
+                  </label>
+                  <select
+                    value={newItem.source}
+                    onChange={(e) => setNewItem({ ...newItem, source: e.target.value })}
+                    className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none font-bold"
+                  >
+                    <option value="internal">การตรวจสอบภายใน (IA)</option>
+                    <option value="oag">สำนักงานการตรวจเงินแผ่นดิน (สตง.)</option>
+                    <option value="inspector">ผู้ตรวจราชการ</option>
+                    <option value="external">หน่วยงานภายนอกอื่นๆ</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                    หน่วยรับตรวจ:
+                  </label>
+                  <select
+                    value={newItem.department}
+                    onChange={(e) => setNewItem({ ...newItem, department: e.target.value })}
+                    className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none font-bold"
+                  >
+                    <option value="สำนักปลัด">สำนักปลัด</option>
+                    <option value="กองคลัง">กองคลัง</option>
+                    <option value="กองช่าง">กองช่าง</option>
+                    <option value="กองการศึกษา">กองการศึกษา</option>
+                    <option value="กองสาธารณสุขและสิ่งแวดล้อม">กองสาธารณสุขฯ</option>
+                    <option value="กองสวัสดิการสังคม">กองสวัสดิการสังคม</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
                 <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
                   หัวข้อข้อตรวจพบ / รายการบกพร่อง:
@@ -844,20 +1397,15 @@ export default function AuditFollowUpView({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
-                    หน่วยรับตรวจ:
+                    ผู้รับผิดชอบดำเนินการ:
                   </label>
-                  <select
-                    value={newItem.department}
-                    onChange={(e) => setNewItem({ ...newItem, department: e.target.value })}
+                  <input
+                    type="text"
+                    placeholder={`เช่น ผู้อำนวยการ${newItem.department}`}
+                    value={newItem.responsiblePerson}
+                    onChange={(e) => setNewItem({ ...newItem, responsiblePerson: e.target.value })}
                     className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none"
-                  >
-                    <option value="สำนักปลัด">สำนักปลัด</option>
-                    <option value="กองคลัง">กองคลัง</option>
-                    <option value="กองช่าง">กองช่าง</option>
-                    <option value="กองการศึกษา">กองการศึกษา</option>
-                    <option value="กองสาธารณสุขและสิ่งแวดล้อม">กองสาธารณสุขฯ</option>
-                    <option value="กองสวัสดิการสังคม">กองสวัสดิการสังคม</option>
-                  </select>
+                  />
                 </div>
 
                 <div>
@@ -875,20 +1423,31 @@ export default function AuditFollowUpView({
                   </select>
                 </div>
               </div>
+
               {newItem.regime === 'agency_defined' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">กำหนดเวลา (วัน):</label>
-                    <input type="number" min="1" max="3650" required value={newItem.deadlineDays}
+                    <input
+                      type="number"
+                      min="1"
+                      max="3650"
+                      required
+                      value={newItem.deadlineDays}
                       onChange={(e) => setNewItem({ ...newItem, deadlineDays: e.target.value })}
-                      className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800" />
+                      className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
+                    />
                   </div>
                   <div>
                     <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">ฐาน/เหตุผล:</label>
-                    <input type="text" required value={newItem.deadlineBasis}
+                    <input
+                      type="text"
+                      required
+                      value={newItem.deadlineBasis}
                       onChange={(e) => setNewItem({ ...newItem, deadlineBasis: e.target.value })}
                       placeholder="เช่น มติ/คำสั่ง/แนวทางหน่วยงาน"
-                      className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800" />
+                      className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800"
+                    />
                   </div>
                 </div>
               )}
@@ -917,6 +1476,19 @@ export default function AuditFollowUpView({
                   value={newItem.recommendation}
                   onChange={(e) => setNewItem({ ...newItem, recommendation: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                  พยานหลักฐานที่ต้องจัดส่ง / ตรวจสอบ:
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น สำเนางบกระทบยอด, คำสั่งแต่งตั้ง, ภาพถ่าย..."
+                  value={newItem.evidenceDocs}
+                  onChange={(e) => setNewItem({ ...newItem, evidenceDocs: e.target.value })}
+                  className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none"
                 />
               </div>
 
