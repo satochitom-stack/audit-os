@@ -103,7 +103,7 @@ export default function SystemUpdateNotification() {
   // When dismissed by user, show discreet floating badge at bottom-right in Audit-OS theme
   if (isDismissed) {
     return (
-      <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-3 duration-300">
+      <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-3 duration-300 no-print print:hidden">
         <button
           onClick={() => setIsDismissed(false)}
           className="bg-stone-900/95 hover:bg-stone-900 text-amber-300 border border-amber-500/40 rounded-full px-3.5 py-2 text-xs font-bold shadow-xl shadow-amber-950/30 backdrop-blur-md flex items-center space-x-2 transition-all cursor-pointer group hover:border-amber-400"
@@ -121,7 +121,7 @@ export default function SystemUpdateNotification() {
   }
 
   return (
-    <div className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 w-[95vw] max-w-xl md:max-w-2xl animate-in fade-in slide-in-from-top-3 duration-300">
+    <div className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 w-[95vw] max-w-xl md:max-w-2xl animate-in fade-in slide-in-from-top-3 duration-300 no-print print:hidden">
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-stone-900 via-stone-900 to-amber-950 text-white p-4 sm:px-5 sm:py-4 border border-amber-500/40 shadow-2xl shadow-amber-950/50 backdrop-blur-md ring-1 ring-amber-400/20">
         {/* Subtle decorative glow */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />

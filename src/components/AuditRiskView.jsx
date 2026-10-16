@@ -43,7 +43,8 @@ import {
   exportThaiMemoToWord,
   exportDocumentToWord,
   exportRiskMatrixToExcel,
-  applySmartPrintOrientation
+  applySmartPrintOrientation,
+  exportElementToPdf
 } from '../utils/documentExportUtils';
 import { toThaiDigits } from '../utils/sarabanUtils';
 import { getDepartments } from '../utils/auth';
@@ -1363,28 +1364,35 @@ export default function AuditRiskView({
     }, 150);
   };
 
-  // 4. บันทึกเป็น PDF พร้อมจัดหน้ากระดาษและตั้งชื่อไฟล์อัตโนมัติ
-  const handleSavePdf = () => {
-    const preferred = reportFormat === 'memo' ? 'portrait' : 'landscape';
-    applySmartPrintOrientation(preferred, 'audit-risk-report-container');
+  // 4. บันทึกและดาวน์โหลดเป็นไฟล์ PDF คุณภาพสูงโดยตรง (Direct Download)
+  const handleSavePdf = async () => {
+    const isMemo = reportFormat === 'memo';
+    const preferred = isMemo ? 'portrait' : 'landscape';
     const orgName = orgProfile?.name || 'อปท';
-    const docName = reportFormat === 'memo' ? 'บันทึกข้อความขออนุมัติผลประเมินความเสี่ยง' : 'ตารางประเมินความเสี่ยง_SOFCK';
-    const origTitle = document.title;
-    document.title = `${docName}_ปี_${selectedYear}_${orgName}`;
-    showToast(`ระบบจัดหน้ากระดาษเป็น "${preferred === 'landscape' ? 'แนวนอน' : 'แนวตั้ง'}" และตั้งชื่อไฟล์อัตโนมัติ กรุณาเลือก "Save as PDF"`);
-    setTimeout(() => {
-      window.print();
-      setTimeout(() => {
-        document.title = origTitle;
-      }, 1000);
-    }, 200);
+    const docName = isMemo
+      ? `บันทึกข้อความขออนุมัติผลประเมินความเสี่ยง_ปี_${selectedYear}_${orgName}`
+      : `ตารางประเมินความเสี่ยง_SOFCK_ปี_${selectedYear}_${orgName}`;
+
+    showToast('กำลังประมวลผลและดาวน์โหลดไฟล์ PDF...');
+
+    try {
+      await exportElementToPdf('audit-risk-report-container', {
+        fileName: `${docName}.pdf`,
+        orientation: preferred,
+        margin: isMemo ? [20, 15, 20, 20] : [10, 10, 10, 10]
+      });
+      showToast('ดาวน์โหลดไฟล์ PDF เรียบร้อยแล้ว');
+    } catch (err) {
+      console.error('Save PDF error:', err);
+      showToast('⚠️ เกิดข้อผิดพลาดในการสร้างไฟล์ PDF กรุณาลองใหม่อีกครั้ง');
+    }
   };
 
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-stone-900/95 dark:bg-stone-950/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 border border-stone-700/60 text-xs font-bold animate-slide-up ring-1 ring-white/10">
+        <div className="fixed bottom-6 right-6 z-50 bg-stone-900/95 dark:bg-stone-950/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 border border-stone-700/60 text-xs font-bold animate-slide-up ring-1 ring-white/10 no-print print:hidden">
           {toastMessage.startsWith('⚠️') ? (
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
           ) : (

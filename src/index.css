@@ -57,10 +57,9 @@ html.dark body {
   background: rgba(100, 116, 139, 0.7);
 }
 
-/* Print Styles for Official Government Reports (A4 Landscape) */
+/* Print Styles for Official Government Reports (Clean Print - No Browser Header/Footer) */
 @page {
-  size: A4 landscape;
-  margin: 8mm 10mm;
+  margin: 0;
 }
 
 @media print {
@@ -95,9 +94,24 @@ html.dark body {
     margin: 0 !important;
   }
 
-  /* Hide app navigation, headers, sidebars, modals, floating action bars */
-  header, aside, nav, footer, .no-print, [role="navigation"], .no-print * {
+  /* Hide app navigation, headers, sidebars, modals, floating action bars, banners, toasts, and buttons */
+  header, aside, nav, footer, button, .no-print, [role="navigation"], [role="alert"], [role="status"], .print\:hidden, .toast, .no-print *, .fixed.bottom-5, .fixed.bottom-6, .fixed.top-3, .fixed.top-4, .animate-slide-up, [data-no-print="true"] {
     display: none !important;
+  }
+
+  /* Official Thai Saraban Margins (ระเบียบสำนักนายกรัฐมนตรี: กั้นหน้า ๓ ซม. กั้นหลัง ๒ ซม. กั้นบน ๒.๕ ซม. กั้นล่าง ๒ ซม.) */
+  .official-saraban-memo,
+  .official-saraban-external-letter,
+  .official-saraban-order {
+    padding: 2.5cm 2.0cm 2.0cm 3.0cm !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-sizing: border-box !important;
   }
 
   /* Ensure white text remains white on dark/colored badges and headers */

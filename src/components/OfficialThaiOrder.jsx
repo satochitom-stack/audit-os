@@ -52,15 +52,14 @@ export default function OfficialThaiOrder({
           ครุฑกึ่งกลางหน้ากระดาษ (ขนาด ๓ ซม. ตามแบบที่ ๑๔)
       ========================================================================= */}
       <div className="flex flex-col items-center justify-center pb-3 text-center">
-        <svg
-          viewBox="0 0 100 100"
+        <img
+          src="/garuda.png"
+          alt="ตราครุฑราชการ ๓ เซนติเมตร"
           width="113"
           height="113"
-          className="fill-current text-black mb-3 shrink-0"
-          aria-label="ตราครุฑราชการ ๓ เซนติเมตร"
-        >
-          <path d={GARUDA_SVG_PATH} />
-        </svg>
+          className="object-contain mb-3 shrink-0"
+          style={{ width: '3.0cm', height: '3.0cm', maxHeight: '3.0cm' }}
+        />
 
         <h1
           className="font-bold text-black"

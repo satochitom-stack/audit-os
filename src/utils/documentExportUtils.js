@@ -5,6 +5,9 @@
  */
 
 import * as XLSX from 'xlsx';
+import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas-pro';
+import { jsPDF } from 'jspdf';
 import {
   toThaiDigits,
   formatSarabanDate,
@@ -646,14 +649,154 @@ export function applySmartPrintOrientation(preferred = 'auto', elementId = null)
       styleEl.id = 'smart-print-orientation-style';
       document.head.appendChild(styleEl);
     }
-    styleEl.innerHTML = `@media print { @page { size: ${orientation}; margin: ${orientation === 'landscape' ? '15mm 15mm 15mm 15mm' : '25mm 20mm 20mm 30mm'}; } }`;
+    // Set @page directly at top level (not wrapped in @media print)
+    // margin: 0 removes browser header (title/date) and footer (URL/page numbers) in Chrome & Edge
+    styleEl.innerHTML = `@page { size: ${orientation}; margin: 0; }`;
   }
 
   return orientation;
 }
 
 /**
- * 7. Helper สำหรับการพิมพ์เอกสาร (Direct Clean Print)
+ * 7. ส่งออก Element ทางหน้าจอเป็นไฟล์ PDF (.pdf) คุณภาพสูงโดยตรง (Direct Download)
+ * ไม่เปิดหน้าต่างพิมพ์ (window.print) และดาวน์โหลดลงเครื่องทันที
+ * รองรับ Dual-Engine: Engine 1 (html2pdf.js) + Engine 2 (html2canvas-pro + jsPDF pagination fallback)
+ */
+export async function exportElementToPdf(elementOrId, options = {}) {
+  if (typeof document === 'undefined') return false;
+
+  let element = null;
+  if (typeof elementOrId === 'string') {
+    element = document.getElementById(elementOrId);
+  } else if (elementOrId instanceof HTMLElement) {
+    element = elementOrId;
+  }
+
+  if (!element) {
+    console.error('exportElementToPdf: Element not found', elementOrId);
+    throw new Error('ไม่พบข้อมูลเอกสารสำหรับการสร้างไฟล์ PDF');
+  }
+
+  const {
+    fileName = 'เอกสารราชการ.pdf',
+    orientation = 'portrait', // 'portrait' | 'landscape'
+    margin = orientation === 'landscape' ? [10, 10, 10, 10] : [20, 15, 20, 20]
+  } = options;
+
+  const cleanFileName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+
+  // Engine 1: Try html2pdf.js with safe function detection
+  const getHtml2PdfFn = () => {
+    if (typeof html2pdf === 'function') return html2pdf;
+    if (html2pdf && typeof html2pdf.default === 'function') return html2pdf.default;
+    if (typeof window !== 'undefined' && typeof window.html2pdf === 'function') return window.html2pdf;
+    return null;
+  };
+
+  const html2pdfFn = getHtml2PdfFn();
+  if (html2pdfFn) {
+    try {
+      const opt = {
+        margin: margin,
+        filename: cleanFileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: orientation
+        }
+      };
+      await html2pdfFn().from(element).set(opt).save();
+      return true;
+    } catch (h2pErr) {
+      console.warn('html2pdf.js failed, falling back to direct html2canvas + jsPDF engine:', h2pErr);
+    }
+  }
+
+  // Engine 2 (Rock-solid Fallback): Direct html2canvas-pro + jsPDF multi-page pagination
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+
+    const isLandscape = orientation === 'landscape';
+    const pageWidthMm = isLandscape ? 297 : 210;
+    const pageHeightMm = isLandscape ? 210 : 297;
+
+    const [marginTop, marginRight, marginBottom, marginLeft] = Array.isArray(margin)
+      ? [margin[0] ?? 10, margin[1] ?? 10, margin[2] ?? 10, margin[3] ?? 10]
+      : [10, 10, 10, 10];
+
+    const printAreaWidthMm = pageWidthMm - marginLeft - marginRight;
+    const printAreaHeightMm = pageHeightMm - marginTop - marginBottom;
+
+    const pxPerMm = canvas.width / printAreaWidthMm;
+    const pxPageHeight = Math.floor(printAreaHeightMm * pxPerMm);
+
+    const pdf = new jsPDF({
+      orientation: orientation,
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    let renderedPx = 0;
+    let pageIndex = 0;
+
+    while (renderedPx < canvas.height) {
+      const chunkPxHeight = Math.min(pxPageHeight, canvas.height - renderedPx);
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = chunkPxHeight;
+      const ctx = pageCanvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(
+          canvas,
+          0, renderedPx, canvas.width, chunkPxHeight,
+          0, 0, canvas.width, chunkPxHeight
+        );
+      }
+
+      const chunkMmHeight = chunkPxHeight / pxPerMm;
+      const imgData = pageCanvas.toDataURL('image/jpeg', 0.98);
+
+      if (pageIndex > 0) {
+        pdf.addPage('a4', orientation);
+      }
+
+      pdf.addImage(
+        imgData,
+        'JPEG',
+        marginLeft,
+        marginTop,
+        printAreaWidthMm,
+        chunkMmHeight
+      );
+
+      renderedPx += chunkPxHeight;
+      pageIndex++;
+    }
+
+    pdf.save(cleanFileName);
+    return true;
+  } catch (directErr) {
+    console.error('Direct html2canvas + jsPDF export error:', directErr);
+    throw directErr;
+  }
+}
+
+/**
+ * 8. Helper สำหรับการพิมพ์เอกสาร (Direct Clean Print)
  */
 export function triggerDirectPrint(elementId) {
   if (elementId) {

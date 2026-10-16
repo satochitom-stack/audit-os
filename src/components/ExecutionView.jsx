@@ -603,13 +603,13 @@ export default function ExecutionView({
           <OfficialDocActionToolbar
             onWord={handleDownloadWord}
             onExcel={() => exportWorkingPaperToExcel(currentWp, orgProfile)}
-            onPdf={() => window.print()}
+            onPrint={() => window.print()}
             wordTitle="ส่งออกกระดาษทำการ (Word .doc)"
             wordSubtitle={`${currentWp.id}: ${currentWp.topic || 'กระดาษทำการ'} พร้อมบันทึกข้อตรวจพบและช่องลงนาม`}
             excelTitle="ส่งออกกระดาษทำการ (Excel .xls)"
             excelSubtitle="ตารางแนวทางการตรวจสอบ Checklist และประเด็นข้อตรวจพบ"
-            pdfTitle="พิมพ์กระดาษทำการ (PDF/Print)"
-            pdfSubtitle="จัดพิมพ์แบบกระดาษทำการตรวจสอบภายในมาตรฐาน"
+            printTitle="พิมพ์กระดาษทำการ"
+            printSubtitle="จัดพิมพ์แบบกระดาษทำการตรวจสอบภายในมาตรฐาน"
           />
         </div>
       </div>

@@ -34,7 +34,7 @@ import AnnualAuditReportView from './AnnualAuditReportView';
 import ReportExportHubModal from './ReportExportHubModal';
 import OfficialThaiMemo from './OfficialThaiMemo';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
-import { exportThaiMemoToWord, exportDocumentToWord } from '../utils/documentExportUtils';
+import { exportThaiMemoToWord, exportDocumentToWord, applySmartPrintOrientation, exportElementToPdf } from '../utils/documentExportUtils';
 import { GARUDA_SVG_3CM_HTML, toThaiDigits } from '../utils/sarabanUtils';
 import { initialCapaFindings } from '../data/initialData';
 import { DLA_CORE_WORKFLOWS_6 } from '../data/dlaStandardTemplates';
@@ -406,11 +406,40 @@ export default function ReportingView({
     exportThaiMemoToWord(memoData, `บันทึกข้อความรายงานผลการติดตามข้อทักท้วง_${selectedYear}.doc`);
   };
 
+  const handlePrintDocument = () => {
+    applySmartPrintOrientation('portrait', 'audit-reporting-container');
+    showToast('กำลังเปิดหน้าต่างพิมพ์ (แนวตั้ง A4)...');
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  const handleSavePdf = async () => {
+    showToast('กำลังประมวลผลและดาวน์โหลดไฟล์ PDF...');
+    const title = activeTab === 'capa'
+      ? `บันทึกข้อความสรุปการติดตามข้อทักท้วง_ปี_${selectedYear}`
+      : activeTab === 'exit'
+      ? `สรุปการปิดตรวจ_Exit_Conference_${reportDept}_ปี_${selectedYear}`
+      : `รายงานผลการตรวจสอบ_${reportTitle}_ปี_${selectedYear}`;
+
+    try {
+      await exportElementToPdf('audit-reporting-container', {
+        fileName: `${title}.pdf`,
+        orientation: 'portrait',
+        margin: [20, 15, 20, 20]
+      });
+      showToast('ดาวน์โหลดไฟล์ PDF เรียบร้อยแล้ว');
+    } catch (err) {
+      console.error('Save PDF error:', err);
+      showToast('⚠️ เกิดข้อผิดพลาดในการสร้างไฟล์ PDF กรุณาลองใหม่อีกครั้ง');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 dark:bg-slate-950 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 border border-slate-700 text-xs font-bold animate-slide-up">
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 dark:bg-slate-950 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 border border-slate-700 text-xs font-bold animate-slide-up no-print print:hidden">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -547,7 +576,24 @@ export default function ReportingView({
             <OfficialDocActionToolbar
               onWord={activeTab === 'capa' ? handleDownloadCapaMemoWord : handleDownloadCurrentReportWord}
               onExcel={() => setShowExportHubModal(true)}
-              onPdf={() => window.print()}
+              onPrint={handlePrintDocument}
+              printTitle={
+                activeTab === 'capa'
+                  ? 'พิมพ์บันทึกติดตามข้อทักท้วง (แนวตั้ง A4)'
+                  : activeTab === 'exit'
+                  ? 'พิมพ์สรุปการปิดตรวจ (แนวตั้ง A4)'
+                  : 'พิมพ์รายงานผลการตรวจสอบ (แนวตั้ง A4)'
+              }
+              printSubtitle="พิมพ์เอกสารราชการผ่านเครื่องพิมพ์ (ปรับแนวหน้ากระดาษอัตโนมัติ)"
+              onSavePdf={handleSavePdf}
+              pdfTitle={
+                activeTab === 'capa'
+                  ? 'บันทึกสรุปข้อทักท้วงเป็น PDF (.pdf)'
+                  : activeTab === 'exit'
+                  ? 'บันทึกสรุปการปิดตรวจเป็น PDF (.pdf)'
+                  : 'บันทึกรายงานผลการตรวจสอบเป็น PDF (.pdf)'
+              }
+              pdfSubtitle="ดาวน์โหลดเป็นไฟล์ PDF คุณภาพสูงลงเครื่องทันที"
               wordTitle={
                 activeTab === 'capa'
                   ? 'ส่งออกบันทึกสรุปเสนอผู้บริหาร (Word .doc)'
@@ -564,13 +610,13 @@ export default function ReportingView({
               }
               excelTitle="ศูนย์ส่งออกรายงาน (Excel .xlsx)"
               excelSubtitle="ส่งออกข้อมูลข้อตรวจพบและทะเบียนคุมเป็นไฟล์ Excel ครบชุด"
-              pdfTitle="พิมพ์รายงาน / PDF"
-              pdfSubtitle="จัดพิมพ์เอกสารรายงานตามระเบียบงานสารบรรณ"
             />
           )}
         </div>
       </div>
 
+      {/* Printable Report Container */}
+      <div id="audit-reporting-container">
       {/* =========================================================================
           TAB 0: ANNUAL AUDIT REPORT (รายงานผลการตรวจสอบภายในประจำปีงบประมาณ)
       ========================================================================= */}
@@ -1475,6 +1521,7 @@ export default function ReportingView({
           </div>
         </div>
       )}
+      </div>
 
       {/* =========================================================================
           MODAL: OFFICIAL CAPA SUMMARY MEMO FOR EXECUTIVE & DISTRICT CHIEF

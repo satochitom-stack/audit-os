@@ -1538,7 +1538,7 @@ export default function App() {
 
       {/* Real-time Broadcast Announcement Banner จาก Super Admin */}
       {systemSettings?.broadcastActive && systemSettings?.announcement && !dismissedAnnouncement && (
-        <div className="bg-gradient-to-r from-stone-900 via-amber-950/90 to-stone-900 text-amber-100 px-4 py-2.5 text-xs border-b border-amber-500/40 flex items-center justify-between shadow-md z-30 shrink-0 backdrop-blur-xs animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="bg-gradient-to-r from-stone-900 via-amber-950/90 to-stone-900 text-amber-100 px-4 py-2.5 text-xs border-b border-amber-500/40 flex items-center justify-between shadow-md z-30 shrink-0 backdrop-blur-xs animate-in fade-in slide-in-from-top-2 duration-300 no-print print:hidden">
           <div className="flex items-center space-x-2.5 overflow-hidden">
             <span className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide shrink-0 shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-950 animate-ping inline-block" />
@@ -1560,7 +1560,7 @@ export default function App() {
 
       {/* Impersonate / Department Preview Banner (แสดงเฉพาะเมื่อ ADMIN กำลังกดทดสอบมุมมองเท่านั้น) */}
       {session?.isImpersonating && (
-        <div className="bg-gradient-to-r from-amber-400 via-amber-500 to-orange-400 text-slate-950 px-4 py-2 text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm z-20 shrink-0">
+        <div className="bg-gradient-to-r from-amber-400 via-amber-500 to-orange-400 text-slate-950 px-4 py-2 text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm z-20 shrink-0 no-print print:hidden">
           <div className="flex items-center space-x-2">
             <span>👁️ <strong>โหมดทดสอบมุมมอง (Admin Preview):</strong> คุณกำลังดูหน้าจอในฐานะ {session.displayName || session.username} ({session.department})</span>
             <span className="text-[10px] bg-slate-950/20 px-2 py-0.5 rounded-full font-mono">
@@ -1658,7 +1658,7 @@ export default function App() {
               setCloudToast(null);
             }
           }}
-          className={`fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-slate-700 flex items-start space-x-3 max-w-sm animate-in fade-in slide-in-from-bottom-5 duration-300 backdrop-blur-xs ${
+          className={`fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-slate-700 flex items-start space-x-3 max-w-sm animate-in fade-in slide-in-from-bottom-5 duration-300 backdrop-blur-xs no-print print:hidden ${
             cloudToast.actionTab ? 'cursor-pointer hover:border-amber-500/80 transition-all' : ''
           }`}
         >

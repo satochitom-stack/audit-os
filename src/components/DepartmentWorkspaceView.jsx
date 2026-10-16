@@ -601,11 +601,11 @@ export default function DepartmentWorkspaceView({
               });
               showToast(`📗 ส่งออกข้อมูล Excel ของ ${activeDept} เรียบร้อยแล้ว`);
             }}
-            onPdf={() => window.print()}
+            onPrint={() => window.print()}
             excelTitle={`ส่งออกข้อมูล ${activeDept} (Excel .xlsx)`}
             excelSubtitle={`ตารางข้อมูลทะเบียนคุมและสถิติการปฏิบัติงานของ ${activeDept}`}
-            pdfTitle={`พิมพ์สรุปพื้นที่ทำงาน ${activeDept} (PDF/Print)`}
-            pdfSubtitle={`จัดพิมพ์ภาพรวมและสถิติข้อมูลของ ${activeDept}`}
+            printTitle={`พิมพ์สรุปพื้นที่ทำงาน ${activeDept}`}
+            printSubtitle={`จัดพิมพ์ภาพรวมและสถิติข้อมูลของ ${activeDept}`}
           />
         </div>
       </div>

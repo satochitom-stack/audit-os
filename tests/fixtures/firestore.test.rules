@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // HELPER FUNCTIONS (การตรวจสอบสิทธิ์และความปลอดภัยระดับระบบ)
+    // =========================================================================
+
+    // ตรวจสอบว่าผู้ใช้ผ่านการตรวจสอบสิทธิ์ (Authenticated)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // ตรวจสอบสิทธิ์ System Admin อย่างปลอดภัย
+    // **ข้อบังคับความปลอดภัย:** ต้องตรวจสอบจาก Custom Claims ใน Token เท่านั้น (admin == true หรือ role == 'system_admin')
+    // ห้ามอ่านจากเอกสารโปรไฟล์ใน Firestore เพราะผู้ใช้อาจแทรกแซงหรือปลอมแปลงได้
+    function isSystemAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true || 
+        request.auth.token.role == 'system_admin'
+      );
+    }
+
+    // ดึงข้อมูลโปรไฟล์ผู้ใช้จาก /users/{uid} สำหรับผู้ใช้ทั่วไป
+    function getUserProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // ตรวจสอบหน่วยงาน (orgId) จาก Token Claims เป็นลำดับแรก หากไม่มีจึงอ่านจาก Profile
+    function getOrgId() {
+      return request.auth.token.orgId != null 
+        ? request.auth.token.orgId 
+        : (exists(/databases/$(database)/documents/users/$(request.auth.uid)) ? getUserProfile().orgId : null);
+    }
+
+    // ตรวจสอบบทบาท (role) ภายในองค์กร
+    function getRole() {
+      return request.auth.token.role != null 
+        ? request.auth.token.role 
+        : (exists(/databases/$(database)/documents/users/$(request.auth.uid)) ? getUserProfile().role : null);
+    }
+
+    // ตรวจสอบว่าผู้ใช้สังกัดหน่วยงานเป้าหมาย
+    function belongsToOrg(orgId) {
+      return isAuthenticated() && getOrgId() == orgId;
+    }
+
+    // ตรวจสอบว่าเป็นผู้ดูแลระบบประจำหน่วยงาน (Org Admin) หรือ System Admin
+    function isOrgAdmin(orgId) {
+      return (belongsToOrg(orgId) && getRole() == 'admin') || isSystemAdmin();
+    }
+
+    // =========================================================================
+    // USER PROFILES (/users/{userId})
+    // =========================================================================
+    match /users/{userId} {
+      // ผู้ใช้อ่านข้อมูลโปรไฟล์ของตนเองได้เท่านั้น หรือ System Admin อ่านได้ (ห้ามอ่านข้ามคน/ข้ามองค์กร)
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isSystemAdmin());
+
+      // การสร้างโปรไฟล์: ผู้ใช้สร้างโปรไฟล์ของตนเองได้เท่านั้น (request.auth.uid == userId)
+      // ข้อกำหนดความปลอดภัย:
+      // 1. ห้ามกำหนด role เป็น admin หรือ system_admin โดยเด็ดขาด (อนุญาตเฉพาะ viewer, auditor, user)
+      // 2. ป้องกันการเลือก orgId เอง: ต้องมี orgId ใน Auth Token ที่เชื่อถือได้ และค่า orgId ในเอกสารต้องตรงกับใน Token เท่านั้น
+      allow create: if isSystemAdmin() || (
+        isAuthenticated()
+        && request.auth.uid == userId
+        && (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role in ['viewer', 'auditor', 'user'])
+        && request.auth.token.orgId != null
+        && request.resource.data.orgId == request.auth.token.orgId
+      );
+
+      // การแก้ไขโปรไฟล์: ผู้ใช้ทั่วไปแก้ไขโปรไฟล์ตนเองได้ แต่ห้ามแก้ไขฟิลด์ role และ orgId โดยเด็ดขาด
+      allow update: if isSystemAdmin() || (
+        isAuthenticated() 
+        && request.auth.uid == userId 
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'orgId'])
+      );
+
+      // ไม่อนุญาตให้ลบโปรไฟล์ ยกเว้น System Admin
+      allow delete: if isSystemAdmin();
+    }
+
+    // =========================================================================
+    // MULTI-TENANT ISOLATION (/organizations/{orgId})
+    // =========================================================================
+    match /organizations/{orgId} {
+      // สมาชิกในหน่วยงานอ่านข้อมูลหน่วยงานตนเองได้
+      allow read: if belongsToOrg(orgId) || isSystemAdmin();
+
+      // การปรับปรุงข้อมูลองค์กรระดับบนสุด
+      allow write: if isOrgAdmin(orgId);
+
+      // ข้อมูลโมดูลและ Subcollections ภายใต้หน่วยงาน
+      match /{allSubcollections=**} {
+        allow read: if belongsToOrg(orgId) || isSystemAdmin();
+        allow write: if belongsToOrg(orgId) || isSystemAdmin();
+      }
+    }
+
+    // =========================================================================
+    // LEGACY USER STORE (/platform_users/{username}) - ปิดการเข้าถึงจาก Client ถาวร
+    // =========================================================================
+    match /platform_users/{username} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // SYSTEM SETTINGS & BROADCASTS (/system_settings/{docId})
+    // อ้างอิงตามโครงสร้างเอกสารจริงใน src/utils/versionCheck.js,
+    // src/components/CentralKnowledgeHubView.jsx และ src/utils/feedbackUtils.js
+    // =========================================================================
+    
+    // 1. การแจ้งเตือนอัปเดตเวอร์ชัน (version_update และ active_version เพื่อความเข้ากันได้)
+    match /system_settings/version_update {
+      allow read: if true; // Public read ให้ทุกอุปกรณ์ตรวจสอบสถานะอัปเดตได้
+      allow write: if isSystemAdmin();
+    }
+    match /system_settings/active_version {
+      allow read: if true;
+      allow write: if isSystemAdmin();
+    }
+
+    // 2. เอกสารส่วนกลาง / คู่มือมาตรฐานการตรวจ (central_documents)
+    match /system_settings/central_documents {
+      allow read: if isAuthenticated(); // สมาชิกที่ล็อกอินแล้วเข้าถึงคู่มือกลางได้
+      allow write: if isSystemAdmin(); // เฉพาะผู้ดูแลระบบกลางแก้ไขคู่มือ
+    }
+
+    // 3. กระดานรับข้อเสนอแนะระบบ (user_feedbacks)
+    match /system_settings/user_feedbacks {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isSystemAdmin();
+    }
+
+    // =========================================================================
+    // DEFAULT DENY: ปฏิเสธทุกเส้นทางที่ไม่ได้ระบุไว้ข้างต้นโดยเด็ดขาด
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

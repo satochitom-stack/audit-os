@@ -5,18 +5,23 @@ import { toThaiDigits, formatSarabanDate, GARUDA_SVG_PATH, SARABAN_CONFIG } from
  * ตราครุฑราชการ (Garuda Emblem) ขนาดมาตรฐาน ๑.๕ เซนติเมตร
  * ตามระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖ ภาคผนวก ๒ แบบที่ ๒ (บันทึกข้อความ)
  */
-export function GarudaEmblem({ className = 'w-14 h-14', size = 57 }) {
+export function GarudaEmblem({ className = '', size = 57, style = {} }) {
   return (
-    <svg
-      viewBox="0 0 100 100"
+    <img
+      src="/garuda.png"
+      alt="ตราครุฑราชการ ๑.๕ เซนติเมตร"
       width={size}
       height={size}
-      className={`${className} fill-current text-slate-900 dark:text-slate-100 shrink-0`}
-      aria-label="ตราครุฑราชการ ๑.๕ เซนติเมตร"
-      style={{ display: 'inline-block' }}
-    >
-      <path d={GARUDA_SVG_PATH} />
-    </svg>
+      className={`shrink-0 object-contain inline-block ${className}`}
+      style={{
+        width: '1.5cm',
+        height: '1.5cm',
+        maxHeight: '1.5cm',
+        display: 'inline-block',
+        verticalAlign: 'top',
+        ...style
+      }}
+    />
   );
 }
 

@@ -755,9 +755,14 @@ export default function FormsView({
                     }}
                   >
                     <div className="flex flex-col items-center justify-center pb-3 text-center">
-                      <svg viewBox="0 0 100 100" width="113" height="113" className="fill-current text-black mb-3 shrink-0" aria-label="ตราครุฑ ๓ เซนติเมตร">
-                        <path d={GARUDA_SVG_PATH} />
-                      </svg>
+                      <img
+                        src="/garuda.png"
+                        alt="ตราครุฑ ๓ เซนติเมตร"
+                        width="113"
+                        height="113"
+                        className="object-contain mb-3 shrink-0"
+                        style={{ width: '3.0cm', height: '3.0cm', maxHeight: '3.0cm' }}
+                      />
                       <h1 className="font-bold text-xl text-black">
                         {toThaiDigits(previewDoc.title.replace(/\[ชื่อองค์กรปกครองส่วนท้องถิ่น\]/g, orgName))}
                       </h1>

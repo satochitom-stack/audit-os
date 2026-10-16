@@ -19,7 +19,7 @@ export default function PageHeaderBanner({
 }) {
   return (
     <div
-      className={`bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs no-print ${className}`}
+      className={`bg-gradient-to-r from-amber-500/10 via-stone-100/70 to-amber-500/5 dark:from-stone-900/60 dark:via-stone-900/40 dark:to-stone-900/60 rounded-3xl p-6 sm:p-7 border border-amber-500/20 dark:border-stone-800 shadow-xs relative overflow-hidden backdrop-blur-xs no-print print:hidden ${className}`}
     >
       <div className="space-y-2.5">
         <div className="flex flex-wrap items-center gap-2">
