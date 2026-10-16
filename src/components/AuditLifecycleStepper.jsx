@@ -52,7 +52,7 @@ export const AUDIT_LIFECYCLE_PHASES = [
         title: 'แผนการตรวจสอบประจำปี & กฎบัตร',
         subtitle: 'จัดทำแผนประจำปี บันทึกเสนอนายก และกฎบัตรตรวจสอบ',
         icon: FileText,
-        deliverables: ['กฎบัตรการตรวจสอบภายใน (Audit Charter)', 'ร่างแผนการตรวจสอบประจำปี (Annual Audit Plan)', 'บันทึกข้อความขออนุมัติแผนเสนอนายก อปท. (ภายใน ก.ย.)'],
+        deliverables: ['กฎบัตรการตรวจสอบภายใน (Audit Charter)', 'ร่างแผนการตรวจสอบประจำปี (Annual Audit Plan)', 'บันทึกข้อความขออนุมัติแผนเสนอนายก อปท. (กำหนดเวลาตามข้อกำหนดที่ใช้บังคับ)'],
         regulations: 'ระเบียบ มท. 2545 ข้อ 15 / หลักเกณฑ์ กค. ข้อ 18 (ต้องอนุมัติก่อนเริ่มปีงบประมาณ)'
       },
       {
@@ -113,7 +113,7 @@ export const AUDIT_LIFECYCLE_PHASES = [
         id: 'reporting',
         stepNum: 8,
         title: 'รายงานผลการตรวจสอบ & เสนอผู้บริหาร',
-        subtitle: 'รายงาน 5 องค์ประกอบ บันทึกเสนอนายก และรายงานประจำปี',
+        subtitle: 'รายงานตามองค์ประกอบที่กำหนด บันทึกเสนอผู้บริหาร และรายงานประจำปี',
         icon: FileSpreadsheet,
         deliverables: ['รายงานผลการตรวจสอบภายในฉบับสมบูรณ์ (5 องค์ประกอบ)', 'บันทึกรายงานเสนอนายก อปท. (ภายใน 2 เดือน)', 'รายงานผลการตรวจสอบประจำปี (Annual Audit Report)'],
         regulations: 'ระเบียบ มท. 2545 ข้อ 20 / หลักเกณฑ์ กค. ข้อ 24-27'
@@ -168,7 +168,7 @@ export default function AuditLifecycleStepper({
                 แผนผังกระบวนการตรวจสอบครบวงจร (Audit Lifecycle Stepper)
               </h3>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30">
-                10 ขั้นตอนมาตรฐาน (กค. & มท.)
+                10 ขั้นตอนกระบวนงาน (ตรวจสอบข้อกำหนดที่ใช้บังคับ)
               </span>
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
