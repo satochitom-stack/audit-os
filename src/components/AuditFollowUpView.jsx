@@ -369,7 +369,7 @@ export default function AuditFollowUpView({
             <p style="margin: 4pt 0 0 0; font-size: 16pt;">${currentMemoItem.recommendation || '-'}</p>
           </div>
           <p style="text-indent: 2.5cm; margin-top: 10pt; margin-bottom: 16pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-            จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป
+            จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายในระยะเวลาที่กำหนด เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป
           </p>
         `,
         signatoryName: effectiveAuditorName,
@@ -798,7 +798,7 @@ export default function AuditFollowUpView({
               <div className="text-stone-900 whitespace-pre-line leading-relaxed">{toThaiDigits(currentMemoItem.recommendation)}</div>
             </div>
             <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed pt-2">
-              {toThaiDigits(`จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป`)}
+              {toThaiDigits(`จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายในระยะเวลาที่กำหนด เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป`)}
             </p>
           </OfficialThaiMemo>
         </div>
