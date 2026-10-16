@@ -778,7 +778,7 @@ export default function AuditFollowUpView({
             phone={orgProfile?.phone || ''}
             docNumber={`มท ๐๘๐๘/${selectedYear}/ว...`}
             date={new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
-            subject={`ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'}`}
+            subject={`ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${deadlineDays == null ? 'ตามกำหนดที่ระบุ' : `${deadlineDaysThai} วัน`}`}
             to={`ผู้อำนวยการ${currentMemoItem.department || 'หน่วยรับตรวจ'}`}
             signatory={{
               name: effectiveAuditorName,
@@ -788,10 +788,10 @@ export default function AuditFollowUpView({
             showReviewBoxes={false}
           >
             <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed">
-              {toThaiDigits(`ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ในภารกิจ "${currentMemoItem.title}" และ นายก${orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ ${currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} นั้น`)}
+              {toThaiDigits(`ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ในภารกิจ "${currentMemoItem.title}" และ นายก${orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ ${currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด ${deadlineDays == null ? 'ตามกำหนดที่ระบุ' : `${deadlineDaysThai} วัน`} นั้น`)}
             </p>
             <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed">
-              {toThaiDigits(`บัดนี้ ได้ครบกำหนดระยะเวลา ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} แล้ว (ครบกำหนดวันที่ ${currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม ${isCgdRegime ? 'หลักเกณฑ์ปฏิบัติการตรวจสอบภายในสำหรับหน่วยงานของรัฐ พ.ศ. ๒๕๖๑ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๔) พ.ศ. ๒๕๖๖' : 'ระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๑'} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว`)}
+              {toThaiDigits(`บัดนี้ ได้ครบกำหนดระยะเวลา ${deadlineDays == null ? 'ตามกำหนดที่ระบุ' : `${deadlineDaysThai} วัน`} แล้ว (ครบกำหนดวันที่ ${currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม ${deadlineBasisText} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว`)}
             </p>
             <div className="p-3.5 bg-stone-50 border border-stone-300 rounded-none space-y-1 my-2">
               <div className="font-bold text-black">ข้อเสนอแนะที่ต้องติดตาม:</div>
