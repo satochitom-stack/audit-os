@@ -1,6 +1,8 @@
 # ระบบกฎเกณฑ์และมาตรฐานการพัฒนา (Project Rules & Guardrails)
 ## ระบบตรวจสอบภายใน อปท. (AuditOS)
 
+> ⚠️ **ข้อกำหนดสำคัญก่อนเริ่มงาน (Mandatory Pre-requisite)**: AI Agent ทุกตัว (ทั้ง Google Antigravity และ Codex Desktop) **ต้องอ่านและปฏิบัติตามคู่มือกลางใน [`AI_WORKFLOW.md`](./AI_WORKFLOW.md) อย่างเคร่งครัดก่อนเริ่มงานทุกครั้ง**
+
 ### 1. กฎเหล็กกรอบหัวเรื่อง (Top Header Banner Architecture)
 - ทุกเมนูในระบบ (ทุก *View.jsx) **ต้องใช้คอมโพเนนต์ `<PageHeaderBanner />` เท่านั้น**
 - **ห้ามใส่ปุ่มคำสั่ง (Button), ปุ่มโมดอล, ลิงก์แอคชั่น หรือปุ่มดาวน์โหลดเอกสารไว้ในกรอบหัวเรื่องเด็ดขาด (Strict Zero-Button Policy in Header Banner)**
