@@ -17,14 +17,77 @@ import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebas
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
-const RULES_PATH = path.join(__dirname, 'fixtures', 'firestore.test.rules');
+// Approved security rules targets for testing
+const APPROVED_TARGETS = new Map([
+  ['tests/fixtures/firestore.test.rules', path.join(__dirname, 'fixtures', 'firestore.test.rules')],
+  ['firestore.rules', path.join(PROJECT_ROOT, 'firestore.rules')],
+]);
+
+function resolveTargetRulesPath() {
+  const envTarget = (process.env.TARGET_RULES_FILE || 'tests/fixtures/firestore.test.rules').trim().replace(/\\/g, '/');
+
+  if (APPROVED_TARGETS.has(envTarget)) {
+    return {
+      relativePath: envTarget,
+      absolutePath: APPROVED_TARGETS.get(envTarget),
+    };
+  }
+
+  // Path traversal guard: strictly confine resolution within project root and enforce .rules extension
+  const candidateAbsolute = path.resolve(PROJECT_ROOT, envTarget);
+  const candidateRelative = path.relative(PROJECT_ROOT, candidateAbsolute).replace(/\\/g, '/');
+
+  if (
+    candidateRelative.startsWith('..') ||
+    path.isAbsolute(candidateRelative) ||
+    !candidateAbsolute.endsWith('.rules')
+  ) {
+    throw new Error(
+      `[SECURITY ERROR] Target rules file "${envTarget}" is not an approved rules target. ` +
+      `Allowed targets: ${Array.from(APPROVED_TARGETS.keys()).join(', ')}`
+    );
+  }
+
+  // Whitelist constraint: must resolve to one of the approved target files
+  if (!APPROVED_TARGETS.has(candidateRelative)) {
+    throw new Error(
+      `[SECURITY ERROR] Target rules file "${candidateRelative}" is not in the approved targets whitelist. ` +
+      `Allowed targets: ${Array.from(APPROVED_TARGETS.keys()).join(', ')}`
+    );
+  }
+
+  if (!fs.existsSync(candidateAbsolute)) {
+    throw new Error(`[NOT FOUND] Target rules file does not exist: "${candidateAbsolute}"`);
+  }
+
+  return {
+    relativePath: candidateRelative,
+    absolutePath: candidateAbsolute,
+  };
+}
+
+const { relativePath: TARGET_RULES_RELATIVE, absolutePath: RULES_PATH } = resolveTargetRulesPath();
 const PROJECT_ID = 'audit-os-test-isolation';
 
 describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   let testEnv;
 
   before(async () => {
+    console.log('\n' + '='.repeat(80));
+    console.log(`[TEST SUITE TARGET RULES]: ${TARGET_RULES_RELATIVE}`);
+    if (TARGET_RULES_RELATIVE === 'tests/fixtures/firestore.test.rules') {
+      console.log('[IMPORTANT NOTICE]: Testing ISOLATED FIXTURE rules (tests/fixtures/firestore.test.rules).');
+      console.log('[NOTICE]: This fixture is a draft rule set designed solely for isolated testing.');
+      console.log('[WARNING]: Passing this test suite DOES NOT verify rules currently deployed on live Firebase!');
+    } else if (TARGET_RULES_RELATIVE === 'firestore.rules') {
+      console.log('[REPOSITORY RULES AUDIT]: Testing local repository rule file (firestore.rules).');
+      console.log('[NOTICE]: This tests the rules file stored in the repository.');
+      console.log('[WARNING]: This test DOES NOT verify rules currently deployed on live Firebase!');
+    }
+    console.log('='.repeat(80) + '\n');
+
     const rulesContent = fs.readFileSync(RULES_PATH, 'utf8');
     testEnv = await initializeTestEnvironment({
       projectId: PROJECT_ID,

@@ -9,6 +9,7 @@
     "build": "node scripts/verify-guardrails.cjs && vite build",
     "deploy": "node scripts/verify-guardrails.cjs && vite build && firebase deploy --only hosting",
     "lint": "oxlint",
+    "test:rules": "mocha tests/security-rules.test.js --timeout 15000",
     "preview": "vite preview"
   },
   "dependencies": {
