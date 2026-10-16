@@ -1751,6 +1751,10 @@ export default function App() {
                 orgProfile={orgProfile}
                 auditUniverse={auditUniverse}
                 annualPlans={annualPlans}
+                setAnnualPlans={setAnnualPlans}
+                strategicPlan={strategicPlan}
+                setStrategicPlan={setStrategicPlan}
+                onNavigateToTab={handleSelectTab}
                 session={session}
               />
             )}

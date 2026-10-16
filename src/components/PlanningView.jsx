@@ -42,6 +42,7 @@ import {
 import { toThaiDigits, formatSarabanDate } from '../utils/sarabanUtils';
 import { AUDIT_DIMENSIONS, generateEngagementPlanWithAI } from '../data/engagementPlanTemplates';
 import { DLA_ANNUAL_AUDIT_PLAN_DATA, DLA_STRATEGIC_PLAN_3YEARS } from '../data/dlaStandardTemplates';
+import { saveUnifiedStrategicPlan } from '../utils/strategicPlanUtils';
 
 export default function PlanningView({
   auditCharter,
@@ -303,6 +304,7 @@ export default function PlanningView({
 
         const combined = [...y1Items, ...y2Items, ...y3Items];
         setStrategicPlan(combined);
+        saveUnifiedStrategicPlan(combined, selectedYear);
         showToast(`นำเข้าแผนระยะยาว 16 กิจกรรม (590 คน-วัน) ตามคู่มือ สถ. สำเร็จ`);
       }
     });
@@ -439,6 +441,7 @@ export default function PlanningView({
       return item;
     });
     setStrategicPlan(updated);
+    saveUnifiedStrategicPlan(updated, selectedYear);
   };
 
   // Add Strategic Plan Item
@@ -446,7 +449,9 @@ export default function PlanningView({
     e.preventDefault();
     if (!newStrategic.activity.trim()) return;
     const stratId = `STRAT-0${strategicPlan.length + 1}`;
-    setStrategicPlan([...strategicPlan, { ...newStrategic, id: stratId }]);
+    const updated = [...strategicPlan, { ...newStrategic, id: stratId }];
+    setStrategicPlan(updated);
+    saveUnifiedStrategicPlan(updated, selectedYear);
     setShowAddStrategicModal(false);
     showToast(`เพิ่มกิจกรรม "${newStrategic.activity}" ในแผนระยะยาว 5 ปีเรียบร้อยแล้ว`);
     setNewStrategic({
@@ -1207,7 +1212,9 @@ export default function PlanningView({
                               confirmText: 'ลบกิจกรรม',
                               type: 'danger',
                               onConfirm: () => {
-                                setStrategicPlan(strategicPlan.filter((s) => s.id !== item.id));
+                                const updated = strategicPlan.filter((s) => s.id !== item.id);
+                                setStrategicPlan(updated);
+                                saveUnifiedStrategicPlan(updated, selectedYear);
                                 showToast('ลบกิจกรรมออกจากแผนระยะยาวแล้ว');
                               }
                             });

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageHeaderBanner from './PageHeaderBanner';
 import {
   Calendar,
@@ -13,17 +13,33 @@ import {
   ArrowRight,
   TrendingUp,
   ShieldAlert,
-  Award
+  Award,
+  Rocket,
+  CheckSquare,
+  Square,
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { DLA_STRATEGIC_PLAN_3YEARS } from '../data/dlaStandardTemplates';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
 import { exportDataToExcel, exportThaiMemoToWord } from '../utils/documentExportUtils';
+import {
+  loadUnifiedStrategicPlan,
+  saveUnifiedStrategicPlan,
+  normalizeStrategicItem,
+  getRollForwardCandidates,
+  rollForwardToAnnualPlans
+} from '../utils/strategicPlanUtils';
 
 export default function StrategicPlanView({
   selectedYear = '2569',
   orgProfile = {},
   auditUniverse = [],
   annualPlans = [],
+  setAnnualPlans,
+  strategicPlan = [],
+  setStrategicPlan,
+  onNavigateToTab,
   session = null
 }) {
   const isNonAdminUser = session?.role !== 'admin' && session?.username?.toLowerCase() !== 'admin';
@@ -34,7 +50,7 @@ export default function StrategicPlanView({
     ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายในปฏิบัติการ'))
     : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
 
-  const [activeTab, setActiveTab] = useState('manday'); // 'manday', 'three_year'
+  const [activeTab, setActiveTab] = useState('three_year'); // 'manday', 'three_year'
 
   // Auditor Man-Day Capacity State
   const [auditorCount, setAuditorCount] = useState(1);
@@ -53,7 +69,7 @@ export default function StrategicPlanView({
   const year2 = currentBE + 1;
   const year3 = currentBE + 2;
 
-  // Strategic Activities
+  // Default Activities fallback
   const defaultActivities = useMemo(() => [
     { id: 'ST-01', name: 'การรับเงินและการนำส่งเงิน (e-LAAS)', department: 'กองคลัง', riskLevel: 'สูง', y1: true, y2: true, y3: true, manDays: 20 },
     { id: 'ST-02', name: 'การบัญชีและงบกระทบยอดเงินฝากธนาคาร', department: 'กองคลัง', riskLevel: 'สูง', y1: true, y2: true, y3: true, manDays: 25 },
@@ -66,23 +82,39 @@ export default function StrategicPlanView({
     { id: 'ST-09', name: 'การบริหารสัญญาและหลักประกันสัญญา', department: 'กองคลัง', riskLevel: 'ปานกลาง', y1: true, y2: true, y3: false, manDays: 15 }
   ], []);
 
+  // Unified Strategic Activities State
   const [strategicActivities, setStrategicActivities] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ia_strategic_activities_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (_) {}
-    return defaultActivities;
+    return loadUnifiedStrategicPlan(selectedYear, defaultActivities);
   });
 
+  useEffect(() => {
+    const loaded = loadUnifiedStrategicPlan(selectedYear, defaultActivities);
+    setStrategicActivities(loaded);
+  }, [selectedYear]);
+
+  const updateActivities = (newActivities) => {
+    setStrategicActivities(newActivities);
+    saveUnifiedStrategicPlan(newActivities, selectedYear);
+    if (setStrategicPlan) {
+      setStrategicPlan(newActivities);
+    }
+  };
+
   const toggleYear = (id, yearKey) => {
-    const updated = strategicActivities.map((act) =>
-      act.id === id ? { ...act, [yearKey]: !act[yearKey] } : act
-    );
-    setStrategicActivities(updated);
-    localStorage.setItem('ia_strategic_activities_v2', JSON.stringify(updated));
+    const updated = strategicActivities.map((act) => {
+      if (act.id === id) {
+        const nextVal = !act[yearKey];
+        const targetYr = yearKey === 'y1' ? String(year1) : yearKey === 'y2' ? String(year2) : String(year3);
+        const nextYears = { ...(act.years || {}), [targetYr]: nextVal };
+        return {
+          ...act,
+          [yearKey]: nextVal,
+          years: nextYears
+        };
+      }
+      return act;
+    });
+    updateActivities(updated);
   };
 
   const handleLoadDlaStrategicPlan = () => {
@@ -107,8 +139,8 @@ export default function StrategicPlanView({
       { id: 'DLA-ST-15', name: 'การปฏิบัติงานสารบรรณและธุรการ', department: 'กองคลัง', riskLevel: 'ต่ำ', y1: false, y2: false, y3: true, manDays: 35 },
       { id: 'DLA-ST-16', name: 'การปฏิบัติงานสารบรรณและธุรการ', department: 'กองช่าง', riskLevel: 'ต่ำ', y1: false, y2: false, y3: true, manDays: 35 }
     ];
-    setStrategicActivities(dlaActivities);
-    localStorage.setItem('ia_strategic_activities_v2', JSON.stringify(dlaActivities));
+    const normalized = dlaActivities.map((a) => normalizeStrategicItem(a, selectedYear));
+    updateActivities(normalized);
     alert('โหลดแผนการตรวจสอบระยะยาว 3 ปี (16 กิจกรรม 590 คน-วัน ตามคู่มือ สถ.) เรียบร้อยแล้ว');
   };
 
@@ -116,6 +148,52 @@ export default function StrategicPlanView({
   const y1TotalDays = strategicActivities
     .filter((a) => a.y1)
     .reduce((sum, a) => sum + (a.manDays || 0), 0);
+
+  // Roll-Forward to Annual Plan State
+  const [showRollForwardModal, setShowRollForwardModal] = useState(false);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
+  const [rollForwardNotification, setRollForwardNotification] = useState(null);
+
+  const rollForwardCandidates = useMemo(() => {
+    return getRollForwardCandidates(strategicActivities, selectedYear, annualPlans);
+  }, [strategicActivities, selectedYear, annualPlans]);
+
+  const handleOpenRollForwardModal = () => {
+    // Default select all candidates that are scheduled and not already in annual plans
+    const availableToSelect = rollForwardCandidates
+      .filter((c) => c.canRollForward)
+      .map((c) => c.strategicId);
+    setSelectedCandidateIds(availableToSelect);
+    setShowRollForwardModal(true);
+  };
+
+  const handleToggleCandidateSelect = (stratId) => {
+    setSelectedCandidateIds((prev) =>
+      prev.includes(stratId) ? prev.filter((id) => id !== stratId) : [...prev, stratId]
+    );
+  };
+
+  const handleExecuteRollForward = () => {
+    if (!setAnnualPlans) {
+      alert('ไม่พบฟังก์ชันอัปเดตแผนประจำปี');
+      return;
+    }
+
+    const result = rollForwardToAnnualPlans(
+      rollForwardCandidates,
+      selectedCandidateIds,
+      annualPlans,
+      selectedYear,
+      { auditorName: effectiveAuditorName }
+    );
+
+    setAnnualPlans(result.updatedAnnualPlans);
+    setShowRollForwardModal(false);
+    setRollForwardNotification({
+      count: result.addedCount,
+      message: `นำเข้ากิจกรรมจากแผนระยะยาวสู่ร่างแผนประจำปี พ.ศ. ${selectedYear} จำนวน ${result.addedCount} โครงการเรียบร้อยแล้ว`
+    });
+  };
 
   // Handlers for exporting Word (.doc) and Excel (.xlsx)
   const handleDownloadExcel = () => {
@@ -145,9 +223,9 @@ export default function StrategicPlanView({
         'รวมอัตรากำลังคน-วันตลอดแผน 3 ปี',
         '',
         '',
-        strategicActivities.filter(a => a.y1).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
-        strategicActivities.filter(a => a.y2).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
-        strategicActivities.filter(a => a.y3).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
+        strategicActivities.filter((a) => a.y1).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
+        strategicActivities.filter((a) => a.y2).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
+        strategicActivities.filter((a) => a.y3).reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน',
         strategicActivities.reduce((s, a) => s + (a.manDays || 0), 0) + ' คน-วัน'
       ]);
 
@@ -176,13 +254,13 @@ export default function StrategicPlanView({
         contentParagraphs: [
           `<strong>๑. เรื่องเดิม:</strong> ตามระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ กำหนดให้หน่วยตรวจสอบภายในต้องจัดทำแผนการตรวจสอบระยะยาว เพื่อให้ครอบคลุมกิจกรรมสำคัญของทุกหน่วยรับตรวจในจักรวาลการตรวจสอบ (Audit Universe) อย่างเป็นระบบ นั้น`,
           `<strong>๒. ข้อเท็จจริง:</strong> หน่วยตรวจสอบภายในได้จัดทำแผนการตรวจสอบระยะยาว (๓ ปี) ประจำปีงบประมาณ พ.ศ. ${year1} - ${year3} โดยวิเคราะห์จากผลการประเมินความเสี่ยงและขีดความสามารถอัตรากำลัง (Audit Capacity) รวมทั้งสิ้น ${strategicActivities.length} กิจกรรม คิดเป็นอัตรากำลังรวม ${strategicActivities.reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน โดยมีรายละเอียดการกระจายกิจกรรมในแต่ละปีงบประมาณ ดังนี้<br/>` +
-          `&nbsp;&nbsp;&nbsp;&nbsp;๒.๑ ปีงบประมาณ พ.ศ. ${year1} กำหนดตรวจจำนวน ${strategicActivities.filter(a => a.y1).length} กิจกรรม รวม ${strategicActivities.filter(a => a.y1).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน<br/>` +
-          `&nbsp;&nbsp;&nbsp;&nbsp;๒.๒ ปีงบประมาณ พ.ศ. ${year2} กำหนดตรวจจำนวน ${strategicActivities.filter(a => a.y2).length} กิจกรรม รวม ${strategicActivities.filter(a => a.y2).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน<br/>` +
-          `&nbsp;&nbsp;&nbsp;&nbsp;๒.๓ ปีงบประมาณ พ.ศ. ${year3} กำหนดตรวจจำนวน ${strategicActivities.filter(a => a.y3).length} กิจกรรม รวม ${strategicActivities.filter(a => a.y3).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน`,
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๑ ปีงบประมาณ พ.ศ. ${year1} กำหนดตรวจจำนวน ${strategicActivities.filter((a) => a.y1).length} กิจกรรม รวม ${strategicActivities.filter((a) => a.y1).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๒ ปีงบประมาณ พ.ศ. ${year2} กำหนดตรวจจำนวน ${strategicActivities.filter((a) => a.y2).length} กิจกรรม รวม ${strategicActivities.filter((a) => a.y2).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๒.๓ ปีงบประมาณ พ.ศ. ${year3} กำหนดตรวจจำนวน ${strategicActivities.filter((a) => a.y3).length} กิจกรรม รวม ${strategicActivities.filter((a) => a.y3).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน`,
           `<strong>๓. ข้อพิจารณาและข้อเสนอ:</strong> เพื่อให้การปฏิบัติงานตรวจสอบภายในมีทิศทางที่ชัดเจนและสอดคล้องกับระเบียบกระทรวงมหาดไทย จึงขอเสนอดังนี้:<br/>` +
-          `&nbsp;&nbsp;&nbsp;&nbsp;๓.๑ เห็นชอบแผนการตรวจสอบระยะยาว (๓ ปี) ประจำปีงบประมาณ พ.ศ. ${year1} - ${year3} ตามเอกสารแนบท้ายนี้<br/>` +
-          `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำแผนปีแรก (พ.ศ. ${year1}) ไปจัดทำเป็นแผนการปฏิบัติงานประจำปีต่อไป<br/><br/>` +
-          `จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ`
+            `&nbsp;&nbsp;&nbsp;&nbsp;๓.๑ เห็นชอบแผนการตรวจสอบระยะยาว (๓ ปี) ประจำปีงบประมาณ พ.ศ. ${year1} - ${year3} ตามเอกสารแนบท้ายนี้<br/>` +
+            `&nbsp;&nbsp;&nbsp;&nbsp;๓.๒ อนุมัติให้นำแผนปีแรก (พ.ศ. ${year1}) ไปจัดทำเป็นแผนการปฏิบัติงานประจำปีต่อไป<br/><br/>` +
+            `จึงเรียนมาเพื่อโปรดพิจารณา หากเห็นชอบโปรดลงนามอนุมัติ`
         ],
         signatoryName: effectiveAuditorName,
         signatoryPosition: effectiveAuditorPosition,
@@ -259,145 +337,228 @@ export default function StrategicPlanView({
         </div>
       </div>
 
-      {/* VIEW: MAN-DAY CALCULATION */}
+      {/* Roll-Forward Notification Banner */}
+      {rollForwardNotification && (
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-2xl p-4 flex items-center justify-between gap-3 text-xs animate-in fade-in">
+          <div className="flex items-center space-x-2 text-emerald-900 dark:text-emerald-200 font-bold">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{rollForwardNotification.message}</span>
+          </div>
+          {onNavigateToTab && (
+            <button
+              onClick={() => onNavigateToTab('planning')}
+              className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1 cursor-pointer shrink-0"
+            >
+              <span>ไปที่แผนประจำปี (ขั้นที่ 4)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* TAB 1: MAN-DAY CAPACITY CALCULATOR */}
       {activeTab === 'manday' && (
-        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-6">
-          <div className="border-b border-stone-200/80 dark:border-stone-800 pb-4">
-            <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
-              <Calculator className="w-5 h-5 text-amber-700 dark:text-amber-400" />
-              <span>สูตรคำนวณวันทำการและความสามารถในการตรวจสอบ (Audit Capacity Formula)</span>
-            </h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-              อ้างอิงหลักเกณฑ์กระทรวงการคลัง และคู่มือการปฏิบัติงานของกองตรวจสอบระบบการเงินบัญชีท้องถิ่น (สถ.)
-            </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800">
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                  <Calculator className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+                  <span>เกณฑ์การคำนวณวันทำการและอัตรากำลัง (Audit Man-Days Formula)</span>
+                </h3>
+                <p className="text-xs text-stone-500">
+                  อ้างอิงมาตรฐานกรมส่งเสริมการปกครองท้องถิ่น (สถ.) และกรมบัญชีกลาง
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1.5 bg-stone-50 dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/60 dark:border-stone-700">
+                <label className="font-bold text-stone-700 dark:text-stone-300">
+                  1. จำนวนผู้ตรวจสอบภายใน (คน):
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={auditorCount}
+                  onChange={(e) => setAuditorCount(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-full text-base font-bold p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <span className="text-[11px] text-stone-400">อัตรากำลังผู้ปฏิบัติงานจริงใน อปท.</span>
+              </div>
+
+              <div className="space-y-1.5 bg-stone-50 dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/60 dark:border-stone-700">
+                <label className="font-bold text-stone-700 dark:text-stone-300">
+                  2. วันทำการรวมต่อปี (วัน):
+                </label>
+                <input
+                  type="number"
+                  value={grossWorkingDays}
+                  onChange={(e) => setGrossWorkingDays(parseInt(e.target.value) || 0)}
+                  className="w-full text-base font-bold p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <span className="text-[11px] text-stone-400">หักวันเสาร์-อาทิตย์ และวันหยุดนักขัตฤกษ์แล้ว (สถ. กำหนด 220 วัน)</span>
+              </div>
+
+              <div className="space-y-1.5 bg-stone-50 dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/60 dark:border-stone-700">
+                <label className="font-bold text-stone-700 dark:text-stone-300">
+                  3. ประมาณการวันลาพักผ่อน/ป่วย/กิจ (วัน/คน):
+                </label>
+                <input
+                  type="number"
+                  value={leaveDays}
+                  onChange={(e) => setLeaveDays(parseInt(e.target.value) || 0)}
+                  className="w-full text-base font-bold p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <span className="text-[11px] text-stone-400">เกณฑ์มาตรฐาน 15 วันทำการ</span>
+              </div>
+
+              <div className="space-y-1.5 bg-stone-50 dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/60 dark:border-stone-700">
+                <label className="font-bold text-stone-700 dark:text-stone-300">
+                  4. วันอบรม/สัมมนาพัฒนาวิชาชีพ (วัน/คน):
+                </label>
+                <input
+                  type="number"
+                  value={trainingDays}
+                  onChange={(e) => setTrainingDays(parseInt(e.target.value) || 0)}
+                  className="w-full text-base font-bold p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <span className="text-[11px] text-stone-400">เกณฑ์การพัฒนาตนเองตามมาตรฐานวิชาชีพ 15 วัน</span>
+              </div>
+
+              <div className="space-y-1.5 bg-stone-50 dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/60 dark:border-stone-700 sm:col-span-2">
+                <label className="font-bold text-stone-700 dark:text-stone-300">
+                  5. วันปฏิบัติงานบริหาร สารบรรณ และการประชุม (วัน/คน):
+                </label>
+                <input
+                  type="number"
+                  value={adminDays}
+                  onChange={(e) => setAdminDays(parseInt(e.target.value) || 0)}
+                  className="w-full text-base font-bold p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <span className="text-[11px] text-stone-400">งานธุรการ การวางแผนประจำปี และภารกิจสนับสนุน 30 วัน</span>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Input Variables */}
-            <div className="space-y-4 bg-stone-50 dark:bg-stone-850/60 p-5 rounded-2xl border border-stone-200/80 dark:border-stone-700">
-              <h3 className="text-sm font-bold text-stone-900 dark:text-stone-200">
-                ตัวแปรการคำนวณประจำปีงบประมาณ พ.ศ. {selectedYear}
-              </h3>
+          {/* Result Card */}
+          <div className="bg-gradient-to-br from-amber-900 to-stone-900 text-white rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-xl border border-amber-800/40">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                <Clock className="w-4 h-4" />
+                <span>ขีดความสามารถที่ใช้ตรวจได้จริง (Net Audit Capacity)</span>
+              </div>
 
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">จำนวนผู้ตรวจสอบภายใน (คน)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={auditorCount}
-                    onChange={(e) => setAuditorCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
-                  />
+              <div className="space-y-1">
+                <div className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-white">
+                  {totalNetAuditCapacity}
                 </div>
+                <div className="text-xs text-amber-200/80 font-bold">คน-วัน / ปีงบประมาณ (Man-Days)</div>
+              </div>
 
-                <div>
-                  <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">วันทำงานรวมทั้งปี (วันทำการราชการ)</label>
-                  <input
-                    type="number"
-                    value={grossWorkingDays}
-                    onChange={(e) => setGrossWorkingDays(parseInt(e.target.value) || 220)}
-                    className="w-full p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
-                  />
-                  <span className="text-[10px] text-stone-400 mt-1 block">มาตรฐาน 52 สัปดาห์ × 5 วัน หักวันหยุดราชการ = ประมาณ 220-230 วัน</span>
+              <div className="pt-4 border-t border-amber-800/60 space-y-2 text-xs text-amber-100/90">
+                <div className="flex justify-between">
+                  <span>วันตรวจภาคสนามเฉลี่ยต่อคน:</span>
+                  <span className="font-bold font-mono">{netFieldworkDaysPerAuditor} วัน</span>
                 </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">หัก วันลา (วัน)</label>
-                    <input
-                      type="number"
-                      value={leaveDays}
-                      onChange={(e) => setLeaveDays(parseInt(e.target.value) || 0)}
-                      className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">หัก ฝึกอบรม (วัน)</label>
-                    <input
-                      type="number"
-                      value={trainingDays}
-                      onChange={(e) => setTrainingDays(parseInt(e.target.value) || 0)}
-                      className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold mb-1 text-stone-700 dark:text-stone-300">หัก งานบริหาร (วัน)</label>
-                    <input
-                      type="number"
-                      value={adminDays}
-                      onChange={(e) => setAdminDays(parseInt(e.target.value) || 0)}
-                      className="w-full p-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-amber-500/30"
-                    />
-                  </div>
+                <div className="flex justify-between">
+                  <span>วันตรวจที่วางแผนไว้ในปี {year1}:</span>
+                  <span className="font-bold font-mono text-amber-300">{y1TotalDays} คน-วัน</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>สัดส่วนการใช้อัตรากำลัง:</span>
+                  <span className="font-bold font-mono">
+                    {totalNetAuditCapacity > 0 ? Math.round((y1TotalDays / totalNetAuditCapacity) * 100) : 0}%
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Capacity Result Card */}
-            <div className="bg-gradient-to-br from-amber-50/80 via-stone-50 to-stone-100/90 dark:from-stone-850 dark:via-stone-900 dark:to-amber-950/20 p-6 rounded-2xl border border-amber-200/80 dark:border-stone-700 flex flex-col justify-between space-y-4 shadow-2xs">
-              <div className="space-y-2">
-                <span className="text-xs font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wider">
-                  ผลการคำนวณกำลังคน-วัน (Audit Capacity)
-                </span>
-                <div className="text-4xl font-black text-stone-900 dark:text-amber-200">
-                  {totalNetAuditCapacity} <span className="text-base font-normal text-stone-600 dark:text-stone-400">คน-วัน (Man-Days)</span>
-                </div>
-                <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
-                  ผู้ตรวจสอบ {auditorCount} คน สามารถลงพื้นที่ตรวจสอบจริงได้คนละ <strong>{netFieldworkDaysPerAuditor} วัน/ปี</strong> รวมกำลังคนตรวจจริง <strong>{totalNetAuditCapacity} คน-วัน</strong>
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-white/90 dark:bg-stone-800/90 border border-stone-200 dark:border-stone-700 text-xs space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-600 dark:text-stone-400">กำลังคน-วันที่ใช้ในแผนปี {year1}:</span>
-                  <span className="font-bold text-stone-900 dark:text-stone-100">{y1TotalDays} คน-วัน</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-600 dark:text-stone-400">กำลังคงเหลือสำหรับงานตรวจพิเศษ/คำสั่งผู้บริหาร:</span>
-                  <span className={`font-bold ${totalNetAuditCapacity >= y1TotalDays ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {totalNetAuditCapacity - y1TotalDays} คน-วัน
-                  </span>
-                </div>
-                <div className="w-full bg-stone-200 dark:bg-stone-700 rounded-full h-2 overflow-hidden mt-1">
-                  <div
-                    className={`h-2 rounded-full ${
-                      y1TotalDays <= totalNetAuditCapacity ? 'bg-amber-600' : 'bg-rose-500'
-                    }`}
-                    style={{ width: `${Math.min(100, (y1TotalDays / (totalNetAuditCapacity || 1)) * 100)}%` }}
-                  />
-                </div>
-              </div>
+            <div className="pt-6">
+              <button
+                onClick={() => setActiveTab('three_year')}
+                className="w-full bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md"
+              >
+                <span>ดูการจัดสรรในแผนระยะยาว 3 ปี</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* VIEW: 3-YEAR STRATEGIC PLAN MATRIX */}
+      {/* TAB 2: 3-YEAR STRATEGIC PLAN MATRIX */}
       {activeTab === 'three_year' && (
-        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-4 print:border-none print:shadow-none print:p-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-stone-100 dark:border-stone-800">
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200/80 dark:border-stone-800 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200 dark:border-stone-800">
             <div>
-              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
-                ผังแผนการตรวจสอบระยะยาว 3 ปี (พ.ศ. {year1} - {year3})
-              </h2>
-              <div className="text-xs text-stone-500">
-                หน่วยตรวจสอบภายใน {orgProfile?.name || 'อปท.'}
-              </div>
+              <h3 className="text-base font-bold text-stone-900 dark:text-stone-100 flex items-center space-x-2">
+                <Layers className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+                <span>ตารางการกระจายกิจกรรมตรวจสอบระยะยาว 3 ปี (พ.ศ. {year1} - {year3})</span>
+              </h3>
+              <p className="text-xs text-stone-500">
+                รวมทั้งหมด {strategicActivities.length} กิจกรรม | คลิกที่ปุ่ม ✓ / - เพื่อเปิดหรือปิดวงรอบการตรวจสอบในแต่ละปี
+              </p>
             </div>
 
-            <div className="text-xs text-stone-500 flex items-center space-x-3">
-              <span className="flex items-center space-x-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
-                <span>เสี่ยงสูง (ตรวจทุกปี)</span>
+            {/* Roll-Forward to Annual Plan CTA Button */}
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                onClick={handleOpenRollForwardModal}
+                className="bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all flex items-center space-x-2 cursor-pointer shadow-md"
+                title={`นำกิจกรรมที่กำหนดตรวจในปี พ.ศ. ${year1} เข้าสู่แผนการตรวจสอบประจำปี`}
+              >
+                <Rocket className="w-4 h-4 text-emerald-200" />
+                <span>🚀 นำกิจกรรมปี {year1} สู่แผนประจำปี (Roll-Forward)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Summary Pills */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/60 dark:border-stone-700">
+              <span className="text-stone-400 font-bold block mb-1">ปีที่ 1 (พ.ศ. {year1}):</span>
+              <div className="text-lg font-black text-amber-800 dark:text-amber-300 font-mono">
+                {strategicActivities.filter((a) => a.y1).length} กิจกรรม
+              </div>
+              <span className="text-[11px] text-stone-500 font-mono">
+                {strategicActivities.filter((a) => a.y1).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน
               </span>
-              <span className="flex items-center space-x-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                <span>เสี่ยงปานกลาง (ตรวจปีเว้นปี)</span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/60 dark:border-stone-700">
+              <span className="text-stone-400 font-bold block mb-1">ปีที่ 2 (พ.ศ. {year2}):</span>
+              <div className="text-lg font-black text-amber-800 dark:text-amber-300 font-mono">
+                {strategicActivities.filter((a) => a.y2).length} กิจกรรม
+              </div>
+              <span className="text-[11px] text-stone-500 font-mono">
+                {strategicActivities.filter((a) => a.y2).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/60 dark:border-stone-700">
+              <span className="text-stone-400 font-bold block mb-1">ปีที่ 3 (พ.ศ. {year3}):</span>
+              <div className="text-lg font-black text-amber-800 dark:text-amber-300 font-mono">
+                {strategicActivities.filter((a) => a.y3).length} กิจกรรม
+              </div>
+              <span className="text-[11px] text-stone-500 font-mono">
+                {strategicActivities.filter((a) => a.y3).reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+              <span className="text-amber-900 dark:text-amber-300 font-bold block mb-1">รวมทั้งสิ้น 3 ปี:</span>
+              <div className="text-lg font-black text-amber-900 dark:text-amber-200 font-mono">
+                {strategicActivities.length} กิจกรรม
+              </div>
+              <span className="text-[11px] text-amber-800 dark:text-amber-400 font-mono">
+                {strategicActivities.reduce((s, a) => s + (a.manDays || 0), 0)} คน-วัน
               </span>
             </div>
           </div>
 
+          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border border-stone-200 dark:border-stone-700 rounded-2xl overflow-hidden">
               <thead className="bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold border-b border-stone-200 dark:border-stone-700">
@@ -421,7 +582,7 @@ export default function StrategicPlanView({
                     <td className="py-3 px-3 text-center">
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          act.riskLevel === 'สูง'
+                          act.riskLevel === 'สูงมาก' || act.riskLevel === 'สูง'
                             ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
                             : act.riskLevel === 'ปานกลาง'
                             ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
@@ -443,6 +604,7 @@ export default function StrategicPlanView({
                             ? 'bg-amber-700 text-white shadow-xs'
                             : 'bg-stone-100 dark:bg-stone-800 text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                         }`}
+                        title={`คลิกเพื่อเปิด/ปิด ปี ${year1}`}
                       >
                         {act.y1 ? '✓' : '-'}
                       </button>
@@ -456,6 +618,7 @@ export default function StrategicPlanView({
                             ? 'bg-amber-700 text-white shadow-xs'
                             : 'bg-stone-100 dark:bg-stone-800 text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                         }`}
+                        title={`คลิกเพื่อเปิด/ปิด ปี ${year2}`}
                       >
                         {act.y2 ? '✓' : '-'}
                       </button>
@@ -469,6 +632,7 @@ export default function StrategicPlanView({
                             ? 'bg-amber-700 text-white shadow-xs'
                             : 'bg-stone-100 dark:bg-stone-800 text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                         }`}
+                        title={`คลิกเพื่อเปิด/ปิด ปี ${year3}`}
                       >
                         {act.y3 ? '✓' : '-'}
                       </button>
@@ -477,6 +641,107 @@ export default function StrategicPlanView({
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ROLL-FORWARD MODAL */}
+      {showRollForwardModal && (
+        <div className="fixed inset-0 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-2xl w-full shadow-2xl border border-stone-200 dark:border-stone-800 p-6 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-stone-800">
+              <div className="flex items-center space-x-2 text-stone-900 dark:text-stone-100 font-bold text-base">
+                <Rocket className="w-5 h-5 text-emerald-600" />
+                <span>นำกิจกรรมปี พ.ศ. {year1} เข้าสู่แผนการตรวจสอบประจำปี</span>
+              </div>
+              <button
+                onClick={() => setShowRollForwardModal(false)}
+                className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed bg-amber-50/60 dark:bg-amber-950/20 p-3 rounded-2xl border border-amber-200/60 dark:border-amber-900/40">
+              ระบบตรวจสอบกิจกรรมที่กำหนดตรวจในปี พ.ศ. {year1} จากแผนระยะยาว พร้อมตรวจจับรายการที่อยู่ในแผนประจำปีอยู่แล้วเพื่อป้องกันการสร้างซ้ำซ้อน
+            </div>
+
+            <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+              {rollForwardCandidates.map((cand) => (
+                <div
+                  key={cand.strategicId}
+                  className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-3 transition-colors ${
+                    cand.alreadyPlanned
+                      ? 'bg-stone-100/60 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 opacity-75'
+                      : cand.canRollForward
+                      ? 'bg-white dark:bg-stone-850 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400'
+                      : 'bg-stone-50 dark:bg-stone-850/40 border-stone-200 dark:border-stone-800 opacity-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <button
+                      type="button"
+                      disabled={cand.alreadyPlanned || !cand.isScheduled}
+                      onClick={() => handleToggleCandidateSelect(cand.strategicId)}
+                      className="cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {selectedCandidateIds.includes(cand.strategicId) ? (
+                        <CheckSquare className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <Square className="w-4 h-4 text-stone-400" />
+                      )}
+                    </button>
+                    <div className="min-w-0 truncate">
+                      <div className="font-bold text-stone-900 dark:text-stone-100 truncate">
+                        {cand.title}
+                      </div>
+                      <div className="text-[11px] text-stone-500">
+                        {cand.department} • ความเสี่ยง: {cand.riskLevel} • {cand.manDays} คน-วัน
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 text-right">
+                    {cand.alreadyPlanned ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-200 text-stone-700 dark:bg-stone-700 dark:text-stone-300">
+                        ✓ มีในแผนประจำปีแล้ว
+                      </span>
+                    ) : cand.canRollForward ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        พร้อมนำเข้า
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-stone-500">
+                        ไม่ได้กำหนดปี {year1}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-stone-200 dark:border-stone-800 text-xs">
+              <span className="text-stone-500 font-medium">
+                เลือกนำเข้า {selectedCandidateIds.length} รายการ (ไม่รวมรายการเดิม)
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRollForwardModal(false)}
+                  className="px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-bold hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="button"
+                  disabled={selectedCandidateIds.length === 0}
+                  onClick={handleExecuteRollForward}
+                  className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-bold transition-all shadow-md cursor-pointer disabled:cursor-not-allowed"
+                >
+                  ยืนยันนำเข้าร่างแผนประจำปี
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
