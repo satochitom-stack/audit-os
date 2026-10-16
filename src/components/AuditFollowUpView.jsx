@@ -681,8 +681,8 @@ export default function AuditFollowUpView({
                         </div>
                         {item.regime === 'agency_defined' && (
                           <div className="mt-2 space-y-1.5">
-                            <input type="number" min="1" max="3650" value={item.deadlineDays || 30}
-                              onChange={(e) => handleUpdateDeadlineSetting(item.id, 'deadlineDays', Number(e.target.value))}
+                            <input type="number" min="1" max="3650" value={item.deadlineDays ?? ''}
+                              onChange={(e) => handleUpdateDeadlineSetting(item.id, 'deadlineDays', e.target.value)}
                               aria-label="จำนวนวันติดตามที่หน่วยงานกำหนด"
                               className="w-full text-[10px] p-1.5 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800" />
                             <input type="text" value={item.deadlineBasis || ''}
