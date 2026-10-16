@@ -7,36 +7,16 @@
  * 
  * สถาปัตยกรรมโมดูล:
  * รองรับ ECMAScript Modules (ESM) ตามการตั้งค่า "type": "module" ใน package.json
+ * นำเข้า @firebase/rules-unit-testing โดยตรง ปราศจาก fallback stubs เพื่อให้ทดสอบล้มเหลวอย่างถูกต้องหากสภาพแวดล้อมไม่พร้อม
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Dynamic loading สำหรับ @firebase/rules-unit-testing เพื่อรองรับทั้งสภาพแวดล้อมที่มีและยังไม่มี package
-let initializeTestEnvironment, assertFails, assertSucceeds;
-try {
-  const testing = await import('@firebase/rules-unit-testing');
-  initializeTestEnvironment = testing.initializeTestEnvironment;
-  assertFails = testing.assertFails;
-  assertSucceeds = testing.assertSucceeds;
-} catch (e) {
-  // Stubs สำหรับ Static/Syntax Checking เมื่อยังไม่ได้ติดตั้งแพ็กเกจ
-  assertFails = async (promise) => {
-    try {
-      await promise;
-      throw new Error('Expected operation to fail, but it succeeded.');
-    } catch (err) {
-      return true;
-    }
-  };
-  assertSucceeds = async (promise) => {
-    return await promise;
-  };
-}
 
 const RULES_PATH = path.join(__dirname, 'fixtures', 'firestore.test.rules');
 const PROJECT_ID = 'audit-os-test-isolation';
@@ -45,11 +25,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   let testEnv;
 
   before(async () => {
-    if (!initializeTestEnvironment) {
-      console.log('Skipping emulator setup: @firebase/rules-unit-testing is not installed.');
-      return;
-    }
-
     const rulesContent = fs.readFileSync(RULES_PATH, 'utf8');
     testEnv = await initializeTestEnvironment({
       projectId: PROJECT_ID,
@@ -73,8 +48,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
    * เพื่อรับประกันว่าไม่มี Test ใดพึ่งพาหรือได้รับผลกระทบจากข้อมูลที่ถูกลบใน Test ก่อนหน้า
    */
   beforeEach(async () => {
-    if (!testEnv) return;
-
     // 1. ล้างข้อมูลเก่าออกจาก Firestore Emulator
     await testEnv.clearFirestore();
 
@@ -137,7 +110,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   // TC-1: Unauthenticated Requests Must Be Denied Everywhere
   // =========================================================================
   it('TC-1: ผู้ไม่เข้าสู่ระบบ (Unauthenticated) ไม่สามารถอ่านหรือเขียนข้อมูลองค์กรและโปรไฟล์ได้', async () => {
-    if (!testEnv) return;
     const unauthDb = testEnv.unauthenticatedContext().firestore();
 
     // ปฏิเสธการอ่าน/เขียนข้อมูลองค์กร
@@ -156,7 +128,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   // TC-2 & TC-3: Tenant Isolation (Org A vs Org B)
   // =========================================================================
   it('TC-2: สมาชิก อปท. สุขสำราญ (Org A) อ่านและเขียนได้เฉพาะข้อมูลของ อปท. ตนเอง', async () => {
-    if (!testEnv) return;
     const orgADb = testEnv.authenticatedContext('user_suksamran_auditor', {
       orgId: 'org_suksamran',
       role: 'auditor'
@@ -174,7 +145,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   });
 
   it('TC-3: สมาชิก อปท. ริมน้ำ (Org B) ไม่สามารถเข้าถึงข้อมูลของ อปท. สุขสำราญ (Org A)', async () => {
-    if (!testEnv) return;
     const orgBDb = testEnv.authenticatedContext('user_rimnam_auditor', {
       orgId: 'org_rimnam',
       role: 'auditor'
@@ -192,7 +162,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   // TC-4: Privilege Escalation & Profile Protection
   // =========================================================================
   it('TC-4.1: ผู้ใช้ไม่สามารถอ่านโปรไฟล์ของผู้ใช้อื่นข้ามองค์กรหรือข้ามบัญชีได้', async () => {
-    if (!testEnv) return;
     const userDb = testEnv.authenticatedContext('user_suksamran_auditor', {
       orgId: 'org_suksamran',
       role: 'auditor'
@@ -205,36 +174,86 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
     await assertFails(userDb.doc('users/user_rimnam_auditor').get());
   });
 
-  it('TC-4.2: ผู้ใช้ไม่สามารถสร้างโปรไฟล์ตนเองโดยกำหนด role: admin หรือ system_admin', async () => {
-    if (!testEnv) return;
-    const newAdminDb = testEnv.authenticatedContext('new_user_1', {
+  it('TC-4.2a: ผู้ใช้ที่มี orgId ใน Auth Token สามารถสร้างโปรไฟล์ที่มี orgId ตรงกับ Token ได้', async () => {
+    const validUserDb = testEnv.authenticatedContext('new_auditor_suksamran', {
+      orgId: 'org_suksamran'
+    }).firestore();
+
+    // อนุญาตการสร้างโปรไฟล์เมื่อ orgId ตรงกับ Token และมี role ปกติ
+    await assertSucceeds(validUserDb.doc('users/new_auditor_suksamran').set({
+      orgId: 'org_suksamran',
+      role: 'auditor',
+      displayName: 'ผู้ตรวจการสุขสำราญคนใหม่'
+    }));
+  });
+
+  it('TC-4.2b: ปฏิเสธการสร้างโปรไฟล์เมื่อระบุ role: admin หรือ system_admin แม้ orgId จะถูกต้อง', async () => {
+    const selfAdminDb = testEnv.authenticatedContext('attempt_admin_user', {
       orgId: 'org_suksamran'
     }).firestore();
 
     // ปฏิเสธการสร้างโปรไฟล์ที่ระบุ role เป็น admin
-    await assertFails(newAdminDb.doc('users/new_user_1').set({
+    await assertFails(selfAdminDb.doc('users/attempt_admin_user').set({
       orgId: 'org_suksamran',
       role: 'admin',
       displayName: 'แอดมินปลอม'
     }));
 
     // ปฏิเสธการสร้างโปรไฟล์ที่ระบุ role เป็น system_admin
-    await assertFails(newAdminDb.doc('users/new_user_1').set({
+    await assertFails(selfAdminDb.doc('users/attempt_admin_user').set({
       orgId: 'org_suksamran',
       role: 'system_admin',
       displayName: 'แอดมินระบบปลอม'
     }));
+  });
 
-    // อนุญาตการสร้างโปรไฟล์ที่ระบุ role เป็น auditor หรือ viewer
-    await assertSucceeds(newAdminDb.doc('users/new_user_1').set({
+  it('TC-4.2c: ปฏิเสธการสร้างโปรไฟล์เมื่อ orgId ในข้อมูลไม่ตรงกับ orgId ใน Auth Token', async () => {
+    // ผู้ใช้ที่ Token ได้รับการรับรองสำหรับ อปท. สุขสำราญ (Org A)
+    const spoofUserDb = testEnv.authenticatedContext('spoof_user_1', {
+      orgId: 'org_suksamran'
+    }).firestore();
+
+    // พยายามสร้างโปรไฟล์ให้ตนเองไปสังกัด อปท. ริมน้ำ (Org B)
+    await assertFails(spoofUserDb.doc('users/spoof_user_1').set({
+      orgId: 'org_rimnam',
+      role: 'auditor',
+      displayName: 'ผู้ใช้พยายามข้ามองค์กร'
+    }));
+  });
+
+  it('TC-4.2d: ปฏิเสธการสร้างโปรไฟล์เมื่อไม่มี orgId ใน Auth Token แม้ผู้ใช้ส่ง orgId เป็นข้อความเอง', async () => {
+    // ผู้ใช้ที่ล็อกอินแล้วแต่ไม่มี Custom Claim orgId ใน Token
+    const unverifiedUserDb = testEnv.authenticatedContext('unverified_user_1', {}).firestore();
+
+    // ส่ง orgId เป็นข้อความเองโดยไม่มี Token Claim รองรับ
+    await assertFails(unverifiedUserDb.doc('users/unverified_user_1').set({
       orgId: 'org_suksamran',
       role: 'auditor',
-      displayName: 'ผู้ตรวจการใหม่'
+      displayName: 'ผู้ใช้ที่ยังไม่ได้รับการอนุมัติองค์กร'
+    }));
+  });
+
+  it('TC-4.2e: ยืนยันว่าการสร้างโปรไฟล์ที่ถูกปฏิเสธไม่ทำให้ผู้ใช้เข้าถึงข้อมูลขององค์กรเป้าหมายได้', async () => {
+    const unverifiedUserDb = testEnv.authenticatedContext('unverified_user_2', {}).firestore();
+
+    // 1. พยายามสร้างโปรไฟล์โดยไม่มี Claim -> ถูกปฏิเสธ
+    await assertFails(unverifiedUserDb.doc('users/unverified_user_2').set({
+      orgId: 'org_suksamran',
+      role: 'auditor',
+      displayName: 'ผู้ใช้ที่ไม่มีสิทธิ์'
+    }));
+
+    // 2. พยายามอ่านข้อมูลของ อปท. สุขสำราญ -> ต้องถูกปฏิเสธเด็ดขาด
+    await assertFails(unverifiedUserDb.doc('organizations/org_suksamran').get());
+    await assertFails(unverifiedUserDb.doc('organizations/org_suksamran/modules/annual_plans_by_year').get());
+
+    // 3. พยายามเขียนข้อมูลของ อปท. สุขสำราญ -> ต้องถูกปฏิเสธเด็ดขาด
+    await assertFails(unverifiedUserDb.doc('organizations/org_suksamran/modules/annual_plans_by_year').set({
+      hacked: true
     }));
   });
 
   it('TC-4.3: ผู้ใช้ไม่สามารถแก้ไข role, orgId หรือลบโปรไฟล์ของตนเองได้', async () => {
-    if (!testEnv) return;
     const userDb = testEnv.authenticatedContext('user_suksamran_auditor', {
       orgId: 'org_suksamran',
       role: 'auditor'
@@ -260,7 +279,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   // TC-5: System Settings Access Control (Real Document Paths)
   // =========================================================================
   it('TC-5: การควบคุมสิทธิ์ system_settings ตรงตามโครงสร้างเอกสารจริง', async () => {
-    if (!testEnv) return;
     const unauthDb = testEnv.unauthenticatedContext().firestore();
     const userDb = testEnv.authenticatedContext('user_suksamran_auditor', {
       orgId: 'org_suksamran',
@@ -291,7 +309,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   // TC-6: Legacy platform_users Lockdown
   // =========================================================================
   it('TC-6: คอลเลกชันเก่า platform_users ต้องถูกปฏิเสธการเข้าถึงทุกกรณี', async () => {
-    if (!testEnv) return;
     const userDb = testEnv.authenticatedContext('user_suksamran_auditor', {
       orgId: 'org_suksamran',
       role: 'auditor'
@@ -305,7 +322,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   // TC-7: System Administrator Capabilities & Anti-Tamper Verification
   // =========================================================================
   it('TC-7.1: ปฏิเสธสิทธิ์ System Admin หากผู้ใช้มี role: system_admin เฉพาะใน Firestore doc แต่ไม่มีใน Auth Token', async () => {
-    if (!testEnv) return;
     // user_attacker มีเอกสาร users/user_attacker ที่ระบุ role: 'system_admin'
     // แต่ Auth Token ของเขาไม่มี custom claims { admin: true }
     const attackerDb = testEnv.authenticatedContext('user_attacker', {
@@ -324,7 +340,6 @@ describe('Audit OS Firestore Multi-Tenant Security Rules', () => {
   });
 
   it('TC-7.2: ผู้ดูแลระบบที่มี Custom Claims (admin: true) ใน Auth Token สามารถจัดการระบบได้สมบูรณ์', async () => {
-    if (!testEnv) return;
     const adminDb = testEnv.authenticatedContext('admin_system', {
       orgId: 'org_central',
       admin: true // ยืนยันสิทธิ์จาก cryptographic token claim ที่เชื่อถือได้
