@@ -51,31 +51,61 @@ export default function AuditFollowUpView({
   const [selectedFindingForMemo, setSelectedFindingForMemo] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Helper to add days to a date string YYYY-MM-DD
-  const addDays = (dateStr, days) => {
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      d.setDate(d.getDate() + days);
-      return d.toISOString().split('T')[0];
-    } catch {
-      return dateStr;
+  // Parse date-only strings without timezone shifts. Support both Gregorian
+  // dates from HTML date inputs (e.g. 2026-10-16) and legacy Buddhist dates
+  // (e.g. 2569-10-16). Keep the input format when adding days.
+  const parseDateOnly = (dateStr) => {
+    if (typeof dateStr !== 'string') return null;
+    const match = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(dateStr);
+    if (!match) return null;
+
+    const inputYear = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const isBuddhistYear = inputYear >= 2400 && inputYear <= 2700;
+    const year = isBuddhistYear ? inputYear - 543 : inputYear;
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    // Reject impossible dates rather than silently normalizing them.
+    if (
+      month < 1 ||
+      month > 12 ||
+      day < 1 ||
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      return null;
     }
+
+    return { date, isBuddhistYear };
   };
 
-  // Helper to calculate days remaining
+  const formatDateOnly = (date, isBuddhistYear) => {
+    const year = date.getUTCFullYear() + (isBuddhistYear ? 543 : 0);
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Add calendar days while preserving whether the input uses Buddhist or Gregorian years.
+  const addDays = (dateStr, days) => {
+    const parsed = parseDateOnly(dateStr);
+    if (!parsed || !Number.isFinite(days)) return dateStr;
+
+    const date = new Date(parsed.date.getTime());
+    date.setUTCDate(date.getUTCDate() + Math.trunc(days));
+    return formatDateOnly(date, parsed.isBuddhistYear);
+  };
+
+  // Return remaining calendar days using local "today" and a timezone-safe date-only comparison.
   const calculateDaysRemaining = (deadlineStr) => {
-    try {
-      if (!deadlineStr) return 0;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const deadline = new Date(deadlineStr);
-      deadline.setHours(0, 0, 0, 0);
-      const diffTime = deadline - today;
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    } catch {
-      return 0;
-    }
+    const parsedDeadline = parseDateOnly(deadlineStr);
+    if (!parsedDeadline) return 0;
+
+    const now = new Date();
+    const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((parsedDeadline.date.getTime() - today) / 86400000);
   };
 
   // Default register findings
