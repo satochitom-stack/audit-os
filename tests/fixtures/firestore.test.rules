@@ -58,11 +58,16 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isSystemAdmin());
 
       // การสร้างโปรไฟล์: ผู้ใช้สร้างโปรไฟล์ของตนเองได้เท่านั้น (request.auth.uid == userId)
-      // ห้ามกำหนด role เป็น admin หรือ system_admin โดยเด็ดขาด
-      allow create: if isAuthenticated() 
+      // ข้อกำหนดความปลอดภัย:
+      // 1. ห้ามกำหนด role เป็น admin หรือ system_admin โดยเด็ดขาด (อนุญาตเฉพาะ viewer, auditor, user)
+      // 2. ป้องกันการเลือก orgId เอง: ต้องมี orgId ใน Auth Token ที่เชื่อถือได้ และค่า orgId ในเอกสารต้องตรงกับใน Token เท่านั้น
+      allow create: if isSystemAdmin() || (
+        isAuthenticated()
         && request.auth.uid == userId
         && (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role in ['viewer', 'auditor', 'user'])
-        && request.resource.data.orgId is string;
+        && request.auth.token.orgId != null
+        && request.resource.data.orgId == request.auth.token.orgId
+      );
 
       // การแก้ไขโปรไฟล์: ผู้ใช้ทั่วไปแก้ไขโปรไฟล์ตนเองได้ แต่ห้ามแก้ไขฟิลด์ role และ orgId โดยเด็ดขาด
       allow update: if isSystemAdmin() || (
