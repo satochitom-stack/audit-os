@@ -47,7 +47,7 @@ export default function AuditFollowUpView({
   const [activeTab, setActiveTab] = useState('register'); // 'register', 'memo'
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [regimeFilter, setRegimeFilter] = useState('all'); // 'all', 'moi_30', 'cgd_60'
+  const [regimeFilter, setRegimeFilter] = useState('all'); // 'all', 'moi_30', 'cgd_60', 'agency_defined'
   const [selectedFindingForMemo, setSelectedFindingForMemo] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -118,7 +118,9 @@ export default function AuditFollowUpView({
         department: 'กองคลัง',
         reportedDate: '2569-01-10',
         orderDate: '2569-01-15',
-        regime: 'moi_30', // 'moi_30' or 'cgd_60'
+        regime: 'agency_defined',
+        deadlineDays: 30,
+        deadlineBasis: 'ข้อมูลตัวอย่าง — ตรวจสอบและกำหนดตามบริบทจริง',
         deadlineDate: '2569-02-14',
         recommendation: 'ให้กองคลังเร่งรัดจัดทำงบกระทบยอดเงินฝากธนาคารทุกบัญชีเป็นประจำทุกสิ้นเดือนและรายงานผู้บริหารภายใน 15 วัน',
         status: 'overdue', // 'completed', 'in_progress', 'urgent', 'overdue'
@@ -131,7 +133,9 @@ export default function AuditFollowUpView({
         department: 'สำนักปลัด',
         reportedDate: '2569-02-01',
         orderDate: '2569-02-05',
-        regime: 'moi_30',
+        regime: 'agency_defined',
+        deadlineDays: 30,
+        deadlineBasis: 'ข้อมูลตัวอย่าง — ตรวจสอบและกำหนดตามบริบทจริง',
         deadlineDate: '2569-03-07',
         recommendation: 'กำชับพนักงานขับรถให้ลงบันทึกเลขไมล์เริ่มต้น-สิ้นสุด และคำนวณอัตราสิ้นเปลืองน้ำมันเชื้อเพลิงทุกครั้ง',
         status: 'completed',
@@ -144,7 +148,9 @@ export default function AuditFollowUpView({
         department: 'กองช่าง',
         reportedDate: '2569-02-10',
         orderDate: '2569-02-15',
-        regime: 'cgd_60', // หลักเกณฑ์ กค. 60 วัน
+        regime: 'agency_defined',
+        deadlineDays: 60,
+        deadlineBasis: 'ข้อมูลตัวอย่าง — ตรวจสอบและกำหนดตามบริบทจริง',
         deadlineDate: '2569-04-16',
         recommendation: 'ให้กองช่างประสานกองคลังเพื่อปรับปรุงฐานข้อมูลสินทรัพย์และสำรวจครุภัณฑ์จริงให้ตรงกับทะเบียนคุม',
         status: 'in_progress',
@@ -177,19 +183,36 @@ export default function AuditFollowUpView({
     saveRegister(updated);
   };
 
-  const handleUpdateRegime = (id, newRegime) => {
+  const handleUpdateRegime = (id, newRegime, customDays) => {
     const updated = registerItems.map((item) => {
-      if (item.id === id) {
-        const days = newRegime === 'cgd_60' ? 60 : 30;
-        const newDeadline = addDays(item.orderDate || new Date().toISOString().split('T')[0], days);
-        return {
-          ...item,
-          regime: newRegime,
-          deadlineDate: newDeadline,
-          updatedAt: new Date().toISOString().split('T')[0]
-        };
+      if (item.id !== id) return item;
+      const days = newRegime === 'cgd_60' ? 60 : newRegime === 'moi_30' ? 30 : Number(customDays ?? item.deadlineDays ?? 30);
+      if (!Number.isInteger(days) || days < 1 || days > 3650) return item;
+      return {
+        ...item,
+        regime: newRegime,
+        deadlineDays: days,
+        deadlineBasis: newRegime === 'agency_defined' ? (item.deadlineBasis || '') : '',
+        deadlineDate: addDays(item.orderDate || new Date().toISOString().split('T')[0], days),
+        updatedAt: new Date().toISOString().split('T')[0]
+      };
+    });
+    saveRegister(updated);
+  };
+  const handleUpdateDeadlineSetting = (id, field, value) => {
+    const updated = registerItems.map((item) => {
+      if (item.id !== id) return item;
+      const next = { ...item, [field]: value, updatedAt: new Date().toISOString().split('T')[0] };
+      if (field === 'deadlineDays') {
+        const days = Number(value);
+        if (Number.isInteger(days) && days >= 1 && days <= 3650) {
+          next.deadlineDate = addDays(item.orderDate || new Date().toISOString().split('T')[0], days);
+        } else {
+          // Do not leave an old deadline visible while the edited interval is invalid or empty.
+          next.deadlineDate = '';
+        }
       }
-      return item;
+      return next;
     });
     saveRegister(updated);
   };
@@ -225,7 +248,9 @@ export default function AuditFollowUpView({
     title: '',
     department: 'กองคลัง',
     orderDate: new Date().toISOString().split('T')[0],
-    regime: 'moi_30',
+    regime: 'agency_defined',
+    deadlineDays: 30,
+    deadlineBasis: '',
     recommendation: '',
     progressNotes: ''
   });
@@ -234,7 +259,9 @@ export default function AuditFollowUpView({
     e.preventDefault();
     if (!newItem.title.trim()) return;
 
-    const days = newItem.regime === 'cgd_60' ? 60 : 30;
+    const days = newItem.regime === 'cgd_60' ? 60 : newItem.regime === 'moi_30' ? 30 : Number(newItem.deadlineDays);
+    if (!Number.isInteger(days) || days < 1 || days > 3650) return;
+    if (newItem.regime === 'agency_defined' && !newItem.deadlineBasis.trim()) return;
     const deadlineDate = addDays(newItem.orderDate, days);
 
     const item = {
@@ -244,6 +271,8 @@ export default function AuditFollowUpView({
       reportedDate: newItem.orderDate,
       orderDate: newItem.orderDate,
       regime: newItem.regime,
+      deadlineDays: days,
+      deadlineBasis: newItem.deadlineBasis.trim(),
       deadlineDate: deadlineDate,
       recommendation: newItem.recommendation,
       status: 'in_progress',
@@ -258,7 +287,9 @@ export default function AuditFollowUpView({
       title: '',
       department: 'กองคลัง',
       orderDate: new Date().toISOString().split('T')[0],
-      regime: 'moi_30',
+      regime: 'agency_defined',
+      deadlineDays: 30,
+      deadlineBasis: '',
       recommendation: '',
       progressNotes: ''
     });
@@ -316,7 +347,13 @@ export default function AuditFollowUpView({
   }, [registerItems]);
 
   const currentMemoItem = selectedFindingForMemo || registerItems[0] || defaultItems[0];
-  const isCgdRegime = currentMemoItem.regime === 'cgd_60';
+  const deadlineDays = Number(currentMemoItem.deadlineDays) || (currentMemoItem.regime === 'cgd_60' ? 60 : currentMemoItem.regime === 'moi_30' ? 30 : null);
+  const deadlineDaysThai = deadlineDays == null ? 'ตามกำหนดที่ระบุ' : toThaiDigits(String(deadlineDays));
+  const deadlineBasisText = currentMemoItem.regime === 'agency_defined'
+    ? `กรอบเวลาที่หน่วยงานกำหนด (${currentMemoItem.deadlineBasis || 'ยังไม่ได้ระบุฐานการกำหนด'})`
+    : currentMemoItem.regime === 'cgd_60'
+      ? 'หลักอ้างอิงที่ผู้ใช้เลือก: กค. (โปรดตรวจสอบฉบับที่ใช้บังคับ)'
+      : 'หลักอ้างอิงที่ผู้ใช้เลือก: มท. (โปรดตรวจสอบฉบับที่ใช้บังคับ)';
 
   const handleDownloadWord = () => {
     if (activeTab === 'memo') {
@@ -324,21 +361,21 @@ export default function AuditFollowUpView({
         agency: `${orgProfile?.agencyName || 'หน่วยตรวจสอบภายใน'} ${orgProfile?.name || 'อปท.'}`,
         docNumber: `มท ๐๘๐๘/${selectedYear}/ว...`,
         date: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-        subject: `ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'}`,
+        subject: `ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${deadlineDays == null ? 'ตามกำหนดที่ระบุ' : `${deadlineDaysThai} วัน`}`, 
         to: `ผู้อำนวยการ${currentMemoItem.department || 'หน่วยรับตรวจ'}`,
         content: `
           <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-            ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ในภารกิจ "${currentMemoItem.title}" และ นายก${orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ ${currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} นั้น
+            ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ในภารกิจ "${currentMemoItem.title}" และ นายก${orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ ${currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด ${deadlineDays == null ? 'ตามกรอบเวลาที่ระบุไว้' : `${deadlineDaysThai} วัน`} นั้น
           </p>
           <p style="text-indent: 2.5cm; margin-bottom: 8pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-            บัดนี้ ได้ครบกำหนดระยะเวลา ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} แล้ว (ครบกำหนดวันที่ ${currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม ${isCgdRegime ? 'หลักเกณฑ์ปฏิบัติการตรวจสอบภายในสำหรับหน่วยงานของรัฐ พ.ศ. ๒๕๖๑ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๔) พ.ศ. ๒๕๖๖' : 'ระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๑'} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว
+            บัดนี้ ถึงกำหนดติดตามผลตามกรอบเวลา ${deadlineDays == null ? 'ที่ระบุไว้' : `${deadlineDaysThai} วัน`} (ครบกำหนดวันที่ ${currentMemoItem.deadlineDate || '...'}) โดยใช้ฐานการกำหนดว่า ${deadlineBasisText} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว
           </p>
           <div style="margin: 10pt 0; padding: 8pt; border: 1pt solid #ccc; font-family: 'TH Sarabun PSK';">
             <p style="margin: 0; font-weight: bold; font-size: 16pt;">ข้อเสนอแนะที่ต้องติดตาม:</p>
             <p style="margin: 4pt 0 0 0; font-size: 16pt;">${currentMemoItem.recommendation || '-'}</p>
           </div>
           <p style="text-indent: 2.5cm; margin-top: 10pt; margin-bottom: 16pt; text-align: justify; line-height: 1.35; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-            จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป
+            จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายในระยะเวลาที่กำหนด เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป
           </p>
         `,
         signatoryName: effectiveAuditorName,
@@ -419,7 +456,7 @@ export default function AuditFollowUpView({
       i + 1,
       item.title || '',
       item.department || '',
-      item.regime === 'cgd_60' ? 'เกณฑ์ กค. 60 วัน' : 'ระเบียบ มท. 30 วัน',
+      item.regime === 'cgd_60' ? 'ผู้ใช้เลือกอ้างอิง กค. (ตรวจสอบฉบับที่ใช้บังคับ)' : item.regime === 'moi_30' ? 'ผู้ใช้เลือกอ้างอิง มท. (ตรวจสอบฉบับที่ใช้บังคับ)' : `หน่วยงานกำหนด ${item.deadlineDays || ''} วัน: ${item.deadlineBasis || 'ไม่ระบุฐาน'}`, 
       item.condition || '',
       item.recommendation || '',
       item.orderDate || '',
@@ -479,8 +516,8 @@ export default function AuditFollowUpView({
         <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col justify-between">
           <div className="text-[11px] font-bold text-stone-500 dark:text-stone-400">กรอบเวลาตามเกณฑ์</div>
           <div className="text-xs space-y-1 font-bold">
-            <div className="text-amber-800 dark:text-amber-300">🏛️ มท. 2545: 30 วัน</div>
-            <div className="text-stone-700 dark:text-stone-300">💼 กค. 2561: 60 วัน</div>
+            <div className="text-stone-700 dark:text-stone-300">กำหนดตามข้อกำหนดที่ใช้บังคับ</div>
+            <div className="text-stone-500 dark:text-stone-400">หากไม่มีข้อกำหนดชัดเจน ให้หน่วยงานกำหนดเอง</div>
           </div>
         </div>
       </div>
@@ -509,7 +546,7 @@ export default function AuditFollowUpView({
             }`}
           >
             <Send className="w-4 h-4" />
-            <span>บันทึกข้อความติดตามผล (เตือนครบกำหนด 30/60 วัน)</span>
+            <span>บันทึกข้อความติดตามผลตามกำหนดของรายการ</span>
           </button>
         </div>
 
@@ -581,9 +618,10 @@ export default function AuditFollowUpView({
                 onChange={(e) => setRegimeFilter(e.target.value)}
                 className="text-xs p-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold outline-none cursor-pointer"
               >
-                <option value="all">ทุกกรอบเวลา (มท. 30 วัน & กค. 60 วัน)</option>
-                <option value="moi_30">ระเบียบ มท. (30 วัน)</option>
-                <option value="cgd_60">หลักเกณฑ์ กค. (60 วัน)</option>
+                <option value="all">ทุกกรอบเวลา</option>
+                <option value="moi_30">ผู้ใช้เลือกอ้างอิง มท.</option>
+                <option value="cgd_60">ผู้ใช้เลือกอ้างอิง กค.</option>
+                <option value="agency_defined">กรอบเวลาที่หน่วยงานกำหนด</option>
               </select>
 
               {/* Status Filter */}
@@ -638,14 +676,28 @@ export default function AuditFollowUpView({
                       <td className="py-3 px-3 space-y-1">
                         <div className="flex items-center space-x-1">
                           <select
-                            value={item.regime || 'moi_30'}
+                            value={item.regime || 'agency_defined'}
                             onChange={(e) => handleUpdateRegime(item.id, e.target.value)}
                             className="text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 outline-none cursor-pointer"
                           >
-                            <option value="moi_30">มท. 30 วัน</option>
-                            <option value="cgd_60">กค. 60 วัน</option>
+                            <option value="agency_defined">หน่วยงานกำหนด</option>
+                            <option value="moi_30">ผู้ใช้เลือกอ้างอิง มท. (30 วัน)</option>
+                            <option value="cgd_60">ผู้ใช้เลือกอ้างอิง กค. (60 วัน)</option>
                           </select>
                         </div>
+                        {item.regime === 'agency_defined' && (
+                          <div className="mt-2 space-y-1.5">
+                            <input type="number" min="1" max="3650" value={item.deadlineDays ?? ''}
+                              onChange={(e) => handleUpdateDeadlineSetting(item.id, 'deadlineDays', e.target.value)}
+                              aria-label="จำนวนวันติดตามที่หน่วยงานกำหนด"
+                              className="w-full text-[10px] p-1.5 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800" />
+                            <input type="text" value={item.deadlineBasis || ''}
+                              onChange={(e) => handleUpdateDeadlineSetting(item.id, 'deadlineBasis', e.target.value)}
+                              placeholder="ฐาน/เหตุผลที่กำหนดเวลา"
+                              aria-label="ฐานหรือเหตุผลที่หน่วยงานกำหนดเวลา"
+                              className="w-full text-[10px] p-1.5 rounded-md border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800" />
+                          </div>
+                        )}
                         <div className="font-mono font-bold text-stone-800 dark:text-stone-200">
                           {item.deadlineDate}
                         </div>
@@ -732,7 +784,7 @@ export default function AuditFollowUpView({
             phone={orgProfile?.phone || ''}
             docNumber={`มท ๐๘๐๘/${selectedYear}/ว...`}
             date={new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
-            subject={`ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'}`}
+            subject={`ติดตามผลการดำเนินการตามข้อเสนอแนะการตรวจสอบภายใน ครบกำหนด ${deadlineDays == null ? 'ตามกำหนดที่ระบุ' : `${deadlineDaysThai} วัน`}`}
             to={`ผู้อำนวยการ${currentMemoItem.department || 'หน่วยรับตรวจ'}`}
             signatory={{
               name: effectiveAuditorName,
@@ -742,17 +794,17 @@ export default function AuditFollowUpView({
             showReviewBoxes={false}
           >
             <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed">
-              {toThaiDigits(`ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ในภารกิจ "${currentMemoItem.title}" และ นายก${orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ ${currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} นั้น`)}
+              {toThaiDigits(`ตามที่ หน่วยตรวจสอบภายในได้รายงานผลการตรวจสอบภายในประจำปีงบประมาณ พ.ศ. ${selectedYear} ในภารกิจ "${currentMemoItem.title}" และ นายก${orgProfile?.name || 'อปท.'} ได้มีข้อสั่งการเมื่อวันที่ ${currentMemoItem.orderDate || '...'} ให้หน่วยงานของท่านดำเนินการปรับปรุงแก้ไขข้อบกพร่องตามข้อเสนอแนะภายในกำหนด ${deadlineDays == null ? 'ตามกำหนดที่ระบุ' : `${deadlineDaysThai} วัน`} นั้น`)}
             </p>
             <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed">
-              {toThaiDigits(`บัดนี้ ได้ครบกำหนดระยะเวลา ${isCgdRegime ? '๖๐ วัน' : '๓๐ วัน'} แล้ว (ครบกำหนดวันที่ ${currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม ${isCgdRegime ? 'หลักเกณฑ์ปฏิบัติการตรวจสอบภายในสำหรับหน่วยงานของรัฐ พ.ศ. ๒๕๖๑ และที่แก้ไขเพิ่มเติม (ฉบับที่ ๔) พ.ศ. ๒๕๖๖' : 'ระเบียบกระทรวงมหาดไทยว่าด้วยการตรวจสอบภายในขององค์กรปกครองส่วนท้องถิ่น พ.ศ. ๒๕๔๕ ข้อ ๒๑'} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว`)}
+              {toThaiDigits(`บัดนี้ ได้ครบกำหนดระยะเวลา ${deadlineDays == null ? 'ตามกำหนดที่ระบุ' : `${deadlineDaysThai} วัน`} แล้ว (ครบกำหนดวันที่ ${currentMemoItem.deadlineDate || '...'}) เพื่อให้การติดตามผลการตรวจสอบภายในเป็นไปตาม ${deadlineBasisText} หน่วยตรวจสอบภายในจึงขอติดตามผลความคืบหน้าการปรับปรุงแก้ไขในประเด็นดังกล่าว`)}
             </p>
             <div className="p-3.5 bg-stone-50 border border-stone-300 rounded-none space-y-1 my-2">
               <div className="font-bold text-black">ข้อเสนอแนะที่ต้องติดตาม:</div>
               <div className="text-stone-900 whitespace-pre-line leading-relaxed">{toThaiDigits(currentMemoItem.recommendation)}</div>
             </div>
             <p style={{ textIndent: '2.5cm' }} className="m-0 text-justify leading-relaxed pt-2">
-              {toThaiDigits(`จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายใน ๗ วันทำการ เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป`)}
+              {toThaiDigits(`จึงเรียนมาเพื่อโปรดรายงานผลการดำเนินการพร้อมแนบเอกสารหลักฐานที่เกี่ยวข้อง ส่งกลับมายังหน่วยตรวจสอบภายในภายในระยะเวลาที่กำหนด เพื่อรวบรวมรายงานต่อนายก${orgProfile?.name || 'อปท.'} ต่อไป`)}
             </p>
           </OfficialThaiMemo>
         </div>
@@ -810,18 +862,36 @@ export default function AuditFollowUpView({
 
                 <div>
                   <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
-                    กรอบเวลากฎหมาย:
+                    ฐานกำหนดเวลา:
                   </label>
                   <select
                     value={newItem.regime}
                     onChange={(e) => setNewItem({ ...newItem, regime: e.target.value })}
                     className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none font-bold"
                   >
-                    <option value="moi_30">ระเบียบ มท. (30 วัน)</option>
-                    <option value="cgd_60">หลักเกณฑ์ กค. (60 วัน)</option>
+                    <option value="agency_defined">หน่วยงานกำหนดเอง</option>
+                    <option value="moi_30">ผู้ใช้เลือกอ้างอิง มท. (30 วัน)</option>
+                    <option value="cgd_60">ผู้ใช้เลือกอ้างอิง กค. (60 วัน)</option>
                   </select>
                 </div>
               </div>
+              {newItem.regime === 'agency_defined' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">กำหนดเวลา (วัน):</label>
+                    <input type="number" min="1" max="3650" required value={newItem.deadlineDays}
+                      onChange={(e) => setNewItem({ ...newItem, deadlineDays: e.target.value })}
+                      className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800" />
+                  </div>
+                  <div>
+                    <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">ฐาน/เหตุผล:</label>
+                    <input type="text" required value={newItem.deadlineBasis}
+                      onChange={(e) => setNewItem({ ...newItem, deadlineBasis: e.target.value })}
+                      placeholder="เช่น มติ/คำสั่ง/แนวทางหน่วยงาน"
+                      className="w-full p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800" />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="font-bold text-stone-700 dark:text-stone-300 block mb-1">
