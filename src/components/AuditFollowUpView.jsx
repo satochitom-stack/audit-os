@@ -203,8 +203,14 @@ export default function AuditFollowUpView({
     const updated = registerItems.map((item) => {
       if (item.id !== id) return item;
       const next = { ...item, [field]: value, updatedAt: new Date().toISOString().split('T')[0] };
-      if (field === 'deadlineDays' && Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 3650) {
-        next.deadlineDate = addDays(item.orderDate || new Date().toISOString().split('T')[0], Number(value));
+      if (field === 'deadlineDays') {
+        const days = Number(value);
+        if (Number.isInteger(days) && days >= 1 && days <= 3650) {
+          next.deadlineDate = addDays(item.orderDate || new Date().toISOString().split('T')[0], days);
+        } else {
+          // Do not leave an old deadline visible while the edited interval is invalid or empty.
+          next.deadlineDate = '';
+        }
       }
       return next;
     });
