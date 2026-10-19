@@ -1292,32 +1292,9 @@ export default function App() {
     }
     scopedDynamicKeys.forEach((key) => localStorage.removeItem(key));
 
-    // Unscoped legacy keys may be shared/ambiguous, so only admin may clear them.
-    const isAdminSession = session?.role === 'admin' || session?.username?.toLowerCase() === 'admin';
-    if (isAdminSession) {
-      [
-        'ia_annual_plans_by_year',
-        'ia_working_papers_by_year',
-        'ia_risk_assessments_by_year',
-        'ia_internal_controls_by_year',
-        'ia_risk_management_by_year',
-        'ia_lpa_indicators_by_year',
-        'ia_audit_charter_by_year',
-        'ia_audit_universe_by_year',
-        'ia_engagement_plans_by_year',
-        'ia_org_profile',
-        'ia_annual_plans',
-        'ia_working_papers',
-        'ia_risk_assessments',
-        'ia_internal_controls',
-        'ia_risk_management',
-        'ia_lpa_indicators',
-        'ia_strategic_plan',
-        'ia_strategic_activities_v2',
-        'ia_capa_findings_by_year',
-        'ia_risk_feedback_linkages_by_year'
-      ].forEach((key) => localStorage.removeItem(key));
-    }
+    // Phase 6A Tenant Isolation:
+    // Only the active tenant's scoped keys are reset. Unscoped legacy keys are NEVER deleted,
+    // ensuring legacy datasets remain completely intact and available for recovery.
   };
 
   // Consolidate tenant audit dataset for Google Sheets BYOD sync, backups, and safety snapshots
@@ -1423,11 +1400,8 @@ export default function App() {
         });
       },
       applyImportCallback: (validatedPayload) => {
-        // Platform-global datasets (users, departments) must NOT be overwritten by normal tenant imports
-        if (session?.role === 'admin') {
-          if (validatedPayload.users && Array.isArray(validatedPayload.users)) saveUsers(validatedPayload.users);
-          if (validatedPayload.departments && Array.isArray(validatedPayload.departments)) saveDepartments(validatedPayload.departments);
-        }
+        // Platform-global datasets (users, departments) are NEVER overwritten by normal tenant imports,
+        // even if the active session has an 'admin' role. Tenant imports are strictly scoped to the tenant workspace.
         if (validatedPayload.orgProfile) setOrgProfile(validatedPayload.orgProfile);
         if (validatedPayload.fiscalYears) setFiscalYears(validatedPayload.fiscalYears);
         if (validatedPayload.auditUniverseByYear) setAuditUniverseByYear(validatedPayload.auditUniverseByYear);

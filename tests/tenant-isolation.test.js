@@ -1219,6 +1219,132 @@ await runTest('Condition 10.9: Auditor data export does not expose platform user
   assert.equal(adminPlatformExport.users.length, 2);
 });
 
+// =========================================================================
+// Test 10.10: Admin importing tenant backup with unexpected users/departments cannot overwrite platform globals
+// =========================================================================
+await runTest('Condition 10.10: Admin importing tenant backup cannot overwrite platform users or departments', async () => {
+  mockStorage.clear();
+  persistentDatabases.clear();
+
+  const originalUsers = [
+    { username: 'admin', role: 'admin', hash: 'super-admin-hash' },
+    { username: 'auditor_real', role: 'auditor', hash: 'auditor-hash' }
+  ];
+  const originalDepts = ['สำนักปลัด', 'กองคลัง', 'กองช่าง'];
+
+  mockStorage.set('ia_auth_users', JSON.stringify(originalUsers));
+  mockStorage.set('ia_departments', JSON.stringify(originalDepts));
+
+  const adminUser = { username: 'admin', organization: 'อบต. ศูนย์กลาง', role: 'admin' };
+  const adminApp = createSimulatedTenantApp(adminUser, {
+    workingPapersByYear: { '2569': [{ id: 'WP-ADMIN-GENUINE' }] }
+  });
+
+  // Incoming tenant backup contains rogue/tampered users and departments
+  const rogueTenantBackup = {
+    version: '2.6.2',
+    orgProfile: { name: 'อบต. ศูนย์กลาง' },
+    users: [{ username: 'attacker', role: 'admin', hash: 'hacked' }],
+    departments: ['กองปลอม'],
+    workingPapersByYear: { '2569': [{ id: 'WP-NEW-IMPORTED' }] }
+  };
+
+  // Execute safe import with an admin session
+  // In App.jsx, normal tenant import applyImportCallback NEVER touches users or departments
+  const result = await orchestrateSafeImport({
+    backupPayload: rogueTenantBackup,
+    currentTenantData: adminApp.getAuditData(),
+    session: adminUser,
+    confirmCallback: async () => true,
+    applyImportCallback: (validatedPayload) => {
+      // Mirror updated App.jsx applyImportCallback:
+      // Platform-global users and departments are explicitly ignored
+      adminApp.applyImport(validatedPayload);
+    }
+  });
+
+  assert.equal(result.success, true);
+
+  // Platform-global users must be 100% UNCHANGED
+  const afterUsers = JSON.parse(mockStorage.get('ia_auth_users'));
+  assert.equal(afterUsers.length, 2);
+  assert.equal(afterUsers.some((u) => u.username === 'auditor_real'), true);
+  assert.equal(afterUsers.some((u) => u.username === 'attacker'), false, 'Rogue user must not be injected');
+
+  // Platform-global departments must be 100% UNCHANGED
+  const afterDepts = JSON.parse(mockStorage.get('ia_departments'));
+  assert.deepEqual(afterDepts, originalDepts);
+
+  // Tenant working paper was updated
+  assert.equal(adminApp.state.workingPapersByYear['2569'][0].id, 'WP-NEW-IMPORTED');
+});
+
+// =========================================================================
+// Test 10.11: Reset Data and Safety Snapshot Recovery NEVER delete legacy recovery keys
+// =========================================================================
+await runTest('Condition 10.11: Reset Data and Snapshot Recovery NEVER delete legacy recovery keys', async () => {
+  mockStorage.clear();
+  persistentDatabases.clear();
+
+  // 1. Establish pre-existing unscoped legacy keys intended for migration/recovery
+  const legacyUniverse = JSON.stringify({ '2569': [{ id: 'LEGACY-AU-IMMUTABLE' }] });
+  const legacyWp = JSON.stringify({ '2569': [{ id: 'LEGACY-WP-IMMUTABLE' }] });
+  const legacyPlan = JSON.stringify({ '2569': [{ id: 'LEGACY-PLAN-IMMUTABLE' }] });
+  const legacyProfile = JSON.stringify({ name: 'อบต. ข้อมูลเดิม 2568' });
+
+  mockStorage.set('ia_audit_universe_by_year', legacyUniverse);
+  mockStorage.set('ia_working_papers_by_year', legacyWp);
+  mockStorage.set('ia_annual_plans_by_year', legacyPlan);
+  mockStorage.set('ia_org_profile', legacyProfile);
+
+  const user = { username: 'reset_tester', organization: 'อบต. ทดสอบรีเซ็ต', role: 'auditor' };
+  const admin = { username: 'admin', organization: 'อบต. ทดสอบรีเซ็ต', role: 'admin' };
+
+  // Pre-seed tenant's scoped data
+  saveTenantData('ia_working_papers_by_year', { '2569': [{ id: 'WP-SCOPED-TO-BE-RESET' }] }, user);
+  const tenantKey = getTenantStorageKey('ia_working_papers_by_year', user);
+  assert.ok(mockStorage.get(tenantKey), 'Tenant scoped key must exist before reset');
+
+  // Simulate updated App.jsx handleResetData behavior:
+  // Scoped base keys are removed, but legacy keys are NEVER removed even if session is admin
+  const simulateReset = (currentSession) => {
+    const scopedKeys = ['ia_working_papers_by_year', 'ia_annual_plans_by_year', 'ia_audit_universe_by_year', 'ia_org_profile'];
+    scopedKeys.forEach((key) => {
+      mockStorage.delete(getTenantStorageKey(key, currentSession));
+    });
+    // Legacy keys are strictly preserved
+  };
+
+  // Run reset as auditor
+  simulateReset(user);
+  assert.equal(mockStorage.get(tenantKey), undefined, 'Scoped key must be cleared on reset');
+  assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp, 'Legacy WP must not be deleted on auditor reset');
+  assert.equal(mockStorage.get('ia_audit_universe_by_year'), legacyUniverse, 'Legacy AU must not be deleted');
+
+  // Run reset as admin
+  simulateReset(admin);
+  assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp, 'Legacy WP must not be deleted even on admin reset');
+  assert.equal(mockStorage.get('ia_annual_plans_by_year'), legacyPlan, 'Legacy Plan must not be deleted');
+  assert.equal(mockStorage.get('ia_org_profile'), legacyProfile, 'Legacy Profile must not be deleted');
+
+  // Verify Snapshot recovery also leaves legacy keys untouched
+  const snap = await createTenantSafetySnapshot({
+    workingPapersByYear: { '2569': [{ id: 'WP-FOR-RECOVERY-TEST' }] }
+  }, user);
+  assert.equal(snap.success, true);
+  const restoreRes = await restoreLatestSafetySnapshot({
+    session: user,
+    applyCallback: () => {}
+  });
+  assert.equal(restoreRes.success, true);
+
+  // All legacy keys remain 100% byte-for-byte identical
+  assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp);
+  assert.equal(mockStorage.get('ia_audit_universe_by_year'), legacyUniverse);
+  assert.equal(mockStorage.get('ia_annual_plans_by_year'), legacyPlan);
+  assert.equal(mockStorage.get('ia_org_profile'), legacyProfile);
+});
+
 console.log(`\n======================================================`);
 console.log(`Phase 6A Tenant Isolation Suite Completed: ${testsPassed}/${testsTotal} passed`);
 console.log(`======================================================\n`);
