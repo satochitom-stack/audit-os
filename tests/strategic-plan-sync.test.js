@@ -182,18 +182,44 @@ console.log('🧪 Starting Strategic Plan to Annual Plan Integration Unit Tests.
     { id: 'ST-01', name: 'ตรวจสอบ e-LAAS', department: 'กองคลัง', y1: true, y2: true, y3: false }
   ];
 
-  saveUnifiedStrategicPlan(sampleItems, '2569');
+  saveUnifiedStrategicPlan(sampleItems, '2569', { username: 'admin', role: 'admin' });
 
-  // Verify it saved to both keys for backward compatibility
-  assert.ok(storage.has('ia_strategic_plan'));
-  assert.ok(storage.has('ia_strategic_activities_v2'));
+  // Admin writes use the scoped admin keys; legacy unscoped records are not newly written.
+  assert.ok(storage.has('ia_strategic_plan_tenant_admin'));
+  assert.ok(storage.has('ia_strategic_activities_v2_tenant_admin'));
+  assert.equal(storage.has('ia_strategic_plan'), false);
+  assert.equal(storage.has('ia_strategic_activities_v2'), false);
 
-  const loaded = loadUnifiedStrategicPlan('2569');
+  const loaded = loadUnifiedStrategicPlan('2569', [], { username: 'admin', role: 'admin' });
   assert.equal(loaded.length, 1);
   assert.equal(loaded[0].name, 'ตรวจสอบ e-LAAS');
   assert.equal(loaded[0].years['2569'], true);
 
   console.log('  ✅ Test 5 Passed: Storage Load & Save Compatibility Roundtrip');
+}
+
+// -------------------------------------------------------------
+// Test 6: Two tenant workspaces cannot load or overwrite each other's plans
+// -------------------------------------------------------------
+{
+  const storage = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => storage.has(key) ? storage.get(key) : null,
+    setItem: (key, val) => storage.set(key, String(val)),
+    removeItem: (key) => storage.delete(key),
+    clear: () => storage.clear()
+  };
+
+  const tenantA = { username: 'auditor_a', role: 'auditor' };
+  const tenantB = { username: 'auditor_b', role: 'auditor' };
+  saveUnifiedStrategicPlan([{ id: 'A', name: 'แผนของ A', y1: true }], '2569', tenantA);
+  saveUnifiedStrategicPlan([{ id: 'B', name: 'แผนของ B', y1: true }], '2569', tenantB);
+
+  assert.equal(loadUnifiedStrategicPlan('2569', [], tenantA)[0].name, 'แผนของ A');
+  assert.equal(loadUnifiedStrategicPlan('2569', [], tenantB)[0].name, 'แผนของ B');
+  assert.equal(storage.has('ia_strategic_plan'), false);
+  assert.equal(storage.has('ia_strategic_activities_v2'), false);
+  console.log('  ✅ Test 6 Passed: Strategic Plan Tenant Isolation');
 }
 
 console.log('\n🎉 ALL STRATEGIC TO ANNUAL PLAN INTEGRATION TESTS PASSED!\n');
