@@ -190,7 +190,13 @@ export default function ReportingView({
     if (editingFinding) {
       // Update existing
       const updated = findingsList.map((item) =>
-        item.id === editingFinding.id ? { ...item, ...newCapa } : item
+        item.id === editingFinding.id
+          ? {
+              ...item,
+              ...newCapa,
+              recommendation: newCapa.recommendation || newCapa.auditorOpinion || newCapa.correctiveAction || item.recommendation || item.title
+            }
+          : item
       );
       setCapaFindings(updated);
       showToast(`อัปเดตข้อมูลข้อทักท้วง "${newCapa.title}" เรียบร้อยแล้ว`);
@@ -202,6 +208,7 @@ export default function ReportingView({
       const itemToAdd = {
         ...newCapa,
         id: newId,
+        recommendation: newCapa.recommendation || newCapa.auditorOpinion || newCapa.correctiveAction || newCapa.title,
         verifiedDate: newCapa.status === 'verified_closed' ? getTodayISO() : ''
       };
       setCapaFindings([itemToAdd, ...findingsList]);
@@ -1211,7 +1218,19 @@ export default function ReportingView({
                           {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                         </button>
 
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {onNavigateToTab && (
+                            <button
+                              type="button"
+                              onClick={() => onNavigateToTab('tracking-register')}
+                              className="bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800 font-bold px-3 py-1.5 rounded-xl cursor-pointer transition-colors shadow-2xs inline-flex items-center space-x-1"
+                              title="เปิดทะเบียนคุมและติดตามผลข้อเสนอแนะ"
+                            >
+                              <FileSpreadsheet className="w-3.5 h-3.5 text-amber-600" />
+                              <span>ทะเบียนติดตามผล</span>
+                            </button>
+                          )}
+
                           {!isClosed && (
                             <button
                               type="button"

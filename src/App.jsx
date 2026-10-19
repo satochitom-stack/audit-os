@@ -64,6 +64,7 @@ import {
   pullPendingUsersFromCloud,
   loadTenantData,
   saveTenantData,
+  getTenantStorageKey,
   getSystemSettings
 } from './utils/auth';
 import { cloudSyncService, mergeRiskManagement } from './services/cloudSyncService';
@@ -403,15 +404,15 @@ export default function App() {
   // Persistent States isolated by fiscal year
   const [annualPlansByYear, setAnnualPlansByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_annual_plans_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_annual_plans_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         if (!parsed['2569'] && parsed['2568']) parsed['2569'] = parsed['2568'];
         return parsed;
       }
-      const old = localStorage.getItem('ia_annual_plans');
-      if (old) {
-        const parsed = JSON.parse(old);
+      const old = currentSession ? loadTenantData('ia_annual_plans', null, currentSession) : null;
+      if (Array.isArray(old)) {
+        const parsed = old;
         if (Array.isArray(parsed)) {
           if (parsed.some((p) => p.title?.includes('ค่าเช่าบ้าน') || p.id === 'PLAN-68-01')) {
             return { '2569': [] };
@@ -427,16 +428,16 @@ export default function App() {
 
   const [workingPapersByYear, setWorkingPapersByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_working_papers_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_working_papers_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         if (!parsed['2569'] && parsed['2568']) parsed['2569'] = parsed['2568'];
         if (!parsed['2570'] || parsed['2570'].length === 0) parsed['2570'] = initialWorkingPapers2570;
         return parsed;
       }
-      const old = localStorage.getItem('ia_working_papers');
-      if (old) {
-        const parsed = JSON.parse(old);
+      const old = currentSession ? loadTenantData('ia_working_papers', null, currentSession) : null;
+      if (Array.isArray(old)) {
+        const parsed = old;
         if (Array.isArray(parsed)) {
           return { '2569': parsed, '2570': initialWorkingPapers2570 };
         }
@@ -613,9 +614,9 @@ export default function App() {
   // Audit Universe Risk Assessment state isolated by fiscal year
   const [auditUniverseByYear, setAuditUniverseByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_audit_universe_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_audit_universe_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         if (!parsed['2569']) {
           parsed['2569'] = parsed['2568'] || defaultAuditUniverse;
         }
@@ -631,9 +632,9 @@ export default function App() {
   // Audit Engagement Plans state (ว 614) isolated by fiscal year
   const [engagementPlansByYear, setEngagementPlansByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_engagement_plans_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_engagement_plans_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         if (!parsed['2569']) {
           parsed['2569'] = createEngagementPlansForYear('2569');
         }
@@ -664,8 +665,9 @@ export default function App() {
   // Strategic Multi-Year Audit Plan (3 - 5 ปี) state
   const [strategicPlan, setStrategicPlan] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_strategic_plan');
-      if (saved) return JSON.parse(saved);
+      const currentSession = getSession();
+      const saved = currentSession ? loadTenantData('ia_strategic_plan', null, currentSession) : null;
+      if (Array.isArray(saved)) return saved;
     } catch (e) {
       console.error(e);
     }
@@ -675,9 +677,9 @@ export default function App() {
   // CAPA Findings Tracker state isolated by fiscal year
   const [capaFindingsByYear, setCapaFindingsByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_capa_findings_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_capa_findings_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         const sampleCapaIds = [
           'CAPA-OAG-69-01', 'CAPA-IA-69-01', 'CAPA-INSP-69-01', 'CAPA-FIN-69-01', 'CAPA-ENG-69-01',
           'CAPA-2569-001', 'CAPA-2569-002', 'CAPA-2569-003'
@@ -705,6 +707,25 @@ export default function App() {
     }
     return { '2569': [], '2570': [] };
   });
+
+  // Risk Feedback Loop Linkages state isolated by fiscal year and tenant
+  const [riskFeedbackLinkagesByYear, setRiskFeedbackLinkagesByYear] = useState(() => {
+    try {
+      const currentSession = getSession();
+      const saved = currentSession
+        ? loadTenantData('ia_risk_feedback_linkages_by_year', null, currentSession)
+        : null;
+      if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+        return saved;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return { '2569': [], '2570': [] };
+  });
+
+  // Persistence is gated until tenant state has reloaded, preventing account-switch data leakage.
+  const tenantPersistenceOwnerRef = useRef(null);
 
   const [knowledgeBase, setKnowledgeBase] = useState(() => {
     try {
@@ -764,18 +785,18 @@ export default function App() {
 
   // Save year-scoped states to localStorage with Multi-Tenant isolation
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_org_profile', orgProfile, session);
-    localStorage.setItem('ia_org_profile', JSON.stringify(orgProfile));
   }, [orgProfile, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_annual_plans_by_year', annualPlansByYear, session);
-    localStorage.setItem('ia_annual_plans_by_year', JSON.stringify(annualPlansByYear));
   }, [annualPlansByYear, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_working_papers_by_year', workingPapersByYear, session);
-    localStorage.setItem('ia_working_papers_by_year', JSON.stringify(workingPapersByYear));
   }, [workingPapersByYear, session]);
 
   useEffect(() => {
@@ -931,24 +952,31 @@ export default function App() {
   }, [auditCharterByYear]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_audit_universe_by_year', auditUniverseByYear, session);
-    localStorage.setItem('ia_audit_universe_by_year', JSON.stringify(auditUniverseByYear));
   }, [auditUniverseByYear, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_engagement_plans_by_year', engagementPlansByYear, session);
-    localStorage.setItem('ia_engagement_plans_by_year', JSON.stringify(engagementPlansByYear));
   }, [engagementPlansByYear, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_strategic_plan', strategicPlan, session);
-    localStorage.setItem('ia_strategic_plan', JSON.stringify(strategicPlan));
   }, [strategicPlan, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_capa_findings_by_year', capaFindingsByYear, session);
-    localStorage.setItem('ia_capa_findings_by_year', JSON.stringify(capaFindingsByYear));
   }, [capaFindingsByYear, session]);
+
+  useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
+    if (session) {
+      saveTenantData('ia_risk_feedback_linkages_by_year', riskFeedbackLinkagesByYear, session);
+    }
+  }, [riskFeedbackLinkagesByYear, session]);
 
   const reloadDataFromStorage = (currentSess = session) => {
     try {
@@ -967,15 +995,32 @@ export default function App() {
           if (currentSess.province) cleanOrg.province = currentSess.province;
         }
         setOrgProfile((prev) => ({ ...prev, ...cleanOrg }));
+      } else {
+        // Never retain the previous tenant's profile if the new tenant has no saved profile.
+        setOrgProfile(initialOrgProfile);
       }
       const au = loadTenantData('ia_audit_universe_by_year', null, currentSess);
-      if (au) setAuditUniverseByYear(au);
+      setAuditUniverseByYear(
+        au && typeof au === 'object' && !Array.isArray(au)
+          ? au
+          : { '2569': defaultAuditUniverse, '2570': defaultAuditUniverse }
+      );
       const ap = loadTenantData('ia_annual_plans_by_year', null, currentSess);
-      if (ap) setAnnualPlansByYear(ap);
+      setAnnualPlansByYear(
+        ap && typeof ap === 'object' && !Array.isArray(ap) ? ap : { '2569': [], '2570': [] }
+      );
       const ep = loadTenantData('ia_engagement_plans_by_year', null, currentSess);
-      if (ep) setEngagementPlansByYear(ep);
+      setEngagementPlansByYear(
+        ep && typeof ep === 'object' && !Array.isArray(ep)
+          ? ep
+          : { '2569': createEngagementPlansForYear('2569'), '2570': createEngagementPlansForYear('2570') }
+      );
       const wp = loadTenantData('ia_working_papers_by_year', null, currentSess);
-      if (wp) setWorkingPapersByYear(wp);
+      setWorkingPapersByYear(
+        wp && typeof wp === 'object' && !Array.isArray(wp)
+          ? wp
+          : { '2569': initialWorkingPapers, '2570': initialWorkingPapers2570 }
+      );
       const ra = loadTenantData('ia_risk_assessments_by_year', null, currentSess);
       if (ra) setRiskAssessmentsByYear(ra);
       const ic = loadTenantData('ia_internal_controls_by_year', null, currentSess);
@@ -983,9 +1028,19 @@ export default function App() {
       const rm = loadTenantData('ia_risk_management_by_year', null, currentSess);
       if (rm) setRiskManagementByYear(rm);
       const st = loadTenantData('ia_strategic_plan', null, currentSess);
-      if (st) setStrategicPlan(st);
+      setStrategicPlan(Array.isArray(st) ? st : initialStrategicPlan);
       const cf = loadTenantData('ia_capa_findings_by_year', null, currentSess);
-      if (cf) setCapaFindingsByYear(cf);
+      setCapaFindingsByYear(
+        cf && typeof cf === 'object' && !Array.isArray(cf)
+          ? cf
+          : { '2569': [], '2570': [] }
+      );
+      const rfl = loadTenantData('ia_risk_feedback_linkages_by_year', null, currentSess);
+      setRiskFeedbackLinkagesByYear(
+        rfl && typeof rfl === 'object' && !Array.isArray(rfl)
+          ? rfl
+          : { '2569': [], '2570': [] }
+      );
     } catch (e) {
       console.error(e);
     }
@@ -995,6 +1050,9 @@ export default function App() {
   useEffect(() => {
     if (session?.username) {
       reloadDataFromStorage(session);
+      tenantPersistenceOwnerRef.current = session.username.toLowerCase();
+    } else {
+      tenantPersistenceOwnerRef.current = null;
     }
   }, [session?.username]);
 
@@ -1122,6 +1180,15 @@ export default function App() {
     });
   };
 
+  const riskFeedbackLinkages = riskFeedbackLinkagesByYear[selectedYear] || [];
+  const setRiskFeedbackLinkages = (updaterOrValue) => {
+    setRiskFeedbackLinkagesByYear((prev) => {
+      const current = prev[selectedYear] || [];
+      const updated = typeof updaterOrValue === 'function' ? updaterOrValue(current) : updaterOrValue;
+      return { ...prev, [selectedYear]: updated };
+    });
+  };
+
   // Actions
   const handleSaveProfile = (newProfile) => {
     setOrgProfile(newProfile);
@@ -1138,7 +1205,6 @@ export default function App() {
         localStorage.setItem('ia_session', JSON.stringify(updatedSession));
       } catch (_) {}
     }
-    localStorage.setItem('ia_org_profile', JSON.stringify(newProfile));
 
     if (session?.username) {
       const users = getUsers();
@@ -1168,7 +1234,7 @@ export default function App() {
       fiscalYear: newProfile.fiscalYear || orgProfile.fiscalYear
     };
     setOrgProfile(updated);
-    localStorage.setItem('ia_org_profile', JSON.stringify(updated));
+    if (session) saveTenantData('ia_org_profile', updated, session);
     localStorage.setItem('audit_os_onboarded', 'true');
     setShowOnboarding(false);
 
@@ -1245,23 +1311,74 @@ export default function App() {
     setAuditCharterByYear({ [selectedYear]: initialAuditCharter });
     setAuditUniverseByYear({ [selectedYear]: defaultAuditUniverse });
     setEngagementPlansByYear({ [selectedYear]: INITIAL_ENGAGEMENT_PLANS });
+    setStrategicPlan(initialStrategicPlan);
+    setCapaFindingsByYear({ '2569': [], '2570': [] });
+    setRiskFeedbackLinkagesByYear({ '2569': [], '2570': [] });
     setOrgProfile(initialOrgProfile);
-    localStorage.removeItem('ia_annual_plans_by_year');
-    localStorage.removeItem('ia_working_papers_by_year');
-    localStorage.removeItem('ia_risk_assessments_by_year');
-    localStorage.removeItem('ia_internal_controls_by_year');
-    localStorage.removeItem('ia_risk_management_by_year');
-    localStorage.removeItem('ia_lpa_indicators_by_year');
-    localStorage.removeItem('ia_audit_charter_by_year');
-    localStorage.removeItem('ia_audit_universe_by_year');
-    localStorage.removeItem('ia_engagement_plans_by_year');
-    localStorage.removeItem('ia_org_profile');
-    localStorage.removeItem('ia_annual_plans');
-    localStorage.removeItem('ia_working_papers');
-    localStorage.removeItem('ia_risk_assessments');
-    localStorage.removeItem('ia_internal_controls');
-    localStorage.removeItem('ia_risk_management');
-    localStorage.removeItem('ia_lpa_indicators');
+
+    // Clear the active tenant's scoped lifecycle records only.
+    const scopedBaseKeys = [
+      'ia_annual_plans_by_year',
+      'ia_working_papers_by_year',
+      'ia_risk_assessments_by_year',
+      'ia_internal_controls_by_year',
+      'ia_risk_management_by_year',
+      'ia_lpa_indicators_by_year',
+      'ia_audit_charter_by_year',
+      'ia_audit_universe_by_year',
+      'ia_engagement_plans_by_year',
+      'ia_org_profile',
+      'ia_strategic_plan',
+      'ia_strategic_activities_v2',
+      'ia_capa_findings_by_year',
+      'ia_risk_feedback_linkages_by_year'
+    ];
+    scopedBaseKeys.forEach((key) => {
+      localStorage.removeItem(getTenantStorageKey(key, session));
+    });
+
+    // Opening/closing minutes and follow-up registers use a tenant suffix after their base key.
+    const scopedSampleKey = getTenantStorageKey('__audit_os_scope__', session);
+    const scopedSuffix = scopedSampleKey.slice('__audit_os_scope__'.length);
+    const scopedDynamicKeys = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (
+        key &&
+        key.endsWith(scopedSuffix) &&
+        /^(ia_opening_meeting_|ia_closing_meeting_|ia_followup_register_)/.test(key)
+      ) {
+        scopedDynamicKeys.push(key);
+      }
+    }
+    scopedDynamicKeys.forEach((key) => localStorage.removeItem(key));
+
+    // Unscoped legacy keys may be shared/ambiguous, so only admin may clear them.
+    const isAdminSession = session?.role === 'admin' || session?.username?.toLowerCase() === 'admin';
+    if (isAdminSession) {
+      [
+        'ia_annual_plans_by_year',
+        'ia_working_papers_by_year',
+        'ia_risk_assessments_by_year',
+        'ia_internal_controls_by_year',
+        'ia_risk_management_by_year',
+        'ia_lpa_indicators_by_year',
+        'ia_audit_charter_by_year',
+        'ia_audit_universe_by_year',
+        'ia_engagement_plans_by_year',
+        'ia_org_profile',
+        'ia_annual_plans',
+        'ia_working_papers',
+        'ia_risk_assessments',
+        'ia_internal_controls',
+        'ia_risk_management',
+        'ia_lpa_indicators',
+        'ia_strategic_plan',
+        'ia_strategic_activities_v2',
+        'ia_capa_findings_by_year',
+        'ia_risk_feedback_linkages_by_year'
+      ].forEach((key) => localStorage.removeItem(key));
+    }
   };
 
   // Consolidate complete audit dataset for Google Sheets BYOD sync and backups
@@ -1732,13 +1849,17 @@ export default function App() {
 
             {currentTab === 'audit-risk' && (
               <AuditRiskView
-                key={`audit-risk-${selectedYear}`}
+                key={`audit-risk-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
+                fiscalYears={fiscalYears}
                 orgProfile={orgProfile}
                 auditUniverse={auditUniverse}
                 setAuditUniverse={setAuditUniverse}
                 annualPlans={annualPlans}
                 setAnnualPlans={setAnnualPlans}
+                capaFindingsByYear={capaFindingsByYear}
+                riskFeedbackLinkages={riskFeedbackLinkages}
+                setRiskFeedbackLinkages={setRiskFeedbackLinkages}
                 setCurrentTab={handleSelectTab}
                 session={session}
               />
@@ -1746,11 +1867,15 @@ export default function App() {
 
             {currentTab === 'strategic-plan' && (
               <StrategicPlanView
-                key={`strategic-plan-${selectedYear}`}
+                key={`strategic-plan-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 auditUniverse={auditUniverse}
                 annualPlans={annualPlans}
+                setAnnualPlans={setAnnualPlans}
+                strategicPlan={strategicPlan}
+                setStrategicPlan={setStrategicPlan}
+                onNavigateToTab={handleSelectTab}
                 session={session}
               />
             )}
@@ -1792,10 +1917,11 @@ export default function App() {
 
             {currentTab === 'opening-meeting' && (
               <OpeningMeetingView
-                key={`opening-meeting-${selectedYear}`}
+                key={`opening-meeting-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
+                engagementPlans={engagementPlans}
                 session={session}
               />
             )}
@@ -1817,10 +1943,11 @@ export default function App() {
 
             {currentTab === 'closing-meeting' && (
               <ClosingMeetingView
-                key={`closing-meeting-${selectedYear}`}
+                key={`closing-meeting-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
+                engagementPlans={engagementPlans}
                 workingPapers={workingPapers}
                 onNavigateToTab={handleSelectTab}
                 session={session}
@@ -1829,12 +1956,13 @@ export default function App() {
 
             {currentTab === 'tracking-register' && (
               <AuditFollowUpView
-                key={`tracking-register-${selectedYear}`}
+                key={`tracking-register-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 capaFindings={capaFindings}
                 setCapaFindings={setCapaFindings}
                 session={session}
+                onNavigateToTab={handleSelectTab}
               />
             )}
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PageHeaderBanner from './PageHeaderBanner';
 import {
   Users,
@@ -20,13 +20,21 @@ import {
 } from 'lucide-react';
 import { DLA_CLOSING_MEETING_DATA } from '../data/dlaStandardTemplates';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
-import { exportDocumentToWord, exportDataToExcel, wrapWordHtml } from '../utils/documentExportUtils';
+import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExportUtils';
 import { toThaiDigits, formatSarabanDate } from '../utils/sarabanUtils';
+import {
+  loadClosingMeeting,
+  saveClosingMeeting,
+  extractFindingsFromWorkingPapers,
+  createInitialClosingMeeting
+} from '../utils/meetingSyncUtils';
+import { getTodayDate } from '../utils/followupSyncUtils';
 
 export default function ClosingMeetingView({
   selectedYear = '2569',
   orgProfile = {},
   annualPlans = [],
+  engagementPlans = [],
   workingPapers = [],
   session = null,
   onNavigateToTab
@@ -39,40 +47,110 @@ export default function ClosingMeetingView({
     ? (session?.position || (orgProfile?.auditorPosition && !orgProfile.auditorPosition.includes('Platform Root') && !orgProfile.auditorPosition.includes('ผู้ดูแลระบบ') ? orgProfile.auditorPosition : 'นักวิชาการตรวจสอบภายใน'))
     : (orgProfile?.auditorPosition || session?.position || 'ผู้ดูแลระบบระบบตรวจสอบภายใน (Platform Root)');
 
-  const [selectedPlanId, setSelectedPlanId] = useState(() => annualPlans[0]?.id || '');
-  const currentPlan = annualPlans.find((p) => p.id === selectedPlanId) || annualPlans[0] || {
-    id: 'PLAN-01',
-    projectName: 'การตรวจสอบการรับเงินและนำส่งเงิน',
-    department: 'กองคลัง',
-    auditor: effectiveAuditorName
+  // Combine engagement plans and annual plans for scoping
+  const combinedPlans = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+
+    if (Array.isArray(engagementPlans) && engagementPlans.length > 0) {
+      engagementPlans.forEach((ep) => {
+        if (ep && ep.id && !seen.has(ep.id)) {
+          seen.add(ep.id);
+          list.push({
+            id: ep.id,
+            projectName: ep.title || ep.projectName || ep.activityName || 'แผนปฏิบัติการตรวจสอบ',
+            department: ep.department || 'หน่วยรับตรวจ',
+            auditor: ep.auditorName || ep.auditor || effectiveAuditorName,
+            source: 'engagement',
+            typeLabel: 'แผนปฏิบัติการ (Engagement Plan)'
+          });
+        }
+      });
+    }
+
+    if (Array.isArray(annualPlans) && annualPlans.length > 0) {
+      annualPlans.forEach((ap) => {
+        if (ap && ap.id && !seen.has(ap.id)) {
+          seen.add(ap.id);
+          list.push({
+            id: ap.id,
+            projectName: ap.projectName || ap.title || ap.topic || 'แผนการตรวจสอบประจำปี',
+            department: ap.department || 'หน่วยรับตรวจ',
+            auditor: ap.auditor || effectiveAuditorName,
+            source: 'annual',
+            typeLabel: 'แผนประจำปี (Annual Plan)'
+          });
+        }
+      });
+    }
+
+    if (list.length === 0) {
+      list.push({
+        id: 'PLAN-01',
+        projectName: 'การตรวจสอบการรับเงินและนำส่งเงิน',
+        department: 'กองคลัง',
+        auditor: effectiveAuditorName,
+        source: 'default',
+        typeLabel: 'แผนเริ่มต้น'
+      });
+    }
+    return list;
+  }, [annualPlans, engagementPlans, effectiveAuditorName]);
+
+  const [selectedPlanId, setSelectedPlanId] = useState(() => combinedPlans[0]?.id || '');
+  const currentPlan = combinedPlans.find((p) => p.id === selectedPlanId) || combinedPlans[0];
+
+  // Persistent closing meeting data state scoped by (selectedYear, currentPlan.id)
+  const [meetingData, setMeetingData] = useState(() => {
+    return loadClosingMeeting(selectedYear, currentPlan, workingPapers, {
+      auditorName: effectiveAuditorName,
+      auditorPosition: effectiveAuditorPosition,
+      year: selectedYear
+    }, session);
+  });
+
+  // Reload when plan or year changes
+  useEffect(() => {
+    if (currentPlan) {
+      const loaded = loadClosingMeeting(selectedYear, currentPlan, workingPapers, {
+        auditorName: effectiveAuditorName,
+        auditorPosition: effectiveAuditorPosition,
+        year: selectedYear
+      });
+      setMeetingData(loaded);
+    }
+  }, [selectedYear, selectedPlanId, session?.username]);
+
+  // Save helper
+  const updateMeetingData = (updater) => {
+    setMeetingData((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
+      if (currentPlan?.id) {
+        saveClosingMeeting(selectedYear, currentPlan.id, next, session);
+      }
+      return next;
+    });
   };
 
-  const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0]);
-  const [meetingTime, setMeetingTime] = useState('13:30 น.');
-  const [meetingLocation, setMeetingLocation] = useState('ห้องประชุมกองคลัง / สำนักงาน อปท.');
+  // Attendees management
+  const [newAttendee, setNewAttendee] = useState({ name: '', position: '', role: 'หน่วยรับตรวจ' });
+  const handleAddAttendee = () => {
+    if (!newAttendee.name.trim()) return;
+    updateMeetingData((prev) => ({
+      ...prev,
+      attendees: [...(prev.attendees || []), { ...newAttendee }]
+    }));
+    setNewAttendee({ name: '', position: '', role: 'หน่วยรับตรวจ' });
+  };
 
-  // Preliminary Findings discussed in Closing Meeting
-  const [findings, setFindings] = useState([
-    {
-      id: 'FIND-01',
-      topic: 'การจัดทำงบกระทบยอดเงินฝากธนาคารล่าช้า',
-      condition: 'พบว่างบกระทบยอดเงินฝากธนาคารสำหรับบัญชีเงินฝากกระแสรายวันของ อปท. ยังไม่ได้จัดทำเป็นประจำทุกสิ้นเดือน ทำให้ไม่ทราบยอดเงินคงเหลือที่แท้จริง',
-      criteria: 'ระเบียบ มท. ว่าด้วยการรับเงินฯ พ.ศ. 2566 ข้อ 94 และหนังสือสั่งการ กค ว 23',
-      auditeeFeedback: 'ยอมรับข้อตรวจพบ เนื่องจากเจ้าหน้าที่ผู้รับผิดชอบเพิ่งได้รับการบรรจุแต่งตั้งใหม่ ยังขาดความชำนาญในระบบ e-LAAS',
-      agreement: 'กองคลังจะเร่งรัดจัดทำงบกระทบยอดเงินฝากธนาคารย้อนหลังให้แล้วเสร็จภายใน 15 วันทำการ',
-      status: 'เห็นชอบร่วมกัน'
-    },
-    {
-      id: 'FIND-02',
-      topic: 'การลงบันทึกการใช้รถยนต์ส่วนกลางไม่ครบถ้วน',
-      condition: 'พบว่าสมุดบันทึกประจำรถยนต์ส่วนกลางบางคัน ไม่ได้ลงเลขกิโลเมตรเริ่มต้นและสิ้นสุด ทำให้ไม่สามารถตรวจสอบอัตราสิ้นเปลืองน้ำมันเชื้อเพลิงได้',
-      criteria: 'ระเบียบกระทรวงมหาดไทยว่าด้วยการใช้และรักษารถยนต์ของ อปท. พ.ศ. 2548 ข้อ 19',
-      auditeeFeedback: 'พนักงานขับรถได้ชี้แจงว่าช่วงเกิดเหตุมีภารกิจเร่งด่วน จึงลงบันทึกตกหล่น',
-      agreement: 'สำนักปลัดจะกำชับพนักงานขับรถทุกคนให้บันทึกเลขไมล์ทุกครั้งก่อนและหลังใช้รถอย่างเคร่งครัด',
-      status: 'เห็นชอบร่วมกัน'
-    }
-  ]);
+  const handleRemoveAttendee = (index) => {
+    updateMeetingData((prev) => ({
+      ...prev,
+      attendees: (prev.attendees || []).filter((_, i) => i !== index)
+    }));
+  };
 
+  // Findings management
   const [newFinding, setNewFinding] = useState({
     topic: '',
     condition: '',
@@ -83,14 +161,19 @@ export default function ClosingMeetingView({
 
   const handleAddFinding = () => {
     if (!newFinding.topic.trim()) return;
-    setFindings([
-      ...findings,
-      {
-        id: `FIND-${Date.now().toString().slice(-4)}`,
-        ...newFinding,
-        status: 'เห็นชอบร่วมกัน'
-      }
-    ]);
+    const item = {
+      id: `FIND-${Date.now().toString().slice(-4)}`,
+      topic: newFinding.topic.trim(),
+      condition: newFinding.condition.trim(),
+      criteria: newFinding.criteria.trim(),
+      auditeeFeedback: newFinding.auditeeFeedback.trim() || 'ยอมรับข้อตรวจพบและพร้อมปรับปรุงแก้ไข',
+      agreement: newFinding.agreement.trim() || 'ตกลงดำเนินการปรับปรุงแก้ไขตามข้อเสนอแนะ',
+      status: 'เห็นชอบร่วมกัน'
+    };
+    updateMeetingData((prev) => ({
+      ...prev,
+      findings: [...(prev.findings || []), item]
+    }));
     setNewFinding({
       topic: '',
       condition: '',
@@ -100,50 +183,85 @@ export default function ClosingMeetingView({
     });
   };
 
-  const handleRemoveFinding = (id) => {
-    setFindings(findings.filter((f) => f.id !== id));
+  const handleUpdateFinding = (findingId, field, value) => {
+    updateMeetingData((prev) => ({
+      ...prev,
+      findings: (prev.findings || []).map((f) => {
+        if (f.id === findingId) {
+          return { ...f, [field]: value };
+        }
+        return f;
+      })
+    }));
   };
 
+  const handleRemoveFinding = (findingId) => {
+    updateMeetingData((prev) => ({
+      ...prev,
+      findings: (prev.findings || []).filter((f) => f.id !== findingId)
+    }));
+  };
+
+  // Load DLA Template
   const handleLoadDlaClosingMeeting = () => {
-    setMeetingDate('2568-11-29');
-    setMeetingTime(DLA_CLOSING_MEETING_DATA.time || '14.00 น.');
-    setMeetingLocation(DLA_CLOSING_MEETING_DATA.location || 'ห้องประชุมกองคลัง');
-    setFindings(
-      (DLA_CLOSING_MEETING_DATA.findingsSummary || []).map((f, idx) => ({
-        id: `FIND-DLA-${idx + 1}`,
-        topic: f.issue,
-        condition: f.detail,
-        criteria: 'ระเบียบ มท. ว่าด้วยการรับเงินฯ พ.ศ. 2547 และที่แก้ไขเพิ่มเติม ข้อ 12',
-        auditeeFeedback: f.auditeeExplanation,
-        agreement: f.agreedResolution,
-        status: 'เห็นชอบร่วมกัน'
-      }))
-    );
+    const dlaFindings = (DLA_CLOSING_MEETING_DATA.findingsSummary || []).map((f, idx) => ({
+      id: `FIND-DLA-${idx + 1}`,
+      topic: f.issue,
+      condition: f.detail,
+      criteria: 'ระเบียบ มท. ว่าด้วยการรับเงินฯ พ.ศ. 2547 และที่แก้ไขเพิ่มเติม ข้อ 12',
+      auditeeFeedback: f.auditeeExplanation,
+      agreement: f.agreedResolution,
+      status: 'เห็นชอบร่วมกัน'
+    }));
+
+    updateMeetingData((prev) => ({
+      ...prev,
+      meetingDate: '2568-11-29',
+      meetingTime: DLA_CLOSING_MEETING_DATA.time || '14.00 น.',
+      meetingLocation: DLA_CLOSING_MEETING_DATA.location || 'ห้องประชุมกองคลัง',
+      findings: dlaFindings,
+      conclusion: 'การประชุมปิดการตรวจสอบดำเนินไปด้วยความเรียบร้อย หน่วยรับตรวจยินดีนำข้อเสนอแนะไปปรับปรุงการปฏิบัติงาน',
+      nextSteps: 'ผู้ตรวจสอบภายในจะนำข้อตกลงไปจัดทำรายงานผลการตรวจสอบภายในฉบับสมบูรณ์เสนอผู้บริหารเพื่อโปรดสั่งการต่อไป'
+    }));
   };
 
+  // Pull findings from working papers scoped to current plan
   const handlePullFindingsFromWorkingPapers = () => {
-    const pulled = [];
-    workingPapers.forEach((wp) => {
-      if (wp.finding?.condition) {
-        pulled.push({
-          id: `FIND-${wp.id}`,
-          topic: wp.topic,
-          condition: wp.finding.condition,
-          criteria: Array.isArray(wp.criteria) ? wp.criteria.join(', ') : (wp.criteria || ''),
-          auditeeFeedback: 'หน่วยรับตรวจรับทราบข้อสังเกตและชี้แจงข้อเท็จจริงตามสภาพงาน',
-          agreement: wp.finding.recommendation || 'หน่วยรับตรวจตกลงดำเนินการปรับปรุงแก้ไขตามข้อเสนอแนะภายใน 30 วัน',
-          status: 'เห็นชอบร่วมกัน'
-        });
-      }
-    });
+    const planFindings = extractFindingsFromWorkingPapers(workingPapers, currentPlan.id);
 
-    if (pulled.length === 0) {
-      alert('ยังไม่พบข้อตรวจพบที่บันทึกไว้ในกระดาษทำการ (ขั้นที่ 6) กรุณาบันทึกข้อตรวจพบในกระดาษทำการก่อน หรือกดโหลดตัวอย่าง สถ.');
+    if (planFindings.length > 0) {
+      updateMeetingData((prev) => {
+        const existingIds = new Set((prev.findings || []).map((f) => f.wpId || f.id));
+        const newItems = planFindings.filter((pf) => !existingIds.has(pf.wpId || pf.id));
+        return {
+          ...prev,
+          findings: [...(prev.findings || []), ...newItems]
+        };
+      });
+      alert(`ดึงข้อตรวจพบจากกระดาษทำการของโครงการ ${currentPlan.projectName} เรียบร้อยแล้ว (${planFindings.length} รายการ)`);
       return;
     }
 
-    setFindings(pulled);
-    alert(`ดึงข้อตรวจพบจากกระดาษทำการจำนวน ${pulled.length} โครงการ เรียบร้อยแล้ว`);
+    // Fallback: check if there are any working papers with findings across other plans
+    const allFindings = extractFindingsFromWorkingPapers(workingPapers, null);
+    if (allFindings.length > 0) {
+      const confirmAll = window.confirm(
+        `ไม่พบข้อตรวจพบที่ระบุรหัสโครงการ ${currentPlan.id} โดยตรง แต่พบข้อตรวจพบในกระดาษทำการอื่นจำนวน ${allFindings.length} รายการ ท่านต้องการนำเข้าข้อตรวจพบทั้งหมดหรือไม่?`
+      );
+      if (confirmAll) {
+        updateMeetingData((prev) => {
+          const existingIds = new Set((prev.findings || []).map((f) => f.wpId || f.id));
+          const newItems = allFindings.filter((pf) => !existingIds.has(pf.wpId || pf.id));
+          return {
+            ...prev,
+            findings: [...(prev.findings || []), ...newItems]
+          };
+        });
+        alert(`ดึงข้อตรวจพบจากกระดาษทำการเรียบร้อยแล้ว (${allFindings.length} รายการ)`);
+      }
+    } else {
+      alert('ยังไม่พบข้อตรวจพบที่บันทึกไว้ในกระดาษทำการ (ขั้นที่ 6) กรุณาบันทึกข้อตรวจพบในกระดาษทำการก่อน หรือกดโหลดตัวอย่าง สถ.');
+    }
   };
 
   const handlePrint = () => {
@@ -152,10 +270,22 @@ export default function ClosingMeetingView({
 
   const handleDownloadWord = () => {
     const orgName = toThaiDigits(orgProfile?.name || 'องค์กรปกครองส่วนท้องถิ่น');
-    const projName = toThaiDigits(currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน');
+    const projName = toThaiDigits(currentPlan.projectName);
     const deptName = toThaiDigits(currentPlan.department || 'หน่วยรับตรวจ');
     const auditorName = toThaiDigits(effectiveAuditorName);
     const auditorPos = toThaiDigits(effectiveAuditorPosition);
+    const meetingDate = meetingData.meetingDate || getTodayDate();
+    const meetingTime = meetingData.meetingTime || '13:30 น.';
+    const meetingLocation = meetingData.meetingLocation || '';
+    const attendees = meetingData.attendees || [];
+    const findings = meetingData.findings || [];
+
+    const attendeesHtml = attendees
+      .map(
+        (a, i) =>
+          `<li>${toThaiDigits(i + 1)}. ${toThaiDigits(a.name)} ตำแหน่ง ${toThaiDigits(a.position)} (${toThaiDigits(a.role)})</li>`
+      )
+      .join('');
 
     const bodyContent = `
       <div style="text-align: center; margin-bottom: 16pt;">
@@ -177,10 +307,9 @@ export default function ClosingMeetingView({
       </table>
 
       <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-bottom: 4pt;">ผู้เข้าร่วมประชุม:</p>
-      <ol style="margin-top: 0; margin-left: 20pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
-        <li>${auditorName} ตำแหน่ง ${auditorPos} (ฝ่ายตรวจสอบภายใน)</li>
-        <li>หัวหน้าหน่วยรับตรวจ และเจ้าหน้าที่ผู้รับผิดชอบงาน (${deptName})</li>
-      </ol>
+      <ul style="margin-top: 0; margin-left: 20pt; font-size: 16pt; font-family: 'TH Sarabun PSK'; list-style-type: none; padding-left: 0;">
+        ${attendeesHtml || `<li>๑. ${auditorName} ตำแหน่ง ${auditorPos} (ผู้ตรวจสอบภายใน)</li><li>๒. หัวหน้าหน่วยรับตรวจ และเจ้าหน้าที่ผู้รับผิดชอบงาน (${deptName})</li>`}
+      </ul>
 
       <p style="font-size: 16pt; font-weight: bold; font-family: 'TH Sarabun PSK'; margin-top: 12pt; margin-bottom: 4pt;">วาระการประชุมและสรุปประเด็นข้อตรวจพบเบื้องต้น:</p>
       <p style="text-indent: 2.5cm; font-size: 16pt; font-family: 'TH Sarabun PSK'; line-height: 1.35; margin-bottom: 8pt; text-align: justify;">
@@ -201,8 +330,12 @@ export default function ClosingMeetingView({
         )
         .join('')}
 
-      <p style="text-indent: 2.5cm; font-size: 16pt; font-family: 'TH Sarabun PSK'; line-height: 1.35; margin-top: 14pt; margin-bottom: 24pt; text-align: justify;">
-        ฝ่ายตรวจสอบภายในจะนำข้อเท็จจริงและคำชี้แจงดังกล่าวไปประกอบการยกร่างรายงานผลการตรวจสอบภายในฉบับสมบูรณ์ เพื่อเสนอผู้บริหารท้องถิ่นและแจ้งให้หน่วยรับตรวจดำเนินการปรับปรุงแก้ไขตามกรอบเวลาต่อไป
+      <p style="text-indent: 2.5cm; font-size: 16pt; font-family: 'TH Sarabun PSK'; line-height: 1.35; margin-top: 14pt; margin-bottom: 8pt; text-align: justify;">
+        <strong>ข้อสรุปการประชุม:</strong> ${toThaiDigits(meetingData.conclusion || 'การประชุมปิดการตรวจสอบดำเนินไปด้วยความเรียบร้อย หน่วยรับตรวจรับทราบและเห็นชอบร่วมกันในข้อตรวจพบเบื้องต้น')}
+      </p>
+
+      <p style="text-indent: 2.5cm; font-size: 16pt; font-family: 'TH Sarabun PSK'; line-height: 1.35; margin-top: 4pt; margin-bottom: 24pt; text-align: justify;">
+        <strong>การดำเนินการขั้นต่อไป:</strong> ${toThaiDigits(meetingData.nextSteps || 'ฝ่ายตรวจสอบภายในจะนำข้อเท็จจริงและคำชี้แจงดังกล่าวไปประกอบการยกร่างรายงานผลการตรวจสอบภายในฉบับสมบูรณ์ เพื่อเสนอผู้บริหารท้องถิ่นพิจารณาสั่งการต่อไป')}
       </p>
 
       <table style="width: 100%; border: none; margin-top: 30pt; font-size: 16pt; font-family: 'TH Sarabun PSK';">
@@ -223,10 +356,15 @@ export default function ClosingMeetingView({
       </table>
     `;
 
-    exportDocumentToWord(bodyContent, `รายงานการประชุมปิดการตรวจสอบ_${projName}_${selectedYear}.doc`, 'รายงานการประชุมปิดการตรวจสอบ');
+    exportDocumentToWord({
+      title: 'รายงานการประชุมปิดการตรวจสอบ',
+      htmlContent: bodyContent,
+      fileName: `รายงานการประชุมปิดการตรวจสอบ_${projName}_${selectedYear}.doc`
+    });
   };
 
   const handleDownloadExcel = () => {
+    const findings = meetingData.findings || [];
     const headers = [
       'ที่',
       'ประเด็นข้อตรวจพบ',
@@ -244,8 +382,16 @@ export default function ClosingMeetingView({
       f.agreement || ''
     ]);
     const filename = `Closing_Meeting_Findings_${currentPlan.projectName || 'audit'}_${selectedYear}.xlsx`;
-    exportDataToExcel('ประเด็นปิดตรวจ', [headers, ...rows], filename);
+    exportDataToExcel({
+      sheetName: 'ประเด็นปิดตรวจ',
+      headers,
+      rows,
+      fileName: filename
+    });
   };
+
+  const findings = meetingData.findings || [];
+  const attendees = meetingData.attendees || [];
 
   return (
     <div className="space-y-6">
@@ -260,16 +406,16 @@ export default function ClosingMeetingView({
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-3 sm:p-4 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 print:hidden">
         <div className="flex items-center space-x-3">
           <label className="text-xs font-bold text-stone-600 dark:text-stone-300 shrink-0">
-            เลือกโครงการตรวจสอบ:
+            โครงการ / แผน:
           </label>
           <select
             value={selectedPlanId}
             onChange={(e) => setSelectedPlanId(e.target.value)}
-            className="text-xs p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold max-w-xs text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer truncate"
+            className="text-xs p-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 font-bold max-w-sm text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer truncate"
           >
-            {annualPlans.map((p) => (
+            {combinedPlans.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.projectName || p.title || p.topic} ({p.department || 'หน่วยรับตรวจ'})
+                [{p.typeLabel}] {p.projectName} ({p.department})
               </option>
             ))}
           </select>
@@ -295,7 +441,7 @@ export default function ClosingMeetingView({
           <OfficialDocActionToolbar
             onDownloadWord={handleDownloadWord}
             wordTitle="รายงานการประชุมปิดการตรวจสอบ (.doc)"
-            wordSubtitle={`รายงานการประชุมปิดตรวจและข้อตกลงร่วมกันโครงการ ${currentPlan.projectName || 'ตรวจสอบ'}`}
+            wordSubtitle={`รายงานการประชุมปิดตรวจและข้อตกลงร่วมกันโครงการ ${currentPlan.projectName}`}
             onDownloadExcel={handleDownloadExcel}
             excelTitle="ประเด็นข้อตรวจพบและข้อตกลง (.xlsx)"
             excelSubtitle="ตารางสรุป Criteria, Condition, คำชี้แจง และ Agreement"
@@ -313,7 +459,7 @@ export default function ClosingMeetingView({
             รายงานการประชุมปิดการตรวจสอบ (Closing Meeting Minutes)
           </h2>
           <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-            โครงการ: {currentPlan.projectName || currentPlan.topic || 'การตรวจสอบภายใน'}
+            โครงการ: {currentPlan.projectName}
           </div>
           <div className="text-xs text-slate-500">
             หน่วยรับตรวจ: {currentPlan.department || 'หน่วยรับตรวจ'} {orgProfile?.name || 'อปท.'} ประจำปีงบประมาณ พ.ศ. {selectedYear}
@@ -326,8 +472,8 @@ export default function ClosingMeetingView({
             <span className="text-slate-400 font-medium">วันที่ปิดตรวจ: </span>
             <input
               type="date"
-              value={meetingDate}
-              onChange={(e) => setMeetingDate(e.target.value)}
+              value={meetingData.meetingDate || ''}
+              onChange={(e) => updateMeetingData({ meetingDate: e.target.value })}
               className="bg-transparent font-bold print:border-none"
             />
           </div>
@@ -335,8 +481,8 @@ export default function ClosingMeetingView({
             <span className="text-slate-400 font-medium">เวลา: </span>
             <input
               type="text"
-              value={meetingTime}
-              onChange={(e) => setMeetingTime(e.target.value)}
+              value={meetingData.meetingTime || ''}
+              onChange={(e) => updateMeetingData({ meetingTime: e.target.value })}
               className="bg-transparent font-bold w-24 print:border-none"
             />
           </div>
@@ -344,15 +490,91 @@ export default function ClosingMeetingView({
             <span className="text-slate-400 font-medium">สถานที่: </span>
             <input
               type="text"
-              value={meetingLocation}
-              onChange={(e) => setMeetingLocation(e.target.value)}
+              value={meetingData.meetingLocation || ''}
+              onChange={(e) => updateMeetingData({ meetingLocation: e.target.value })}
               className="bg-transparent font-bold w-full print:border-none"
             />
           </div>
         </div>
 
+        {/* Attendees Section */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-stone-800 dark:text-stone-200 flex items-center space-x-2">
+            <Users className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <span>ผู้เข้าร่วมการประชุมปิดตรวจ ({attendees.length} ท่าน)</span>
+          </h3>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border border-stone-200 dark:border-stone-700 rounded-xl overflow-hidden">
+              <thead className="bg-stone-100/80 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold">
+                <tr>
+                  <th className="py-2.5 px-3 w-12 text-center">ลำดับ</th>
+                  <th className="py-2.5 px-3">ชื่อ - สกุล</th>
+                  <th className="py-2.5 px-3">ตำแหน่ง</th>
+                  <th className="py-2.5 px-3">บทบาทในการประชุม</th>
+                  <th className="py-2.5 px-3 w-12 print:hidden text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
+                {attendees.map((a, idx) => (
+                  <tr key={idx} className="hover:bg-amber-50/40 dark:hover:bg-stone-800/40">
+                    <td className="py-2 px-3 text-center font-bold text-stone-400">{idx + 1}</td>
+                    <td className="py-2 px-3 font-semibold">{a.name}</td>
+                    <td className="py-2 px-3 text-stone-600 dark:text-stone-400">{a.position}</td>
+                    <td className="py-2 px-3">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/40">
+                        {a.role}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 text-center print:hidden">
+                      <button
+                        onClick={() => handleRemoveAttendee(idx)}
+                        className="text-stone-300 hover:text-rose-500 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Add Attendee Row */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 print:hidden">
+            <input
+              type="text"
+              placeholder="ชื่อ-สกุล"
+              value={newAttendee.name}
+              onChange={(e) => setNewAttendee({ ...newAttendee, name: e.target.value })}
+              className="text-xs p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 flex-1 min-w-[140px] text-stone-850 dark:text-stone-100"
+            />
+            <input
+              type="text"
+              placeholder="ตำแหน่ง"
+              value={newAttendee.position}
+              onChange={(e) => setNewAttendee({ ...newAttendee, position: e.target.value })}
+              className="text-xs p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 flex-1 min-w-[140px] text-stone-850 dark:text-stone-100"
+            />
+            <input
+              type="text"
+              placeholder="บทบาท (เช่น หัวหน้าหน่วยรับตรวจ)"
+              value={newAttendee.role}
+              onChange={(e) => setNewAttendee({ ...newAttendee, role: e.target.value })}
+              className="text-xs p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 w-44 text-stone-850 dark:text-stone-100"
+            />
+            <button
+              onClick={handleAddAttendee}
+              className="bg-amber-700 hover:bg-amber-800 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1 cursor-pointer transition-colors shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>เพิ่มผู้เข้าร่วม</span>
+            </button>
+          </div>
+        </div>
+
         {/* Preliminary Findings Discussion Cards */}
-        <div className="space-y-4">
+        <div className="space-y-4 pt-2">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-2">
               <AlertTriangle className="w-4 h-4 text-amber-600" />
@@ -363,7 +585,7 @@ export default function ClosingMeetingView({
           <div className="space-y-4">
             {findings.map((f, idx) => (
               <div
-                key={f.id}
+                key={f.id || idx}
                 className="p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 space-y-3"
               >
                 <div className="flex items-start justify-between">
@@ -375,24 +597,54 @@ export default function ClosingMeetingView({
                   </div>
                   <button
                     onClick={() => handleRemoveFinding(f.id)}
-                    className="text-slate-300 hover:text-rose-500 print:hidden"
+                    className="text-slate-300 hover:text-rose-500 print:hidden cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  <div className="space-y-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700">
-                    <div className="text-slate-400 font-bold">สภาพข้อเท็จจริงที่ตรวจพบ (Condition):</div>
-                    <div className="text-slate-700 dark:text-slate-300 leading-relaxed">{f.condition}</div>
-                    <div className="text-[11px] text-blue-600 font-medium pt-1">เกณฑ์อ้างอิง: {f.criteria}</div>
+                  <div className="space-y-2 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                    <div>
+                      <div className="text-slate-400 font-bold mb-1">สภาพข้อเท็จจริงที่ตรวจพบ (Condition):</div>
+                      <textarea
+                        rows={3}
+                        value={f.condition || ''}
+                        onChange={(e) => handleUpdateFinding(f.id, 'condition', e.target.value)}
+                        className="w-full text-slate-700 dark:text-slate-300 bg-transparent border-0 focus:ring-1 focus:ring-amber-500 rounded p-1 leading-relaxed"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-blue-600 font-medium mb-1">เกณฑ์อ้างอิง (Criteria):</div>
+                      <input
+                        type="text"
+                        value={f.criteria || ''}
+                        onChange={(e) => handleUpdateFinding(f.id, 'criteria', e.target.value)}
+                        className="w-full text-xs text-slate-600 dark:text-slate-400 bg-transparent border-0 focus:ring-1 focus:ring-amber-500 rounded p-1"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-1 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40">
-                    <div className="text-emerald-800 dark:text-emerald-300 font-bold">คำชี้แจงของหน่วยรับตรวจ (Auditee Response):</div>
-                    <div className="text-slate-700 dark:text-slate-300 leading-relaxed">{f.auditeeFeedback}</div>
-                    <div className="text-emerald-700 dark:text-emerald-400 font-bold pt-1">
-                      ข้อตกลงแนวทางแก้ไข: {f.agreement}
+                  <div className="space-y-2 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40">
+                    <div>
+                      <div className="text-emerald-800 dark:text-emerald-300 font-bold mb-1">คำชี้แจงของหน่วยรับตรวจ (Auditee Response):</div>
+                      <textarea
+                        rows={2}
+                        value={f.auditeeFeedback || ''}
+                        onChange={(e) => handleUpdateFinding(f.id, 'auditeeFeedback', e.target.value)}
+                        placeholder="ระบุคำชี้แจงและเหตุผลความจำเป็นของหน่วยรับตรวจ..."
+                        className="w-full text-slate-700 dark:text-slate-300 bg-white/70 dark:bg-slate-800/70 border border-emerald-200 dark:border-emerald-800 rounded p-1.5 leading-relaxed text-xs"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-emerald-700 dark:text-emerald-400 font-bold mb-1">ข้อตกลงแนวทางแก้ไขร่วมกัน (Agreed Action):</div>
+                      <textarea
+                        rows={2}
+                        value={f.agreement || ''}
+                        onChange={(e) => handleUpdateFinding(f.id, 'agreement', e.target.value)}
+                        placeholder="ระบุกรอบเวลาและแนวทางปรับปรุงแก้ไขที่ตกลงร่วมกัน..."
+                        className="w-full text-emerald-900 dark:text-emerald-200 bg-white/70 dark:bg-slate-800/70 border border-emerald-200 dark:border-emerald-800 rounded p-1.5 leading-relaxed text-xs font-medium"
+                      />
                     </div>
                   </div>
                 </div>
@@ -445,6 +697,28 @@ export default function ClosingMeetingView({
               <Check className="w-3.5 h-3.5" />
               <span>บันทึกประเด็นข้อตรวจพบ</span>
             </button>
+          </div>
+        </div>
+
+        {/* Conclusion & Next Steps */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs">
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-800 dark:text-slate-200">ข้อสรุปผลการประชุมปิดตรวจ:</label>
+            <textarea
+              rows={3}
+              value={meetingData.conclusion || ''}
+              onChange={(e) => updateMeetingData({ conclusion: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-stone-50/60 dark:bg-stone-850/40 text-slate-850 dark:text-stone-100 leading-relaxed outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="font-bold text-slate-800 dark:text-slate-200">การดำเนินการขั้นต่อไป:</label>
+            <textarea
+              rows={3}
+              value={meetingData.nextSteps || ''}
+              onChange={(e) => updateMeetingData({ nextSteps: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-stone-50/60 dark:bg-stone-850/40 text-slate-850 dark:text-stone-100 leading-relaxed outline-none focus:ring-2 focus:ring-amber-500"
+            />
           </div>
         </div>
 

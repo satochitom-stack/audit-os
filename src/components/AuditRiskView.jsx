@@ -33,6 +33,8 @@ import {
   Copy,
   AlertTriangle,
   RotateCcw,
+  Link2,
+  Unlink,
   X
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
@@ -52,6 +54,12 @@ import {
   DLA_RISK_ASSESSMENT_16,
   DLA_RISK_SCALE
 } from '../data/dlaStandardTemplates';
+import {
+  addRiskFeedbackLinkage,
+  removeRiskFeedbackLinkage,
+  getAvailableSourceIssues,
+  verifyScoresUntouched
+} from '../utils/riskFeedbackUtils';
 
 // =========================================================================
 // 1. ข้อมูลการประเมินความเสี่ยงมาตรฐาน องค์กรปกครองส่วนท้องถิ่น (21 กิจกรรม)
@@ -720,11 +728,15 @@ export const COMPARISON_TABLE_DATA = [
 
 export default function AuditRiskView({
   selectedYear = '2569',
+  fiscalYears = ['2568', '2569', '2570'],
   orgProfile = {},
   auditUniverse = [],
   setAuditUniverse,
   annualPlans = [],
   setAnnualPlans,
+  capaFindingsByYear = {},
+  riskFeedbackLinkages = [],
+  setRiskFeedbackLinkages = () => {},
   setCurrentTab,
   session
 }) {
@@ -752,6 +764,13 @@ export default function AuditRiskView({
   const [referencesTab, setReferencesTab] = useState('criteria'); // 'criteria', 'risk-desc', 'comparison', 'org-universe'
   const [selectedRiskDescItem, setSelectedRiskDescItem] = useState(null);
   const [showRiskDescModal, setShowRiskDescModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackTargetActivity, setFeedbackTargetActivity] = useState(null);
+  const [feedbackSourceYear, setFeedbackSourceYear] = useState(() => {
+    const yrNum = parseInt(selectedYear, 10);
+    return isNaN(yrNum) ? '2568' : String(yrNum - 1);
+  });
+  const [feedbackDepartmentFilter, setFeedbackDepartmentFilter] = useState('all');
   const [reportFormat, setReportFormat] = useState('dla-form'); // 'dla-form' | 'memo'
   const [toastMessage, setToastMessage] = useState('');
 
@@ -1760,12 +1779,30 @@ export default function AuditRiskView({
 
                         {deptItems.map((item, idx) => {
                           const inPlan = isActivityInAnnualPlan(item);
+                          const itemLinkages = (riskFeedbackLinkages || []).filter(
+                            (l) => l.universeId === item.id || l.universeActivity === item.activity
+                          );
                           return (
                             <tr key={item.id} className="hover:bg-stone-50/70 dark:hover:bg-stone-800/40 transition-colors">
                               <td className="px-3 py-2.5 font-mono text-center text-stone-400">{idx + 1}</td>
                               <td className="px-4 py-2.5">
-                                <div className="font-semibold text-stone-900 dark:text-stone-100">
-                                  - {item.activity}
+                                <div className="font-semibold text-stone-900 dark:text-stone-100 flex items-center flex-wrap gap-1.5">
+                                  <span>- {item.activity}</span>
+                                  {itemLinkages.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFeedbackTargetActivity(item);
+                                        setFeedbackDepartmentFilter(item.department || 'all');
+                                        setShowFeedbackModal(true);
+                                      }}
+                                      className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 cursor-pointer transition-colors"
+                                      title="คลิกเพื่อดู/จัดการข้อทักท้วงเดิมที่เชื่อมโยง"
+                                    >
+                                      <Link2 className="w-2.5 h-2.5 mr-1 text-amber-700 dark:text-amber-300" />
+                                      {itemLinkages.length} ข้อค้นพบเดิม
+                                    </button>
+                                  )}
                                 </div>
                                 {item.reason && (
                                   <div className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-1">
@@ -1817,6 +1854,18 @@ export default function AuditRiskView({
                               </td>
                               <td className="px-3 py-2.5 text-center no-print">
                                 <div className="flex items-center justify-center space-x-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFeedbackTargetActivity(item);
+                                      setFeedbackDepartmentFilter(item.department || 'all');
+                                      setShowFeedbackModal(true);
+                                    }}
+                                    className="p-1 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/40 text-stone-500 hover:text-amber-700 dark:hover:text-amber-400 cursor-pointer"
+                                    title="เชื่อมโยงข้อค้นพบ/ข้อทักท้วงเดิม (Risk Feedback Loop)"
+                                  >
+                                    <Link2 className="w-3.5 h-3.5" />
+                                  </button>
                                   <button
                                     onClick={() => {
                                       setSelectedRiskDescItem(item);
@@ -2809,6 +2858,267 @@ export default function AuditRiskView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Risk Feedback Loop Modal */}
+      {showFeedbackModal && feedbackTargetActivity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-stone-900 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-stone-200 dark:border-stone-850 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between bg-stone-50/80 dark:bg-stone-850/80">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Link2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-stone-900 dark:text-white text-base">
+                    เชื่อมโยงข้อค้นพบ/ข้อทักท้วงเดิม (Risk Feedback Loop)
+                  </h3>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                    กิจกรรม: <strong className="text-stone-800 dark:text-stone-200">{feedbackTargetActivity.activity}</strong> ({feedbackTargetActivity.department})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFeedbackModal(false)}
+                className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs text-stone-700 dark:text-stone-300">
+              {/* Auditor Discretion & Integrity Banner */}
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl space-y-1.5">
+                <div className="flex items-start space-x-2 text-amber-900 dark:text-amber-200 font-bold text-xs">
+                  <Info className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <span>หลักประกันการรักษาดุลยพินิจอิสระของผู้ตรวจสอบ (Auditor Discretion Guarantee)</span>
+                </div>
+                <p className="text-[11px] text-amber-800/90 dark:text-amber-300/80 leading-relaxed pl-6">
+                  การเชื่อมโยงข้อค้นพบ/ข้อทักท้วงจากปีก่อนเป็นข้อมูลอ้างอิงเพื่อการสืบย้อน (Traceability) เท่านั้น
+                  <strong> ระบบจะไม่ปรับเปลี่ยนคะแนนปัจจัยเสี่ยง 5 มิติ (S/O/F/C/K) หรือระดับความเสี่ยงของกิจกรรมโดยอัตโนมัติ</strong>
+                </p>
+                <div className="pl-6 pt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                  <span className="bg-amber-100/70 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded font-mono font-semibold">
+                    คะแนนปัจจุบัน: S={feedbackTargetActivity.sScore} | O={feedbackTargetActivity.oScore} | F={feedbackTargetActivity.fScore} | C={feedbackTargetActivity.cScore} | K={feedbackTargetActivity.kScore}
+                  </span>
+                  <span className="bg-amber-100/70 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded font-bold">
+                    เฉลี่ย: {feedbackTargetActivity.score ? feedbackTargetActivity.score.toFixed(1) : '-'} (ระดับ: {feedbackTargetActivity.level || '-'})
+                  </span>
+                </div>
+              </div>
+
+              {/* Already Linked Issues Section */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-stone-900 dark:text-stone-100 text-xs flex items-center space-x-1.5">
+                    <span>ข้อค้นพบที่เชื่อมโยงกับกิจกรรมนี้แล้ว</span>
+                    <span className="bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full text-[10px] text-stone-600 dark:text-stone-400">
+                      {(riskFeedbackLinkages || []).filter(l => l.universeId === feedbackTargetActivity.id || l.universeActivity === feedbackTargetActivity.activity).length} รายการ
+                    </span>
+                  </h4>
+                </div>
+
+                {(() => {
+                  const linkedItems = (riskFeedbackLinkages || []).filter(
+                    l => l.universeId === feedbackTargetActivity.id || l.universeActivity === feedbackTargetActivity.activity
+                  );
+                  if (linkedItems.length === 0) {
+                    return (
+                      <div className="text-center py-6 border border-dashed border-stone-200 dark:border-stone-800 rounded-xl text-stone-400 text-xs">
+                        ยังไม่มีข้อค้นพบหรือข้อทักท้วงเดิมเชื่อมโยงกับกิจกรรมนี้
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden divide-y divide-stone-100 dark:divide-stone-800 bg-stone-50/40 dark:bg-stone-850/40">
+                      {linkedItems.map((linkage) => (
+                        <div key={linkage.id} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-stone-50 dark:hover:bg-stone-800/60 transition-colors">
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center flex-wrap gap-1.5">
+                              <span className="font-mono text-[10px] px-1.5 py-0.5 bg-stone-200 dark:bg-stone-750 text-stone-700 dark:text-stone-300 rounded font-semibold">
+                                {linkage.sourceType === 'capa' ? 'CAPA' : 'Follow-up'} ปี {linkage.sourceYear}
+                              </span>
+                              <span className="font-bold text-stone-900 dark:text-stone-100 text-xs">
+                                {linkage.issueTitle}
+                              </span>
+                              <span className="text-[10px] text-stone-500">
+                                ({linkage.department || feedbackTargetActivity.department})
+                              </span>
+                              {linkage.status && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+                                  {linkage.status}
+                                </span>
+                              )}
+                            </div>
+                            {linkage.recommendation && (
+                              <p className="text-[11px] text-stone-500 dark:text-stone-400 line-clamp-1">
+                                ข้อเสนอแนะ: {linkage.recommendation}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const before = { ...feedbackTargetActivity };
+                              const res = removeRiskFeedbackLinkage(riskFeedbackLinkages, linkage.id);
+                              if (res.success) {
+                                setRiskFeedbackLinkages(res.linkages);
+                                const untouched = verifyScoresUntouched(before, feedbackTargetActivity);
+                                showToast(`ยกเลิกการเชื่อมโยงเรียบร้อยแล้ว (คะแนนคงเดิม: ${untouched ? 'ผ่าน' : 'เตือน'})`);
+                              }
+                            }}
+                            className="inline-flex items-center space-x-1 px-2.5 py-1 text-[11px] text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-900/50 cursor-pointer self-start sm:self-center transition-colors"
+                          >
+                            <Unlink className="w-3 h-3" />
+                            <span>ยกเลิกเชื่อมโยง</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Source Issues Selection Section */}
+              <div className="space-y-3 pt-3 border-t border-stone-200 dark:border-stone-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h4 className="font-bold text-stone-900 dark:text-stone-100 text-xs flex items-center space-x-1.5">
+                    <span>เลือกข้อค้นพบจากปีก่อนเพื่อเชื่อมโยง (Source Issues)</span>
+                  </h4>
+                  <div className="flex items-center space-x-2">
+                    <label className="text-[11px] text-stone-500">ปีงบประมาณต้นทาง:</label>
+                    <select
+                      value={feedbackSourceYear}
+                      onChange={(e) => setFeedbackSourceYear(e.target.value)}
+                      className="px-2 py-1 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-bold text-xs outline-none"
+                    >
+                      {['2568', '2567', '2566', ...fiscalYears.filter(y => String(y) !== String(selectedYear) && !['2568', '2567', '2566'].includes(String(y)))].map((y) => (
+                        <option key={y} value={y}>พ.ศ. {y}</option>
+                      ))}
+                    </select>
+
+                    <label className="text-[11px] text-stone-500 ml-2">สำนัก/กอง:</label>
+                    <select
+                      value={feedbackDepartmentFilter}
+                      onChange={(e) => setFeedbackDepartmentFilter(e.target.value)}
+                      className="px-2 py-1 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs outline-none"
+                    >
+                      <option value="all">ทุกสำนัก/กอง</option>
+                      <option value={feedbackTargetActivity.department}>{feedbackTargetActivity.department} (ตรงกิจกรรม)</option>
+                      {getDepartments().filter(d => d !== 'หน่วยตรวจสอบภายใน' && d !== feedbackTargetActivity.department).map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {(() => {
+                  const available = getAvailableSourceIssues({
+                    sourceYear: feedbackSourceYear,
+                    capaFindingsByYear,
+                    departmentFilter: feedbackDepartmentFilter,
+                    session
+                  });
+
+                  const currentLinkedIds = new Set(
+                    (riskFeedbackLinkages || [])
+                      .filter(l => l.universeId === feedbackTargetActivity.id)
+                      .map(l => l.issueId)
+                  );
+
+                  if (available.length === 0) {
+                    return (
+                      <div className="text-center py-6 border border-stone-200 dark:border-stone-800 rounded-xl text-stone-400 text-xs bg-stone-50/50 dark:bg-stone-850/50">
+                        ไม่พบข้อค้นพบหรือข้อทักท้วงเดิมของปี พ.ศ. {feedbackSourceYear} ที่ตรงกับเงื่อนไขการค้นหา
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden divide-y divide-stone-100 dark:divide-stone-800 max-h-60 overflow-y-auto">
+                      {available.map((issue) => {
+                        const isAlreadyLinked = currentLinkedIds.has(issue.issueId);
+                        return (
+                          <div key={`${issue.sourceType}-${issue.issueId}`} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors">
+                            <div className="space-y-0.5 flex-1 min-w-0">
+                              <div className="flex items-center flex-wrap gap-1.5">
+                                <span className="font-mono text-[10px] px-1.5 py-0.5 bg-stone-200 dark:bg-stone-750 text-stone-700 dark:text-stone-300 rounded font-semibold">
+                                  {issue.sourceType === 'capa' ? 'CAPA' : 'Follow-up'}
+                                </span>
+                                <span className="font-semibold text-stone-900 dark:text-stone-100 text-xs">
+                                  {issue.issueTitle}
+                                </span>
+                                <span className="text-[10px] text-stone-500">
+                                  ({issue.department})
+                                </span>
+                              </div>
+                              {issue.recommendation && (
+                                <p className="text-[11px] text-stone-500 dark:text-stone-400 line-clamp-1">
+                                  ข้อเสนอแนะ: {issue.recommendation}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              {isAlreadyLinked ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                  <CheckCircle2 className="w-3 h-3 mr-1" /> เชื่อมโยงแล้ว
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const beforeScores = { ...feedbackTargetActivity };
+                                    const res = addRiskFeedbackLinkage(riskFeedbackLinkages, {
+                                      universeId: feedbackTargetActivity.id,
+                                      universeActivity: feedbackTargetActivity.activity,
+                                      sourceType: issue.sourceType,
+                                      sourceYear: feedbackSourceYear,
+                                      targetYear: selectedYear,
+                                      issueId: issue.issueId,
+                                      issueTitle: issue.issueTitle,
+                                      department: issue.department,
+                                      status: issue.status,
+                                      recommendation: issue.recommendation
+                                    });
+                                    if (res.success) {
+                                      setRiskFeedbackLinkages(res.linkages);
+                                      const scoresUntouched = verifyScoresUntouched(beforeScores, feedbackTargetActivity);
+                                      showToast(`เชื่อมโยง "${issue.issueTitle}" เรียบร้อยแล้ว (คะแนนคงเดิม: ${scoresUntouched ? 'ผ่าน' : 'เตือน'})`);
+                                    } else if (res.reason === 'duplicate') {
+                                      showToast('ข้อค้นพบนี้ถูกเชื่อมโยงกับกิจกรรมนี้อยู่แล้ว (ป้องกันรายการซ้ำ)');
+                                    }
+                                  }}
+                                  className="inline-flex items-center space-x-1 px-3 py-1 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-bold text-[11px] cursor-pointer shadow-xs transition-colors"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  <span>+ เชื่อมโยง</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-stone-200 dark:border-stone-800 flex justify-end bg-stone-50/50 dark:bg-stone-850/50">
+              <button
+                type="button"
+                onClick={() => setShowFeedbackModal(false)}
+                className="px-4 py-2 rounded-xl bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold text-xs cursor-pointer transition-colors"
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
           </div>
         </div>
       )}
