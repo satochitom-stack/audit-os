@@ -113,7 +113,7 @@ export default function OpeningMeetingView({
       auditorName: effectiveAuditorName,
       auditorPosition: effectiveAuditorPosition,
       year: selectedYear
-    });
+    }, session);
   });
 
   // Reload when plan or year changes
@@ -126,14 +126,14 @@ export default function OpeningMeetingView({
       });
       setMeetingData(loaded);
     }
-  }, [selectedYear, selectedPlanId]);
+  }, [selectedYear, selectedPlanId, session?.username]);
 
   // Save helper
   const updateMeetingData = (updater) => {
     setMeetingData((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
       if (currentPlan?.id) {
-        saveOpeningMeeting(selectedYear, currentPlan.id, next);
+        saveOpeningMeeting(selectedYear, currentPlan.id, next, session);
       }
       return next;
     });
