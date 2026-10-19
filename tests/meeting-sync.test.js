@@ -4,8 +4,20 @@ import {
   getClosingMeetingStorageKey,
   createInitialOpeningMeeting,
   createInitialClosingMeeting,
-  extractFindingsFromWorkingPapers
+  extractFindingsFromWorkingPapers,
+  loadOpeningMeeting,
+  saveOpeningMeeting,
+  loadClosingMeeting,
+  saveClosingMeeting
 } from '../src/utils/meetingSyncUtils.js';
+
+const meetingStorage = new Map();
+global.localStorage = {
+  getItem: (key) => (meetingStorage.has(key) ? meetingStorage.get(key) : null),
+  setItem: (key, value) => meetingStorage.set(key, String(value)),
+  removeItem: (key) => meetingStorage.delete(key),
+  clear: () => meetingStorage.clear()
+};
 
 console.log('🧪 Starting Opening & Closing Meeting Persistence Unit Tests...');
 
@@ -247,6 +259,30 @@ console.log('🧪 Starting Opening & Closing Meeting Persistence Unit Tests...')
   assert.notEqual(loadedNextYear.meetingLocation, 'ห้องประชุมสำนักปลัด', 'Different year must have its own isolated record');
 
   console.log('  ✅ Test 7 Passed: Multi-Engagement & Multi-Year Isolation');
+}
+
+// -------------------------------------------------------------
+// Test 8: Tenant isolation for opening and closing meeting persistence
+// -------------------------------------------------------------
+{
+  meetingStorage.clear();
+  const tenantA = { username: 'auditor_a', role: 'auditor' };
+  const tenantB = { username: 'auditor_b', role: 'auditor' };
+  const sharedPlan = { id: 'PLAN-SHARED', projectName: 'งานตรวจสอบ', department: 'กองคลัง' };
+
+  saveOpeningMeeting('2569', sharedPlan.id, { planId: sharedPlan.id, meetingLocation: 'สถานที่ของ A' }, tenantA);
+  saveOpeningMeeting('2569', sharedPlan.id, { planId: sharedPlan.id, meetingLocation: 'สถานที่ของ B' }, tenantB);
+  assert.equal(loadOpeningMeeting('2569', sharedPlan, {}, tenantA).meetingLocation, 'สถานที่ของ A');
+  assert.equal(loadOpeningMeeting('2569', sharedPlan, {}, tenantB).meetingLocation, 'สถานที่ของ B');
+
+  saveClosingMeeting('2569', sharedPlan.id, { planId: sharedPlan.id, conclusion: 'ข้อสรุปของ A' }, tenantA);
+  saveClosingMeeting('2569', sharedPlan.id, { planId: sharedPlan.id, conclusion: 'ข้อสรุปของ B' }, tenantB);
+  assert.equal(loadClosingMeeting('2569', sharedPlan, [], {}, tenantA).conclusion, 'ข้อสรุปของ A');
+  assert.equal(loadClosingMeeting('2569', sharedPlan, [], {}, tenantB).conclusion, 'ข้อสรุปของ B');
+
+  assert.equal(meetingStorage.has('ia_opening_meeting_2569_PLAN-SHARED'), false);
+  assert.equal(meetingStorage.has('ia_closing_meeting_2569_PLAN-SHARED'), false);
+  console.log('  ✅ Test 8 Passed: Meeting Tenant Isolation');
 }
 
 console.log('\n🎉 ALL OPENING & CLOSING MEETING PERSISTENCE TESTS PASSED!\n');
