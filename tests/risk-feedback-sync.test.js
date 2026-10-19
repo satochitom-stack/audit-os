@@ -87,6 +87,11 @@ runTest('Scenario 1: Tenant A and Tenant B must not see or overwrite each other 
   assert.equal(resB.success, true);
   saveRiskFeedbackLinkages('2569', resB.linkages, sessionTenantB);
 
+  // Writes must stay scoped and must never mirror tenant data to the legacy global key.
+  assert.equal(mockStorage.has(RISK_FEEDBACK_STORAGE_KEY), false);
+  assert.equal(mockStorage.has(`${RISK_FEEDBACK_STORAGE_KEY}_tenant_auditor_org_a`), true);
+  assert.equal(mockStorage.has(`${RISK_FEEDBACK_STORAGE_KEY}_tenant_auditor_org_b`), true);
+
   // Verify Tenant A loads only their own linkages
   const loadedA = loadRiskFeedbackLinkages('2569', sessionTenantA);
   assert.equal(loadedA.length, 1);
