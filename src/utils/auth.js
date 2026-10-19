@@ -183,16 +183,21 @@ export function savePaymentRecords(records) {
 // -------------------------------------------------------------
 // Multi-Tenant Isolated Storage Helpers
 // -------------------------------------------------------------
+function resolveTenantStorageSession(userOrSession) {
+  if (typeof userOrSession === 'string' || userOrSession?.username) return userOrSession;
+  return getSession();
+}
+
 export function getTenantStorageKey(baseKey, userOrSession) {
-  return getScopedTenantStorageKey(baseKey, userOrSession ?? getSession());
+  return getScopedTenantStorageKey(baseKey, resolveTenantStorageSession(userOrSession));
 }
 
 export function loadTenantData(baseKey, defaultVal, userOrSession) {
-  return loadScopedTenantData(baseKey, defaultVal, userOrSession ?? getSession());
+  return loadScopedTenantData(baseKey, defaultVal, resolveTenantStorageSession(userOrSession));
 }
 
 export function saveTenantData(baseKey, value, userOrSession) {
-  return saveScopedTenantData(baseKey, value, userOrSession ?? getSession());
+  return saveScopedTenantData(baseKey, value, resolveTenantStorageSession(userOrSession));
 }
 
 // -------------------------------------------------------------
