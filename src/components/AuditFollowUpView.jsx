@@ -44,7 +44,9 @@ import {
   createCapaFromFollowupItem,
   createFollowupHistoryEntry,
   getSourceMeta,
-  getTodayDate
+  getTodayDate,
+  loadFollowupRegister,
+  saveFollowupRegister
 } from '../utils/followupSyncUtils';
 
 export default function AuditFollowUpView({
@@ -169,11 +171,7 @@ export default function AuditFollowUpView({
   }, []);
 
   const [registerItems, setRegisterItems] = useState(() => {
-    let saved = null;
-    try {
-      const raw = localStorage.getItem(`ia_followup_register_${selectedYear}`);
-      if (raw) saved = JSON.parse(raw);
-    } catch (_) {}
+    const saved = loadFollowupRegister(selectedYear, null, session);
     return reconcileFollowupRegister(saved, capaFindings, {
       auditorName: effectiveAuditorName,
       selectedYear,
@@ -190,16 +188,16 @@ export default function AuditFollowUpView({
         defaultItems
       });
       try {
-        localStorage.setItem(`ia_followup_register_${selectedYear}`, JSON.stringify(reconciled));
+        saveFollowupRegister(selectedYear, reconciled, session);
       } catch (_) {}
       return reconciled;
     });
-  }, [capaFindings, selectedYear, effectiveAuditorName, defaultItems]);
+  }, [capaFindings, selectedYear, effectiveAuditorName, defaultItems, session?.username]);
 
   const saveRegister = (items) => {
     setRegisterItems(items);
     try {
-      localStorage.setItem(`ia_followup_register_${selectedYear}`, JSON.stringify(items));
+      saveFollowupRegister(selectedYear, items, session);
     } catch (_) {}
   };
 
