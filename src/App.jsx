@@ -1956,7 +1956,7 @@ export default function App() {
 
             {currentTab === 'tracking-register' && (
               <AuditFollowUpView
-                key={`tracking-register-${session?.username || 'anonymous'}-${selectedYear}`
+                key={`tracking-register-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 capaFindings={capaFindings}
