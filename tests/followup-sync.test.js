@@ -7,8 +7,18 @@ import {
   reconcileFollowupRegister,
   syncFollowupStatusToCapa,
   createCapaFromFollowupItem,
-  createFollowupHistoryEntry
+  createFollowupHistoryEntry,
+  loadFollowupRegister,
+  saveFollowupRegister
 } from '../src/utils/followupSyncUtils.js';
+
+const followupStorage = new Map();
+global.localStorage = {
+  getItem: (key) => (followupStorage.has(key) ? followupStorage.get(key) : null),
+  setItem: (key, value) => followupStorage.set(key, String(value)),
+  removeItem: (key) => followupStorage.delete(key),
+  clear: () => followupStorage.clear()
+};
 
 console.log('🧪 Starting CAPA & Follow-up Integration Unit Tests...');
 
@@ -219,6 +229,22 @@ console.log('🧪 Starting CAPA & Follow-up Integration Unit Tests...');
   assert.equal(capaModel.recommendation, 'จัดประชุมรับฟังความคิดเห็นประชาชน');
 
   console.log('  ✅ Test 7 Passed: Convert Follow-up item to CAPA model');
+}
+
+// -------------------------------------------------------------
+// Test 8: Follow-up register persistence is tenant-scoped
+// -------------------------------------------------------------
+{
+  followupStorage.clear();
+  const tenantA = { username: 'auditor_a', role: 'auditor' };
+  const tenantB = { username: 'auditor_b', role: 'auditor' };
+  saveFollowupRegister('2569', [{ id: 'A-1', title: 'Finding A' }], tenantA);
+  saveFollowupRegister('2569', [{ id: 'B-1', title: 'Finding B' }], tenantB);
+
+  assert.equal(loadFollowupRegister('2569', [], tenantA)[0].id, 'A-1');
+  assert.equal(loadFollowupRegister('2569', [], tenantB)[0].id, 'B-1');
+  assert.equal(followupStorage.has('ia_followup_register_2569'), false);
+  console.log('  ✅ Test 8 Passed: Follow-up Tenant Isolation');
 }
 
 console.log('\n🎉 ALL CAPA & FOLLOW-UP INTEGRATION TESTS PASSED SUCCESSFULLY!\n');
