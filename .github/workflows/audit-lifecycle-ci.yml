@@ -1,0 +1,35 @@
+name: Audit Lifecycle CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/risk-feedback-loop]
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run lifecycle unit and integration tests
+        run: npm test
+
+      - name: Verify UI guardrails
+        run: npm run verify:guardrails
+
+      - name: Build production bundle
+        run: npm run build
