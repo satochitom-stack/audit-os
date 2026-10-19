@@ -64,6 +64,7 @@ import {
   pullPendingUsersFromCloud,
   loadTenantData,
   saveTenantData,
+  getTenantStorageKey,
   getSystemSettings
 } from './utils/auth';
 import { cloudSyncService, mergeRiskManagement } from './services/cloudSyncService';
@@ -1310,23 +1311,74 @@ export default function App() {
     setAuditCharterByYear({ [selectedYear]: initialAuditCharter });
     setAuditUniverseByYear({ [selectedYear]: defaultAuditUniverse });
     setEngagementPlansByYear({ [selectedYear]: INITIAL_ENGAGEMENT_PLANS });
+    setStrategicPlan(initialStrategicPlan);
+    setCapaFindingsByYear({ '2569': [], '2570': [] });
+    setRiskFeedbackLinkagesByYear({ '2569': [], '2570': [] });
     setOrgProfile(initialOrgProfile);
-    localStorage.removeItem('ia_annual_plans_by_year');
-    localStorage.removeItem('ia_working_papers_by_year');
-    localStorage.removeItem('ia_risk_assessments_by_year');
-    localStorage.removeItem('ia_internal_controls_by_year');
-    localStorage.removeItem('ia_risk_management_by_year');
-    localStorage.removeItem('ia_lpa_indicators_by_year');
-    localStorage.removeItem('ia_audit_charter_by_year');
-    localStorage.removeItem('ia_audit_universe_by_year');
-    localStorage.removeItem('ia_engagement_plans_by_year');
-    localStorage.removeItem('ia_org_profile');
-    localStorage.removeItem('ia_annual_plans');
-    localStorage.removeItem('ia_working_papers');
-    localStorage.removeItem('ia_risk_assessments');
-    localStorage.removeItem('ia_internal_controls');
-    localStorage.removeItem('ia_risk_management');
-    localStorage.removeItem('ia_lpa_indicators');
+
+    // Clear the active tenant's scoped lifecycle records only.
+    const scopedBaseKeys = [
+      'ia_annual_plans_by_year',
+      'ia_working_papers_by_year',
+      'ia_risk_assessments_by_year',
+      'ia_internal_controls_by_year',
+      'ia_risk_management_by_year',
+      'ia_lpa_indicators_by_year',
+      'ia_audit_charter_by_year',
+      'ia_audit_universe_by_year',
+      'ia_engagement_plans_by_year',
+      'ia_org_profile',
+      'ia_strategic_plan',
+      'ia_strategic_activities_v2',
+      'ia_capa_findings_by_year',
+      'ia_risk_feedback_linkages_by_year'
+    ];
+    scopedBaseKeys.forEach((key) => {
+      localStorage.removeItem(getTenantStorageKey(key, session));
+    });
+
+    // Opening/closing minutes and follow-up registers use a tenant suffix after their base key.
+    const scopedSampleKey = getTenantStorageKey('__audit_os_scope__', session);
+    const scopedSuffix = scopedSampleKey.slice('__audit_os_scope__'.length);
+    const scopedDynamicKeys = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (
+        key &&
+        key.endsWith(scopedSuffix) &&
+        /^(ia_opening_meeting_|ia_closing_meeting_|ia_followup_register_)/.test(key)
+      ) {
+        scopedDynamicKeys.push(key);
+      }
+    }
+    scopedDynamicKeys.forEach((key) => localStorage.removeItem(key));
+
+    // Unscoped legacy keys may be shared/ambiguous, so only admin may clear them.
+    const isAdminSession = session?.role === 'admin' || session?.username?.toLowerCase() === 'admin';
+    if (isAdminSession) {
+      [
+        'ia_annual_plans_by_year',
+        'ia_working_papers_by_year',
+        'ia_risk_assessments_by_year',
+        'ia_internal_controls_by_year',
+        'ia_risk_management_by_year',
+        'ia_lpa_indicators_by_year',
+        'ia_audit_charter_by_year',
+        'ia_audit_universe_by_year',
+        'ia_engagement_plans_by_year',
+        'ia_org_profile',
+        'ia_annual_plans',
+        'ia_working_papers',
+        'ia_risk_assessments',
+        'ia_internal_controls',
+        'ia_risk_management',
+        'ia_lpa_indicators',
+        'ia_strategic_plan',
+        'ia_strategic_activities_v2',
+        'ia_capa_findings_by_year',
+        'ia_risk_feedback_linkages_by_year'
+      ].forEach((key) => localStorage.removeItem(key));
+    }
   };
 
   // Consolidate complete audit dataset for Google Sheets BYOD sync and backups
