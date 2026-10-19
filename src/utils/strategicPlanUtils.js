@@ -8,6 +8,8 @@
  * - Requires explicit auditor review/confirmation (non-destructive)
  */
 
+import { loadTenantData, saveTenantData } from './tenantStorageUtils.js';
+
 /**
  * Normalizes strategic items from either schema format into canonical structure.
  * Canonical structure contains both `years` map and `y1`, `y2`, `y3` relative to `baseYear`.
@@ -63,22 +65,14 @@ export const normalizeStrategicPlan = (items = [], baseYear = '2569') => {
 /**
  * Load unified strategic plan checking both new and legacy storage keys.
  */
-export const loadUnifiedStrategicPlan = (baseYear = '2569', defaultFallback = []) => {
+export const loadUnifiedStrategicPlan = (baseYear = '2569', defaultFallback = [], session = null) => {
   let loaded = null;
   try {
-    if (typeof localStorage !== 'undefined') {
-      const v2 = localStorage.getItem('ia_strategic_activities_v2');
-      if (v2) {
-        const parsed = JSON.parse(v2);
-        if (Array.isArray(parsed) && parsed.length > 0) loaded = parsed;
-      }
-      if (!loaded) {
-        const v1 = localStorage.getItem('ia_strategic_plan');
-        if (v1) {
-          const parsed = JSON.parse(v1);
-          if (Array.isArray(parsed) && parsed.length > 0) loaded = parsed;
-        }
-      }
+    const v2 = loadTenantData('ia_strategic_activities_v2', null, session);
+    if (Array.isArray(v2) && v2.length > 0) loaded = v2;
+    if (!loaded) {
+      const v1 = loadTenantData('ia_strategic_plan', null, session);
+      if (Array.isArray(v1) && v1.length > 0) loaded = v1;
     }
   } catch (_) {}
 
@@ -89,14 +83,12 @@ export const loadUnifiedStrategicPlan = (baseYear = '2569', defaultFallback = []
 /**
  * Saves unified strategic plan to both current and legacy compatible keys.
  */
-export const saveUnifiedStrategicPlan = (items, baseYear = '2569') => {
+export const saveUnifiedStrategicPlan = (items, baseYear = '2569', session = null) => {
   if (!Array.isArray(items)) return;
   const normalized = normalizeStrategicPlan(items, baseYear);
   try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('ia_strategic_plan', JSON.stringify(normalized));
-      localStorage.setItem('ia_strategic_activities_v2', JSON.stringify(normalized));
-    }
+    saveTenantData('ia_strategic_plan', normalized, session);
+    saveTenantData('ia_strategic_activities_v2', normalized, session);
   } catch (e) {
     console.error('Failed to save strategic plan:', e);
   }
