@@ -20,6 +20,11 @@ import {
 } from '../data/dlaStandardTemplates';
 import { INITIAL_ENGAGEMENT_PLANS } from '../data/engagementPlanTemplates';
 import { initialOrgProfile } from '../data/initialData';
+import {
+  getTenantStorageKey as getScopedTenantStorageKey,
+  loadTenantData as loadScopedTenantData,
+  saveTenantData as saveScopedTenantData
+} from './tenantStorageUtils.js';
 
 const USERS_KEY = 'ia_auth_users';
 const SESSION_KEY = 'ia_auth_session';
@@ -179,47 +184,15 @@ export function savePaymentRecords(records) {
 // Multi-Tenant Isolated Storage Helpers
 // -------------------------------------------------------------
 export function getTenantStorageKey(baseKey, userOrSession) {
-  const username = typeof userOrSession === 'string'
-    ? userOrSession
-    : userOrSession?.username || (typeof getSession === 'function' ? getSession()?.username : null);
-
-  if (!username || username.toLowerCase() === 'admin') {
-    return `${baseKey}_tenant_admin`;
-  }
-  return `${baseKey}_tenant_${username.toLowerCase()}`;
+  return getScopedTenantStorageKey(baseKey, userOrSession ?? getSession());
 }
 
 export function loadTenantData(baseKey, defaultVal, userOrSession) {
-  try {
-    const key = getTenantStorageKey(baseKey, userOrSession);
-    const raw = localStorage.getItem(key);
-    if (raw !== null) {
-      return JSON.parse(raw);
-    }
-    // Backward compatibility fallback to unprefixed baseKey ONLY for admin
-    const username = typeof userOrSession === 'string'
-      ? userOrSession
-      : userOrSession?.username || (typeof getSession === 'function' ? getSession()?.username : null);
-
-    if (!username || username.toLowerCase() === 'admin') {
-      const legacy = localStorage.getItem(baseKey);
-      if (legacy !== null) {
-        return JSON.parse(legacy);
-      }
-    }
-  } catch (e) {
-    console.warn(`Error loading tenant data for ${baseKey}:`, e);
-  }
-  return defaultVal;
+  return loadScopedTenantData(baseKey, defaultVal, userOrSession ?? getSession());
 }
 
 export function saveTenantData(baseKey, value, userOrSession) {
-  try {
-    const key = getTenantStorageKey(baseKey, userOrSession);
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
-    console.warn(`Error saving tenant data for ${baseKey}:`, e);
-  }
+  return saveScopedTenantData(baseKey, value, userOrSession ?? getSession());
 }
 
 // -------------------------------------------------------------
