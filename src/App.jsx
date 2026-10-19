@@ -1204,7 +1204,6 @@ export default function App() {
         localStorage.setItem('ia_session', JSON.stringify(updatedSession));
       } catch (_) {}
     }
-    localStorage.setItem('ia_org_profile', JSON.stringify(newProfile));
 
     if (session?.username) {
       const users = getUsers();
@@ -1234,7 +1233,7 @@ export default function App() {
       fiscalYear: newProfile.fiscalYear || orgProfile.fiscalYear
     };
     setOrgProfile(updated);
-    localStorage.setItem('ia_org_profile', JSON.stringify(updated));
+    if (session) saveTenantData('ia_org_profile', updated, session);
     localStorage.setItem('audit_os_onboarded', 'true');
     setShowOnboarding(false);
 
