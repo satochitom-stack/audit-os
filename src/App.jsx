@@ -403,15 +403,15 @@ export default function App() {
   // Persistent States isolated by fiscal year
   const [annualPlansByYear, setAnnualPlansByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_annual_plans_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_annual_plans_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         if (!parsed['2569'] && parsed['2568']) parsed['2569'] = parsed['2568'];
         return parsed;
       }
-      const old = localStorage.getItem('ia_annual_plans');
-      if (old) {
-        const parsed = JSON.parse(old);
+      const old = currentSession ? loadTenantData('ia_annual_plans', null, currentSession) : null;
+      if (Array.isArray(old)) {
+        const parsed = old;
         if (Array.isArray(parsed)) {
           if (parsed.some((p) => p.title?.includes('ค่าเช่าบ้าน') || p.id === 'PLAN-68-01')) {
             return { '2569': [] };
@@ -427,16 +427,16 @@ export default function App() {
 
   const [workingPapersByYear, setWorkingPapersByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_working_papers_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_working_papers_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         if (!parsed['2569'] && parsed['2568']) parsed['2569'] = parsed['2568'];
         if (!parsed['2570'] || parsed['2570'].length === 0) parsed['2570'] = initialWorkingPapers2570;
         return parsed;
       }
-      const old = localStorage.getItem('ia_working_papers');
-      if (old) {
-        const parsed = JSON.parse(old);
+      const old = currentSession ? loadTenantData('ia_working_papers', null, currentSession) : null;
+      if (Array.isArray(old)) {
+        const parsed = old;
         if (Array.isArray(parsed)) {
           return { '2569': parsed, '2570': initialWorkingPapers2570 };
         }
@@ -613,9 +613,9 @@ export default function App() {
   // Audit Universe Risk Assessment state isolated by fiscal year
   const [auditUniverseByYear, setAuditUniverseByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_audit_universe_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_audit_universe_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         if (!parsed['2569']) {
           parsed['2569'] = parsed['2568'] || defaultAuditUniverse;
         }
@@ -631,9 +631,9 @@ export default function App() {
   // Audit Engagement Plans state (ว 614) isolated by fiscal year
   const [engagementPlansByYear, setEngagementPlansByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_engagement_plans_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_engagement_plans_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         if (!parsed['2569']) {
           parsed['2569'] = createEngagementPlansForYear('2569');
         }
@@ -664,8 +664,9 @@ export default function App() {
   // Strategic Multi-Year Audit Plan (3 - 5 ปี) state
   const [strategicPlan, setStrategicPlan] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_strategic_plan');
-      if (saved) return JSON.parse(saved);
+      const currentSession = getSession();
+      const saved = currentSession ? loadTenantData('ia_strategic_plan', null, currentSession) : null;
+      if (Array.isArray(saved)) return saved;
     } catch (e) {
       console.error(e);
     }
@@ -675,9 +676,9 @@ export default function App() {
   // CAPA Findings Tracker state isolated by fiscal year
   const [capaFindingsByYear, setCapaFindingsByYear] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_capa_findings_by_year');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const currentSession = getSession();
+      const parsed = currentSession ? loadTenantData('ia_capa_findings_by_year', null, currentSession) : null;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         const sampleCapaIds = [
           'CAPA-OAG-69-01', 'CAPA-IA-69-01', 'CAPA-INSP-69-01', 'CAPA-FIN-69-01', 'CAPA-ENG-69-01',
           'CAPA-2569-001', 'CAPA-2569-002', 'CAPA-2569-003'
@@ -788,12 +789,10 @@ export default function App() {
 
   useEffect(() => {
     if (session) saveTenantData('ia_annual_plans_by_year', annualPlansByYear, session);
-    localStorage.setItem('ia_annual_plans_by_year', JSON.stringify(annualPlansByYear));
   }, [annualPlansByYear, session]);
 
   useEffect(() => {
     if (session) saveTenantData('ia_working_papers_by_year', workingPapersByYear, session);
-    localStorage.setItem('ia_working_papers_by_year', JSON.stringify(workingPapersByYear));
   }, [workingPapersByYear, session]);
 
   useEffect(() => {
@@ -950,22 +949,18 @@ export default function App() {
 
   useEffect(() => {
     if (session) saveTenantData('ia_audit_universe_by_year', auditUniverseByYear, session);
-    localStorage.setItem('ia_audit_universe_by_year', JSON.stringify(auditUniverseByYear));
   }, [auditUniverseByYear, session]);
 
   useEffect(() => {
     if (session) saveTenantData('ia_engagement_plans_by_year', engagementPlansByYear, session);
-    localStorage.setItem('ia_engagement_plans_by_year', JSON.stringify(engagementPlansByYear));
   }, [engagementPlansByYear, session]);
 
   useEffect(() => {
     if (session) saveTenantData('ia_strategic_plan', strategicPlan, session);
-    localStorage.setItem('ia_strategic_plan', JSON.stringify(strategicPlan));
   }, [strategicPlan, session]);
 
   useEffect(() => {
     if (session) saveTenantData('ia_capa_findings_by_year', capaFindingsByYear, session);
-    localStorage.setItem('ia_capa_findings_by_year', JSON.stringify(capaFindingsByYear));
   }, [capaFindingsByYear, session]);
 
   useEffect(() => {
