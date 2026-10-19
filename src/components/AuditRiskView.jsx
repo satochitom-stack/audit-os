@@ -3021,7 +3021,8 @@ export default function AuditRiskView({
                   const available = getAvailableSourceIssues({
                     sourceYear: feedbackSourceYear,
                     capaFindingsByYear,
-                    departmentFilter: feedbackDepartmentFilter
+                    departmentFilter: feedbackDepartmentFilter,
+                    session
                   });
 
                   const currentLinkedIds = new Set(
