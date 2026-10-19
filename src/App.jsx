@@ -784,8 +784,8 @@ export default function App() {
 
   // Save year-scoped states to localStorage with Multi-Tenant isolation
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_org_profile', orgProfile, session);
-    localStorage.setItem('ia_org_profile', JSON.stringify(orgProfile));
   }, [orgProfile, session]);
 
   useEffect(() => {
@@ -994,6 +994,9 @@ export default function App() {
           if (currentSess.province) cleanOrg.province = currentSess.province;
         }
         setOrgProfile((prev) => ({ ...prev, ...cleanOrg }));
+      } else {
+        // Never retain the previous tenant's profile if the new tenant has no saved profile.
+        setOrgProfile(initialOrgProfile);
       }
       const au = loadTenantData('ia_audit_universe_by_year', null, currentSess);
       setAuditUniverseByYear(
