@@ -706,6 +706,21 @@ export default function App() {
     return { '2569': [], '2570': [] };
   });
 
+  // Risk Feedback Loop Linkages state isolated by fiscal year and tenant
+  const [riskFeedbackLinkagesByYear, setRiskFeedbackLinkagesByYear] = useState(() => {
+    try {
+      const currentSession = getSession();
+      const tenantSaved = currentSession ? loadTenantData('ia_risk_feedback_linkages_by_year', null, currentSession) : null;
+      const saved = tenantSaved || localStorage.getItem('ia_risk_feedback_linkages_by_year');
+      if (saved) {
+        return typeof saved === 'string' ? JSON.parse(saved) : saved;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return { '2569': [], '2570': [] };
+  });
+
   const [knowledgeBase, setKnowledgeBase] = useState(() => {
     try {
       const saved = localStorage.getItem('ia_knowledge_base');
@@ -950,6 +965,11 @@ export default function App() {
     localStorage.setItem('ia_capa_findings_by_year', JSON.stringify(capaFindingsByYear));
   }, [capaFindingsByYear, session]);
 
+  useEffect(() => {
+    if (session) saveTenantData('ia_risk_feedback_linkages_by_year', riskFeedbackLinkagesByYear, session);
+    localStorage.setItem('ia_risk_feedback_linkages_by_year', JSON.stringify(riskFeedbackLinkagesByYear));
+  }, [riskFeedbackLinkagesByYear, session]);
+
   const reloadDataFromStorage = (currentSess = session) => {
     try {
       const org = loadTenantData('ia_org_profile', null, currentSess);
@@ -986,6 +1006,8 @@ export default function App() {
       if (st) setStrategicPlan(st);
       const cf = loadTenantData('ia_capa_findings_by_year', null, currentSess);
       if (cf) setCapaFindingsByYear(cf);
+      const rfl = loadTenantData('ia_risk_feedback_linkages_by_year', null, currentSess);
+      if (rfl) setRiskFeedbackLinkagesByYear(rfl);
     } catch (e) {
       console.error(e);
     }
@@ -1117,6 +1139,15 @@ export default function App() {
   const setCapaFindings = (updaterOrValue) => {
     setCapaFindingsByYear((prev) => {
       const current = prev[selectedYear] || initialCapaFindings;
+      const updated = typeof updaterOrValue === 'function' ? updaterOrValue(current) : updaterOrValue;
+      return { ...prev, [selectedYear]: updated };
+    });
+  };
+
+  const riskFeedbackLinkages = riskFeedbackLinkagesByYear[selectedYear] || [];
+  const setRiskFeedbackLinkages = (updaterOrValue) => {
+    setRiskFeedbackLinkagesByYear((prev) => {
+      const current = prev[selectedYear] || [];
       const updated = typeof updaterOrValue === 'function' ? updaterOrValue(current) : updaterOrValue;
       return { ...prev, [selectedYear]: updated };
     });
@@ -1734,11 +1765,15 @@ export default function App() {
               <AuditRiskView
                 key={`audit-risk-${selectedYear}`}
                 selectedYear={selectedYear}
+                fiscalYears={fiscalYears}
                 orgProfile={orgProfile}
                 auditUniverse={auditUniverse}
                 setAuditUniverse={setAuditUniverse}
                 annualPlans={annualPlans}
                 setAnnualPlans={setAnnualPlans}
+                capaFindingsByYear={capaFindingsByYear}
+                riskFeedbackLinkages={riskFeedbackLinkages}
+                setRiskFeedbackLinkages={setRiskFeedbackLinkages}
                 setCurrentTab={handleSelectTab}
                 session={session}
               />
