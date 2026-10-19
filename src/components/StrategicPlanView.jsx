@@ -84,17 +84,17 @@ export default function StrategicPlanView({
 
   // Unified Strategic Activities State
   const [strategicActivities, setStrategicActivities] = useState(() => {
-    return loadUnifiedStrategicPlan(selectedYear, defaultActivities);
+    return loadUnifiedStrategicPlan(selectedYear, defaultActivities, session);
   });
 
   useEffect(() => {
     const loaded = loadUnifiedStrategicPlan(selectedYear, defaultActivities);
     setStrategicActivities(loaded);
-  }, [selectedYear]);
+  }, [selectedYear, session?.username]);
 
   const updateActivities = (newActivities) => {
     setStrategicActivities(newActivities);
-    saveUnifiedStrategicPlan(newActivities, selectedYear);
+    saveUnifiedStrategicPlan(newActivities, selectedYear, session);
     if (setStrategicPlan) {
       setStrategicPlan(newActivities);
     }
