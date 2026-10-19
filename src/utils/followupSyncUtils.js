@@ -9,6 +9,8 @@
  * preventing duplicate records, and maintaining complete audit trails.
  */
 
+import { loadTenantData, saveTenantData } from './tenantStorageUtils.js';
+
 // Parse date-only strings without timezone shifts. Support both Gregorian
 // dates from HTML date inputs (e.g. 2026-10-16) and legacy Buddhist dates
 // (e.g. 2569-10-16). Keep the input format when adding days.
@@ -67,6 +69,17 @@ export const calculateDaysRemaining = (deadlineStr) => {
 };
 
 export const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+export const getFollowupRegisterStorageKey = (year = '2569') => `ia_followup_register_${year || '2569'}`;
+
+export const loadFollowupRegister = (year = '2569', defaultValue = null, session = null) => {
+  const saved = loadTenantData(getFollowupRegisterStorageKey(year), defaultValue, session);
+  return Array.isArray(saved) ? saved : defaultValue;
+};
+
+export const saveFollowupRegister = (year = '2569', items = [], session = null) => {
+  saveTenantData(getFollowupRegisterStorageKey(year), Array.isArray(items) ? items : [], session);
+};
 
 /**
  * Standardize source name and label
