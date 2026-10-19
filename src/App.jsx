@@ -710,16 +710,19 @@ export default function App() {
   const [riskFeedbackLinkagesByYear, setRiskFeedbackLinkagesByYear] = useState(() => {
     try {
       const currentSession = getSession();
-      const tenantSaved = currentSession ? loadTenantData('ia_risk_feedback_linkages_by_year', null, currentSession) : null;
-      const saved = tenantSaved || localStorage.getItem('ia_risk_feedback_linkages_by_year');
-      if (saved) {
-        return typeof saved === 'string' ? JSON.parse(saved) : saved;
+      const saved = currentSession
+        ? loadTenantData('ia_risk_feedback_linkages_by_year', null, currentSession)
+        : null;
+      if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+        return saved;
       }
     } catch (e) {
       console.error(e);
     }
     return { '2569': [], '2570': [] };
   });
+
+  const riskFeedbackStorageOwnerRef = useRef(session?.username?.toLowerCase() || null);
 
   const [knowledgeBase, setKnowledgeBase] = useState(() => {
     try {
@@ -966,8 +969,15 @@ export default function App() {
   }, [capaFindingsByYear, session]);
 
   useEffect(() => {
-    if (session) saveTenantData('ia_risk_feedback_linkages_by_year', riskFeedbackLinkagesByYear, session);
-    localStorage.setItem('ia_risk_feedback_linkages_by_year', JSON.stringify(riskFeedbackLinkagesByYear));
+    const currentOwner = session?.username?.toLowerCase() || null;
+    if (riskFeedbackStorageOwnerRef.current !== currentOwner) {
+      // Do not persist the previous tenant's state into the newly selected tenant.
+      riskFeedbackStorageOwnerRef.current = currentOwner;
+      return;
+    }
+    if (session) {
+      saveTenantData('ia_risk_feedback_linkages_by_year', riskFeedbackLinkagesByYear, session);
+    }
   }, [riskFeedbackLinkagesByYear, session]);
 
   const reloadDataFromStorage = (currentSess = session) => {
@@ -1007,7 +1017,11 @@ export default function App() {
       const cf = loadTenantData('ia_capa_findings_by_year', null, currentSess);
       if (cf) setCapaFindingsByYear(cf);
       const rfl = loadTenantData('ia_risk_feedback_linkages_by_year', null, currentSess);
-      if (rfl) setRiskFeedbackLinkagesByYear(rfl);
+      setRiskFeedbackLinkagesByYear(
+        rfl && typeof rfl === 'object' && !Array.isArray(rfl)
+          ? rfl
+          : { '2569': [], '2570': [] }
+      );
     } catch (e) {
       console.error(e);
     }
@@ -1763,7 +1777,7 @@ export default function App() {
 
             {currentTab === 'audit-risk' && (
               <AuditRiskView
-                key={`audit-risk-${selectedYear}`}
+                key={`audit-risk-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 fiscalYears={fiscalYears}
                 orgProfile={orgProfile}
@@ -1781,7 +1795,7 @@ export default function App() {
 
             {currentTab === 'strategic-plan' && (
               <StrategicPlanView
-                key={`strategic-plan-${selectedYear}`}
+                key={`strategic-plan-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 auditUniverse={auditUniverse}
@@ -1831,7 +1845,7 @@ export default function App() {
 
             {currentTab === 'opening-meeting' && (
               <OpeningMeetingView
-                key={`opening-meeting-${selectedYear}`}
+                key={`opening-meeting-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
@@ -1857,7 +1871,7 @@ export default function App() {
 
             {currentTab === 'closing-meeting' && (
               <ClosingMeetingView
-                key={`closing-meeting-${selectedYear}`}
+                key={`closing-meeting-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
@@ -1870,7 +1884,7 @@ export default function App() {
 
             {currentTab === 'tracking-register' && (
               <AuditFollowUpView
-                key={`tracking-register-${selectedYear}`}
+                key={`tracking-register-${session?.username || 'anonymous'}-${selectedYear}`
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 capaFindings={capaFindings}
