@@ -2,45 +2,12 @@
 // ระบบเชื่อมโยงผลการตรวจสอบเดิมและข้อทักท้วงเข้าสู่จักรวาลการตรวจสอบ (Risk Feedback Loop)
 // รองรับ Multi-Tenant (แยกตาม orgId / user tenant) และแยกตามปีงบประมาณอย่างสมบูรณ์
 
-export function getTenantStorageKey(baseKey, session = null) {
-  const username = typeof session === 'string'
-    ? session
-    : session?.username;
-  if (username && username.toLowerCase() !== 'admin') {
-    return `${baseKey}_tenant_${username.toLowerCase()}`;
-  }
-  return baseKey;
-}
-
-export function loadTenantData(baseKey, defaultVal = null, session = null) {
-  try {
-    const key = getTenantStorageKey(baseKey, session);
-    const raw = localStorage.getItem(key);
-    if (raw !== null) {
-      return JSON.parse(raw);
-    }
-    const legacy = localStorage.getItem(baseKey);
-    if (legacy !== null) {
-      return JSON.parse(legacy);
-    }
-  } catch (e) {
-    console.warn('Failed to load tenant data:', e);
-  }
-  return defaultVal;
-}
-
-export function saveTenantData(baseKey, val, session = null) {
-  try {
-    const key = getTenantStorageKey(baseKey, session);
-    const jsonStr = JSON.stringify(val);
-    localStorage.setItem(key, jsonStr);
-    if (key !== baseKey) {
-      localStorage.setItem(baseKey, jsonStr);
-    }
-  } catch (e) {
-    console.warn('Failed to save tenant data:', e);
-  }
-}
+import {
+  getTenantStorageKey,
+  loadTenantData,
+  saveTenantData
+} from './tenantStorageUtils.js';
+export { getTenantStorageKey, loadTenantData, saveTenantData };
 
 export const RISK_FEEDBACK_STORAGE_KEY = 'ia_risk_feedback_linkages_by_year';
 
@@ -52,13 +19,8 @@ export const RISK_FEEDBACK_STORAGE_KEY = 'ia_risk_feedback_linkages_by_year';
 export function loadAllRiskFeedbackLinkages(session = null) {
   try {
     const tenantSaved = loadTenantData(RISK_FEEDBACK_STORAGE_KEY, null, session);
-    if (tenantSaved && typeof tenantSaved === 'object') {
+    if (tenantSaved && typeof tenantSaved === 'object' && !Array.isArray(tenantSaved)) {
       return tenantSaved;
-    }
-    const legacy = localStorage.getItem(RISK_FEEDBACK_STORAGE_KEY);
-    if (legacy) {
-      const parsed = JSON.parse(legacy);
-      if (parsed && typeof parsed === 'object') return parsed;
     }
   } catch (err) {
     console.warn('Failed to load risk feedback linkages:', err);
@@ -88,7 +50,6 @@ export function saveRiskFeedbackLinkages(targetYear = '2569', linkagesForYear = 
     const all = { ...loadAllRiskFeedbackLinkages(session) };
     all[targetYear] = Array.isArray(linkagesForYear) ? linkagesForYear : [];
     saveTenantData(RISK_FEEDBACK_STORAGE_KEY, all, session);
-    localStorage.setItem(RISK_FEEDBACK_STORAGE_KEY, JSON.stringify(all));
     return all;
   } catch (err) {
     console.warn('Failed to save risk feedback linkages:', err);
@@ -180,7 +141,8 @@ export function getAvailableSourceIssues({
   sourceYear = '2568',
   capaFindingsByYear = {},
   followupRegisterItems = [],
-  departmentFilter = 'all'
+  departmentFilter = 'all',
+  session = null
 }) {
   const issues = [];
   const seenIds = new Set();
@@ -211,13 +173,8 @@ export function getAvailableSourceIssues({
   // 2. รวบรวมจาก Follow-up Register (ตรวจจากพารามิเตอร์หรือ LocalStorage ประจำปีนั้น)
   let followList = Array.isArray(followupRegisterItems) ? followupRegisterItems : [];
   if (followList.length === 0) {
-    try {
-      const saved = localStorage.getItem(`ia_followup_register_${sourceYear}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) followList = parsed;
-      }
-    } catch (_) {}
+    const saved = loadTenantData(`ia_followup_register_${sourceYear}`, [], session);
+    if (Array.isArray(saved)) followList = saved;
   }
 
   followList.forEach((f) => {
