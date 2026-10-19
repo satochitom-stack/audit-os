@@ -67,13 +67,15 @@ import {
   getTenantStorageKey,
   getSystemSettings
 } from './utils/auth';
+import { clearTenantStorage } from './utils/tenantStorageUtils';
 import { cloudSyncService, mergeRiskManagement } from './services/cloudSyncService';
 import { isSupabaseConfigured, getSupabaseClient } from './services/supabaseClient';
 import { luxuryConfirm, luxuryAlert } from './components/LuxuryModal';
 import {
   orchestrateSafeImport,
   getLatestSafetySnapshot,
-  restoreLatestSafetySnapshot
+  restoreLatestSafetySnapshot,
+  applyTenantImportPayload
 } from './utils/backupRestoreUtils';
 
 
@@ -1255,47 +1257,27 @@ export default function App() {
     setRiskFeedbackLinkagesByYear({ '2569': [], '2570': [] });
     setOrgProfile(initialOrgProfile);
 
-    // Clear the active tenant's scoped lifecycle records only.
-    const scopedBaseKeys = [
-      'ia_annual_plans_by_year',
-      'ia_working_papers_by_year',
-      'ia_risk_assessments_by_year',
-      'ia_internal_controls_by_year',
-      'ia_risk_management_by_year',
-      'ia_lpa_indicators_by_year',
-      'ia_audit_charter_by_year',
-      'ia_audit_universe_by_year',
-      'ia_engagement_plans_by_year',
-      'ia_org_profile',
-      'ia_strategic_plan',
-      'ia_strategic_activities_v2',
-      'ia_capa_findings_by_year',
-      'ia_risk_feedback_linkages_by_year'
-    ];
-    scopedBaseKeys.forEach((key) => {
-      localStorage.removeItem(getTenantStorageKey(key, session));
-    });
-
-    // Opening/closing minutes and follow-up registers use a tenant suffix after their base key.
-    const scopedSampleKey = getTenantStorageKey('__audit_os_scope__', session);
-    const scopedSuffix = scopedSampleKey.slice('__audit_os_scope__'.length);
-    const scopedDynamicKeys = [];
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      if (
-        key &&
-        key.endsWith(scopedSuffix) &&
-        /^(ia_opening_meeting_|ia_closing_meeting_|ia_followup_register_)/.test(key)
-      ) {
-        scopedDynamicKeys.push(key);
-      }
-    }
-    scopedDynamicKeys.forEach((key) => localStorage.removeItem(key));
-
-    // Phase 6A Tenant Isolation:
-    // Only the active tenant's scoped keys are reset. Unscoped legacy keys are NEVER deleted,
-    // ensuring legacy datasets remain completely intact and available for recovery.
+    // Clear the active tenant's scoped lifecycle records from storage using centralized utility.
+    // Unscoped legacy keys and other tenants' keys are NEVER deleted.
+    clearTenantStorage(session);
   };
+
+  const getTenantStateSetters = () => ({
+    setOrgProfile,
+    setFiscalYears,
+    setAuditUniverseByYear,
+    setEngagementPlansByYear,
+    setAnnualPlansByYear,
+    setWorkingPapersByYear,
+    setRiskAssessmentsByYear,
+    setInternalControlsByYear,
+    setRiskManagementByYear,
+    setLpaIndicatorsByYear,
+    setAuditCharterByYear,
+    setStrategicPlan,
+    setCapaFindingsByYear,
+    setRiskFeedbackLinkagesByYear
+  });
 
   // Consolidate tenant audit dataset for Google Sheets BYOD sync, backups, and safety snapshots
   const getAllAuditData = (options = {}) => {
@@ -1400,32 +1382,7 @@ export default function App() {
         });
       },
       applyImportCallback: (validatedPayload) => {
-        // Platform-global datasets (users, departments) are NEVER overwritten by normal tenant imports,
-        // even if the active session has an 'admin' role. Tenant imports are strictly scoped to the tenant workspace.
-        if (validatedPayload.orgProfile) setOrgProfile(validatedPayload.orgProfile);
-        if (validatedPayload.fiscalYears) setFiscalYears(validatedPayload.fiscalYears);
-        if (validatedPayload.auditUniverseByYear) setAuditUniverseByYear(validatedPayload.auditUniverseByYear);
-        else if (validatedPayload.auditUniverse) setAuditUniverseByYear({ [selectedYear]: validatedPayload.auditUniverse });
-        if (validatedPayload.engagementPlansByYear) setEngagementPlansByYear(validatedPayload.engagementPlansByYear);
-        else if (validatedPayload.engagementPlans) setEngagementPlansByYear({ [selectedYear]: validatedPayload.engagementPlans });
-        if (validatedPayload.annualPlansByYear) setAnnualPlansByYear(validatedPayload.annualPlansByYear);
-        else if (validatedPayload.annualPlans) setAnnualPlansByYear({ [selectedYear]: validatedPayload.annualPlans });
-        if (validatedPayload.workingPapersByYear) setWorkingPapersByYear(validatedPayload.workingPapersByYear);
-        else if (validatedPayload.workingPapers) setWorkingPapersByYear({ [selectedYear]: validatedPayload.workingPapers });
-        if (validatedPayload.riskAssessmentsByYear) setRiskAssessmentsByYear(validatedPayload.riskAssessmentsByYear);
-        else if (validatedPayload.riskAssessments) setRiskAssessmentsByYear({ [selectedYear]: validatedPayload.riskAssessments });
-        if (validatedPayload.internalControlsByYear) setInternalControlsByYear(validatedPayload.internalControlsByYear);
-        else if (validatedPayload.internalControls) setInternalControlsByYear({ [selectedYear]: validatedPayload.internalControls });
-        if (validatedPayload.riskManagementByYear) setRiskManagementByYear(validatedPayload.riskManagementByYear);
-        else if (validatedPayload.riskManagement) setRiskManagementByYear({ [selectedYear]: validatedPayload.riskManagement });
-        if (validatedPayload.lpaIndicatorsByYear) setLpaIndicatorsByYear(validatedPayload.lpaIndicatorsByYear);
-        else if (validatedPayload.lpaIndicators) setLpaIndicatorsByYear({ [selectedYear]: validatedPayload.lpaIndicators });
-        if (validatedPayload.auditCharterByYear) setAuditCharterByYear(validatedPayload.auditCharterByYear);
-        else if (validatedPayload.auditCharter) setAuditCharterByYear({ [selectedYear]: validatedPayload.auditCharter });
-        if (validatedPayload.strategicPlan && Array.isArray(validatedPayload.strategicPlan)) setStrategicPlan(validatedPayload.strategicPlan);
-        if (validatedPayload.capaFindingsByYear) setCapaFindingsByYear(validatedPayload.capaFindingsByYear);
-        else if (validatedPayload.capaFindings) setCapaFindingsByYear({ [selectedYear]: validatedPayload.capaFindings });
-        if (validatedPayload.riskFeedbackLinkagesByYear) setRiskFeedbackLinkagesByYear(validatedPayload.riskFeedbackLinkagesByYear);
+        applyTenantImportPayload(validatedPayload, getTenantStateSetters(), { selectedYear });
       }
     });
 
@@ -1475,21 +1432,7 @@ export default function App() {
     const res = await restoreLatestSafetySnapshot({
       session,
       applyCallback: (validatedPayload) => {
-        // Platform-global datasets (users, departments) are NEVER overwritten by tenant safety snapshot restore
-        if (validatedPayload.orgProfile) setOrgProfile(validatedPayload.orgProfile);
-        if (validatedPayload.fiscalYears) setFiscalYears(validatedPayload.fiscalYears);
-        if (validatedPayload.auditUniverseByYear) setAuditUniverseByYear(validatedPayload.auditUniverseByYear);
-        if (validatedPayload.engagementPlansByYear) setEngagementPlansByYear(validatedPayload.engagementPlansByYear);
-        if (validatedPayload.annualPlansByYear) setAnnualPlansByYear(validatedPayload.annualPlansByYear);
-        if (validatedPayload.workingPapersByYear) setWorkingPapersByYear(validatedPayload.workingPapersByYear);
-        if (validatedPayload.riskAssessmentsByYear) setRiskAssessmentsByYear(validatedPayload.riskAssessmentsByYear);
-        if (validatedPayload.internalControlsByYear) setInternalControlsByYear(validatedPayload.internalControlsByYear);
-        if (validatedPayload.riskManagementByYear) setRiskManagementByYear(validatedPayload.riskManagementByYear);
-        if (validatedPayload.lpaIndicatorsByYear) setLpaIndicatorsByYear(validatedPayload.lpaIndicatorsByYear);
-        if (validatedPayload.auditCharterByYear) setAuditCharterByYear(validatedPayload.auditCharterByYear);
-        if (validatedPayload.strategicPlan && Array.isArray(validatedPayload.strategicPlan)) setStrategicPlan(validatedPayload.strategicPlan);
-        if (validatedPayload.capaFindingsByYear) setCapaFindingsByYear(validatedPayload.capaFindingsByYear);
-        if (validatedPayload.riskFeedbackLinkagesByYear) setRiskFeedbackLinkagesByYear(validatedPayload.riskFeedbackLinkagesByYear);
+        applyTenantImportPayload(validatedPayload, getTenantStateSetters(), { selectedYear });
       }
     });
 

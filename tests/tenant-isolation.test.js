@@ -17,7 +17,11 @@ global.localStorage = {
   getItem: (key) => (mockStorage.has(key) ? mockStorage.get(key) : null),
   setItem: (key, val) => mockStorage.set(key, String(val)),
   removeItem: (key) => mockStorage.delete(key),
-  clear: () => mockStorage.clear()
+  clear: () => mockStorage.clear(),
+  get length() {
+    return mockStorage.size;
+  },
+  key: (index) => Array.from(mockStorage.keys())[index] || null
 };
 
 // Mock window and CustomEvent for auth.js
@@ -140,7 +144,9 @@ const {
   getTenantStorageKey,
   hasLegacyModuleData,
   recordLegacyRecoveryStatus,
-  getLegacyRecoveryStatus
+  getLegacyRecoveryStatus,
+  clearTenantStorage,
+  SCOPED_BASE_KEYS
 } = await import('../src/utils/tenantStorageUtils.js');
 
 const {
@@ -156,7 +162,8 @@ const {
   getLatestSafetySnapshot,
   restoreLatestSafetySnapshot,
   setForceSnapshotFailureForTest,
-  MAX_SNAPSHOT_SIZE_BYTES
+  MAX_SNAPSHOT_SIZE_BYTES,
+  applyTenantImportPayload
 } = await import('../src/utils/backupRestoreUtils.js');
 
 
@@ -433,12 +440,13 @@ function createSimulatedTenantApp(user, initialData = {}) {
   }
 
   const applyImport = (validatedPayload) => {
-    for (const [key, storageKey] of Object.entries(TENANT_STORAGE_KEY_MAP)) {
-      if (validatedPayload[key]) {
-        state[key] = validatedPayload[key];
-        saveTenantData(storageKey, validatedPayload[key], user);
-      }
-    }
+    applyTenantImportPayload(validatedPayload, {
+      setOrgProfile: (val) => { state.orgProfile = val; saveTenantData('ia_org_profile', val, user); },
+      setAuditUniverseByYear: (val) => { state.auditUniverseByYear = val; saveTenantData('ia_audit_universe_by_year', val, user); },
+      setAnnualPlansByYear: (val) => { state.annualPlansByYear = val; saveTenantData('ia_annual_plans_by_year', val, user); },
+      setWorkingPapersByYear: (val) => { state.workingPapersByYear = val; saveTenantData('ia_working_papers_by_year', val, user); },
+      setRiskFeedbackLinkagesByYear: (val) => { state.riskFeedbackLinkagesByYear = val; saveTenantData('ia_risk_feedback_linkages_by_year', val, user); }
+    });
   };
 
   const getAuditData = () => ({ ...state });
@@ -1249,17 +1257,25 @@ await runTest('Condition 10.10: Admin importing tenant backup cannot overwrite p
     workingPapersByYear: { '2569': [{ id: 'WP-NEW-IMPORTED' }] }
   };
 
-  // Execute safe import with an admin session
-  // In App.jsx, normal tenant import applyImportCallback NEVER touches users or departments
+  // State setters passed to applyTenantImportPayload (same structure as App.jsx getTenantStateSetters)
+  const receivedState = {};
+  const spySetters = {
+    setOrgProfile: (val) => { receivedState.orgProfile = val; adminApp.state.orgProfile = val; },
+    setWorkingPapersByYear: (val) => { receivedState.workingPapersByYear = val; adminApp.state.workingPapersByYear = val; },
+    // Spies to guarantee neither users nor departments are ever dispatched
+    setUsers: () => { throw new Error('setUsers must NEVER be invoked during tenant import'); },
+    setDepartments: () => { throw new Error('setDepartments must NEVER be invoked during tenant import'); }
+  };
+
+  // Execute safe import with an admin session using real applyTenantImportPayload
   const result = await orchestrateSafeImport({
     backupPayload: rogueTenantBackup,
     currentTenantData: adminApp.getAuditData(),
     session: adminUser,
     confirmCallback: async () => true,
     applyImportCallback: (validatedPayload) => {
-      // Mirror updated App.jsx applyImportCallback:
-      // Platform-global users and departments are explicitly ignored
-      adminApp.applyImport(validatedPayload);
+      // Calls the exact production applyTenantImportPayload function
+      applyTenantImportPayload(validatedPayload, spySetters, { selectedYear: '2569' });
     }
   });
 
@@ -1269,13 +1285,13 @@ await runTest('Condition 10.10: Admin importing tenant backup cannot overwrite p
   const afterUsers = JSON.parse(mockStorage.get('ia_auth_users'));
   assert.equal(afterUsers.length, 2);
   assert.equal(afterUsers.some((u) => u.username === 'auditor_real'), true);
-  assert.equal(afterUsers.some((u) => u.username === 'attacker'), false, 'Rogue user must not be injected');
+  assert.equal(afterUsers.some((u) => u.username === 'attacker'), false, 'Rogue user must not be injected into platform storage');
 
   // Platform-global departments must be 100% UNCHANGED
   const afterDepts = JSON.parse(mockStorage.get('ia_departments'));
-  assert.deepEqual(afterDepts, originalDepts);
+  assert.deepEqual(afterDepts, originalDepts, 'Platform departments must remain completely unchanged');
 
-  // Tenant working paper was updated
+  // Tenant working paper was updated as expected
   assert.equal(adminApp.state.workingPapersByYear['2569'][0].id, 'WP-NEW-IMPORTED');
 });
 
@@ -1305,44 +1321,126 @@ await runTest('Condition 10.11: Reset Data and Snapshot Recovery NEVER delete le
   const tenantKey = getTenantStorageKey('ia_working_papers_by_year', user);
   assert.ok(mockStorage.get(tenantKey), 'Tenant scoped key must exist before reset');
 
-  // Simulate updated App.jsx handleResetData behavior:
-  // Scoped base keys are removed, but legacy keys are NEVER removed even if session is admin
-  const simulateReset = (currentSession) => {
-    const scopedKeys = ['ia_working_papers_by_year', 'ia_annual_plans_by_year', 'ia_audit_universe_by_year', 'ia_org_profile'];
-    scopedKeys.forEach((key) => {
-      mockStorage.delete(getTenantStorageKey(key, currentSession));
-    });
-    // Legacy keys are strictly preserved
-  };
+  // Call the real clearTenantStorage production function used by App.jsx handleResetData
+  // NO simulateReset() - calls actual implementation directly!
+  clearTenantStorage(user, global.localStorage);
 
-  // Run reset as auditor
-  simulateReset(user);
   assert.equal(mockStorage.get(tenantKey), undefined, 'Scoped key must be cleared on reset');
   assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp, 'Legacy WP must not be deleted on auditor reset');
   assert.equal(mockStorage.get('ia_audit_universe_by_year'), legacyUniverse, 'Legacy AU must not be deleted');
 
-  // Run reset as admin
-  simulateReset(admin);
+  // Run clearTenantStorage with admin session: Legacy keys must STILL remain untouched!
+  clearTenantStorage(admin, global.localStorage);
   assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp, 'Legacy WP must not be deleted even on admin reset');
   assert.equal(mockStorage.get('ia_annual_plans_by_year'), legacyPlan, 'Legacy Plan must not be deleted');
   assert.equal(mockStorage.get('ia_org_profile'), legacyProfile, 'Legacy Profile must not be deleted');
 
-  // Verify Snapshot recovery also leaves legacy keys untouched
+  // Verify Snapshot recovery with applyTenantImportPayload also leaves legacy keys untouched
   const snap = await createTenantSafetySnapshot({
     workingPapersByYear: { '2569': [{ id: 'WP-FOR-RECOVERY-TEST' }] }
   }, user);
   assert.equal(snap.success, true);
+
+  const recoveredState = {};
   const restoreRes = await restoreLatestSafetySnapshot({
     session: user,
-    applyCallback: () => {}
+    applyCallback: (validatedPayload) => {
+      applyTenantImportPayload(validatedPayload, {
+        setWorkingPapersByYear: (val) => { recoveredState.workingPapersByYear = val; }
+      });
+    }
   });
   assert.equal(restoreRes.success, true);
+  assert.equal(recoveredState.workingPapersByYear['2569'][0].id, 'WP-FOR-RECOVERY-TEST');
 
   // All legacy keys remain 100% byte-for-byte identical
   assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp);
   assert.equal(mockStorage.get('ia_audit_universe_by_year'), legacyUniverse);
   assert.equal(mockStorage.get('ia_annual_plans_by_year'), legacyPlan);
   assert.equal(mockStorage.get('ia_org_profile'), legacyProfile);
+});
+
+// =========================================================================
+// Test 10.12: Tenant isolation across user switching, page refresh, and recovery
+// =========================================================================
+await runTest('Condition 10.12: Tenant isolation across user switching, page refresh, and recovery', async () => {
+  mockStorage.clear();
+  persistentDatabases.clear();
+
+  const userA = { username: 'auditor_switch_a', organization: 'อบต. สวิตช์ เอ', role: 'auditor' };
+  const userB = { username: 'auditor_switch_b', organization: 'อบต. สวิตช์ บี', role: 'auditor' };
+
+  // 1. User A logs in and saves active data
+  saveTenantData('ia_working_papers_by_year', { '2569': [{ id: 'WP-USER-A-STABLE' }] }, userA);
+  saveTenantData('ia_risk_feedback_linkages_by_year', { '2569': [{ linkageId: 'LINK-A-STABLE' }] }, userA);
+
+  // 2. Simulate page refresh for User A: loads exactly their scoped data
+  const reloadedA_Wp = loadTenantData('ia_working_papers_by_year', null, userA);
+  const reloadedA_Rf = loadTenantData('ia_risk_feedback_linkages_by_year', null, userA);
+  assert.equal(reloadedA_Wp['2569'][0].id, 'WP-USER-A-STABLE');
+  assert.equal(reloadedA_Rf['2569'][0].linkageId, 'LINK-A-STABLE');
+
+  // 3. User A logs out, User B logs in
+  const userB_Wp = loadTenantData('ia_working_papers_by_year', null, userB);
+  assert.equal(userB_Wp, null, 'User B must not see User A data');
+
+  // 4. User B creates and saves their own data
+  saveTenantData('ia_working_papers_by_year', { '2569': [{ id: 'WP-USER-B-NEW' }] }, userB);
+
+  // 5. Verify User A data in storage has NOT been modified by User B's activity
+  const checkA_Wp = loadTenantData('ia_working_papers_by_year', null, userA);
+  assert.equal(checkA_Wp['2569'][0].id, 'WP-USER-A-STABLE');
+
+  // 6. User B logs out, User A logs back in
+  const resumeA_Wp = loadTenantData('ia_working_papers_by_year', null, userA);
+  assert.equal(resumeA_Wp['2569'][0].id, 'WP-USER-A-STABLE');
+});
+
+// =========================================================================
+// Test 10.13: Reset Data deletes ONLY active tenant data, preserving other tenants and legacy keys
+// =========================================================================
+await runTest('Condition 10.13: Reset Data deletes ONLY active tenant data, preserving other tenants and legacy keys', async () => {
+  mockStorage.clear();
+  persistentDatabases.clear();
+
+  const userA = { username: 'tenant_alice', organization: 'อบต. อลิซ', role: 'auditor' };
+  const userB = { username: 'tenant_bob', organization: 'อบต. บ๊อบ', role: 'auditor' };
+
+  // 1. Establish pre-existing legacy unscoped keys
+  const legacyUniverse = JSON.stringify({ '2569': [{ id: 'LEGACY-AU-SACRED' }] });
+  mockStorage.set('ia_audit_universe_by_year', legacyUniverse);
+
+  // 2. Pre-seed User A data (base and dynamic keys)
+  saveTenantData('ia_working_papers_by_year', { '2569': [{ id: 'WP-ALICE-1' }] }, userA);
+  saveTenantData('ia_annual_plans_by_year', { '2569': [{ id: 'PLAN-ALICE-1' }] }, userA);
+  const dynKeyAlice = `ia_opening_meeting_sample_${getTenantStorageKey('__audit_os_scope__', userA).slice('__audit_os_scope__'.length)}`;
+  mockStorage.set(dynKeyAlice, JSON.stringify({ title: 'Alice Opening Meeting' }));
+
+  // 3. Pre-seed User B data (base and dynamic keys)
+  saveTenantData('ia_working_papers_by_year', { '2569': [{ id: 'WP-BOB-KEEP' }] }, userB);
+  saveTenantData('ia_annual_plans_by_year', { '2569': [{ id: 'PLAN-BOB-KEEP' }] }, userB);
+  const dynKeyBob = `ia_opening_meeting_sample_${getTenantStorageKey('__audit_os_scope__', userB).slice('__audit_os_scope__'.length)}`;
+  mockStorage.set(dynKeyBob, JSON.stringify({ title: 'Bob Opening Meeting' }));
+
+  // 4. User A performs clearTenantStorage (the production function called by handleResetData)
+  const removedKeys = clearTenantStorage(userA, global.localStorage);
+  assert.ok(removedKeys.includes(getTenantStorageKey('ia_working_papers_by_year', userA)));
+  assert.ok(removedKeys.includes(dynKeyAlice));
+
+  // 5. Verify User A keys are cleared
+  assert.equal(loadTenantData('ia_working_papers_by_year', null, userA), null);
+  assert.equal(loadTenantData('ia_annual_plans_by_year', null, userA), null);
+  assert.equal(mockStorage.get(dynKeyAlice), undefined);
+
+  // 6. Verify User B keys are 100% INTACT
+  const bobWp = loadTenantData('ia_working_papers_by_year', null, userB);
+  const bobPlan = loadTenantData('ia_annual_plans_by_year', null, userB);
+  assert.equal(bobWp['2569'][0].id, 'WP-BOB-KEEP');
+  assert.equal(bobPlan['2569'][0].id, 'PLAN-BOB-KEEP');
+  assert.equal(mockStorage.get(dynKeyBob), JSON.stringify({ title: 'Bob Opening Meeting' }));
+
+  // 7. Verify legacy keys are 100% INTACT
+  assert.equal(mockStorage.get('ia_audit_universe_by_year'), legacyUniverse);
 });
 
 console.log(`\n======================================================`);

@@ -530,3 +530,129 @@ export async function orchestrateSafeImport({
     conflictInfo
   };
 }
+
+/**
+ * Applies a validated backup or snapshot payload into tenant state setters.
+ * Strictly guarantees that platform-global datasets (users, departments, auth records)
+ * are NEVER touched or overwritten, even if present in the payload or called by an admin session.
+ *
+ * @param {object} validatedPayload - Validated JSON backup or snapshot payload
+ * @param {object} setters - Map of state setters
+ * @param {object} [options] - Contextual options like selectedYear
+ * @returns {string[]} List of applied module keys
+ */
+export function applyTenantImportPayload(validatedPayload, setters = {}, options = {}) {
+  if (!validatedPayload || typeof validatedPayload !== 'object') return [];
+  const selectedYear = options.selectedYear || '2569';
+  const appliedModules = [];
+
+  // Platform-global datasets (users, departments) are strictly ignored and never applied to tenant workspace
+  if (validatedPayload.orgProfile && typeof setters.setOrgProfile === 'function') {
+    setters.setOrgProfile(validatedPayload.orgProfile);
+    appliedModules.push('orgProfile');
+  }
+  if (validatedPayload.fiscalYears && typeof setters.setFiscalYears === 'function') {
+    setters.setFiscalYears(validatedPayload.fiscalYears);
+    appliedModules.push('fiscalYears');
+  }
+  if (typeof setters.setAuditUniverseByYear === 'function') {
+    if (validatedPayload.auditUniverseByYear) {
+      setters.setAuditUniverseByYear(validatedPayload.auditUniverseByYear);
+      appliedModules.push('auditUniverseByYear');
+    } else if (validatedPayload.auditUniverse) {
+      setters.setAuditUniverseByYear({ [selectedYear]: validatedPayload.auditUniverse });
+      appliedModules.push('auditUniverseByYear');
+    }
+  }
+  if (typeof setters.setEngagementPlansByYear === 'function') {
+    if (validatedPayload.engagementPlansByYear) {
+      setters.setEngagementPlansByYear(validatedPayload.engagementPlansByYear);
+      appliedModules.push('engagementPlansByYear');
+    } else if (validatedPayload.engagementPlans) {
+      setters.setEngagementPlansByYear({ [selectedYear]: validatedPayload.engagementPlans });
+      appliedModules.push('engagementPlansByYear');
+    }
+  }
+  if (typeof setters.setAnnualPlansByYear === 'function') {
+    if (validatedPayload.annualPlansByYear) {
+      setters.setAnnualPlansByYear(validatedPayload.annualPlansByYear);
+      appliedModules.push('annualPlansByYear');
+    } else if (validatedPayload.annualPlans) {
+      setters.setAnnualPlansByYear({ [selectedYear]: validatedPayload.annualPlans });
+      appliedModules.push('annualPlansByYear');
+    }
+  }
+  if (typeof setters.setWorkingPapersByYear === 'function') {
+    if (validatedPayload.workingPapersByYear) {
+      setters.setWorkingPapersByYear(validatedPayload.workingPapersByYear);
+      appliedModules.push('workingPapersByYear');
+    } else if (validatedPayload.workingPapers) {
+      setters.setWorkingPapersByYear({ [selectedYear]: validatedPayload.workingPapers });
+      appliedModules.push('workingPapersByYear');
+    }
+  }
+  if (typeof setters.setRiskAssessmentsByYear === 'function') {
+    if (validatedPayload.riskAssessmentsByYear) {
+      setters.setRiskAssessmentsByYear(validatedPayload.riskAssessmentsByYear);
+      appliedModules.push('riskAssessmentsByYear');
+    } else if (validatedPayload.riskAssessments) {
+      setters.setRiskAssessmentsByYear({ [selectedYear]: validatedPayload.riskAssessments });
+      appliedModules.push('riskAssessmentsByYear');
+    }
+  }
+  if (typeof setters.setInternalControlsByYear === 'function') {
+    if (validatedPayload.internalControlsByYear) {
+      setters.setInternalControlsByYear(validatedPayload.internalControlsByYear);
+      appliedModules.push('internalControlsByYear');
+    } else if (validatedPayload.internalControls) {
+      setters.setInternalControlsByYear({ [selectedYear]: validatedPayload.internalControls });
+      appliedModules.push('internalControlsByYear');
+    }
+  }
+  if (typeof setters.setRiskManagementByYear === 'function') {
+    if (validatedPayload.riskManagementByYear) {
+      setters.setRiskManagementByYear(validatedPayload.riskManagementByYear);
+      appliedModules.push('riskManagementByYear');
+    } else if (validatedPayload.riskManagement) {
+      setters.setRiskManagementByYear({ [selectedYear]: validatedPayload.riskManagement });
+      appliedModules.push('riskManagementByYear');
+    }
+  }
+  if (typeof setters.setLpaIndicatorsByYear === 'function') {
+    if (validatedPayload.lpaIndicatorsByYear) {
+      setters.setLpaIndicatorsByYear(validatedPayload.lpaIndicatorsByYear);
+      appliedModules.push('lpaIndicatorsByYear');
+    } else if (validatedPayload.lpaIndicators) {
+      setters.setLpaIndicatorsByYear({ [selectedYear]: validatedPayload.lpaIndicators });
+      appliedModules.push('lpaIndicatorsByYear');
+    }
+  }
+  if (typeof setters.setAuditCharterByYear === 'function') {
+    if (validatedPayload.auditCharterByYear) {
+      setters.setAuditCharterByYear(validatedPayload.auditCharterByYear);
+      appliedModules.push('auditCharterByYear');
+    } else if (validatedPayload.auditCharter) {
+      setters.setAuditCharterByYear({ [selectedYear]: validatedPayload.auditCharter });
+      appliedModules.push('auditCharterByYear');
+    }
+  }
+  if (validatedPayload.strategicPlan && Array.isArray(validatedPayload.strategicPlan) && typeof setters.setStrategicPlan === 'function') {
+    setters.setStrategicPlan(validatedPayload.strategicPlan);
+    appliedModules.push('strategicPlan');
+  }
+  if (typeof setters.setCapaFindingsByYear === 'function') {
+    if (validatedPayload.capaFindingsByYear) {
+      setters.setCapaFindingsByYear(validatedPayload.capaFindingsByYear);
+      appliedModules.push('capaFindingsByYear');
+    } else if (validatedPayload.capaFindings) {
+      setters.setCapaFindingsByYear({ [selectedYear]: validatedPayload.capaFindings });
+      appliedModules.push('capaFindingsByYear');
+    }
+  }
+  if (validatedPayload.riskFeedbackLinkagesByYear && typeof setters.setRiskFeedbackLinkagesByYear === 'function') {
+    setters.setRiskFeedbackLinkagesByYear(validatedPayload.riskFeedbackLinkagesByYear);
+    appliedModules.push('riskFeedbackLinkagesByYear');
+  }
+
+  return appliedModules;
+}
