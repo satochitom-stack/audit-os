@@ -723,7 +723,8 @@ export default function App() {
     return { '2569': [], '2570': [] };
   });
 
-  const riskFeedbackStorageOwnerRef = useRef(session?.username?.toLowerCase() || null);
+  // Persistence is gated until tenant state has reloaded, preventing account-switch data leakage.
+  const tenantPersistenceOwnerRef = useRef(null);
 
   const [knowledgeBase, setKnowledgeBase] = useState(() => {
     try {
@@ -788,10 +789,12 @@ export default function App() {
   }, [orgProfile, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_annual_plans_by_year', annualPlansByYear, session);
   }, [annualPlansByYear, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_working_papers_by_year', workingPapersByYear, session);
   }, [workingPapersByYear, session]);
 
@@ -948,28 +951,27 @@ export default function App() {
   }, [auditCharterByYear]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_audit_universe_by_year', auditUniverseByYear, session);
   }, [auditUniverseByYear, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_engagement_plans_by_year', engagementPlansByYear, session);
   }, [engagementPlansByYear, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_strategic_plan', strategicPlan, session);
   }, [strategicPlan, session]);
 
   useEffect(() => {
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) saveTenantData('ia_capa_findings_by_year', capaFindingsByYear, session);
   }, [capaFindingsByYear, session]);
 
   useEffect(() => {
-    const currentOwner = session?.username?.toLowerCase() || null;
-    if (riskFeedbackStorageOwnerRef.current !== currentOwner) {
-      // Do not persist the previous tenant's state into the newly selected tenant.
-      riskFeedbackStorageOwnerRef.current = currentOwner;
-      return;
-    }
+    if (tenantPersistenceOwnerRef.current !== (session?.username?.toLowerCase() || null)) return;
     if (session) {
       saveTenantData('ia_risk_feedback_linkages_by_year', riskFeedbackLinkagesByYear, session);
     }
@@ -994,13 +996,27 @@ export default function App() {
         setOrgProfile((prev) => ({ ...prev, ...cleanOrg }));
       }
       const au = loadTenantData('ia_audit_universe_by_year', null, currentSess);
-      if (au) setAuditUniverseByYear(au);
+      setAuditUniverseByYear(
+        au && typeof au === 'object' && !Array.isArray(au)
+          ? au
+          : { '2569': defaultAuditUniverse, '2570': defaultAuditUniverse }
+      );
       const ap = loadTenantData('ia_annual_plans_by_year', null, currentSess);
-      if (ap) setAnnualPlansByYear(ap);
+      setAnnualPlansByYear(
+        ap && typeof ap === 'object' && !Array.isArray(ap) ? ap : { '2569': [], '2570': [] }
+      );
       const ep = loadTenantData('ia_engagement_plans_by_year', null, currentSess);
-      if (ep) setEngagementPlansByYear(ep);
+      setEngagementPlansByYear(
+        ep && typeof ep === 'object' && !Array.isArray(ep)
+          ? ep
+          : { '2569': createEngagementPlansForYear('2569'), '2570': createEngagementPlansForYear('2570') }
+      );
       const wp = loadTenantData('ia_working_papers_by_year', null, currentSess);
-      if (wp) setWorkingPapersByYear(wp);
+      setWorkingPapersByYear(
+        wp && typeof wp === 'object' && !Array.isArray(wp)
+          ? wp
+          : { '2569': initialWorkingPapers, '2570': initialWorkingPapers2570 }
+      );
       const ra = loadTenantData('ia_risk_assessments_by_year', null, currentSess);
       if (ra) setRiskAssessmentsByYear(ra);
       const ic = loadTenantData('ia_internal_controls_by_year', null, currentSess);
@@ -1008,9 +1024,13 @@ export default function App() {
       const rm = loadTenantData('ia_risk_management_by_year', null, currentSess);
       if (rm) setRiskManagementByYear(rm);
       const st = loadTenantData('ia_strategic_plan', null, currentSess);
-      if (st) setStrategicPlan(st);
+      setStrategicPlan(Array.isArray(st) ? st : initialStrategicPlan);
       const cf = loadTenantData('ia_capa_findings_by_year', null, currentSess);
-      if (cf) setCapaFindingsByYear(cf);
+      setCapaFindingsByYear(
+        cf && typeof cf === 'object' && !Array.isArray(cf)
+          ? cf
+          : { '2569': [], '2570': [] }
+      );
       const rfl = loadTenantData('ia_risk_feedback_linkages_by_year', null, currentSess);
       setRiskFeedbackLinkagesByYear(
         rfl && typeof rfl === 'object' && !Array.isArray(rfl)
@@ -1026,6 +1046,9 @@ export default function App() {
   useEffect(() => {
     if (session?.username) {
       reloadDataFromStorage(session);
+      tenantPersistenceOwnerRef.current = session.username.toLowerCase();
+    } else {
+      tenantPersistenceOwnerRef.current = null;
     }
   }, [session?.username]);
 
