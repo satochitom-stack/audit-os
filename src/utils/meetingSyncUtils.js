@@ -12,6 +12,7 @@
  */
 
 import { getTodayDate } from './followupSyncUtils.js';
+import { loadTenantData, saveTenantData } from './tenantStorageUtils.js';
 
 export const getOpeningMeetingStorageKey = (year, planId) => {
   return `ia_opening_meeting_${year || '2569'}_${planId || 'default'}`;
@@ -77,21 +78,18 @@ export const createInitialOpeningMeeting = (plan, options = {}) => {
 /**
  * Loads saved opening meeting or falls back to initialized data.
  */
-export const loadOpeningMeeting = (year, plan, options = {}) => {
+export const loadOpeningMeeting = (year, plan, options = {}, session = null) => {
   if (!plan) return createInitialOpeningMeeting(null, options);
   const key = getOpeningMeetingStorageKey(year, plan.id);
   try {
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        return {
-          ...createInitialOpeningMeeting(plan, options),
-          ...parsed,
-          planId: plan.id,
-          year: String(year)
-        };
-      }
+    const parsed = loadTenantData(key, null, session);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return {
+        ...createInitialOpeningMeeting(plan, options),
+        ...parsed,
+        planId: plan.id,
+        year: String(year)
+      };
     }
   } catch (_) {}
   return createInitialOpeningMeeting(plan, options);
@@ -100,11 +98,11 @@ export const loadOpeningMeeting = (year, plan, options = {}) => {
 /**
  * Saves opening meeting to localStorage scoped by engagement ID and year.
  */
-export const saveOpeningMeeting = (year, planId, data) => {
+export const saveOpeningMeeting = (year, planId, data, session = null) => {
   if (!planId) return;
   const key = getOpeningMeetingStorageKey(year, planId);
   try {
-    localStorage.setItem(key, JSON.stringify({ ...data, updatedAt: getTodayDate() }));
+    saveTenantData(key, { ...data, updatedAt: getTodayDate() }, session);
   } catch (e) {
     console.error('Failed to save opening meeting:', e);
   }
@@ -192,21 +190,18 @@ export const createInitialClosingMeeting = (plan, workingPapers = [], options = 
 /**
  * Loads saved closing meeting or falls back to initialized data.
  */
-export const loadClosingMeeting = (year, plan, workingPapers = [], options = {}) => {
+export const loadClosingMeeting = (year, plan, workingPapers = [], options = {}, session = null) => {
   if (!plan) return createInitialClosingMeeting(null, workingPapers, options);
   const key = getClosingMeetingStorageKey(year, plan.id);
   try {
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        return {
-          ...createInitialClosingMeeting(plan, workingPapers, options),
-          ...parsed,
-          planId: plan.id,
-          year: String(year)
-        };
-      }
+    const parsed = loadTenantData(key, null, session);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return {
+        ...createInitialClosingMeeting(plan, workingPapers, options),
+        ...parsed,
+        planId: plan.id,
+        year: String(year)
+      };
     }
   } catch (_) {}
   return createInitialClosingMeeting(plan, workingPapers, options);
@@ -215,11 +210,11 @@ export const loadClosingMeeting = (year, plan, workingPapers = [], options = {})
 /**
  * Saves closing meeting to localStorage scoped by engagement ID and year.
  */
-export const saveClosingMeeting = (year, planId, data) => {
+export const saveClosingMeeting = (year, planId, data, session = null) => {
   if (!planId) return;
   const key = getClosingMeetingStorageKey(year, planId);
   try {
-    localStorage.setItem(key, JSON.stringify({ ...data, updatedAt: getTodayDate() }));
+    saveTenantData(key, { ...data, updatedAt: getTodayDate() }, session)
   } catch (e) {
     console.error('Failed to save closing meeting:', e);
   }
