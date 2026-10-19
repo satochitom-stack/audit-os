@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "verify:guardrails": "node scripts/verify-guardrails.cjs",
-    "test": "node tests/followup-sync.test.js && node tests/meeting-sync.test.js && node tests/strategic-plan-sync.test.js && node tests/risk-feedback-sync.test.js",
+    "test": "node tests/followup-sync.test.js && node tests/meeting-sync.test.js && node tests/strategic-plan-sync.test.js && node tests/risk-feedback-sync.test.js && node tests/tenant-isolation.test.js",
     "test:followup": "node tests/followup-sync.test.js",
     "test:meetings": "node tests/meeting-sync.test.js",
     "test:strategic": "node tests/strategic-plan-sync.test.js",
     "test:risk-feedback": "node tests/risk-feedback-sync.test.js",
+    "test:isolation": "node tests/tenant-isolation.test.js",
     "build": "node scripts/verify-guardrails.cjs && vite build",
     "deploy": "node scripts/verify-guardrails.cjs && vite build && firebase deploy --only hosting",
     "lint": "oxlint",

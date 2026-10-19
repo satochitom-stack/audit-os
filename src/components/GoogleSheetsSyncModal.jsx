@@ -162,13 +162,16 @@ export default function GoogleSheetsSyncModal({
     try {
       const restoredData = await pullFromGoogleSheets(config.webAppUrl, session);
       if (onImportBackup && restoredData) {
-        onImportBackup(restoredData);
+        const ok = await onImportBackup(restoredData);
+        if (ok !== false) {
+          setConfig(getGoogleSheetsConfig(session));
+          setFeedback({
+            type: 'success',
+            message: '✓ กู้คืนข้อมูลจาก Google Sheets กลับสู่ระบบสำเร็จเรียบร้อยแล้ว!'
+          });
+        }
       }
-      setConfig(getGoogleSheetsConfig(session));
-      setFeedback({
-        type: 'success',
-        message: '✓ กู้คืนข้อมูลจาก Google Sheets กลับสู่ระบบสำเร็จเรียบร้อยแล้ว!'
-      });
+
     } catch (err) {
       setFeedback({ type: 'error', message: 'การดึงข้อมูลล้มเหลว: ' + err.message });
     } finally {

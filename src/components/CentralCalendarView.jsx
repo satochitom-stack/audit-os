@@ -21,6 +21,7 @@ import {
   Tag
 } from 'lucide-react';
 import { initialCentralCalendarEvents } from '../data/initialData';
+import { loadTenantData, saveTenantData } from '../utils/tenantStorageUtils.js';
 
 export default function CentralCalendarView({
   session,
@@ -31,10 +32,9 @@ export default function CentralCalendarView({
 }) {
   const [events, setEvents] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_central_calendar_events');
+      const saved = loadTenantData('ia_central_calendar_events', null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(saved) && saved.length > 0) return saved;
       }
     } catch (e) {
       console.error(e);
@@ -62,7 +62,7 @@ export default function CentralCalendarView({
   const saveEvents = (data) => {
     setEvents(data);
     try {
-      localStorage.setItem('ia_central_calendar_events', JSON.stringify(data));
+      saveTenantData('ia_central_calendar_events', data, session);
     } catch (e) {
       console.error(e);
     }

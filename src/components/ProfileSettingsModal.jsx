@@ -24,6 +24,7 @@ export default function ProfileSettingsModal({
   onResetData,
   onExportBackup,
   onImportBackup,
+  onRestoreSafetySnapshot,
   onClose
 }) {
   const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'years', 'data'
@@ -105,18 +106,21 @@ export default function ProfileSettingsModal({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const json = JSON.parse(event.target.result);
-        onImportBackup(json);
-        setMessage('นำเข้าข้อมูลสำรองสำเร็จ');
-        setTimeout(() => setMessage(''), 2500);
+        const ok = await onImportBackup(json);
+        if (ok !== false) {
+          setMessage('นำเข้าข้อมูลสำรองสำเร็จ');
+          setTimeout(() => setMessage(''), 2500);
+        }
       } catch {
         setError('ไฟล์ JSON ไม่ถูกต้องหรือไม่สามารถอ่านได้');
       }
     };
     reader.readAsText(file);
   };
+
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
@@ -419,8 +423,27 @@ export default function ProfileSettingsModal({
                       className="hidden"
                     />
                   </label>
+
+                  {onRestoreSafetySnapshot && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const ok = await onRestoreSafetySnapshot();
+                        if (ok) {
+                          setMessage('ย้อนกลับข้อมูลไปยังจุดสำรองก่อนนำเข้าสำเร็จแล้ว');
+                          setTimeout(() => setMessage(''), 3000);
+                        }
+                      }}
+                      className="bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800 font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 cursor-pointer"
+                      title="ย้อนกลับข้อมูลไปยังจุดสำรองนิรภัยที่สร้างขึ้นก่อนการนำเข้าล่าสุด"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                      <span>ย้อนกลับข้อมูลก่อนนำเข้าล่าสุด (Safety Snapshot)</span>
+                    </button>
+                  )}
                 </div>
               </div>
+
             </div>
           )}
         </div>
