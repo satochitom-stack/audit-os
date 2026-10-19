@@ -214,7 +214,7 @@ export const saveClosingMeeting = (year, planId, data, session = null) => {
   if (!planId) return;
   const key = getClosingMeetingStorageKey(year, planId);
   try {
-    saveTenantData(key, { ...data, updatedAt: getTodayDate() }, session)
+    saveTenantData(key, { ...data, updatedAt: getTodayDate() }, session);
   } catch (e) {
     console.error('Failed to save closing meeting:', e);
   }
