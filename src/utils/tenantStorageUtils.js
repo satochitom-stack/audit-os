@@ -103,7 +103,18 @@ export const SCOPED_BASE_KEYS = [
   'ia_strategic_plan',
   'ia_strategic_activities_v2',
   'ia_capa_findings_by_year',
-  'ia_risk_feedback_linkages_by_year'
+  'ia_risk_feedback_linkages_by_year',
+  'ia_central_calendar_events',
+  'ia_dept_office_data',
+  'ia_dept_finance_data',
+  'ia_dept_tech_data',
+  'ia_dept_education_data',
+  'ia_dept_welfare_data',
+  'ia_dept_public_health_data',
+  'ia_dept_cdc_charoen_data',
+  'ia_dept_cdc_fangthoeng_data',
+  'ia_executive_directives',
+  'ia_public_overview_data'
 ];
 
 /**
@@ -159,7 +170,9 @@ export function clearTenantStorage(session, storage = typeof localStorage !== 'u
     } else if (typeof storage.delete === 'function') {
       storage.delete(scopedKey);
     }
-    removedKeys.push(scopedKey);
+    if (!removedKeys.includes(scopedKey)) {
+      removedKeys.push(scopedKey);
+    }
   });
 
   // 2. Remove dynamic scoped keys (e.g. opening meeting, closing meeting, followup register)
@@ -171,9 +184,14 @@ export function clearTenantStorage(session, storage = typeof localStorage !== 'u
     const parsed = parseTenantStorageKey(key);
     if (!parsed) return;
 
+    // Never remove tenant legacy recovery marker
+    if (parsed.baseKey === 'ia_legacy_recovery_status') return;
+
     // Exact tenant ownership match: parsed.tenant must strictly equal targetTenant
-    if (parsed.tenant === targetTenant && isDynamicAuditBaseKey(parsed.baseKey)) {
-      dynamicKeysToRemove.push(key);
+    if (parsed.tenant === targetTenant && (isDynamicAuditBaseKey(parsed.baseKey) || SCOPED_BASE_KEYS.includes(parsed.baseKey))) {
+      if (!dynamicKeysToRemove.includes(key)) {
+        dynamicKeysToRemove.push(key);
+      }
     }
   };
 
@@ -187,6 +205,10 @@ export function clearTenantStorage(session, storage = typeof localStorage !== 'u
     for (const key of storage.keys()) {
       checkAndCollectKey(key);
     }
+  } else if (typeof storage === 'object' && storage !== null) {
+    for (const key of Object.keys(storage)) {
+      checkAndCollectKey(key);
+    }
   }
 
   dynamicKeysToRemove.forEach((key) => {
@@ -195,7 +217,9 @@ export function clearTenantStorage(session, storage = typeof localStorage !== 'u
     } else if (typeof storage.delete === 'function') {
       storage.delete(key);
     }
-    removedKeys.push(key);
+    if (!removedKeys.includes(key)) {
+      removedKeys.push(key);
+    }
   });
 
   return removedKeys;
