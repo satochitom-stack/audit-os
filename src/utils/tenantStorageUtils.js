@@ -2,17 +2,23 @@
 // Legacy unscoped data is readable only by admin; it is never a fallback for an auditor tenant.
 
 function resolveUsername(userOrSession) {
-  return typeof userOrSession === 'string'
-    ? userOrSession
-    : userOrSession?.username || null;
+  if (typeof userOrSession === 'string') {
+    return userOrSession.trim();
+  }
+  return userOrSession?.username ? String(userOrSession.username).trim() : null;
+}
+
+export function getTenantIdentifier(userOrSession = null) {
+  const username = resolveUsername(userOrSession);
+  if (!username || username.toLowerCase() === 'admin') {
+    return 'admin';
+  }
+  return username.toLowerCase();
 }
 
 export function getTenantStorageKey(baseKey, userOrSession = null) {
-  const username = resolveUsername(userOrSession);
-  if (!username || username.toLowerCase() === 'admin') {
-    return `${baseKey}_tenant_admin`;
-  }
-  return `${baseKey}_tenant_${username.toLowerCase()}`;
+  const tenant = getTenantIdentifier(userOrSession);
+  return `${baseKey}_tenant_${tenant}`;
 }
 
 export function loadTenantData(baseKey, defaultVal = null, userOrSession = null) {
@@ -101,6 +107,37 @@ export const SCOPED_BASE_KEYS = [
 ];
 
 /**
+ * Decomposes a storage key into its baseKey and tenantIdentifier.
+ * Returns null if the key is not tenant-scoped.
+ *
+ * @param {string} key - Full storage key
+ * @returns {{ baseKey: string, tenant: string } | null}
+ */
+export function parseTenantStorageKey(key) {
+  if (typeof key !== 'string') return null;
+  const separator = '_tenant_';
+  const sepIndex = key.indexOf(separator);
+  if (sepIndex === -1) return null;
+
+  const baseKey = key.slice(0, sepIndex);
+  const tenant = key.slice(sepIndex + separator.length);
+
+  return { baseKey, tenant };
+}
+
+/**
+ * Checks whether a baseKey belongs to a known dynamic audit key pattern.
+ * Supports Opening Meeting, Closing Meeting, Follow-up Register, and Audit Committee registers.
+ *
+ * @param {string} baseKey
+ * @returns {boolean}
+ */
+export function isDynamicAuditBaseKey(baseKey) {
+  if (typeof baseKey !== 'string') return false;
+  return /^(ia_opening_meeting_|ia_closing_meeting_|ia_followup_register_|ia_audit_comm_)/.test(baseKey);
+}
+
+/**
  * Clears the active tenant's scoped lifecycle records from storage.
  * Only keys scoped to this tenant are removed.
  * Legacy unscoped keys and other tenants' keys are NEVER deleted.
@@ -112,6 +149,7 @@ export const SCOPED_BASE_KEYS = [
 export function clearTenantStorage(session, storage = typeof localStorage !== 'undefined' ? localStorage : null) {
   if (!storage) return [];
   const removedKeys = [];
+  const targetTenant = getTenantIdentifier(session);
 
   // 1. Remove base scoped keys for this tenant
   SCOPED_BASE_KEYS.forEach((baseKey) => {
@@ -125,31 +163,29 @@ export function clearTenantStorage(session, storage = typeof localStorage !== 'u
   });
 
   // 2. Remove dynamic scoped keys (e.g. opening meeting, closing meeting, followup register)
-  const scopedSampleKey = getTenantStorageKey('__audit_os_scope__', session);
-  const scopedSuffix = scopedSampleKey.slice('__audit_os_scope__'.length);
+  // Scans all keys and parses exact tenant owner, avoiding any suffix-based collisions
   const dynamicKeysToRemove = [];
+
+  const checkAndCollectKey = (key) => {
+    if (!key || typeof key !== 'string') return;
+    const parsed = parseTenantStorageKey(key);
+    if (!parsed) return;
+
+    // Exact tenant ownership match: parsed.tenant must strictly equal targetTenant
+    if (parsed.tenant === targetTenant && isDynamicAuditBaseKey(parsed.baseKey)) {
+      dynamicKeysToRemove.push(key);
+    }
+  };
 
   if (typeof storage.length === 'number' && typeof storage.key === 'function') {
     const length = storage.length;
     for (let index = 0; index < length; index += 1) {
       const key = storage.key(index);
-      if (
-        key &&
-        key.endsWith(scopedSuffix) &&
-        /^(ia_opening_meeting_|ia_closing_meeting_|ia_followup_register_)/.test(key)
-      ) {
-        dynamicKeysToRemove.push(key);
-      }
+      checkAndCollectKey(key);
     }
   } else if (typeof storage.keys === 'function') {
     for (const key of storage.keys()) {
-      if (
-        key &&
-        key.endsWith(scopedSuffix) &&
-        /^(ia_opening_meeting_|ia_closing_meeting_|ia_followup_register_)/.test(key)
-      ) {
-        dynamicKeysToRemove.push(key);
-      }
+      checkAndCollectKey(key);
     }
   }
 
