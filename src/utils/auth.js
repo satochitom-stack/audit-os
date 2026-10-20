@@ -26,7 +26,8 @@ import {
   saveTenantData as saveScopedTenantData,
   hasLegacyModuleData,
   recordLegacyRecoveryStatus,
-  getLegacyRecoveryStatus
+  getLegacyRecoveryStatus,
+  LEGACY_RECOVERY_BASE_KEYS
 } from './tenantStorageUtils.js';
 
 export { hasLegacyModuleData, recordLegacyRecoveryStatus, getLegacyRecoveryStatus };
@@ -323,6 +324,15 @@ export function initializeUserTenantWorkspace(user) {
   } else if (!localStorage.getItem(engKey)) {
     saveTenantData('ia_engagement_plans_by_year', { '2569': INITIAL_ENGAGEMENT_PLANS, '2570': [] }, user);
   }
+
+  // Inventory every known prior-version unscoped module key, not only the first four
+  // modules initialized above. Preserve unknown-owner data and never auto-assign it.
+  const recordedRecoveryStatus = getLegacyRecoveryStatus(user);
+  LEGACY_RECOVERY_BASE_KEYS.forEach((baseKey) => {
+    if (hasLegacyModuleData(baseKey) && !recordedRecoveryStatus[baseKey]) {
+      recordLegacyRecoveryStatus(baseKey, 'awaiting_recovery', user);
+    }
+  });
 }
 
 // -------------------------------------------------------------
