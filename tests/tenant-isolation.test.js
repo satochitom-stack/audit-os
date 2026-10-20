@@ -632,7 +632,14 @@ await runTest('Condition 9.5: Invalid or malformed backup payload is rejected wi
     [],
     {}, // empty object
     { randomProperty: 123 }, // no recognized audit keys
-    { auditUniverseByYear: 'not an object' } // bad nested structure
+    { auditUniverseByYear: 'not an object' },
+    { auditUniverseByYear: [] }, // current year-map format cannot be a top-level array
+    { annualPlansByYear: [] }, // current year-map format cannot be a top-level array
+    { auditUniverseByYear: { '2569': 'not an array or object' } },
+    { annualPlansByYear: { '2569': null } },
+    { workingPapersByYear: { '2569': 7 } },
+    { riskManagementByYear: { '2569': false } },
+    { auditUniverseByYear: null }
   ];
 
   for (const bad of badPayloads) {
@@ -651,6 +658,10 @@ await runTest('Condition 9.5: Invalid or malformed backup payload is rejected wi
     // Destination data must never change
     assert.equal(app.state.auditUniverseByYear['2569'][0].id, 'AU-DO-NOT-TOUCH');
   }
+
+  // Historical single-year array exports remain supported through legacy aliases.
+  assert.equal(validateBackupPayload({ auditUniverse: [{ id: 'LEGACY-AU-01' }] }).valid, true);
+  assert.equal(validateBackupPayload({ annualPlans: [] }).valid, true);
 });
 
 // =========================================================================
