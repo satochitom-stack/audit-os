@@ -1954,7 +1954,7 @@ export default function App() {
 
             {currentTab === 'audit-committee' && (
               <AuditCommitteeView
-                key={`audit-committee-${selectedYear}`}
+                key={`audit-committee-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 orgProfile={orgProfile}
                 annualPlans={annualPlans}
@@ -2001,7 +2001,7 @@ export default function App() {
 
             {currentTab === 'public-overview' && (
               <PublicOverviewView
-                key={`public-overview-${selectedYear}`}
+                key={`public-overview-${session?.username || 'anonymous'}-${selectedYear}`}
                 orgProfile={orgProfile}
                 selectedYear={selectedYear}
                 session={session}
@@ -2011,7 +2011,7 @@ export default function App() {
 
             {currentTab === 'executive-dashboard' && (
               <ExecutiveDashboardView
-                key={`executive-dashboard-${selectedYear}`}
+                key={`executive-dashboard-${session?.username || 'anonymous'}-${selectedYear}`}
                 orgProfile={orgProfile}
                 selectedYear={selectedYear}
                 annualPlans={annualPlans}
@@ -2024,7 +2024,7 @@ export default function App() {
 
             {currentTab === 'central-calendar' && (
               <CentralCalendarView
-                key={`central-calendar-${selectedYear}`}
+                key={`central-calendar-${session?.username || 'anonymous'}-${selectedYear}`}
                 selectedYear={selectedYear}
                 annualPlans={annualPlans}
                 session={session}
@@ -2040,7 +2040,7 @@ export default function App() {
               currentTab === 'dept-cdc-charoen' ||
               currentTab === 'dept-cdc-fangthoeng') && (
               <DepartmentWorkspaceView
-                key={`dept-${currentTab}-${selectedYear}`}
+                key={`dept-${session?.username || 'anonymous'}-${currentTab}-${selectedYear}`}
                 orgProfile={orgProfile}
                 selectedYear={selectedYear}
                 session={session}
