@@ -27,6 +27,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import { loadTenantData, saveTenantData } from '../utils/tenantStorageUtils.js';
 
 const INITIAL_DIRECTIVES = [];
 
@@ -41,11 +42,10 @@ export default function ExecutiveDashboardView({
 }) {
   const [directives, setDirectives] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_executive_directives');
+      const saved = loadTenantData('ia_executive_directives', null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const realOnes = parsed.filter((d) => !d.id?.startsWith('DIR-2569-00'));
+        if (Array.isArray(saved) && saved.length > 0) {
+          const realOnes = saved.filter((d) => !d.id?.startsWith('DIR-2569-00'));
           return realOnes;
         }
       }
@@ -82,7 +82,7 @@ export default function ExecutiveDashboardView({
   const saveDirectives = (data) => {
     setDirectives(data);
     try {
-      localStorage.setItem('ia_executive_directives', JSON.stringify(data));
+      saveTenantData('ia_executive_directives', data, session);
     } catch (e) {
       console.error(e);
     }
@@ -216,29 +216,29 @@ export default function ExecutiveDashboardView({
 
   const financeLoans = useMemo(() => {
     try {
-      const f = JSON.parse(localStorage.getItem('ia_dept_finance_data') || '{}');
+      const f = loadTenantData('ia_dept_finance_data', null, session) || {};
       if (Array.isArray(f.loans)) return f.loans;
     } catch (_) {}
     return [];
-  }, []);
+  }, [session]);
   const overdueLoans = financeLoans.filter((l) => l.status === 'overdue' || (l.status !== 'cleared' && !l.clearDate));
 
   const techPermits = useMemo(() => {
     try {
-      const t = JSON.parse(localStorage.getItem('ia_dept_tech_data') || '{}');
+      const t = loadTenantData('ia_dept_tech_data', null, session) || {};
       if (Array.isArray(t.buildingPermits)) return t.buildingPermits;
     } catch (_) {}
     return [];
-  }, []);
+  }, [session]);
   const pendingPermits = techPermits.filter((p) => p.status === 'reviewing' || p.status === 'pending');
 
   const inventoryItems = useMemo(() => {
     try {
-      const f = JSON.parse(localStorage.getItem('ia_dept_finance_data') || '{}');
+      const f = loadTenantData('ia_dept_finance_data', null, session) || {};
       if (Array.isArray(f.inventoryCheck)) return f.inventoryCheck;
     } catch (_) {}
     return [];
-  }, []);
+  }, [session]);
 
   // Filtered Directives
   const filteredDirectives = directives.filter((d) => {

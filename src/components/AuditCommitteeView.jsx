@@ -28,6 +28,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { loadTenantData, saveTenantData } from '../utils/tenantStorageUtils.js';
 import { exportDocumentToWord, exportDataToExcel } from '../utils/documentExportUtils';
 
 export default function AuditCommitteeView({
@@ -142,17 +143,16 @@ export default function AuditCommitteeView({
 
   const [evaluations, setEvaluations] = useState(() => {
     try {
-      const saved = localStorage.getItem(`ia_audit_comm_eval_${selectedYear}`);
+      const saved = loadTenantData(`ia_audit_comm_eval_${selectedYear}`, null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === 11) return parsed;
+        if (Array.isArray(saved) && saved.length === 11) return saved;
       }
     } catch (_) {}
     return defaultEvaluations;
   });
 
   const [evaluatorName, setEvaluatorName] = useState(() => {
-    return localStorage.getItem(`ia_audit_comm_evaluator_${selectedYear}`) || 'ประธานคณะกรรมการตรวจสอบ';
+    return loadTenantData(`ia_audit_comm_evaluator_${selectedYear}`, 'ประธานคณะกรรมการตรวจสอบ', session);
   });
 
   const handleScoreChange = (id, newScore) => {
@@ -160,7 +160,7 @@ export default function AuditCommitteeView({
       item.id === id ? { ...item, score: Number(newScore) } : item
     );
     setEvaluations(updated);
-    localStorage.setItem(`ia_audit_comm_eval_${selectedYear}`, JSON.stringify(updated));
+    saveTenantData(`ia_audit_comm_eval_${selectedYear}`, updated, session);
   };
 
   const handleCommentChange = (id, newComment) => {
@@ -168,7 +168,7 @@ export default function AuditCommitteeView({
       item.id === id ? { ...item, comment: newComment } : item
     );
     setEvaluations(updated);
-    localStorage.setItem(`ia_audit_comm_eval_${selectedYear}`, JSON.stringify(updated));
+    saveTenantData(`ia_audit_comm_eval_${selectedYear}`, updated, session);
   };
 
   const totalScore = useMemo(() => {
@@ -286,10 +286,9 @@ export default function AuditCommitteeView({
 
   const [quarters, setQuarters] = useState(() => {
     try {
-      const saved = localStorage.getItem(`ia_audit_comm_quarters_${selectedYear}`);
+      const saved = loadTenantData(`ia_audit_comm_quarters_${selectedYear}`, null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === 4) return parsed;
+        if (Array.isArray(saved) && saved.length === 4) return saved;
       }
     } catch (_) {}
     return defaultQuarters;
@@ -304,7 +303,7 @@ export default function AuditCommitteeView({
       };
     });
     setQuarters(updated);
-    localStorage.setItem(`ia_audit_comm_quarters_${selectedYear}`, JSON.stringify(updated));
+    saveTenantData(`ia_audit_comm_quarters_${selectedYear}`, updated, session);
   };
 
   const totalChecklistItems = 40;
@@ -357,11 +356,10 @@ export default function AuditCommitteeView({
 
   const [members, setMembers] = useState(() => {
     try {
-      const saved = localStorage.getItem(`ia_audit_comm_members_${selectedYear}`);
+      const saved = loadTenantData(`ia_audit_comm_members_${selectedYear}`, null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((m) => {
+        if (Array.isArray(saved) && saved.length > 0) {
+          return saved.map((m) => {
             if (m.id === 'MB-04') {
               return {
                 ...m,
@@ -633,7 +631,7 @@ export default function AuditCommitteeView({
                   value={evaluatorName}
                   onChange={(e) => {
                     setEvaluatorName(e.target.value);
-                    localStorage.setItem(`ia_audit_comm_evaluator_${selectedYear}`, e.target.value);
+                    saveTenantData(`ia_audit_comm_evaluator_${selectedYear}`, e.target.value, session);
                   }}
                   className="text-xs px-2.5 py-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:ring-1 focus:ring-amber-500 outline-none font-medium"
                 />

@@ -40,6 +40,7 @@ import {
 import RadialOrbitalTimeline from '@/components/ui/radial-orbital-timeline';
 import { luxuryConfirm, luxuryAlert } from './LuxuryModal';
 import { cloudSyncService } from '../services/cloudSyncService';
+import { loadTenantData, saveTenantData } from '../utils/tenantStorageUtils.js';
 
 export default function PublicOverviewView({
   orgProfile = {},
@@ -347,18 +348,17 @@ export default function PublicOverviewView({
   // Selected node for editing in orbital tab
   const [selectedOrbitalNodeForEdit, setSelectedOrbitalNodeForEdit] = useState(0);
 
-  // Persistent state backed by LocalStorage
+  // Persistent state backed by Tenant Storage
   const [data, setData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_public_overview_data');
+      const saved = loadTenantData('ia_public_overview_data', null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && Array.isArray(parsed.divisions) && parsed.divisions.length === 5) {
+        if (typeof saved === 'object' && Array.isArray(saved.divisions) && saved.divisions.length === 5) {
           return {
             ...defaultOverviewData,
-            ...parsed,
-            orbitalNodes: Array.isArray(parsed.orbitalNodes) && parsed.orbitalNodes.length === 6
-              ? parsed.orbitalNodes
+            ...saved,
+            orbitalNodes: Array.isArray(saved.orbitalNodes) && saved.orbitalNodes.length === 6
+              ? saved.orbitalNodes
               : defaultOverviewData.orbitalNodes
           };
         }
@@ -390,9 +390,9 @@ export default function PublicOverviewView({
                 : prev.orbitalNodes
             };
             try {
-              localStorage.setItem('ia_public_overview_data', JSON.stringify(merged));
+              saveTenantData('ia_public_overview_data', merged, session);
             } catch (err) {
-              console.warn('LocalStorage save error:', err);
+              console.warn('Tenant save error:', err);
             }
             return merged;
           });
@@ -417,7 +417,7 @@ export default function PublicOverviewView({
               : prev.orbitalNodes
           };
           try {
-            localStorage.setItem('ia_public_overview_data', JSON.stringify(merged));
+            saveTenantData('ia_public_overview_data', merged, session);
           } catch (err) {
             console.warn(err);
           }
@@ -449,7 +449,7 @@ export default function PublicOverviewView({
   const handleSaveAdminData = async () => {
     setIsSavingCloud(true);
     setData(editForm);
-    localStorage.setItem('ia_public_overview_data', JSON.stringify(editForm));
+    saveTenantData('ia_public_overview_data', editForm, session);
     
     try {
       const ok = await cloudSyncService.pushPublicOverviewData(editForm);
@@ -481,7 +481,7 @@ export default function PublicOverviewView({
 
     setData(defaultOverviewData);
     setEditForm(defaultOverviewData);
-    localStorage.setItem('ia_public_overview_data', JSON.stringify(defaultOverviewData));
+    saveTenantData('ia_public_overview_data', defaultOverviewData, session);
     try {
       await cloudSyncService.pushPublicOverviewData(defaultOverviewData);
       setCloudNotice('☁️ รีเซ็ตและซิงค์ข้อมูลค่าเริ่มต้นขึ้น Supabase Cloud สำเร็จ');

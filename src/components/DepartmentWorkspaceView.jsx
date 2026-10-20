@@ -58,6 +58,7 @@ import {
 } from '../data/initialData';
 import { exportDepartmentWorkspacesExcel } from '../services/reportExportService';
 import OfficialDocActionToolbar from './OfficialDocActionToolbar';
+import { loadTenantData, saveTenantData } from '../utils/tenantStorageUtils.js';
 
 export default function DepartmentWorkspaceView({
   orgProfile = {},
@@ -108,11 +109,11 @@ export default function DepartmentWorkspaceView({
     setSubTab('overview');
   }, [activeDept]);
 
-  // Persistent Department States isolated in LocalStorage
+  // Persistent Department States isolated by Tenant
   const [officeData, setOfficeData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_dept_office_data');
-      if (saved) return JSON.parse(saved);
+      const saved = loadTenantData('ia_dept_office_data', null, session);
+      if (saved) return saved;
     } catch (e) {
       console.error(e);
     }
@@ -121,8 +122,8 @@ export default function DepartmentWorkspaceView({
 
   const [financeData, setFinanceData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_dept_finance_data');
-      if (saved) return JSON.parse(saved);
+      const saved = loadTenantData('ia_dept_finance_data', null, session);
+      if (saved) return saved;
     } catch (e) {
       console.error(e);
     }
@@ -131,8 +132,8 @@ export default function DepartmentWorkspaceView({
 
   const [techData, setTechData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_dept_tech_data');
-      if (saved) return JSON.parse(saved);
+      const saved = loadTenantData('ia_dept_tech_data', null, session);
+      if (saved) return saved;
     } catch (e) {
       console.error(e);
     }
@@ -141,16 +142,15 @@ export default function DepartmentWorkspaceView({
 
   const [educationData, setEducationData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_dept_education_data');
+      const saved = loadTenantData('ia_dept_education_data', null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') {
+        if (typeof saved === 'object') {
           return {
-            summary: { ...initialEducationWorkspaceData.summary, ...(parsed.summary || {}) },
-            centers: Array.isArray(parsed.centers) ? parsed.centers : [],
-            schoolLunchMilk: Array.isArray(parsed.schoolLunchMilk) ? parsed.schoolLunchMilk : [],
-            educationalMaterials: Array.isArray(parsed.educationalMaterials) ? parsed.educationalMaterials : [],
-            cdcTeachers: Array.isArray(parsed.cdcTeachers) ? parsed.cdcTeachers : []
+            summary: { ...initialEducationWorkspaceData.summary, ...(saved.summary || {}) },
+            centers: Array.isArray(saved.centers) ? saved.centers : [],
+            schoolLunchMilk: Array.isArray(saved.schoolLunchMilk) ? saved.schoolLunchMilk : [],
+            educationalMaterials: Array.isArray(saved.educationalMaterials) ? saved.educationalMaterials : [],
+            cdcTeachers: Array.isArray(saved.cdcTeachers) ? saved.cdcTeachers : []
           };
         }
       }
@@ -162,16 +162,15 @@ export default function DepartmentWorkspaceView({
 
   const [welfareData, setWelfareData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_dept_welfare_data');
+      const saved = loadTenantData('ia_dept_welfare_data', null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') {
+        if (typeof saved === 'object') {
           return {
-            summary: { ...initialWelfareWorkspaceData.summary, ...(parsed.summary || {}) },
-            elderlyAllowances: Array.isArray(parsed.elderlyAllowances) ? parsed.elderlyAllowances : initialWelfareWorkspaceData.elderlyAllowances,
-            disabilityAllowances: Array.isArray(parsed.disabilityAllowances) ? parsed.disabilityAllowances : [],
-            emergencyRelief: Array.isArray(parsed.emergencyRelief) ? parsed.emergencyRelief : [],
-            hivEmergencyAids: Array.isArray(parsed.hivEmergencyAids) ? parsed.hivEmergencyAids : []
+            summary: { ...initialWelfareWorkspaceData.summary, ...(saved.summary || {}) },
+            elderlyAllowances: Array.isArray(saved.elderlyAllowances) ? saved.elderlyAllowances : initialWelfareWorkspaceData.elderlyAllowances,
+            disabilityAllowances: Array.isArray(saved.disabilityAllowances) ? saved.disabilityAllowances : [],
+            emergencyRelief: Array.isArray(saved.emergencyRelief) ? saved.emergencyRelief : [],
+            hivEmergencyAids: Array.isArray(saved.hivEmergencyAids) ? saved.hivEmergencyAids : []
           };
         }
       }
@@ -183,27 +182,26 @@ export default function DepartmentWorkspaceView({
 
   const [publicHealthData, setPublicHealthData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_dept_public_health_data');
+      const saved = loadTenantData('ia_dept_public_health_data', null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') {
+        if (typeof saved === 'object') {
           return {
             summary: {
               wasteBinsRegistered: 0,
               monthlyWasteFeeEstimate: 0,
               foggingCampaignsCompleted: 0,
               rabiesVaccinatedAnimals: 0,
-              ...(parsed.summary || {})
+              ...(saved.summary || {})
             },
-            wasteManagement: Array.isArray(parsed.wasteManagement)
-              ? parsed.wasteManagement
-              : (Array.isArray(parsed.wasteFeeCollections) ? parsed.wasteFeeCollections : []),
-            diseaseControl: Array.isArray(parsed.diseaseControl)
-              ? parsed.diseaseControl
-              : (Array.isArray(parsed.diseaseSurveillances) ? parsed.diseaseSurveillances : []),
-            foodSanitation: Array.isArray(parsed.foodSanitation)
-              ? parsed.foodSanitation
-              : (Array.isArray(parsed.marketFoodSanitations) ? parsed.marketFoodSanitations : [])
+            wasteManagement: Array.isArray(saved.wasteManagement)
+              ? saved.wasteManagement
+              : (Array.isArray(saved.wasteFeeCollections) ? saved.wasteFeeCollections : []),
+            diseaseControl: Array.isArray(saved.diseaseControl)
+              ? saved.diseaseControl
+              : (Array.isArray(saved.diseaseSurveillances) ? saved.diseaseSurveillances : []),
+            foodSanitation: Array.isArray(saved.foodSanitation)
+              ? saved.foodSanitation
+              : (Array.isArray(saved.marketFoodSanitations) ? saved.marketFoodSanitations : [])
           };
         }
       }
@@ -213,60 +211,56 @@ export default function DepartmentWorkspaceView({
     return initialPublicHealthWorkspaceData;
   });
 
-  // Executive Directives from LocalStorage
+  // Executive Directives isolated by Tenant
   const [executiveDirectives, setExecutiveDirectives] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_executive_directives');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
+      const saved = loadTenantData('ia_executive_directives', null, session);
+      if (saved && Array.isArray(saved)) return saved;
     } catch (e) {
       console.error(e);
     }
     return [];
   });
 
-  // Save changes to LocalStorage
+  // Save changes isolated by Tenant
   useEffect(() => {
-    localStorage.setItem('ia_dept_office_data', JSON.stringify(officeData));
-  }, [officeData]);
+    saveTenantData('ia_dept_office_data', officeData, session);
+  }, [officeData, session]);
 
   useEffect(() => {
-    localStorage.setItem('ia_dept_finance_data', JSON.stringify(financeData));
-  }, [financeData]);
+    saveTenantData('ia_dept_finance_data', financeData, session);
+  }, [financeData, session]);
 
   useEffect(() => {
-    localStorage.setItem('ia_dept_tech_data', JSON.stringify(techData));
-  }, [techData]);
+    saveTenantData('ia_dept_tech_data', techData, session);
+  }, [techData, session]);
 
   useEffect(() => {
-    localStorage.setItem('ia_dept_education_data', JSON.stringify(educationData));
-  }, [educationData]);
+    saveTenantData('ia_dept_education_data', educationData, session);
+  }, [educationData, session]);
 
   useEffect(() => {
-    localStorage.setItem('ia_dept_welfare_data', JSON.stringify(welfareData));
-  }, [welfareData]);
+    saveTenantData('ia_dept_welfare_data', welfareData, session);
+  }, [welfareData, session]);
 
   useEffect(() => {
-    localStorage.setItem('ia_dept_public_health_data', JSON.stringify(publicHealthData));
-  }, [publicHealthData]);
+    saveTenantData('ia_dept_public_health_data', publicHealthData, session);
+  }, [publicHealthData, session]);
 
   const [cdcCharoenData, setCdcCharoenData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_dept_cdc_charoen_data');
+      const saved = loadTenantData('ia_dept_cdc_charoen_data', null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') {
+        if (typeof saved === 'object') {
           return {
             ...initialCdcCharoenWorkspaceData,
-            ...parsed,
-            summary: { ...initialCdcCharoenWorkspaceData.summary, ...(parsed.summary || {}) },
-            children: Array.isArray(parsed.children) ? parsed.children : initialCdcCharoenWorkspaceData.children,
-            lunchDailyLogs: Array.isArray(parsed.lunchDailyLogs) ? parsed.lunchDailyLogs : initialCdcCharoenWorkspaceData.lunchDailyLogs,
-            healthGrowthChecks: Array.isArray(parsed.healthGrowthChecks) ? parsed.healthGrowthChecks : initialCdcCharoenWorkspaceData.healthGrowthChecks,
-            materialsAndSafety: Array.isArray(parsed.materialsAndSafety) ? parsed.materialsAndSafety : initialCdcCharoenWorkspaceData.materialsAndSafety,
-            teachers: Array.isArray(parsed.teachers) ? parsed.teachers : initialCdcCharoenWorkspaceData.teachers
+            ...saved,
+            summary: { ...initialCdcCharoenWorkspaceData.summary, ...(saved.summary || {}) },
+            children: Array.isArray(saved.children) ? saved.children : initialCdcCharoenWorkspaceData.children,
+            lunchDailyLogs: Array.isArray(saved.lunchDailyLogs) ? saved.lunchDailyLogs : initialCdcCharoenWorkspaceData.lunchDailyLogs,
+            healthGrowthChecks: Array.isArray(saved.healthGrowthChecks) ? saved.healthGrowthChecks : initialCdcCharoenWorkspaceData.healthGrowthChecks,
+            materialsAndSafety: Array.isArray(saved.materialsAndSafety) ? saved.materialsAndSafety : initialCdcCharoenWorkspaceData.materialsAndSafety,
+            teachers: Array.isArray(saved.teachers) ? saved.teachers : initialCdcCharoenWorkspaceData.teachers
           };
         }
       }
@@ -278,19 +272,18 @@ export default function DepartmentWorkspaceView({
 
   const [cdcFangthoengData, setCdcFangthoengData] = useState(() => {
     try {
-      const saved = localStorage.getItem('ia_dept_cdc_fangthoeng_data');
+      const saved = loadTenantData('ia_dept_cdc_fangthoeng_data', null, session);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') {
+        if (typeof saved === 'object') {
           return {
             ...initialCdcFangthoengWorkspaceData,
-            ...parsed,
-            summary: { ...initialCdcFangthoengWorkspaceData.summary, ...(parsed.summary || {}) },
-            children: Array.isArray(parsed.children) ? parsed.children : initialCdcFangthoengWorkspaceData.children,
-            lunchDailyLogs: Array.isArray(parsed.lunchDailyLogs) ? parsed.lunchDailyLogs : initialCdcFangthoengWorkspaceData.lunchDailyLogs,
-            healthGrowthChecks: Array.isArray(parsed.healthGrowthChecks) ? parsed.healthGrowthChecks : initialCdcFangthoengWorkspaceData.healthGrowthChecks,
-            materialsAndSafety: Array.isArray(parsed.materialsAndSafety) ? parsed.materialsAndSafety : initialCdcFangthoengWorkspaceData.materialsAndSafety,
-            teachers: Array.isArray(parsed.teachers) ? parsed.teachers : initialCdcFangthoengWorkspaceData.teachers
+            ...saved,
+            summary: { ...initialCdcFangthoengWorkspaceData.summary, ...(saved.summary || {}) },
+            children: Array.isArray(saved.children) ? saved.children : initialCdcFangthoengWorkspaceData.children,
+            lunchDailyLogs: Array.isArray(saved.lunchDailyLogs) ? saved.lunchDailyLogs : initialCdcFangthoengWorkspaceData.lunchDailyLogs,
+            healthGrowthChecks: Array.isArray(saved.healthGrowthChecks) ? saved.healthGrowthChecks : initialCdcFangthoengWorkspaceData.healthGrowthChecks,
+            materialsAndSafety: Array.isArray(saved.materialsAndSafety) ? saved.materialsAndSafety : initialCdcFangthoengWorkspaceData.materialsAndSafety,
+            teachers: Array.isArray(saved.teachers) ? saved.teachers : initialCdcFangthoengWorkspaceData.teachers
           };
         }
       }
@@ -301,12 +294,12 @@ export default function DepartmentWorkspaceView({
   });
 
   useEffect(() => {
-    localStorage.setItem('ia_dept_cdc_charoen_data', JSON.stringify(cdcCharoenData));
-  }, [cdcCharoenData]);
+    saveTenantData('ia_dept_cdc_charoen_data', cdcCharoenData, session);
+  }, [cdcCharoenData, session]);
 
   useEffect(() => {
-    localStorage.setItem('ia_dept_cdc_fangthoeng_data', JSON.stringify(cdcFangthoengData));
-  }, [cdcFangthoengData]);
+    saveTenantData('ia_dept_cdc_fangthoeng_data', cdcFangthoengData, session);
+  }, [cdcFangthoengData, session]);
 
   // Toast State
   const [toastMessage, setToastMessage] = useState(null);

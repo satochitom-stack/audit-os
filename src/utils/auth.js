@@ -2,7 +2,7 @@
 // สถาปัตยกรรมเฉพาะสำหรับ "ผู้ตรวจสอบภายใน อปท." (Internal Auditor Workbench) และ "ผู้ดูแลระบบกลาง" (Super Admin Backoffice)
 // รองรับการแยกข้อมูลของแต่ละ User เป็นเอกเทศ (Multi-Tenant Isolation) และคลังเอกสารกลาง
 
-import { getSupabaseClient, isSupabaseConfigured } from '../services/supabaseClient';
+import { getSupabaseClient, isSupabaseConfigured } from '../services/supabaseClient.js';
 import {
   collection,
   doc,
@@ -12,19 +12,25 @@ import {
   deleteDoc,
   onSnapshot
 } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { db } from '../services/firebase.js';
 import {
   DLA_RISK_ASSESSMENT_16,
   DLA_ANNUAL_AUDIT_PLAN_DATA,
   DLA_STRATEGIC_PLAN_3YEARS
-} from '../data/dlaStandardTemplates';
-import { INITIAL_ENGAGEMENT_PLANS } from '../data/engagementPlanTemplates';
-import { initialOrgProfile } from '../data/initialData';
+} from '../data/dlaStandardTemplates.js';
+import { INITIAL_ENGAGEMENT_PLANS } from '../data/engagementPlanTemplates.js';
+import { initialOrgProfile } from '../data/initialData.js';
 import {
   getTenantStorageKey as getScopedTenantStorageKey,
   loadTenantData as loadScopedTenantData,
-  saveTenantData as saveScopedTenantData
+  saveTenantData as saveScopedTenantData,
+  hasLegacyModuleData,
+  recordLegacyRecoveryStatus,
+  getLegacyRecoveryStatus,
+  LEGACY_RECOVERY_BASE_KEYS
 } from './tenantStorageUtils.js';
+
+export { hasLegacyModuleData, recordLegacyRecoveryStatus, getLegacyRecoveryStatus };
 
 const USERS_KEY = 'ia_auth_users';
 const SESSION_KEY = 'ia_auth_session';
@@ -238,8 +244,12 @@ export function initializeUserTenantWorkspace(user) {
       palatPosition: 'ปลัดองค์กรปกครองส่วนท้องถิ่น'
     };
     saveTenantData('ia_org_profile', cleanOrg, user);
+    if (hasLegacyModuleData('ia_org_profile')) {
+      recordLegacyRecoveryStatus('ia_org_profile', 'awaiting_recovery', user);
+    }
   }
 
+  // Module 1: Audit Universe
   const auKey = getTenantStorageKey('ia_audit_universe_by_year', username);
   const existingAuRaw = localStorage.getItem(auKey);
   let shouldInitAu = !existingAuRaw;
@@ -253,7 +263,9 @@ export function initializeUserTenantWorkspace(user) {
     } catch (_) {}
   }
 
-  if (shouldInitAu) {
+  if (hasLegacyModuleData('ia_audit_universe_by_year')) {
+    recordLegacyRecoveryStatus('ia_audit_universe_by_year', 'awaiting_recovery', user);
+  } else if (shouldInitAu) {
     const dlaUniverse = DLA_RISK_ASSESSMENT_16.map((item) => ({
       id: item.id,
       department: item.department,
@@ -274,6 +286,7 @@ export function initializeUserTenantWorkspace(user) {
     saveTenantData('ia_audit_universe_by_year', { '2569': dlaUniverse, '2570': dlaUniverse }, user);
   }
 
+  // Module 2: Annual Audit Plan
   const planKey = getTenantStorageKey('ia_annual_plans_by_year', username);
   const existingPlanRaw = localStorage.getItem(planKey);
   let shouldInitPlan = !existingPlanRaw;
@@ -286,7 +299,9 @@ export function initializeUserTenantWorkspace(user) {
     } catch (_) {}
   }
 
-  if (shouldInitPlan) {
+  if (hasLegacyModuleData('ia_annual_plans_by_year')) {
+    recordLegacyRecoveryStatus('ia_annual_plans_by_year', 'awaiting_recovery', user);
+  } else if (shouldInitPlan) {
     const dlaPlans = DLA_ANNUAL_AUDIT_PLAN_DATA.map((plan) => ({
       ...plan,
       auditor: `${user.displayName || 'ผู้ตรวจสอบภายใน'} (${user.position || 'นักวิชาการตรวจสอบภายใน'})`
@@ -294,15 +309,30 @@ export function initializeUserTenantWorkspace(user) {
     saveTenantData('ia_annual_plans_by_year', { '2569': dlaPlans, '2570': [] }, user);
   }
 
+  // Module 3: Strategic Plan
   const stratKey = getTenantStorageKey('ia_strategic_plan', username);
-  if (!localStorage.getItem(stratKey)) {
+  if (hasLegacyModuleData('ia_strategic_plan')) {
+    recordLegacyRecoveryStatus('ia_strategic_plan', 'awaiting_recovery', user);
+  } else if (!localStorage.getItem(stratKey)) {
     saveTenantData('ia_strategic_plan', DLA_STRATEGIC_PLAN_3YEARS, user);
   }
 
+  // Module 4: Engagement Plans
   const engKey = getTenantStorageKey('ia_engagement_plans_by_year', username);
-  if (!localStorage.getItem(engKey)) {
+  if (hasLegacyModuleData('ia_engagement_plans_by_year')) {
+    recordLegacyRecoveryStatus('ia_engagement_plans_by_year', 'awaiting_recovery', user);
+  } else if (!localStorage.getItem(engKey)) {
     saveTenantData('ia_engagement_plans_by_year', { '2569': INITIAL_ENGAGEMENT_PLANS, '2570': [] }, user);
   }
+
+  // Inventory every known prior-version unscoped module key, not only the first four
+  // modules initialized above. Preserve unknown-owner data and never auto-assign it.
+  const recordedRecoveryStatus = getLegacyRecoveryStatus(user);
+  LEGACY_RECOVERY_BASE_KEYS.forEach((baseKey) => {
+    if (hasLegacyModuleData(baseKey) && !recordedRecoveryStatus[baseKey]) {
+      recordLegacyRecoveryStatus(baseKey, 'awaiting_recovery', user);
+    }
+  });
 }
 
 // -------------------------------------------------------------
@@ -538,19 +568,30 @@ export function autoRepairDataLinkages() {
         sess.plan = 'admin';
         localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
       } else {
-        // Active session is a normal user: ensure global ia_org_profile is clean and not contaminated with ADMIN
+        // Active session is a normal user: ensure tenant ia_org_profile is clean and not contaminated with ADMIN
         try {
-          const rawActiveOrg = localStorage.getItem('ia_org_profile');
-          if (rawActiveOrg) {
-            const parsed = JSON.parse(rawActiveOrg);
-            if (parsed.auditorName?.toUpperCase() === 'ADMIN' || parsed.auditorName?.includes('Super Admin') || !parsed.auditorName) {
-              parsed.auditorName = sess.displayName || 'ผู้ตรวจสอบภายใน';
-              parsed.auditorPosition = sess.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
-              if (sess.organization) parsed.name = sess.organization;
-              if (sess.district) parsed.district = sess.district;
-              if (sess.province) parsed.province = sess.province;
-              localStorage.setItem('ia_org_profile', JSON.stringify(parsed));
-              saveTenantData('ia_org_profile', parsed, sess);
+          const tenantOrg = loadTenantData('ia_org_profile', null, sess);
+          if (tenantOrg) {
+            let changed = false;
+            if (tenantOrg.auditorName?.toUpperCase() === 'ADMIN' || tenantOrg.auditorName?.includes('Super Admin') || !tenantOrg.auditorName) {
+              tenantOrg.auditorName = sess.displayName || 'ผู้ตรวจสอบภายใน';
+              tenantOrg.auditorPosition = sess.position || 'นักวิชาการตรวจสอบภายในปฏิบัติการ';
+              changed = true;
+            }
+            if (sess.organization && (!tenantOrg.name || tenantOrg.name.includes('ศูนย์ควบคุมแพลตฟอร์มส่วนกลาง') || tenantOrg.name === 'องค์การบริหารส่วนตำบลต้นแบบ')) {
+              tenantOrg.name = sess.organization;
+              changed = true;
+            }
+            if (sess.district && !tenantOrg.district) {
+              tenantOrg.district = sess.district;
+              changed = true;
+            }
+            if (sess.province && !tenantOrg.province) {
+              tenantOrg.province = sess.province;
+              changed = true;
+            }
+            if (changed) {
+              saveTenantData('ia_org_profile', tenantOrg, sess);
             }
           }
         } catch (_) {}
@@ -1369,8 +1410,7 @@ export function startSession(user, remember = true, isImpersonating = false) {
   try {
     const isUserAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'admin';
     const tenantOrg = loadTenantData('ia_org_profile', null, user);
-    const rawOrg = tenantOrg ? null : localStorage.getItem('ia_org_profile');
-    const parsedOrg = tenantOrg || (rawOrg ? JSON.parse(rawOrg) : {});
+    const parsedOrg = tenantOrg || {};
 
     let targetAuditorName = parsedOrg.auditorName;
     let targetAuditorPosition = parsedOrg.auditorPosition;
@@ -1399,7 +1439,6 @@ export function startSession(user, remember = true, isImpersonating = false) {
       auditorPosition: targetAuditorPosition
     };
     saveTenantData('ia_org_profile', updatedOrg, user);
-    localStorage.setItem('ia_org_profile', JSON.stringify(updatedOrg));
     window.dispatchEvent(new CustomEvent('ia-org-profile-changed', { detail: updatedOrg }));
   } catch (_) {}
 

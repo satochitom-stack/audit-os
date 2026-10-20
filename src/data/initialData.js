@@ -1,7 +1,7 @@
 // ฐานข้อมูลระบบงานตรวจสอบภายใน (อปท.) - Clean Template Version
 // โครงสร้างมาตรฐานตามระเบียบกระทรวงการคลัง และมาตรฐานการตรวจสอบภายในภาครัฐ
 
-import { getCurrentFiscalYear, getStandardFiscalYears } from '../utils/dateUtils';
+import { getCurrentFiscalYear, getStandardFiscalYears } from '../utils/dateUtils.js';
 
 export const initialFiscalYears = getStandardFiscalYears();
 
