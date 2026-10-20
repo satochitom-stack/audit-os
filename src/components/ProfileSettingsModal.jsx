@@ -14,6 +14,50 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import {
+  buildLegacyRecoveryBundle,
+  getLegacyRecoveryStatus,
+  LEGACY_RECOVERY_BASE_KEYS
+} from '../utils/tenantStorageUtils.js';
+
+const LEGACY_MODULE_LABELS = {
+  ia_org_profile: 'โปรไฟล์หน่วยงาน',
+  ia_annual_plans_by_year: 'แผนตรวจสอบประจำปี',
+  ia_working_papers_by_year: 'กระดาษทำการ',
+  ia_risk_assessments_by_year: 'การประเมินความเสี่ยง',
+  ia_internal_controls_by_year: 'การควบคุมภายใน',
+  ia_risk_management_by_year: 'การบริหารความเสี่ยง',
+  ia_lpa_indicators_by_year: 'ตัวชี้วัด LPA',
+  ia_audit_charter_by_year: 'กฎบัตรการตรวจสอบ',
+  ia_audit_universe_by_year: 'จักรวาลการตรวจสอบ',
+  ia_engagement_plans_by_year: 'แผนการปฏิบัติงาน',
+  ia_strategic_plan: 'แผนยุทธศาสตร์',
+  ia_strategic_activities_v2: 'กิจกรรมแผนยุทธศาสตร์',
+  ia_capa_findings_by_year: 'ข้อสังเกตและรายการติดตาม',
+  ia_risk_feedback_linkages_by_year: 'ความเชื่อมโยงข้อสังเกตกับความเสี่ยง',
+  ia_central_calendar_events: 'ปฏิทินกลาง',
+  ia_dept_office_data: 'ข้อมูลสำนักปลัด',
+  ia_dept_finance_data: 'ข้อมูลกองคลัง',
+  ia_dept_tech_data: 'ข้อมูลกองช่าง',
+  ia_dept_education_data: 'ข้อมูลกองการศึกษา',
+  ia_dept_welfare_data: 'ข้อมูลกองสวัสดิการสังคม',
+  ia_dept_public_health_data: 'ข้อมูลกองสาธารณสุข',
+  ia_dept_cdc_charoen_data: 'ข้อมูลศูนย์พัฒนาเด็กเล็กเจริญ',
+  ia_dept_cdc_fangthoeng_data: 'ข้อมูลศูนย์พัฒนาเด็กเล็กฝั่งเทิง',
+  ia_executive_directives: 'ข้อสั่งการผู้บริหาร',
+  ia_public_overview_data: 'ข้อมูลภาพรวมเผยแพร่',
+  ia_annual_plans: 'แผนตรวจสอบประจำปีรูปแบบเดิม',
+  ia_working_papers: 'กระดาษทำการรูปแบบเดิม',
+  ia_risk_assessments: 'การประเมินความเสี่ยงรูปแบบเดิม',
+  ia_internal_controls: 'การควบคุมภายในรูปแบบเดิม',
+  ia_risk_management: 'การบริหารความเสี่ยงรูปแบบเดิม',
+  ia_lpa_indicators: 'ตัวชี้วัด LPA รูปแบบเดิม',
+  ia_audit_charter: 'กฎบัตรการตรวจสอบรูปแบบเดิม',
+  ia_audit_universe: 'จักรวาลการตรวจสอบรูปแบบเดิม',
+  ia_engagement_plans: 'แผนการปฏิบัติงานรูปแบบเดิม',
+  ia_capa_findings: 'รายการติดตามรูปแบบเดิม',
+  ia_risk_feedback_linkages: 'ข้อมูลเชื่อมโยงความเสี่ยงรูปแบบเดิม'
+};
 
 export default function ProfileSettingsModal({
   orgProfile,
@@ -25,6 +69,7 @@ export default function ProfileSettingsModal({
   onExportBackup,
   onImportBackup,
   onRestoreSafetySnapshot,
+  session,
   onClose
 }) {
   const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'years', 'data'
@@ -32,6 +77,15 @@ export default function ProfileSettingsModal({
   const [newYearInput, setNewYearInput] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [legacyRecoveryStatus, setLegacyRecoveryStatus] = useState({});
+
+  useEffect(() => {
+    setLegacyRecoveryStatus(getLegacyRecoveryStatus(session));
+  }, [session?.username, activeTab]);
+
+  const awaitingLegacyRecovery = Object.entries(legacyRecoveryStatus).filter(
+    ([baseKey, entry]) => entry?.status === 'awaiting_recovery' && LEGACY_RECOVERY_BASE_KEYS.includes(baseKey)
+  );
 
   useEffect(() => {
     if (orgProfile) {
@@ -121,6 +175,23 @@ export default function ProfileSettingsModal({
     reader.readAsText(file);
   };
 
+  const handleLegacyRecoveryExport = () => {
+    const bundle = buildLegacyRecoveryBundle();
+    if (Object.keys(bundle.entries).length === 0) {
+      setError('ไม่พบข้อมูลเดิมที่ต้องเก็บรักษาในเบราว์เซอร์นี้');
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Audit-OS_Legacy-Recovery-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setMessage('ส่งออกชุดเก็บรักษาข้อมูลเดิมแล้ว ไฟล์นี้ยังไม่ได้ย้ายข้อมูลเข้าบัญชีใด');
+    setTimeout(() => setMessage(''), 4000);
+  };
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
@@ -370,6 +441,33 @@ export default function ProfileSettingsModal({
           {/* Tab 3: Data Management & Clean Wipe */}
           {activeTab === 'data' && (
             <div className="space-y-4 text-xs">
+              {awaitingLegacyRecovery.length > 0 && (
+                <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/30 space-y-2">
+                  <div className="flex items-center space-x-2 font-bold text-amber-900 dark:text-amber-200">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>พบข้อมูลเก่าที่ยังไม่ผูกกับบัญชี (Legacy Recovery)</span>
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed">
+                    ระบบเก็บข้อมูลเดิมไว้โดยไม่ย้ายเข้าบัญชีอัตโนมัติ เพราะยังยืนยันเจ้าของข้อมูลไม่ได้ โปรดดาวน์โหลดไฟล์เก็บรักษาก่อนดำเนินการต่อ และเก็บไฟล์นี้ในที่ปลอดภัย
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-700 dark:text-slate-300">
+                    {awaitingLegacyRecovery.map(([baseKey]) => (
+                      <li key={baseKey}>{LEGACY_MODULE_LABELS[baseKey] || baseKey}</li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={handleLegacyRecoveryExport}
+                    className="mt-1 bg-amber-700 hover:bg-amber-800 text-white font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>ดาวน์โหลดชุดเก็บรักษาข้อมูลเดิม</span>
+                  </button>
+                  <p className="text-slate-500 dark:text-slate-400 text-[10px]">
+                    ไฟล์นี้เป็นชุดเก็บรักษาเพื่อให้ตรวจสอบและกู้คืนภายหลัง ไม่ใช่ไฟล์สำรองมาตรฐาน และไม่ควรนำเข้าโดยตรง
+                  </p>
+                </div>
+              )}
               <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 space-y-2">
                 <div className="flex items-center space-x-2 font-bold text-rose-900 dark:text-rose-300">
                   <RotateCcw className="w-4 h-4 text-rose-600" />
