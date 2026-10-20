@@ -118,6 +118,60 @@ export const SCOPED_BASE_KEYS = [
 ];
 
 /**
+ * Unscoped keys used by earlier Audit OS versions. They are detected for recovery
+ * but are never automatically copied into a tenant workspace because ownership is unknown.
+ */
+export const LEGACY_RECOVERY_BASE_KEYS = Array.from(new Set([
+  ...SCOPED_BASE_KEYS,
+  'ia_annual_plans',
+  'ia_working_papers',
+  'ia_risk_assessments',
+  'ia_internal_controls',
+  'ia_risk_management',
+  'ia_lpa_indicators',
+  'ia_audit_charter',
+  'ia_audit_universe',
+  'ia_engagement_plans',
+  'ia_capa_findings',
+  'ia_risk_feedback_linkages'
+]));
+
+/**
+ * Creates a preservation-only bundle of unscoped legacy values for a person to
+ * review or hand to an administrator. It does not migrate or assign ownership.
+ */
+export function buildLegacyRecoveryBundle(storage = typeof localStorage !== 'undefined' ? localStorage : null) {
+  const entries = {};
+  if (!storage || typeof storage.getItem !== 'function') {
+    return {
+      schema: 'audit-os-legacy-recovery-bundle/v1',
+      exportedAt: new Date().toISOString(),
+      warning: 'Legacy data ownership has not been verified. Do not import into a tenant without review.',
+      entries
+    };
+  }
+
+  LEGACY_RECOVERY_BASE_KEYS.forEach((baseKey) => {
+    try {
+      const rawValue = storage.getItem(baseKey);
+      if (rawValue === null || typeof rawValue !== 'string') return;
+      const trimmed = rawValue.trim();
+      if (trimmed === '' || trimmed === '{}' || trimmed === '[]' || trimmed === 'null') return;
+      entries[baseKey] = { rawValue };
+    } catch {
+      // Keep the bundle usable when an individual storage key cannot be read.
+    }
+  });
+
+  return {
+    schema: 'audit-os-legacy-recovery-bundle/v1',
+    exportedAt: new Date().toISOString(),
+    warning: 'Legacy data ownership has not been verified. This file preserves raw values only; it does not migrate data.',
+    entries
+  };
+}
+
+/**
  * Decomposes a storage key into its baseKey and tenantIdentifier.
  * Returns null if the key is not tenant-scoped.
  *
