@@ -103,13 +103,35 @@ export function validateBackupPayload(payload) {
 
   for (const modKey of recognizedModules) {
     const meta = AUDIT_MODULE_METADATA[modKey];
-    const val = payload[modKey] || (meta.legacyKey ? payload[meta.legacyKey] : undefined);
+    const hasCurrentShape = payload[modKey] !== undefined;
+    const hasLegacyShape = !hasCurrentShape && meta.legacyKey && payload[meta.legacyKey] !== undefined;
+    const val = hasCurrentShape
+      ? payload[modKey]
+      : hasLegacyShape
+      ? payload[meta.legacyKey]
+      : undefined;
+
     if (meta.isYearly && val !== undefined) {
-      if (typeof val !== 'object' || val === null) {
+      // Current "*ByYear" modules must be an object keyed by fiscal year.
+      // Older backups may store the legacy alias as a single-year array/object.
+      const isLegacyArray = Boolean(hasLegacyShape && Array.isArray(val));
+      if (val === null || typeof val !== 'object' || (!isLegacyArray && Array.isArray(val))) {
         return {
           valid: false,
-          error: `โครงสร้างข้อมูลไม่ถูกต้องในโมดูล "${meta.label}" (ต้องเป็น Object รายปีงบประมาณ)`
+          error: `โครงสร้างข้อมูลไม่ถูกต้องในโมดูล "${meta.label}" (ต้องเป็น Object แยกตามปีงบประมาณ)`
         };
+      }
+
+      // A fiscal-year map cannot contain scalar or null year entries.
+      if (!isLegacyArray) {
+        for (const [year, yearData] of Object.entries(val)) {
+          if (yearData === null || typeof yearData !== 'object') {
+            return {
+              valid: false,
+              error: `โครงสร้างข้อมูลไม่ถูกต้องในโมดูล "${meta.label}" ปี "${year}"`
+            };
+          }
+        }
       }
     }
   }
