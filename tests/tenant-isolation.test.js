@@ -338,8 +338,10 @@ await runTest('Condition 5.1: Legacy recovery export preserves raw values withou
 runTest('Condition 1 & 3: Suppress template creation per-module and record awaiting_recovery', () => {
   mockStorage.clear();
 
-  // Only ia_audit_universe_by_year has legacy data; other modules do not
+  // Legacy data can exist in other workspace modules outside the original four initializers.
+  const legacyFinanceData = JSON.stringify({ loans: [{ id: 'LOAN-LEGACY-01' }] });
   mockStorage.set('ia_audit_universe_by_year', JSON.stringify({ '2569': [{ id: 'AU-OLD' }] }));
+  mockStorage.set('ia_dept_finance_data', legacyFinanceData);
 
   assert.equal(hasLegacyModuleData('ia_audit_universe_by_year'), true);
   assert.equal(hasLegacyModuleData('ia_annual_plans_by_year'), false);
@@ -356,6 +358,10 @@ runTest('Condition 1 & 3: Suppress template creation per-module and record await
   const recoveryStatus = getLegacyRecoveryStatus(user);
   assert.ok(recoveryStatus['ia_audit_universe_by_year'], 'Awaiting recovery status must be recorded');
   assert.equal(recoveryStatus['ia_audit_universe_by_year'].status, 'awaiting_recovery');
+
+  // All known workspace keys are inventoried too, not just template-seeded modules.
+  assert.equal(recoveryStatus['ia_dept_finance_data'].status, 'awaiting_recovery');
+  assert.equal(mockStorage.get('ia_dept_finance_data'), legacyFinanceData, 'Legacy workspace data remains unchanged');
 
   // 3. Annual plans had NO legacy data -> template was initialized normally
   const planKey = getTenantStorageKey('ia_annual_plans_by_year', user);
