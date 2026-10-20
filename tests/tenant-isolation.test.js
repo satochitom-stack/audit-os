@@ -1443,8 +1443,12 @@ await runTest('Condition 10.13: Reset Data deletes ONLY active tenant data, pres
   // 4. Establish tenant legacy recovery status markers (must NEVER be deleted by reset)
   saveTenantData('ia_legacy_recovery_status', { awaiting_recovery: true, snapshot_safe: true }, userA);
   saveTenantData('ia_legacy_recovery_status', { awaiting_recovery: false, snapshot_safe: true }, userB);
+  saveTenantData('ia_legacy_recovery_status', { awaiting_recovery: false, snapshot_safe: true }, userC);
+  saveTenantData('ia_legacy_recovery_status', { awaiting_recovery: false, snapshot_safe: true }, adminUser);
   const recoveryStatusKeyA = getTenantStorageKey('ia_legacy_recovery_status', userA);
   const recoveryStatusKeyB = getTenantStorageKey('ia_legacy_recovery_status', userB);
+  const recoveryStatusKeyC = getTenantStorageKey('ia_legacy_recovery_status', userC);
+  const recoveryStatusKeyAdmin = getTenantStorageKey('ia_legacy_recovery_status', adminUser);
 
   // 5. Establish malformed / unknown / boundary keys in storage
   mockStorage.set('ia_custom_unscoped_data', JSON.stringify({ info: 'custom' }));
@@ -1452,171 +1456,147 @@ await runTest('Condition 10.13: Reset Data deletes ONLY active tenant data, pres
   mockStorage.set('ia_corrupted_tenant_', JSON.stringify({ bad: true }));
   mockStorage.set('ia_random_module_tenant_alice', JSON.stringify({ random: true }));
 
-  // Helper to seed all 25 Scoped Base Keys and all Dynamic Key families for a user
+  // 6. Define dynamic audit key families across multiple fiscal years and plans
+  const dynamicKeyDefinitions = [
+    // Opening Meeting Family
+    'ia_opening_meeting_2568_PLAN-01',
+    'ia_opening_meeting_2569_PLAN-01',
+    'ia_opening_meeting_2569_PLAN-02',
+    'ia_opening_meeting_2570_PLAN-SPECIAL',
+    // Closing Meeting Family
+    'ia_closing_meeting_2568_PLAN-01',
+    'ia_closing_meeting_2569_PLAN-01',
+    'ia_closing_meeting_2569_PLAN-02',
+    'ia_closing_meeting_2570_PLAN-SPECIAL',
+    // Follow-up Register Family
+    'ia_followup_register_2568',
+    'ia_followup_register_2569',
+    'ia_followup_register_2570',
+    // Audit Committee Family
+    'ia_audit_comm_eval_2568',
+    'ia_audit_comm_eval_2569',
+    'ia_audit_comm_eval_2570',
+    'ia_audit_comm_evaluator_2569',
+    'ia_audit_comm_quarters_2569',
+    'ia_audit_comm_members_2569'
+  ];
+
+  // Helper to seed all SCOPED_BASE_KEYS and dynamic keys for a user using production saveTenantData
   const seedFullTenantData = (user, prefix) => {
-    // A. 14 Core Audit Base Keys
-    saveTenantData('ia_annual_plans_by_year', { '2569': [{ id: `PLAN-${prefix}-01` }] }, user);
-    saveTenantData('ia_working_papers_by_year', { '2569': [{ id: `WP-${prefix}-01`, title: `กระดาษทำการของ ${prefix}` }] }, user);
-    saveTenantData('ia_risk_assessments_by_year', { '2569': [{ id: `RA-${prefix}-01` }] }, user);
-    saveTenantData('ia_internal_controls_by_year', { '2569': [{ id: `IC-${prefix}-01` }] }, user);
-    saveTenantData('ia_risk_management_by_year', { '2569': [{ id: `RM-${prefix}-01` }] }, user);
-    saveTenantData('ia_lpa_indicators_by_year', { '2569': [{ id: `LPA-${prefix}-01` }] }, user);
-    saveTenantData('ia_audit_charter_by_year', { '2569': [{ title: `กฎบัตร ${prefix}` }] }, user);
-    saveTenantData('ia_audit_universe_by_year', { '2569': [{ id: `AU-${prefix}-01` }] }, user);
-    saveTenantData('ia_engagement_plans_by_year', { '2569': [{ id: `ENG-${prefix}-01` }] }, user);
-    saveTenantData('ia_org_profile', { name: `อปท. ${prefix}`, auditorName: prefix }, user);
-    saveTenantData('ia_strategic_plan', [{ id: `STRAT-${prefix}-01` }], user);
-    saveTenantData('ia_strategic_activities_v2', [{ id: `ACT-${prefix}-01` }], user);
-    saveTenantData('ia_capa_findings_by_year', { '2569': [{ id: `CAPA-${prefix}-01` }] }, user);
-    saveTenantData('ia_risk_feedback_linkages_by_year', { '2569': [{ linkageId: `LINK-${prefix}-01` }] }, user);
+    // A. Seed EVERY Scoped Base Key from the authoritative SCOPED_BASE_KEYS constant
+    SCOPED_BASE_KEYS.forEach((baseKey) => {
+      saveTenantData(baseKey, { module: baseKey, owner: user.username, tag: `SEED-${prefix}-${baseKey}` }, user);
+    });
 
-    // B. 11 Component View Base Keys
-    saveTenantData('ia_central_calendar_events', [{ id: `CAL-${prefix}-01`, title: `นัดหมาย ${prefix}` }], user);
-    saveTenantData('ia_dept_office_data', { summary: `สำนักปลัด ${prefix}` }, user);
-    saveTenantData('ia_dept_finance_data', { summary: `กองคลัง ${prefix}` }, user);
-    saveTenantData('ia_dept_tech_data', { summary: `กองช่าง ${prefix}` }, user);
-    saveTenantData('ia_dept_education_data', { summary: `กองการศึกษา ${prefix}` }, user);
-    saveTenantData('ia_dept_welfare_data', { summary: `กองสวัสดิการ ${prefix}` }, user);
-    saveTenantData('ia_dept_public_health_data', { summary: `กองสาธารณสุข ${prefix}` }, user);
-    saveTenantData('ia_dept_cdc_charoen_data', { summary: `ศพด.เจริญ ${prefix}` }, user);
-    saveTenantData('ia_dept_cdc_fangthoeng_data', { summary: `ศพด.ฝั่งธง ${prefix}` }, user);
-    saveTenantData('ia_executive_directives', [{ id: `DIR-${prefix}-01`, text: `ข้อสั่งการ ${prefix}` }], user);
-    saveTenantData('ia_public_overview_data', { slogan: `คำขวัญ ${prefix}` }, user);
-
-    // C. Dynamic Opening Meetings (Multiple years & plans)
-    saveTenantData('ia_opening_meeting_2569_PLAN-01', { meetingTitle: `เปิดตรวจ 2569 PLAN-01 ${prefix}` }, user);
-    saveTenantData('ia_opening_meeting_2569_PLAN-02', { meetingTitle: `เปิดตรวจ 2569 PLAN-02 ${prefix}` }, user);
-    saveTenantData('ia_opening_meeting_2570_PLAN-01', { meetingTitle: `เปิดตรวจ 2570 PLAN-01 ${prefix}` }, user);
-
-    // D. Dynamic Closing Meetings (Multiple years & plans)
-    saveTenantData('ia_closing_meeting_2569_PLAN-01', { conclusion: `ปิดตรวจ 2569 PLAN-01 ${prefix}` }, user);
-    saveTenantData('ia_closing_meeting_2569_PLAN-02', { conclusion: `ปิดตรวจ 2569 PLAN-02 ${prefix}` }, user);
-    saveTenantData('ia_closing_meeting_2570_PLAN-01', { conclusion: `ปิดตรวจ 2570 PLAN-01 ${prefix}` }, user);
-
-    // E. Dynamic Follow-up Registers (Multiple years)
-    saveTenantData('ia_followup_register_2569', [{ id: `FU-2569-${prefix}-01` }], user);
-    saveTenantData('ia_followup_register_2570', [{ id: `FU-2570-${prefix}-01` }], user);
-
-    // F. Dynamic Audit Committee (Multiple modules & years)
-    saveTenantData('ia_audit_comm_eval_2569', [{ dim: 1, score: 4, comment: `ประเมิน 2569 ${prefix}` }], user);
-    saveTenantData('ia_audit_comm_evaluator_2569', `ประธานกรรมการ ${prefix}`, user);
-    saveTenantData('ia_audit_comm_quarters_2569', [{ quarter: 1, date: '2026-01-15' }], user);
-    saveTenantData('ia_audit_comm_members_2569', [{ name: `กรรมการ ${prefix}` }], user);
-    saveTenantData('ia_audit_comm_eval_2570', [{ dim: 1, score: 5, comment: `ประเมิน 2570 ${prefix}` }], user);
+    // B. Seed EVERY Dynamic Key Family
+    dynamicKeyDefinitions.forEach((dynKey) => {
+      saveTenantData(dynKey, { dynKey, owner: user.username, tag: `SEED-${prefix}-${dynKey}` }, user);
+    });
   };
 
-  // Seed data for all 3 users
+  // Seed full datasets for userA ('alice'), userB ('firm_tenant_alice'), and userC ('charlie')
   seedFullTenantData(userA, 'ALICE');
   seedFullTenantData(userB, 'FIRM_ALICE');
   seedFullTenantData(userC, 'CHARLIE');
 
-  // Verify key scoping names before reset
-  const aliceDynKey = getTenantStorageKey('ia_opening_meeting_2569_PLAN-01', userA);
-  const firmDynKey = getTenantStorageKey('ia_opening_meeting_2569_PLAN-01', userB);
-  const charlieDynKey = getTenantStorageKey('ia_opening_meeting_2569_PLAN-01', userC);
+  // Verify before reset: Every single scoped base key and dynamic key MUST exist in storage for all 3 users
+  SCOPED_BASE_KEYS.forEach((baseKey) => {
+    const keyA = getTenantStorageKey(baseKey, userA);
+    const keyB = getTenantStorageKey(baseKey, userB);
+    const keyC = getTenantStorageKey(baseKey, userC);
+    assert.ok(mockStorage.has(keyA), `Key ${keyA} must exist before reset`);
+    assert.ok(mockStorage.has(keyB), `Key ${keyB} must exist before reset`);
+    assert.ok(mockStorage.has(keyC), `Key ${keyC} must exist before reset`);
+  });
 
-  assert.equal(aliceDynKey, 'ia_opening_meeting_2569_PLAN-01_tenant_alice');
-  assert.equal(firmDynKey, 'ia_opening_meeting_2569_PLAN-01_tenant_firm_tenant_alice');
-  assert.equal(charlieDynKey, 'ia_opening_meeting_2569_PLAN-01_tenant_charlie');
-  assert.equal(firmDynKey.endsWith('_tenant_alice'), true, 'Confirms firm key suffix matches _tenant_alice');
+  dynamicKeyDefinitions.forEach((dynKey) => {
+    const keyA = getTenantStorageKey(dynKey, userA);
+    const keyB = getTenantStorageKey(dynKey, userB);
+    const keyC = getTenantStorageKey(dynKey, userC);
+    assert.ok(mockStorage.has(keyA), `Dynamic key ${keyA} must exist before reset`);
+    assert.ok(mockStorage.has(keyB), `Dynamic key ${keyB} must exist before reset`);
+    assert.ok(mockStorage.has(keyC), `Dynamic key ${keyC} must exist before reset`);
+  });
+
+  // Snapshot raw storage before Reset A for User B, User C, legacy, platform, and recovery status
+  const rawBeforeResetA = new Map();
+  mockStorage.forEach((val, k) => {
+    rawBeforeResetA.set(k, val);
+  });
+
+  // Verify naming collision condition: User B keys end with '_tenant_alice'
+  const sampleKeyB = getTenantStorageKey('ia_opening_meeting_2569_PLAN-01', userB);
+  assert.equal(sampleKeyB.endsWith('_tenant_alice'), true, 'Confirms firm key ends with _tenant_alice');
 
   // =========================================================================
   // CASE A: Reset User A ('alice')
   // =========================================================================
   const removedKeysA = clearTenantStorage(userA, global.localStorage);
 
-  // A.1 Verify removedKeys contains User A's keys and NEVER contains User B or C
-  assert.ok(removedKeysA.includes(aliceDynKey));
-  assert.ok(removedKeysA.includes(getTenantStorageKey('ia_working_papers_by_year', userA)));
-  assert.ok(removedKeysA.includes(getTenantStorageKey('ia_central_calendar_events', userA)));
-  assert.ok(removedKeysA.includes(getTenantStorageKey('ia_dept_finance_data', userA)));
-  assert.ok(removedKeysA.includes(getTenantStorageKey('ia_public_overview_data', userA)));
-  assert.ok(removedKeysA.includes(getTenantStorageKey('ia_audit_comm_eval_2569', userA)));
-  assert.ok(removedKeysA.includes(getTenantStorageKey('ia_audit_comm_eval_2570', userA)));
+  // A.1 Verify removedKeys list
+  assert.ok(Array.isArray(removedKeysA));
+  assert.ok(removedKeysA.length > 0);
+  assert.equal(removedKeysA.includes(sampleKeyB), false, 'removedKeys must never include firm_tenant_alice key');
 
-  assert.equal(removedKeysA.includes(firmDynKey), false, 'CRITICAL: Must NOT contain firm_tenant_alice key');
-  assert.equal(removedKeysA.includes(charlieDynKey), false, 'CRITICAL: Must NOT contain charlie key');
-  assert.equal(removedKeysA.includes(recoveryStatusKeyA), false, 'CRITICAL: Must NOT remove legacy recovery status marker');
+  // A.2 Verify in REAL STORAGE: EVERY SINGLE Scoped Base Key of User A is GONE
+  SCOPED_BASE_KEYS.forEach((baseKey) => {
+    const keyA = getTenantStorageKey(baseKey, userA);
+    assert.equal(mockStorage.has(keyA), false, `Raw storage must not have ${keyA}`);
+    assert.equal(mockStorage.get(keyA), undefined, `mockStorage.get(${keyA}) must be undefined`);
+    assert.equal(loadTenantData(baseKey, null, userA), null, `loadTenantData(${baseKey}) for User A must return null`);
+  });
 
-  // A.2 Verify in real storage: ALL User A keys are CLEARED
-  assert.equal(loadTenantData('ia_working_papers_by_year', null, userA), null);
-  assert.equal(loadTenantData('ia_annual_plans_by_year', null, userA), null);
-  assert.equal(loadTenantData('ia_audit_universe_by_year', null, userA), null);
-  assert.equal(loadTenantData('ia_org_profile', null, userA), null);
-  assert.equal(loadTenantData('ia_risk_feedback_linkages_by_year', null, userA), null);
-  assert.equal(loadTenantData('ia_central_calendar_events', null, userA), null);
-  assert.equal(loadTenantData('ia_dept_finance_data', null, userA), null);
-  assert.equal(loadTenantData('ia_dept_tech_data', null, userA), null);
-  assert.equal(loadTenantData('ia_executive_directives', null, userA), null);
-  assert.equal(loadTenantData('ia_public_overview_data', null, userA), null);
-  assert.equal(loadTenantData('ia_opening_meeting_2569_PLAN-01', null, userA), null);
-  assert.equal(loadTenantData('ia_opening_meeting_2569_PLAN-02', null, userA), null);
-  assert.equal(loadTenantData('ia_opening_meeting_2570_PLAN-01', null, userA), null);
-  assert.equal(loadTenantData('ia_closing_meeting_2569_PLAN-01', null, userA), null);
-  assert.equal(loadTenantData('ia_closing_meeting_2570_PLAN-01', null, userA), null);
-  assert.equal(loadTenantData('ia_followup_register_2569', null, userA), null);
-  assert.equal(loadTenantData('ia_followup_register_2570', null, userA), null);
-  assert.equal(loadTenantData('ia_audit_comm_eval_2569', null, userA), null);
-  assert.equal(loadTenantData('ia_audit_comm_evaluator_2569', null, userA), null);
-  assert.equal(loadTenantData('ia_audit_comm_quarters_2569', null, userA), null);
-  assert.equal(loadTenantData('ia_audit_comm_members_2569', null, userA), null);
-  assert.equal(loadTenantData('ia_audit_comm_eval_2570', null, userA), null);
+  // A.3 Verify in REAL STORAGE: EVERY SINGLE Dynamic Key of User A is GONE
+  dynamicKeyDefinitions.forEach((dynKey) => {
+    const keyA = getTenantStorageKey(dynKey, userA);
+    assert.equal(mockStorage.has(keyA), false, `Raw storage must not have dynamic key ${keyA}`);
+    assert.equal(mockStorage.get(keyA), undefined, `mockStorage.get(${keyA}) must be undefined`);
+    assert.equal(loadTenantData(dynKey, null, userA), null, `loadTenantData(${dynKey}) for User A must return null`);
+  });
 
-  // A.3 CRITICAL: Verify ALL User B ('firm_tenant_alice') modules are 100% INTACT
-  const firmWp = loadTenantData('ia_working_papers_by_year', null, userB);
-  assert.equal(firmWp['2569'][0].id, 'WP-FIRM_ALICE-01');
-  assert.equal(firmWp['2569'][0].title, 'กระดาษทำการของ FIRM_ALICE');
+  // A.4 CRITICAL: Verify in REAL STORAGE: User B ('firm_tenant_alice') is 100% UNTOUCHED (Exact Byte-for-Byte Raw Storage Match)
+  SCOPED_BASE_KEYS.forEach((baseKey) => {
+    const keyB = getTenantStorageKey(baseKey, userB);
+    assert.ok(mockStorage.has(keyB), `Key ${keyB} of User B must remain in storage`);
+    assert.equal(mockStorage.get(keyB), rawBeforeResetA.get(keyB), `Key ${keyB} raw value must match byte-for-byte`);
+  });
 
-  const firmPlan = loadTenantData('ia_annual_plans_by_year', null, userB);
-  assert.equal(firmPlan['2569'][0].id, 'PLAN-FIRM_ALICE-01');
+  dynamicKeyDefinitions.forEach((dynKey) => {
+    const keyB = getTenantStorageKey(dynKey, userB);
+    assert.ok(mockStorage.has(keyB), `Dynamic key ${keyB} of User B must remain in storage`);
+    assert.equal(mockStorage.get(keyB), rawBeforeResetA.get(keyB), `Dynamic key ${keyB} raw value must match byte-for-byte`);
+  });
 
-  const firmProfile = loadTenantData('ia_org_profile', null, userB);
-  assert.equal(firmProfile.name, 'อปท. FIRM_ALICE');
+  // A.5 CRITICAL: Verify in REAL STORAGE: User C ('charlie') is 100% UNTOUCHED (Exact Byte-for-Byte Match)
+  SCOPED_BASE_KEYS.forEach((baseKey) => {
+    const keyC = getTenantStorageKey(baseKey, userC);
+    assert.ok(mockStorage.has(keyC), `Key ${keyC} of User C must remain in storage`);
+    assert.equal(mockStorage.get(keyC), rawBeforeResetA.get(keyC), `Key ${keyC} raw value must match byte-for-byte`);
+  });
 
-  const firmCal = loadTenantData('ia_central_calendar_events', null, userB);
-  assert.equal(firmCal[0].id, 'CAL-FIRM_ALICE-01');
+  dynamicKeyDefinitions.forEach((dynKey) => {
+    const keyC = getTenantStorageKey(dynKey, userC);
+    assert.ok(mockStorage.has(keyC), `Dynamic key ${keyC} of User C must remain in storage`);
+    assert.equal(mockStorage.get(keyC), rawBeforeResetA.get(keyC), `Dynamic key ${keyC} raw value must match byte-for-byte`);
+  });
 
-  const firmFinance = loadTenantData('ia_dept_finance_data', null, userB);
-  assert.equal(firmFinance.summary, 'กองคลัง FIRM_ALICE');
-
-  const firmOverview = loadTenantData('ia_public_overview_data', null, userB);
-  assert.equal(firmOverview.slogan, 'คำขวัญ FIRM_ALICE');
-
-  const firmOpening = loadTenantData('ia_opening_meeting_2569_PLAN-01', null, userB);
-  assert.equal(firmOpening.meetingTitle, 'เปิดตรวจ 2569 PLAN-01 FIRM_ALICE');
-
-  const firmClosing = loadTenantData('ia_closing_meeting_2569_PLAN-01', null, userB);
-  assert.equal(firmClosing.conclusion, 'ปิดตรวจ 2569 PLAN-01 FIRM_ALICE');
-
-  const firmFollowup = loadTenantData('ia_followup_register_2569', null, userB);
-  assert.equal(firmFollowup[0].id, 'FU-2569-FIRM_ALICE-01');
-
-  const firmAuditComm = loadTenantData('ia_audit_comm_eval_2569', null, userB);
-  assert.equal(firmAuditComm[0].comment, 'ประเมิน 2569 FIRM_ALICE');
-
-  // A.4 CRITICAL: Verify ALL User C ('charlie') modules are 100% INTACT
-  const charlieWp = loadTenantData('ia_working_papers_by_year', null, userC);
-  assert.equal(charlieWp['2569'][0].id, 'WP-CHARLIE-01');
-
-  const charlieOpening = loadTenantData('ia_opening_meeting_2569_PLAN-01', null, userC);
-  assert.equal(charlieOpening.meetingTitle, 'เปิดตรวจ 2569 PLAN-01 CHARLIE');
-
-  // A.5 Legacy Keys must be 100% byte-for-byte INTACT
+  // A.6 Legacy Keys must be 100% byte-for-byte INTACT
   assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp);
   assert.equal(mockStorage.get('ia_audit_universe_by_year'), legacyUniverse);
   assert.equal(mockStorage.get('ia_annual_plans_by_year'), legacyPlan);
   assert.equal(mockStorage.get('ia_org_profile'), legacyProfile);
 
-  // A.6 Platform-Global Keys must be 100% INTACT
+  // A.7 Platform-Global Keys must be 100% INTACT
   assert.equal(mockStorage.get('ia_auth_users'), platformUsers);
   assert.equal(mockStorage.get('ia_departments'), platformDepts);
   assert.equal(mockStorage.get('ia_central_documents'), platformCentralDocs);
   assert.equal(mockStorage.get('ia_knowledge_base'), platformKnowledge);
   assert.equal(mockStorage.get('ia_fiscal_years'), platformFiscalYears);
 
-  // A.7 Protected recovery status markers & malformed keys must be 100% INTACT
-  assert.ok(mockStorage.get(recoveryStatusKeyA), 'Legacy recovery status marker for alice must be preserved');
-  assert.ok(mockStorage.get(recoveryStatusKeyB), 'Legacy recovery status marker for firm_tenant_alice must be preserved');
+  // A.8 Recovery status markers & malformed keys must be 100% INTACT
+  assert.equal(mockStorage.get(recoveryStatusKeyA), rawBeforeResetA.get(recoveryStatusKeyA));
+  assert.equal(mockStorage.get(recoveryStatusKeyB), rawBeforeResetA.get(recoveryStatusKeyB));
+  assert.equal(mockStorage.get(recoveryStatusKeyC), rawBeforeResetA.get(recoveryStatusKeyC));
   assert.equal(mockStorage.get('ia_custom_unscoped_data'), JSON.stringify({ info: 'custom' }));
   assert.equal(mockStorage.get('ia_opening_meeting_2569_PLAN-01_tenant_alice_extra'), JSON.stringify({ title: 'alice_extra' }));
   assert.equal(mockStorage.get('ia_corrupted_tenant_'), JSON.stringify({ bad: true }));
@@ -1625,25 +1605,44 @@ await runTest('Condition 10.13: Reset Data deletes ONLY active tenant data, pres
   // =========================================================================
   // CASE B: Reset User B ('firm_tenant_alice')
   // =========================================================================
+  const rawBeforeResetB = new Map();
+  mockStorage.forEach((val, k) => rawBeforeResetB.set(k, val));
+
   const removedKeysB = clearTenantStorage(userB, global.localStorage);
-  assert.ok(removedKeysB.includes(firmDynKey));
+  assert.ok(removedKeysB.includes(sampleKeyB));
 
-  // B.1 Verify User B keys cleared
-  assert.equal(loadTenantData('ia_working_papers_by_year', null, userB), null);
-  assert.equal(loadTenantData('ia_opening_meeting_2569_PLAN-01', null, userB), null);
-  assert.equal(loadTenantData('ia_central_calendar_events', null, userB), null);
+  // B.1 Verify in REAL STORAGE: EVERY SINGLE key of User B is GONE
+  SCOPED_BASE_KEYS.forEach((baseKey) => {
+    const keyB = getTenantStorageKey(baseKey, userB);
+    assert.equal(mockStorage.has(keyB), false, `Raw storage must not have ${keyB}`);
+    assert.equal(mockStorage.get(keyB), undefined);
+  });
 
-  // B.2 Verify User C ('charlie') STILL 100% INTACT
-  const charlieWpAfterB = loadTenantData('ia_working_papers_by_year', null, userC);
-  assert.equal(charlieWpAfterB['2569'][0].id, 'WP-CHARLIE-01');
+  dynamicKeyDefinitions.forEach((dynKey) => {
+    const keyB = getTenantStorageKey(dynKey, userB);
+    assert.equal(mockStorage.has(keyB), false, `Raw storage must not have dynamic key ${keyB}`);
+    assert.equal(mockStorage.get(keyB), undefined);
+  });
 
-  // B.3 Legacy keys STILL 100% INTACT
+  // B.2 Verify User C ('charlie') is STILL 100% INTACT (Exact Raw Storage Match)
+  SCOPED_BASE_KEYS.forEach((baseKey) => {
+    const keyC = getTenantStorageKey(baseKey, userC);
+    assert.equal(mockStorage.get(keyC), rawBeforeResetB.get(keyC));
+  });
+
+  dynamicKeyDefinitions.forEach((dynKey) => {
+    const keyC = getTenantStorageKey(dynKey, userC);
+    assert.equal(mockStorage.get(keyC), rawBeforeResetB.get(keyC));
+  });
+
+  // B.3 Legacy keys & platform keys STILL 100% INTACT
   assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp);
   assert.equal(mockStorage.get('ia_audit_universe_by_year'), legacyUniverse);
+  assert.equal(mockStorage.get('ia_auth_users'), platformUsers);
 
   // =========================================================================
   // CASE C: High-Volume / Multi-Year Tenant Reset ('charlie')
-  // Tests iteration resilience without index skipping when deleting 20+ dynamic keys
+  // Tests iteration resilience without index skipping when deleting 40+ dynamic keys
   // =========================================================================
   const multiYears = ['2567', '2568', '2569', '2570'];
   const multiPlans = ['PLAN-01', 'PLAN-02', 'PLAN-03', 'PLAN-04', 'PLAN-05'];
@@ -1672,29 +1671,75 @@ await runTest('Condition 10.13: Reset Data deletes ONLY active tenant data, pres
   });
 
   // Verify charlie base keys are cleared
-  assert.equal(loadTenantData('ia_working_papers_by_year', null, userC), null);
-  assert.equal(loadTenantData('ia_central_calendar_events', null, userC), null);
+  SCOPED_BASE_KEYS.forEach((baseKey) => {
+    assert.equal(loadTenantData(baseKey, null, userC), null);
+  });
 
   // =========================================================================
-  // CASE D: Admin Workspace Reset
+  // CASE D: Admin Scoped Base & Dynamic Keys Reset Test
   // Admin reset clears only '_tenant_admin' scoped data, NEVER platform-global accounts or depts
   // =========================================================================
+  // D.1 Seed Admin Scoped Base Keys
   saveTenantData('ia_working_papers_by_year', { '2569': [{ id: 'WP-ADMIN-01' }] }, adminUser);
+  saveTenantData('ia_annual_plans_by_year', { '2569': [{ id: 'PLAN-ADMIN-01' }] }, adminUser);
   saveTenantData('ia_central_calendar_events', [{ id: 'CAL-ADMIN-01' }], adminUser);
-  const adminWpKey = getTenantStorageKey('ia_working_papers_by_year', adminUser);
-  assert.equal(adminWpKey, 'ia_working_papers_by_year_tenant_admin');
-  assert.ok(mockStorage.get(adminWpKey));
+  saveTenantData('ia_dept_finance_data', { summary: 'กองคลัง Admin' }, adminUser);
 
+  // D.2 Seed Admin Dynamic Keys from EACH major family
+  saveTenantData('ia_opening_meeting_2569_PLAN-01', { meetingTitle: 'การประชุมเปิดตรวจ Admin 2569' }, adminUser);
+  saveTenantData('ia_closing_meeting_2569_PLAN-01', { conclusion: 'ปิดตรวจ Admin 2569 เรียบร้อย' }, adminUser);
+  saveTenantData('ia_followup_register_2569', [{ id: 'CAPA-ADMIN-01', finding: 'ข้อตรวจพบ Admin' }], adminUser);
+  saveTenantData('ia_audit_comm_eval_2569', [{ dim: 1, score: 5, comment: 'ประเมิน คกก. Admin' }], adminUser);
+  saveTenantData('ia_audit_comm_evaluator_2569', 'ประธาน คกก. ตรวจสอบกลาง', adminUser);
+
+  const adminWpKey = getTenantStorageKey('ia_working_papers_by_year', adminUser);
+  const adminOpenKey = getTenantStorageKey('ia_opening_meeting_2569_PLAN-01', adminUser);
+  const adminCloseKey = getTenantStorageKey('ia_closing_meeting_2569_PLAN-01', adminUser);
+  const adminFuKey = getTenantStorageKey('ia_followup_register_2569', adminUser);
+  const adminCommKey = getTenantStorageKey('ia_audit_comm_eval_2569', adminUser);
+
+  assert.equal(adminWpKey, 'ia_working_papers_by_year_tenant_admin');
+  assert.equal(adminOpenKey, 'ia_opening_meeting_2569_PLAN-01_tenant_admin');
+  assert.equal(adminFuKey, 'ia_followup_register_2569_tenant_admin');
+  assert.equal(adminCommKey, 'ia_audit_comm_eval_2569_tenant_admin');
+
+  assert.ok(mockStorage.has(adminWpKey), 'Admin WP must exist before reset');
+  assert.ok(mockStorage.has(adminOpenKey), 'Admin Opening Meeting must exist before reset');
+  assert.ok(mockStorage.has(adminCloseKey), 'Admin Closing Meeting must exist before reset');
+  assert.ok(mockStorage.has(adminFuKey), 'Admin Followup Register must exist before reset');
+  assert.ok(mockStorage.has(adminCommKey), 'Admin Audit Comm must exist before reset');
+
+  // D.3 Call real clearTenantStorage for adminUser
   const removedKeysAdmin = clearTenantStorage(adminUser, global.localStorage);
   assert.ok(removedKeysAdmin.includes(adminWpKey));
+  assert.ok(removedKeysAdmin.includes(adminOpenKey));
+  assert.ok(removedKeysAdmin.includes(adminCloseKey));
+  assert.ok(removedKeysAdmin.includes(adminFuKey));
+  assert.ok(removedKeysAdmin.includes(adminCommKey));
 
-  // Admin scoped data is cleared
+  // D.4 Verify in REAL STORAGE: Admin scoped base and dynamic keys are GONE
+  assert.equal(mockStorage.has(adminWpKey), false, 'Admin WP must be removed from raw storage');
+  assert.equal(mockStorage.has(adminOpenKey), false, 'Admin Opening Meeting must be removed');
+  assert.equal(mockStorage.has(adminCloseKey), false, 'Admin Closing Meeting must be removed');
+  assert.equal(mockStorage.has(adminFuKey), false, 'Admin Followup Register must be removed');
+  assert.equal(mockStorage.has(adminCommKey), false, 'Admin Audit Comm must be removed');
+
   assert.equal(loadTenantData('ia_working_papers_by_year', null, adminUser), null);
+  assert.equal(loadTenantData('ia_opening_meeting_2569_PLAN-01', null, adminUser), null);
+  assert.equal(loadTenantData('ia_followup_register_2569', null, adminUser), null);
+  assert.equal(loadTenantData('ia_audit_comm_eval_2569', null, adminUser), null);
 
-  // CRITICAL: Platform-global accounts and departments MUST REMAIN 100% UNTOUCHED
-  assert.equal(mockStorage.get('ia_auth_users'), platformUsers, 'Admin reset must never delete ia_auth_users');
-  assert.equal(mockStorage.get('ia_departments'), platformDepts, 'Admin reset must never delete ia_departments');
-  assert.equal(mockStorage.get('ia_central_documents'), platformCentralDocs, 'Admin reset must never delete central docs');
+  // D.5 CRITICAL: Platform-global accounts, departments, knowledge hub, legacy keys, and recovery status MUST REMAIN 100% UNTOUCHED
+  assert.equal(mockStorage.get('ia_auth_users'), platformUsers, 'Admin reset must NEVER delete ia_auth_users');
+  assert.equal(mockStorage.get('ia_departments'), platformDepts, 'Admin reset must NEVER delete ia_departments');
+  assert.equal(mockStorage.get('ia_central_documents'), platformCentralDocs, 'Admin reset must NEVER delete central docs');
+  assert.equal(mockStorage.get('ia_knowledge_base'), platformKnowledge, 'Admin reset must NEVER delete knowledge base');
+  assert.equal(mockStorage.get('ia_fiscal_years'), platformFiscalYears, 'Admin reset must NEVER delete fiscal years');
+  assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp, 'Admin reset must NEVER delete legacy WP');
+  assert.equal(mockStorage.get('ia_audit_universe_by_year'), legacyUniverse, 'Admin reset must NEVER delete legacy AU');
+  assert.equal(mockStorage.get('ia_annual_plans_by_year'), legacyPlan, 'Admin reset must NEVER delete legacy Plan');
+  assert.equal(mockStorage.get('ia_org_profile'), legacyProfile, 'Admin reset must NEVER delete legacy Profile');
+  assert.ok(mockStorage.get(recoveryStatusKeyAdmin), 'Admin reset must NEVER delete recovery status marker');
 
   // =========================================================================
   // CASE E: Unknown & Malformed Keys Safety Verification
@@ -1705,16 +1750,23 @@ await runTest('Condition 10.13: Reset Data deletes ONLY active tenant data, pres
   assert.equal(mockStorage.get('ia_random_module_tenant_alice'), JSON.stringify({ random: true }));
 
   // =========================================================================
-  // CASE F: Idempotent Repeated Reset
-  // Calling clearTenantStorage a second time on an already reset user must be safe and idempotent
+  // CASE F: Idempotent Repeated Reset Verification
+  // Calling clearTenantStorage a second time on an already reset user must be safe, idempotent,
+  // and must leave all other keys completely untouched.
   // =========================================================================
   const repeatRemovedA = clearTenantStorage(userA, global.localStorage);
   assert.ok(Array.isArray(repeatRemovedA));
+
+  const repeatRemovedAdmin = clearTenantStorage(adminUser, global.localStorage);
+  assert.ok(Array.isArray(repeatRemovedAdmin));
 
   // Legacy keys and platform-global keys remain 100% intact after repeated reset
   assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWp);
   assert.equal(mockStorage.get('ia_auth_users'), platformUsers);
   assert.equal(mockStorage.get('ia_departments'), platformDepts);
+  assert.equal(mockStorage.get('ia_central_documents'), platformCentralDocs);
+  assert.equal(mockStorage.get('ia_knowledge_base'), platformKnowledge);
+  assert.equal(mockStorage.get('ia_fiscal_years'), platformFiscalYears);
 });
 
 console.log(`\n======================================================`);
