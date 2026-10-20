@@ -147,6 +147,8 @@ const {
   getLegacyRecoveryStatus,
   clearTenantStorage,
   SCOPED_BASE_KEYS,
+  LEGACY_RECOVERY_BASE_KEYS,
+  buildLegacyRecoveryBundle,
   parseTenantStorageKey,
   isDynamicAuditBaseKey,
   getTenantIdentifier
@@ -309,6 +311,25 @@ runTest('Condition 5: Legacy source keys are never deleted, overwritten, or modi
 
   // Legacy key in localStorage must be 100% identical byte-for-byte
   assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyData, 'Legacy key must not be modified');
+});
+
+await runTest('Condition 5.1: Legacy recovery export preserves raw values without migrating them', () => {
+  mockStorage.clear();
+
+  const legacyWorkingPapers = JSON.stringify({ '2569': [{ id: 'WP-LEGACY-PRESERVE' }] });
+  const legacyAnnualPlans = JSON.stringify([{ id: 'PLAN-LEGACY-PRESERVE' }]);
+  mockStorage.set('ia_working_papers_by_year', legacyWorkingPapers);
+  mockStorage.set('ia_annual_plans', legacyAnnualPlans);
+
+  const bundle = buildLegacyRecoveryBundle(global.localStorage);
+  assert.equal(bundle.schema, 'audit-os-legacy-recovery-bundle/v1');
+  assert.equal(bundle.entries.ia_working_papers_by_year.rawValue, legacyWorkingPapers);
+  assert.equal(bundle.entries.ia_annual_plans.rawValue, legacyAnnualPlans);
+  assert.ok(LEGACY_RECOVERY_BASE_KEYS.includes('ia_annual_plans'));
+
+  // Export is preservation-only: original source values remain byte-for-byte intact.
+  assert.equal(mockStorage.get('ia_working_papers_by_year'), legacyWorkingPapers);
+  assert.equal(mockStorage.get('ia_annual_plans'), legacyAnnualPlans);
 });
 
 // =========================================================================
