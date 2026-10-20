@@ -1697,6 +1697,7 @@ export default function App() {
           onExportBackup={handleExportBackup}
           onImportBackup={handleImportBackup}
           onRestoreSafetySnapshot={handleRestoreSafetySnapshot}
+          session={session}
           onClose={() => setShowSettings(false)}
         />
       )}
