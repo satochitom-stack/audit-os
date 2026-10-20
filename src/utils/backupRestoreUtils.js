@@ -262,6 +262,15 @@ export async function createTenantSafetySnapshot(currentTenantData, session = nu
   delete sanitizedTenantData.platform_users;
   delete sanitizedTenantData.systemSettings;
 
+  // Simulated or partially initialized workspaces can contain null placeholders for modules
+  // that have never been created. Omit those placeholders from internal snapshots so the
+  // strict backup validator can still validate and restore the actual saved modules.
+  Object.keys(sanitizedTenantData).forEach((key) => {
+    if (sanitizedTenantData[key] === null || sanitizedTenantData[key] === undefined) {
+      delete sanitizedTenantData[key];
+    }
+  });
+
   let serialized;
   try {
     serialized = JSON.stringify(sanitizedTenantData);
